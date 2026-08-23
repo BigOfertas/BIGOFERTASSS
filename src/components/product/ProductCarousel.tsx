@@ -19,21 +19,26 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }
 
   return (
     <div className="w-full">
-      {/* Products Container with Crossfade */}
-      <div className="relative min-h-[400px] md:min-h-[450px]">
+      {/* Products Container with Crossfade - Only Opacity changes */}
+      <div className="relative">
         {pages.map((pageProducts, pageIndex) => (
           <div
             key={pageIndex}
-            className={`absolute top-0 left-0 w-full transition-opacity duration-300 ease-in-out flex gap-4 md:gap-5 justify-center flex-wrap md:flex-nowrap ${
-              activePage === pageIndex ? "opacity-100 z-10 pointer-events-auto" : "opacity-0 z-0 pointer-events-none"
+            className={`transition-opacity duration-300 ease-in-out grid grid-cols-2 md:grid-cols-5 gap-x-4 gap-y-6 md:gap-5 ${
+              activePage === pageIndex 
+                ? "opacity-100 z-10 pointer-events-auto relative" 
+                : "opacity-0 z-0 pointer-events-none absolute top-0 left-0 w-full"
             }`}
           >
             {pageProducts.map((child, i) => (
               <div 
                 key={i} 
-                className="flex-shrink-0 w-[46%] sm:w-[45%] md:w-[calc((100%-80px)/5)]"
+                className="w-full flex justify-center"
               >
-                {child}
+                {/* Each child (ProductCard) already has responsive sizing internally or is wrapped correctly */}
+                <div className="w-full max-w-[180px] md:max-w-none">
+                  {child}
+                </div>
               </div>
             ))}
           </div>
@@ -41,7 +46,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }
       </div>
 
       {/* Pagination Dots - Exactly 3, Small, Discrete, Centralized */}
-      <div className="flex justify-center items-center gap-4 mt-8">
+      <div className="flex justify-center items-center gap-4 mt-10">
         {Array.from({ length: pageCount }).map((_, i) => (
           <button
             key={i}
