@@ -1,61 +1,94 @@
 /**
- * # PROMPT CORRETIVO — TAMANHO DOS CARDS DE CATEGORIA EM 115%
+ * # ETAPA 6 — Criar Banner Clicável do Brasileirão
  * 
  * Considere o **estado ATUAL do projeto BIGofertas** como fonte de verdade.
  * 
- * Faça SOMENTE o ajuste de escala dos cards da seção de categorias / **“Diversifique seu pedido”**.
+ * Faça SOMENTE a criação da área destinada à **arte/banner do Brasileirão** na Home.
  * 
- * ## REGRA PRINCIPAL
+ * A posição correta será:
  * 
- * Os cards das categorias devem ter exatamente:
+ * **Mais Vendidos / Lançamentos**
+ * ↓
+ * **Diversifique seu pedido / Categorias**
+ * ↓
+ * **BANNER BRASILEIRÃO**
+ * ↓
+ * **futura seção Times Brasileiros**
  * 
- * **115% do tamanho visual dos cards normais de produto usados em “MAIS VENDIDOS” e “LANÇAMENTOS”.**
- * 
- * Ou seja:
- * 
- * **Card de produto normal = 100%**
- * **Card de categoria = 115%**
- * 
- * Use os próprios cards atuais de **Mais Vendidos/Lançamentos** como referência real de tamanho.
- * 
- * Não utilize valores arbitrários de prompts antigos.
+ * Não criar ainda a seção Times Brasileiros.
  * 
  * ---
  * 
- * ## IMPORTANTE
+ * ## OBJETIVO
  * 
- * O aumento de 15% deve ser proporcional.
+ * Criar um espaço específico para uma futura **arte PNG/WebP clicável do Brasileirão**.
  * 
- * Considere principalmente:
+ * Essa arte será fornecida posteriormente.
  * 
- * * largura do card;
- * * altura proporcional;
- * * área visual ocupada;
- * * espaçamento necessário entre cards.
+ * Por enquanto, utilizar somente um placeholder neutro indicando:
  * 
- * Não aumentar somente a imagem interna deixando o container igual.
+ * **PNG Slot: Brasileirão**
  * 
- * O **card inteiro de categoria** deve aparentar aproximadamente 15% maior que um card de produto comum.
+ * Não gerar nenhuma imagem.
+ * 
+ * Não criar arte fictícia.
  * 
  * ---
  * 
- * ## PROPORÇÃO DA ARTE
+ * ## BANNER INTEIRO CLICÁVEL
  * 
- * As futuras artes das categorias terão proporção vertical:
+ * O banner completo deve ser preparado para funcionar como um único link.
  * 
- * **2:3**
+ * Futuramente, ao clicar na arte, o usuário deverá ser direcionado para a área/categoria:
  * 
- * Referência de arquivo:
+ * **Brasileirão**
  * 
- * `1000 × 1500 px`
+ * Estrutura conceitual:
  * 
- * O componente deve preservar essa proporção.
+ * ```tsx
+ * <PromoBanner
+ *   image="..."
+ *   href="/brasileirao"
+ * />
+ * ```
  * 
- * Não deformar.
+ * ou solução equivalente compatível com a arquitetura atual.
  * 
- * Não esticar.
+ * Se a rota definitiva ainda não existir, não criar lógica complexa nem link quebrado apenas para simular.
  * 
- * Não cortar desnecessariamente.
+ * Deixar preparado para receber o `href` futuramente.
+ * 
+ * ---
+ * 
+ * ## POSICIONAMENTO
+ * 
+ * O banner deve aparecer imediatamente DEPOIS da seção:
+ * 
+ * **Diversifique seu pedido**
+ * 
+ * e ANTES da futura seção:
+ * 
+ * **Times Brasileiros**
+ * 
+ * Manter espaçamento profissional entre as seções.
+ * 
+ * Não deixar um espaço vazio exagerado.
+ * 
+ * ---
+ * 
+ * ## DESKTOP
+ * 
+ * No desktop:
+ * 
+ * * banner horizontal;
+ * * centralizado;
+ * * alinhado ao container principal da Home;
+ * * largura semelhante às grandes artes promocionais da referência;
+ * * não ultrapassar a largura útil do conteúdo;
+ * * não ficar excessivamente alto;
+ * * aparência de banner profissional de e-commerce.
+ * 
+ * Não alterar nenhuma seção anterior para acomodar o banner.
  * 
  * ---
  * 
@@ -63,89 +96,92 @@
  * 
  * No mobile:
  * 
- * * usar como referência o tamanho MOBILE atual dos cards de Mais Vendidos/Lançamentos;
- * * aplicar aproximadamente **115% dessa largura** aos cards de categoria;
- * * preservar proporção 2:3;
- * * manter carrossel horizontal;
- * * permitir swipe;
- * * mostrar parte do próximo card quando possível;
- * * não criar scrollbar horizontal visível;
- * * não criar overflow na página inteira.
+ * * continuar horizontal;
+ * * ocupar praticamente toda a largura disponível;
+ * * manter margens laterais coerentes com o restante da Home;
+ * * não ficar exageradamente alto;
+ * * adaptar responsivamente;
+ * * não criar overflow horizontal.
  * 
- * Exemplo conceitual:
- * 
- * Se um card normal tiver:
- * 
- * `100px`
- * 
- * o card de categoria deverá ter:
- * 
- * `115px`
- * 
- * Se tiver:
- * 
- * `140px`
- * 
- * o card de categoria deverá ter:
- * 
- * `161px`
- * 
- * A lógica deve ser proporcional ao layout atual.
+ * A futura imagem deve preencher o container sem deformação.
  * 
  * ---
  * 
- * ## DESKTOP
+ * ## IMAGEM FUTURA
  * 
- * No desktop, aplicar a mesma relação visual:
+ * Quando a arte real for inserida, preservar:
  * 
- * **card de categoria = 115% do card normal de produto.**
+ * * `width: 100%`;
+ * * proporção da arte;
+ * * boa resolução;
+ * * ausência de deformação.
  * 
- * Não transformar os cards em banners gigantes.
+ * Preferir:
  * 
- * Eles devem permanecer compactos, verticais e organizados.
+ * * `object-cover` quando necessário para preencher o espaço;
  * 
- * Caso os 6 cards não caibam corretamente na largura disponível após o aumento, preserve:
+ * ou outra solução já utilizada pelo projeto que preserve corretamente a imagem.
  * 
- * * proporção;
- * * espaçamento;
- * * alinhamento;
- * 
- * e permita uma distribuição/carrossel adequada.
- * 
- * Não comprimir artificialmente os cards apenas para forçar todos na mesma linha.
+ * Não usar `object-fill`.
  * 
  * ---
  * 
  * ## CONTEÚDO TEMPORÁRIO
  * 
- * Neste momento, manter apenas os textos/placeholders existentes nas categorias.
+ * Neste momento mostrar apenas algo discreto como:
  * 
- * NÃO gerar imagens.
+ * **PNG Slot: Brasileirão**
  * 
- * NÃO criar artes temporárias.
+ * O placeholder é apenas estrutural.
  * 
- * Futuramente cada card receberá uma **arte PNG/WebP completa e clicável**.
+ * Não adicionar:
  * 
- * As categorias continuam sendo:
+ * * jogadores fictícios;
+ * * escudos;
+ * * textos promocionais inventados;
+ * * logos;
+ * * imagens externas;
+ * * gradientes chamativos;
+ * * elementos gerados por IA.
  * 
- * * Camisas de Times
- * * Conjuntos Infantis / Kids
- * * Shorts
- * * Conjuntos / Kit de Treino
- * * Basquete
- * * Corta-Ventos
+ * A arte definitiva será fornecida depois.
  * 
  * ---
  * 
- * ## NÃO ALTERAR OS CARDS DE PRODUTO
+ * ## COMPONENTIZAÇÃO
  * 
- * Muito importante:
+ * Antes de criar um novo componente, verificar se o projeto já possui:
  * 
- * **NÃO aumente nem reduza os cards de Mais Vendidos/Lançamentos.**
+ * `PromoBanner.tsx`
  * 
- * Eles são apenas a REFERÊNCIA de tamanho.
+ * ou componente equivalente.
  * 
- * Somente os cards de categoria devem mudar.
+ * Se for adequado, reutilizá-lo.
+ * 
+ * Não duplicar componente apenas para este banner se a estrutura existente já atende à necessidade.
+ * 
+ * O comportamento deste banner é:
+ * 
+ * **imagem estática + clicável**
+ * 
+ * Ele NÃO é carrossel.
+ * 
+ * ---
+ * 
+ * ## NÃO IMPLEMENTAR AINDA
+ * 
+ * Não criar nesta etapa:
+ * 
+ * * Times Brasileiros;
+ * * logos dos clubes;
+ * * carrossel de times;
+ * * produtos do Brasileirão;
+ * * filtros;
+ * * página completa do Brasileirão;
+ * * integração com R2;
+ * * integração de produtos com Supabase.
+ * 
+ * Essas serão etapas posteriores.
  * 
  * ---
  * 
@@ -153,23 +189,25 @@
  * 
  * Não modificar:
  * 
- * * Mais Vendidos;
- * * Lançamentos;
- * * produtos;
- * * bolinhas de navegação;
  * * PNG Slot Superior;
+ * * carrossel superior;
  * * PNG Slot Inferior;
  * * Header;
  * * busca;
  * * menu;
- * * banners;
+ * * Mais Vendidos;
+ * * Lançamentos;
+ * * cards de produtos;
+ * * bolinhas de paginação;
+ * * Diversifique seu pedido;
+ * * tamanho dos cards de categoria;
  * * Supabase;
  * * Auth;
  * * RLS;
  * * migrations;
  * * TanStack Router;
  * * `.lovable`;
- * * demais seções da Home.
+ * * rodapé.
  * 
  * Não realizar refatorações extras.
  * 
@@ -177,20 +215,20 @@
  * 
  * ## VALIDAÇÃO FINAL
  * 
- * Confirme visualmente:
+ * Antes de finalizar, confirmar:
  * 
- * 1. Card de produto normal continua em **100%**.
- * 2. Card de categoria está aproximadamente em **115%**.
- * 3. A diferença é perceptível, mas discreta.
- * 4. Cards de categoria não ficaram exageradamente grandes.
- * 5. Proporção vertical 2:3 foi preservada.
- * 6. Mobile continua com carrossel horizontal funcional.
- * 7. Desktop permanece organizado.
- * 8. Não existe scrollbar horizontal visível.
- * 9. Não existe overflow horizontal da página.
- * 10. Mais Vendidos/Lançamentos permanecem totalmente intactos.
+ * 1. Existe um novo slot para a arte do Brasileirão.
+ * 2. Ele está imediatamente abaixo de “Diversifique seu pedido”.
+ * 3. Ele está preparado para receber uma PNG/WebP real.
+ * 4. O banner poderá ser clicável futuramente.
+ * 5. Desktop apresenta formato horizontal e profissional.
+ * 6. Mobile está responsivo e sem overflow.
+ * 7. Placeholder contém apenas “PNG Slot: Brasileirão”.
+ * 8. Não foi gerada nenhuma imagem.
+ * 9. Não foi criada ainda a seção Times Brasileiros.
+ * 10. Todas as seções anteriores permanecem visualmente intactas.
  * 
- * **Faça exclusivamente essa alteração de escala dos cards de categoria.**
+ * **Faça exclusivamente esta etapa.**
  */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
@@ -228,9 +266,21 @@ function Index() {
       />
 
       {/* 4. SEÇÃO MAIS VENDIDOS */}
-      <main className="flex-1">
+      <main className="flex-1 pb-12">
         <BestSellers />
         <VisualCategories />
+        
+        {/* BANNER BRASILEIRÃO - SLOT CLICÁVEL */}
+        <section className="mt-8 sm:mt-12">
+          <div className="container mx-auto px-4">
+            <PromoBanner 
+              id="Brasileirão" 
+              aspectRatio="aspect-[1920/500]"
+              className="rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              href="#" // Deixado preparado para receber o link futuramente
+            />
+          </div>
+        </section>
       </main>
     </div>
   );
