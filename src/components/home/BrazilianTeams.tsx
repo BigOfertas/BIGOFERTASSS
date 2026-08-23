@@ -5,10 +5,11 @@ import cruzeiroAsset from "@/assets/teams/cruzeiro.png.asset.json";
 import saoPauloAsset from "@/assets/teams/sao_paulo.png.asset.json";
 import corinthiansAsset from "@/assets/teams/corinthians_v2.png.asset.json";
 import palmeirasAsset from "@/assets/teams/palmeiras.png.asset.json";
-import santosAsset from "@/assets/teams/santos.png.asset.json";
-import botafogoAsset from "@/assets/teams/botafogo.png.asset.json";
-import fluminenseAsset from "@/assets/teams/fluminense.png.asset.json";
-import gremioAsset from "@/assets/teams/gremio.png.asset.json";
+import santosAsset from "@/assets/teams/santos_final.png.asset.json";
+import botafogoAsset from "@/assets/teams/botafogo_final.png.asset.json";
+import fluminenseAsset from "@/assets/teams/fluminense_final.png.asset.json";
+import gremioAsset from "@/assets/teams/gremio_final.png.asset.json";
+import internacionalAsset from "@/assets/teams/internacional.png.asset.json";
 
 interface Team {
   id: string;
@@ -54,11 +55,11 @@ const teams: Team[] = [
   { id: "sao-paulo", name: "São Paulo", slug: "sao-paulo", href: "/times/sao-paulo", logoUrl: saoPauloAsset.url },
   { id: "corinthians", name: "Corinthians", slug: "corinthians", href: "/times/corinthians", logoUrl: corinthiansAsset.url },
   { id: "palmeiras", name: "Palmeiras", slug: "palmeiras", href: "/times/palmeiras", logoUrl: palmeirasAsset.url },
-  { id: "santos", name: "Santos", slug: "santos", href: "/times/santos" },
-  { id: "botafogo", name: "Botafogo", slug: "botafogo", href: "/times/botafogo" },
-  { id: "fluminense", name: "Fluminense", slug: "fluminense", href: "/times/fluminense" },
-  { id: "gremio", name: "Grêmio", slug: "gremio", href: "/times/gremio" },
-  { id: "internacional", name: "Internacional", slug: "internacional", href: "/times/internacional" },
+  { id: "santos", name: "Santos", slug: "santos", href: "/times/santos", logoUrl: santosAsset.url },
+  { id: "botafogo", name: "Botafogo", slug: "botafogo", href: "/times/botafogo", logoUrl: botafogoAsset.url },
+  { id: "fluminense", name: "Fluminense", slug: "fluminense", href: "/times/fluminense", logoUrl: fluminenseAsset.url },
+  { id: "gremio", name: "Grêmio", slug: "gremio", href: "/times/gremio", logoUrl: gremioAsset.url },
+  { id: "internacional", name: "Internacional", slug: "internacional", href: "/times/internacional", logoUrl: internacionalAsset.url },
 ];
 
 const BrazilianTeams: React.FC = () => {
