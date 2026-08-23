@@ -1,85 +1,83 @@
 /**
- * PROMPT PARA LOVABLE — ETAPA 16C (PARTE 3)
- * Integrar Imagens dos Escudos - Times Brasileiros (Imagens 7 a 11)
+ * PROMPT PARA LOVABLE — ETAPA BÔNUS
+ * Adicionar PNG no Slot Inferior (PromoBanner) — Mobile com Scroll Horizontal
  * 
  * ================================================================================
  * 
  * CONTEXTO
  * 
- * Você vai receber as ÚLTIMAS 5 IMAGENS de escudos para integrar na seção
- * "Times Brasileiros" (BrazilianTeams).
+ * Você vai receber 1 imagem PNG que deve ser colocada em um "slot" (espaço vazio)
+ * que já existe na moldura do PromoBanner (faixa promocional).
  * 
- * Esta é PARTE 3 (FINAL) de 3:
- * - PARTE 1 (COMPLETA): Imagens 1, 2, 3 ✅
- * - PARTE 2 (COMPLETA): Imagens 4, 5, 6 ✅
- * - PARTE 3 (AGORA): Imagens 7, 8, 9, 10, 11 (últimos 5 escudos)
+ * Comportamento diferente por plataforma:
+ * - MOBILE (< 768px): Imagem aparece DESLOCADA à esquerda (como se deslizasse)
+ *   → Mostra APENAS a parte esquerda da imagem (resto fica fora da moldura)
+ * - PC (≥ 768px): Imagem aparece INTEIRA dentro da moldura
  * 
- * Status atual:
- * - Posições 1-6 já têm imagens reais
- * - Posições 7-11 têm placeholders
- * - Agora vamos preencher posições 7-11 (FINAL)
+ * Objetivo: Usar a mesma imagem, mas com posicionamento diferente em cada breakpoint
  * 
  * ================================================================================
  * 
  * OBJETIVO
  * 
- * Integrar as 5 ÚLTIMAS imagens (7, 8, 9, 10, 11) no carrossel
- * 
- * Ordem EXATA:
- * - Imagem 1 anexada (PARTE 3) = Posição 7
- * - Imagem 2 anexada (PARTE 3) = Posição 8
- * - Imagem 3 anexada (PARTE 3) = Posição 9
- * - Imagem 4 anexada (PARTE 3) = Posição 10
- * - Imagem 5 anexada (PARTE 3) = Posição 11 (última à direita)
+ * 1. Integrar 1 imagem PNG no slot inferior do PromoBanner
+ * 2. A imagem deve FIT dentro da moldura existente (não sair dos limites)
+ * 3. Mobile: Mostrar apenas a PARTE ESQUERDA (como scrollado para direita)
+ * 4. PC: Mostrar a imagem INTEIRA
+ * 5. Manter estilo e responsividade existentes
  * 
  * ================================================================================
  * 
- * MUDANÇA ESPECÍFICA: ARQUIVO BrazilianTeams.tsx
+ * MUDANÇA ESPECÍFICA: ARQUIVO PromoBanner.tsx
  * 
- * Arquivo: src/components/home/BrazilianTeams.tsx
+ * Arquivo: src/components/layout/PromoBanner.tsx
  * 
  * Contexto:
- * Array de teams com 11 itens
+ * - PromoBanner já existe com 1 slot para imagem (moldura vazia)
+ * - Precisa integrar PNG neste slot
+ * - Comportamento diferente mobile/desktop
  * 
- * Status atual:
- * - Posições 1-6: Imagens reais ✅
- * - Posições 7-11: Placeholders (cinza/vazio)
+ * Integração:
  * 
- * Integração PARTE 3 (FINAL):
- * Substituir as POSIÇÕES 7, 8, 9, 10, 11 com as 5 imagens anexadas
+ * MOBILE (< 768px):
+ * - Imagem posicionada à ESQUERDA
+ * - Deslocamento: Como se o usuário deslizasse a imagem com mouse para DIREITA
+ * - Resultado: Mostra apenas a PARTE ESQUERDA da imagem
+ * - Resto da imagem fica FORA da moldura (oculto)
+ * - CSS: object-position: left center (ou ajustado)
+ * - overflow: hidden (para não sair da moldura)
  * 
- * Estrutura esperada (posições 7-11):
+ * PC (≥ 768px):
+ * - Imagem posicionada no CENTRO
+ * - Mostra a imagem INTEIRA dentro da moldura
+ * - CSS: object-position: center center
+ * - overflow: hidden (para respeitar limites da moldura)
  * 
- * const teams = [
- *   // ... posições 1-6 já têm imagens (não alterar)
- *   {
- *     id: 7,
- *     name: "Time 7",
- *     image: "[IMAGEM 1 ANEXADA PARTE 3 - POSIÇÃO 7]"
- *   },
- *   {
- *     id: 8,
- *     name: "Time 8",
- *     image: "[IMAGEM 2 ANEXADA PARTE 3 - POSIÇÃO 8]"
- *   },
- *   {
- *     id: 9,
- *     name: "Time 9",
- *     image: "[IMAGEM 3 ANEXADA PARTE 3 - POSIÇÃO 9]"
- *   },
- *   {
- *     id: 10,
- *     name: "Time 10",
- *     image: "[IMAGEM 4 ANEXADA PARTE 3 - POSIÇÃO 10]"
- *   },
- *   {
- *     id: 11,
- *     name: "Time 11",
- *     image: "[IMAGEM 5 ANEXADA PARTE 3 - POSIÇÃO 11]"
- *   }
- * ];
+ * Implementação com object-fit e object-position:
  * 
- * ETAPA 16 COMPLETA APÓS ESTA PARTE! 🎉
+ * <img
+ *   src="[IMAGEM ANEXADA]"
+ *   alt="Promoção"
+ *   className={`w-full h-full object-cover
+ *     md:object-position-center
+ *     object-position-left
+ *   `}
+ * />
+ * 
+ * Ou com Tailwind (se suporte custom):
+ * 
+ * Mobile: object-left (ou com style inline)
+ * Desktop: object-center
+ * 
+ * ================================================================================
+ * 
+ * ESPECIFICAÇÕES TÉCNICAS
+ * 
+ * Imagem:
+ * - Formato: PNG
+ * - Localização: Slot inferior do PromoBanner (moldura existente)
+ * - Tamanho container: [verificar em PromoBanner.tsx]
+ * - Deve preencher o espaço (object-cover)
  */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
