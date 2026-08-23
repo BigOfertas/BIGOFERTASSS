@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
 import Header from "@/components/layout/Header";
+import BestSellers from "@/components/home/BestSellers";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -31,9 +32,9 @@ function Index() {
         className="min-h-[200px] md:min-h-[400px] max-md:!aspect-[1920/1265] max-md:min-h-none"
       />
 
-      {/* Espaço neutro da página */}
+      {/* 4. SEÇÃO MAIS VENDIDOS */}
       <main className="flex-1">
-        {/* Placeholder for future content */}
+        <BestSellers />
       </main>
     </div>
   );
