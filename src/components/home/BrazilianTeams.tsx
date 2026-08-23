@@ -64,11 +64,11 @@ const BrazilianTeams: React.FC = () => {
           </h2>
         </div>
 
-        {/* Desktop: Centered distribution / Mobile: Horizontal swipe */}
+        {/* Desktop: Symmetrical distribution / Mobile: Horizontal swipe */}
         <div className="relative group/scroll">
-          <div className="flex overflow-x-auto pb-6 no-scrollbar custom-scrollbar-mobile gap-4 sm:gap-8 md:gap-10 scroll-smooth snap-x md:justify-center items-center">
+          <div className="flex overflow-x-auto md:overflow-visible pb-6 no-scrollbar custom-scrollbar-mobile gap-4 md:gap-0 scroll-smooth snap-x md:grid md:grid-cols-11 md:w-full">
             {teams.map((team) => (
-              <div key={team.id} className="snap-center px-1">
+              <div key={team.id} className="snap-center md:snap-align-none flex justify-center items-center">
                 <TeamLogo team={team} />
               </div>
             ))}
