@@ -41,10 +41,10 @@ const BestSellers: React.FC = () => {
   };
 
   return (
-    <section className="py-12 bg-white overflow-hidden">
+    <section className="py-16 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         {/* Títulos das Abas Centralizados */}
-        <div className="flex justify-center items-center gap-8 md:gap-16 mb-10">
+        <div className="flex justify-center items-center gap-6 md:gap-12 mb-12">
           <button
             onClick={() => handleTabChange("best")}
             className={`text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none transition-all relative ${
