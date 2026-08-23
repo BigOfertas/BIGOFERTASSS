@@ -277,8 +277,8 @@ function Index() {
           <div className="container mx-auto px-4">
             <PromoBanner 
               id="Brasileirão" 
-              aspectRatio="aspect-[1920/500]"
-              className="rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              style={{ aspectRatio: '1920/500' }}
+              className="rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow max-md:!aspect-[1920/750]"
               href="#" // Deixado preparado para receber o link futuramente
             />
           </div>
