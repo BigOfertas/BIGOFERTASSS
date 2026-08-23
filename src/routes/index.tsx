@@ -98,6 +98,7 @@ import ShopByLeague from "@/components/home/ShopByLeague";
 import FAQ from "@/components/home/FAQ";
 
 import bannerInferiorAsset from "@/assets/promos/banner-promo-inferior.png.asset.json";
+import bannerSuperiorAsset from "@/assets/promos/banner-promo-superior.png.asset.json";
 
 export const Route = createFileRoute("/")({
   component: Index,
