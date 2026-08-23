@@ -12,48 +12,63 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }
 
   const products = React.Children.toArray(children);
   
-  // Create groups of 5
+  // Create groups of 5 for desktop pagination
   const pages = Array.from({ length: pageCount }, (_, i) => 
     products.slice(i * productsPerPage, (i + 1) * productsPerPage)
   );
 
   return (
     <div className="w-full">
-      {/* Products Container with Crossfade - Only Opacity changes */}
-      <div className="relative">
-        {pages.map((pageProducts, pageIndex) => (
-          <div
-            key={pageIndex}
-            className={`transition-opacity duration-300 ease-in-out grid grid-cols-2 md:grid-cols-5 gap-x-4 gap-y-6 md:gap-5 ${
-              activePage === pageIndex 
-                ? "opacity-100 z-10 pointer-events-auto relative" 
-                : "opacity-0 z-0 pointer-events-none absolute top-0 left-0 w-full"
-            }`}
-          >
-            {pageProducts.map((child, i) => (
-              <div 
-                key={i} 
-                className="w-full"
-              >
-                {child}
-              </div>
-            ))}
-          </div>
-        ))}
+      {/* Desktop Version: Crossfade + Dots (Hidden on mobile) */}
+      <div className="hidden md:block">
+        <div className="relative">
+          {pages.map((pageProducts, pageIndex) => (
+            <div
+              key={pageIndex}
+              className={`transition-opacity duration-300 ease-in-out grid grid-cols-5 gap-5 ${
+                activePage === pageIndex 
+                  ? "opacity-100 z-10 pointer-events-auto relative" 
+                  : "opacity-0 z-0 pointer-events-none absolute top-0 left-0 w-full"
+              }`}
+            >
+              {pageProducts.map((child, i) => (
+                <div key={i} className="w-full">
+                  {child}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Pagination Dots: 3 dots with border */}
+        <div className="flex justify-center items-center gap-4 mt-10">
+          {Array.from({ length: pageCount }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setActivePage(i)}
+              className={`w-3 h-3 rounded-full border-2 transition-all duration-300 ease-in-out cursor-pointer ${
+                activePage === i 
+                  ? "bg-black border-black scale-110" 
+                  : "bg-white border-gray-400 hover:border-black"
+              }`}
+              aria-label={`Página ${i + 1}`}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Pagination Dots - Exactly 3, Small, Discrete, Centralized */}
-      <div className="flex justify-center items-center gap-4 mt-10">
-        {Array.from({ length: pageCount }).map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setActivePage(i)}
-            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ease-in-out ${
-              activePage === i ? "bg-black scale-110" : "bg-gray-200 hover:bg-gray-300"
-            }`}
-            aria-label={`Página ${i + 1}`}
-          />
-        ))}
+      {/* Mobile Version: Horizontal Scroll (Hidden on desktop) */}
+      <div className="md:hidden">
+        <div className="flex overflow-x-auto pb-4 gap-4 scroll-smooth snap-x custom-scrollbar">
+          {products.map((child, index) => (
+            <div 
+              key={index} 
+              className="flex-shrink-0 w-[46%] snap-start mb-2"
+            >
+              {child}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
