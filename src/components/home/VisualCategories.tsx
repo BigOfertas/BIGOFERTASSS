@@ -30,8 +30,8 @@ const categories = [
 
 const VisualCategories: React.FC = () => {
   return (
-    <section className="py-8 sm:py-12 bg-white">
-      <div className="container mx-auto px-4">
+    <section className="py-8 sm:py-12 bg-white overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <h2 className="mb-6 sm:mb-10 text-center text-lg sm:text-2xl font-black uppercase tracking-tight text-gray-900">
           Diversifique seu pedido
         </h2>
