@@ -46,8 +46,8 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }
           <button
             key={i}
             onClick={() => setActivePage(i)}
-            className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ease-in-out ${
-              activePage === i ? "bg-black" : "bg-gray-300 hover:bg-gray-400"
+            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ease-in-out ${
+              activePage === i ? "bg-black scale-110" : "bg-gray-200 hover:bg-gray-300"
             }`}
             aria-label={`Página ${i + 1}`}
           />

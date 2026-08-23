@@ -17,13 +17,13 @@ const MOCK_NEW_ARRIVALS = Array.from({ length: 15 }, (_, i) => ({
 
 const BestSellers: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"best" | "new">("best");
-  const [currentPage, setCurrentPage] = useState(0);
+  // Removido o estado currentPage daqui para deixar interno no ProductCarousel
+  // ou permitir que cada aba tenha o seu.
 
   const products = activeTab === "best" ? MOCK_BEST_SELLERS : MOCK_NEW_ARRIVALS;
 
   const handleTabChange = (tab: "best" | "new") => {
     setActiveTab(tab);
-    setCurrentPage(0);
   };
 
   return (
@@ -56,20 +56,33 @@ const BestSellers: React.FC = () => {
           </button>
         </div>
 
-        {/* Seção de Produtos com Crossfade e 3 Bolinhas */}
+        {/* Seção de Produtos com Crossfade e Paginação Independente */}
         <div className="relative">
-          <ProductCarousel 
-            itemCount={products.length}
-          >
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.name}
-                price={product.price}
-              />
-            ))}
-          </ProductCarousel>
+          <div className={activeTab === "best" ? "block animate-in fade-in duration-300" : "hidden"}>
+            <ProductCarousel itemCount={MOCK_BEST_SELLERS.length}>
+              {MOCK_BEST_SELLERS.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  price={product.price}
+                />
+              ))}
+            </ProductCarousel>
+          </div>
+
+          <div className={activeTab === "new" ? "block animate-in fade-in duration-300" : "hidden"}>
+            <ProductCarousel itemCount={MOCK_NEW_ARRIVALS.length}>
+              {MOCK_NEW_ARRIVALS.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  price={product.price}
+                />
+              ))}
+            </ProductCarousel>
+          </div>
         </div>
       </div>
     </section>
