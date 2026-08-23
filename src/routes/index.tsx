@@ -1,78 +1,75 @@
 /**
- * PROMPT PARA LOVABLE — ETAPA 15A (PARTE 1)
- * Corrigir VisualCategories Mobile: Cards Cortados e Adicionar Barra Cinza
+ * PROMPT PARA LOVABLE — ETAPA 15B (PARTE 2)
+ * Atualizar FAQ: Remover Pergunta 1 + Atualizar Todas as Respostas
  * 
  * ================================================================================
  * 
  * CONTEXTO
  * 
- * A seção "Diversifique seu Pedido" (VisualCategories) tem problema no mobile:
- * os cards aparecem CORTADOS VERTICALMENTE, forçando o usuário a fazer scroll
- * vertical dentro da própria seção para ver os cards inteiros.
+ * O componente FAQ.tsx foi criado com 13 perguntas, mas precisam de atualizações:
  * 
- * Katninja quer:
- * 1. Cards inteiros (sem corte vertical) - deixar mais "esticados"
- * 2. Adicionar barra cinza abaixo da seção (como existe em BestSellers)
+ * 1. REMOVER: Pergunta 1 (📣 Como funciona a promoção Recompra Garantida?)
+ * 2. ATUALIZAR: Todas as respostas (nova formatação fornecida)
+ * 
+ * Resultado: 12 perguntas com respostas atualizadas
  * 
  * ================================================================================
  * 
  * OBJETIVO
  * 
- * 1. Corrigir altura dos cards para aparecerem INTEIROS no mobile
- * 2. Adicionar indicador visual (barra cinza) abaixo de VisualCategories
- * 3. A barra deve acompanhar o scroll (como em BestSellers)
- * 4. Responsividade mobile/tablet/desktop OK
+ * 1. Remover a pergunta 1 (Recompra Garantida)
+ * 2. Atualizar TODAS as 12 respostas restantes com texto novo
+ * 3. Renumerar perguntas (de 1-12)
+ * 4. Manter: Structure, animações, estilos, responsividade
  * 
  * ================================================================================
  * 
- * MUDANÇA 1: CORRIGIR CARDS CORTADOS
+ * MUDANÇA ESPECÍFICA: ARQUIVO FAQ.tsx
  * 
- * Arquivo: src/components/home/VisualCategories.tsx
+ * Arquivo: src/components/home/FAQ.tsx
  * 
- * Problema atual:
- * - Cards têm altura fixa de 140px
- * - Viewport mobile não consegue exibir inteiro
- * - Usuário precisa fazer scroll VERTICAL para ver
+ * REMOVER COMPLETAMENTE:
  * 
- * Solução:
- * - Aumentar altura dos cards
- * - Ajustar container para não cortar
- * - Deixar padding/margin suficiente
+ * ID 1:
+ * - Emoji: 📣
+ * - Question: "Como funciona a promoção Recompra Garantida?"
+ * - Answer: "[PLACEHOLDER]"
  * 
- * Mobile (< 768px):
- * - Card height: 160px (de 140px) → 180px se necessário
- * - Card width: 160px (mantém quadrado)
- * - Container padding-bottom: +30px (espaço extra)
- * - Seção padding: aumentar vertical
+ * MANTER (renumerar de 1 a 12):
  * 
- * Tablet (768px-1023px):
- * - Card height: 180px-200px
- * - Mais espaço
+ * Nova pergunta 1 (era 2):
+ * ID: 1 (RENUMERAR)
+ * Emoji: ✅
+ * Question: Quais formas de pagamento vocês aceitam?
+ * Answer: Aceitamos pagamentos via pix, cartão de crédito e débito, e boleto.
  * 
- * Desktop (≥ 1024px):
- * - Grid layout (sem scroll)
- * - Cards maiores
+ * Nova pergunta 2 (era 3):
+ * ID: 2 (RENUMERAR)
+ * Emoji: ⏳
+ * Question: Qual o prazo para envio e entrega?
+ * Answer: Após a confirmação do pagamento, o pedido entra em processo de separação.
+ * Separação e entrega: 5 dias úteis para a separação após a confirmação do pagamento e 15 a 25 dias úteis para a entrega, podendo variar conforme a localização do cliente e as condições de envio.
  * 
- * Checklist:
- * - [x] Cards aparecem 100% inteiros no mobile
- * - [x] Sem corte vertical
- * - [x] Usuário não precisa scroll vertical dentro da seção
- * - [x] Responsividade mantida
+ * Os prazos informados têm como base a média de entrega dos pedidos anteriores e podem variar conforme fatores externos.
  * 
- * ================================================================================
+ * Nova pergunta 3 (era 4):
+ * ID: 3 (RENUMERAR)
+ * Emoji: 📏
+ * Question: Como escolher o tamanho certo?
+ * Answer: Disponibilizamos uma tabela de medidas na página de cada produto para ajudar na escolha do tamanho ideal.
+ * Em caso de dúvidas, nossa equipe pode auxiliar antes da compra.
  * 
- * MUDANÇA 2: ADICIONAR BARRA CINZA ABAIXO
+ * Nova pergunta 4 (era 5):
+ * ID: 4 (RENUMERAR)
+ * Emoji: 🎨
+ * Question: Posso personalizar minha camisa?
+ * Answer: Sim. Alguns produtos permitem personalização, como nome e número.
+ * Recomendamos revisar todas as informações antes de finalizar a compra, pois produtos personalizados seguem regras específicas de cancelamento, conforme nossos Termos e Condições.
  * 
- * Arquivo: src/components/home/VisualCategories.tsx
- * 
- * Referência: BestSellers tem barra cinza que acompanha o scroll das abas
- * 
- * Implementar em VisualCategories:
- * - Barra cinza (#d1d5db ou #e5e7eb) abaixo da seção
- * - Altura: 4px-6px
- * - Largura: 100%
- * - Posição: Imediatamente abaixo dos cards (pb-2 or pb-4)
- * - Cor exata: gray-300 (#d1d5db)
+ * Nova pergunta 5 (era 6):
+ * ID: 5 (RENUMERAR)
+ * Emoji: 💰
+ * Question: Preciso pagar alguma taxa de importação?
  */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
