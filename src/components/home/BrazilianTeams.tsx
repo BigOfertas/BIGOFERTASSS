@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState, useEffect } from "react";
 
 interface Team {
   id: string;
@@ -18,7 +18,7 @@ const TeamLogo: React.FC<TeamLogoProps> = ({ team }) => {
       href={team.href}
       className="flex flex-col items-center justify-center group transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
     >
-      <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center bg-gray-50 rounded-full overflow-hidden p-2 group-hover:opacity-90 transition-opacity">
+      <div className="w-[110px] h-[110px] md:w-28 md:h-28 flex items-center justify-center bg-gray-50 rounded-full overflow-hidden p-2 group-hover:opacity-90 transition-opacity">
         {team.logoUrl ? (
           <img
             src={team.logoUrl}
@@ -52,6 +52,20 @@ const teams: Team[] = [
 ];
 
 const BrazilianTeams: React.FC = () => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    const progress = scrollLeft / (scrollWidth - clientWidth);
+    setScrollProgress(progress);
+  };
+
+  // 5 pips: 0%, 25%, 50%, 75%, 100%
+  const dots = [0, 1, 2, 3, 4];
+  const activeDotIndex = Math.round(scrollProgress * 4);
+
   return (
     <section className="py-8 sm:py-12 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
@@ -64,19 +78,30 @@ const BrazilianTeams: React.FC = () => {
           </h2>
         </div>
 
-        {/* Desktop: Symmetrical distribution / Mobile: Horizontal swipe */}
-        <div className="relative group/scroll">
-          <div className="flex overflow-x-auto md:overflow-visible pb-6 no-scrollbar custom-scrollbar-mobile gap-4 md:gap-0 scroll-smooth snap-x md:grid md:grid-cols-11 md:w-full">
+        <div className="relative group/scroll h-[140px] md:h-[160px] lg:h-[180px]">
+          <div 
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="flex overflow-x-auto md:overflow-visible pb-6 no-scrollbar gap-3 md:gap-0 scroll-smooth snap-x mandatory md:grid md:grid-cols-11 md:w-full h-full items-center"
+            style={{ scrollSnapType: 'x mandatory' }}
+          >
             {teams.map((team) => (
-              <div key={team.id} className="snap-center md:snap-align-none flex justify-center items-center">
+              <div key={team.id} className="snap-center md:snap-align-none flex justify-center items-center shrink-0">
                 <TeamLogo team={team} />
               </div>
             ))}
           </div>
           
-          {/* Mobile Discrete Progress Bar Indicator */}
-          <div className="md:hidden mt-1 h-[2px] w-16 mx-auto bg-gray-100 rounded-full overflow-hidden">
-             {/* The progress is handled by the custom-scrollbar-mobile utility in styles.css */}
+          {/* Mobile Discrete Dots Indicator */}
+          <div className="md:hidden flex justify-center gap-2 mt-4">
+            {dots.map((dot) => (
+              <div 
+                key={dot}
+                className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
+                  activeDotIndex === dot ? "bg-red-600" : "bg-gray-200"
+                }`}
+              />
+            ))}
           </div>
         </div>
       </div>
