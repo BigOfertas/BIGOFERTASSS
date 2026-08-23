@@ -91,6 +91,8 @@ import BrazilianTeams from "@/components/home/BrazilianTeams";
 import ShopByLeague from "@/components/home/ShopByLeague";
 import FAQ from "@/components/home/FAQ";
 
+import bannerInferiorAsset from "@/assets/promos/banner-promo-inferior.png.asset.json";
+
 export const Route = createFileRoute("/")({
   component: Index,
 });
@@ -119,7 +121,7 @@ function Index() {
         style={{ aspectRatio: '1920/550' }}
         className="max-h-[550px] max-md:!aspect-[1920/1897] max-md:max-h-none"
         images={[
-          "", // Slot 1
+          bannerInferiorAsset.url, // Slot 1
         ]}
       />
 
