@@ -41,7 +41,7 @@ const VisualCategories: React.FC = () => {
           {categories.map((category, index) => (
             <div 
               key={index} 
-              className="flex-shrink-0 w-[53%] sm:w-[48%] md:w-[calc((100%-120px)/5.5)] lg:w-[calc((100%-150px)/6.5)] xl:w-[calc(850px/6)] snap-start"
+              className="flex-shrink-0 w-[53%] sm:w-[48%] md:w-[calc((100%-120px)/5.5)] lg:w-[calc((100%-150px)/6.5)] xl:w-[calc(900px/6)] snap-start"
             >
               <CategoryCard
                 name={category.name}
