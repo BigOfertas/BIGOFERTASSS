@@ -1,180 +1,82 @@
 /**
- * PROMPT PARA LOVABLE — ETAPA 11B
- * Estilo, Animações e Integração FAQ (Parte 2 de 2)
+ * PROMPT PARA LOVABLE — ETAPA 10C (REVERTIR)
+ * Remover Carrossel Infinito e Barra da Seção "Diversifique seu Pedido"
  * 
  * ================================================================================
  * 
  * CONTEXTO
  * 
- * PARTE 1 concluída: Componente FAQ.tsx criado com estrutura e lógica.
+ * A seção "Diversifique seu Pedido" (VisualCategories) foi modificada na
+ * Etapa 10 para ser um carrossel infinito com barra animada no mobile.
  * 
- * Esta é PARTE 2: Adicionar estilos, animações e integração à Home.
+ * Katninja solicitou REVERTER essa mudança.
  * 
- * Pressupostos: Componente já existe e funciona.
+ * Voltar ao estado anterior: Carrossel comum, como qualquer outro carrossel
+ * do site (sem infinito, sem barra especial).
  * 
  * ================================================================================
  * 
  * OBJETIVO
  * 
- * Estilizar o componente FAQ com:
- * - Cores BIG Ofertas
- * - Espaçamento profissional
- * - Animações suaves ao expandir/recolher
- * - Responsividade mobile/tablet/desktop
- * - Integração visual com o restante da Home
+ * Remover:
+ * ❌ Carrossel infinito (loop contínuo)
+ * ❌ Barra horizontal animada/destacada
+ * ❌ Parallax leve
+ * 
+ * Voltar para:
+ * ✅ Carrossel comum (parado no final)
+ * ✅ Scroll comportamento padrão
+ * ✅ Design simples e consistente com outros carrosséis
+ * 
+ * Manter:
+ * ✅ Cards de categorias
+ * ✅ Responsividade mobile/tablet/desktop
+ * ✅ Scroll horizontal
+ * ✅ Funcionalidade básica
  * 
  * ================================================================================
  * 
- * MUDANÇA 1: ADICIONAR ESTILOS AO COMPONENTE FAQ
+ * MUDANÇA ESPECÍFICA: ARQUIVO VisualCategories.tsx
  * 
- * Arquivo: src/components/home/FAQ.tsx (já existe)
+ * Arquivo: src/components/home/VisualCategories.tsx
  * 
- * Atualizar: Adicionar classes Tailwind aos elementos
+ * O que REMOVER:
  * 
- * Título "PERGUNTAS FREQUENTES":
- * className="text-center text-3xl md:text-2xl font-bold italic uppercase mb-12 text-black"
+ * 1. ❌ Lógica de carrossel infinito (se implementada)
+ *    - Remover: Detecção de fim do scroll
+ *    - Remover: Loop volta ao início
+ *    - Remover: Duplicação de items
  * 
- * Seção Container:
- * className="py-16 md:py-12 sm:py-8 bg-white"
+ * 2. ❌ Barra horizontal animada/destacada
+ *    - Remover: Elemento <div> da barra
+ *    - Remover: Gradiente (#dc2626 → #f97316)
+ *    - Remover: Lógica de parallax
+ *    - Remover: Transições da barra (300ms)
+ *    - Remover: Indicadores de posição
  * 
- * Container Interno:
- * className="max-w-7xl mx-auto px-4 lg:px-8"
+ * 3. ❌ Classes Tailwind específicas para infinite scroll
+ *    - Remover: scroll-snap-type customizado
+ *    - Remover: Animações CSS relacionadas
  * 
- * Grid de Accordions:
- * className="max-w-2xl mx-auto space-y-3"
+ * O que MANTER:
  * 
- * Cada Item (Accordion):
- * className="border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all duration-200"
+ * ✅ Grid/Flex de categorias
+ * ✅ Cards com imagem + nome
+ * ✅ Scroll horizontal em mobile
+ * ✅ Altura e tamanho dos cards (160px)
+ * ✅ Gap entre cards (12px)
+ * ✅ Responsividade
  * 
- * Button (Header - Clicável):
- * className="w-full px-5 py-4 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+ * Como deve ficar:
  * 
- * Texto da Pergunta (dentro do button):
- * className="flex items-center gap-3 text-left"
- * Emoji: className="text-xl"
- * Pergunta: className="font-semibold text-gray-800 text-sm md:text-base"
+ * - Desktop: Grid normal de categorias (não carrossel)
+ * - Tablet: Carrossel horizontal comum
+ * - Mobile: Carrossel horizontal comum (scroll até o final, para)
  * 
- * Chevron Icon (seta):
- * className="text-red-600 w-5 h-5 flex-shrink-0"
- * rotation: 0deg (fechado) → 180deg (aberto)
- * transform: transition-transform duration-300 ease-in-out
- * 
- * Content (Resposta):
- * className="px-5 py-4 text-gray-600 text-sm leading-relaxed whitespace-pre-wrap"
- * 
- * ================================================================================
- * 
- * MUDANÇA 2: ADICIONAR ANIMAÇÕES
- * 
- * Arquivo: src/components/home/FAQ.tsx
- * 
- * Chevron Rotation Animação:
- * - Quando aberto: rotate-180
- * - Quando fechado: rotate-0
- * - Transição: duration-300 ease-in-out
- * - Implementar com className ternário:
- *   `transition-transform duration-300 ease-in-out ${
- *     openId === item.id ? 'rotate-180' : 'rotate-0'
- *   }`
- * 
- * Content Fade Animação:
- * - Usar max-height para controlar abertura
- * - Estado fechado: max-height-0, opacity-0
- * - Estado aberto: max-height-500px, opacity-1
- * - Transição: 300ms ease-in-out
- * - Implementar com conditional rendering + className:
- *   `overflow-hidden transition-all duration-300 ease-in-out ${
- *     openId === item.id 
- *       ? 'max-h-96 opacity-100' 
- *       : 'max-h-0 opacity-0'
- *   }`
- * 
- * Duração Total: 300ms (mesmo padrão ShopByLeague/BestSellers)
- * Easing: ease-in-out
- * 
- * ================================================================================
- * 
- * MUDANÇA 3: ADICIONAR CORES EXATAS
- * 
- * Arquivo: src/components/home/FAQ.tsx
- * 
- * Substituir cores genéricas:
- * 
- * Fundo: #ffffff (branco)
- * Fundo Item: #f9fafb (gray-50)
- * Fundo Hover: #f3f4f6 (gray-100)
- * Border: #e5e7eb (gray-200)
- * Texto Pergunta: #1f2937 (gray-800)
- * Texto Resposta: #4b5563 (gray-600)
- * Icon Chevron: #dc2626 (vermelho BIG Ofertas)
- * Icon Hover: #991b1b (vermelho escuro)
- * 
- * No Tailwind:
- * - bg-white
- * - bg-gray-50
- * - hover:bg-gray-100
- * - border-gray-200
- * - text-gray-800
- * - text-gray-600
- * - text-red-600
- * 
- * ================================================================================
- * 
- * MUDANÇA 4: RESPONSIVIDADE
- * 
- * Arquivo: src/components/home/FAQ.tsx
- * 
- * Desktop (lg ≥ 1024px):
- * - Titulo: text-3xl
- * - Pergunta: text-base
- * - Resposta: text-sm
- * - Padding: px-5 py-4
- * - Padding seção: py-16
- * 
- * Tablet (md 768px-1023px):
- * - Titulo: text-2xl
- * - Pergunta: text-base (mesmo)
- * - Resposta: text-sm (mesmo)
- * - Padding: px-4 py-3
- * - Padding seção: py-12
- * 
- * Mobile (< 768px):
- * - Titulo: text-xl
- * - Pergunta: text-sm
- * - Resposta: text-xs
- * - Padding: px-4 py-3
- * - Padding seção: py-8
- * 
- * Implementar com Tailwind breakpoints:
- * - text-xl md:text-2xl lg:text-3xl
- * - px-4 md:px-5
- * - py-8 md:py-12 lg:py-16
- * 
- * ================================================================================
- * 
- * MUDANÇA 5: INTEGRAÇÃO NA HOME
- * 
- * Arquivo: src/routes/index.tsx
- * 
- * Adicionar import no topo:
- * import FAQ from "@/components/home/FAQ";
- * 
- * Encontrar: <ShopByLeague />
- * 
- * Adicionar APÓS:
- * <FAQ />
- * 
- * Ordem completa deve ser:
- * 1. BestSellers
- * 2. VisualCategories
- * 3. PromoBanner (Brasileirão)
- * 4. BrazilianTeams
- * 5. BrazilianProducts
- * 6. ShopByLeague
- * 7. FAQ ← NOVO (aqui)
- * 8. (Footer virá depois)
- * 
- * Sem outras alterações em index.tsx.
+ * Padrão de referência:
+ * - Comportar-se IGUAL a BrazilianProducts
+ * - Comportar-se IGUAL a qualquer outro carrossel do site
+ * - Sem animações especiais
  */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
