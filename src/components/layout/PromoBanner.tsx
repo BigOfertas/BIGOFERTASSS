@@ -52,7 +52,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
                 <img
                   src={src}
                   alt={`${altText} ${index + 1}`}
-                  className="w-full h-full object-cover object-center"
+                  className={`w-full h-full object-cover transition-all duration-300 ${id === 'inferior' ? 'object-left md:object-center' : 'object-center'}`}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 border-x border-gray-300">
