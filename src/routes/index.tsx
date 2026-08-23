@@ -457,6 +457,9 @@ function Index() {
         <div className="mt-4 sm:mt-8">
           <BrazilianProducts />
         </div>
+
+        {/* 7. COMPRE POR LIGA */}
+        <ShopByLeague />
       </main>
     </div>
   );
