@@ -58,31 +58,33 @@ const BestSellers: React.FC = () => {
 
         {/* Seção de Produtos com Crossfade e Paginação Independente */}
         <div className="relative">
-          <div className={activeTab === "best" ? "block animate-in fade-in duration-300" : "hidden"}>
-            <ProductCarousel itemCount={MOCK_BEST_SELLERS.length}>
-              {MOCK_BEST_SELLERS.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  price={product.price}
-                />
-              ))}
-            </ProductCarousel>
-          </div>
-
-          <div className={activeTab === "new" ? "block animate-in fade-in duration-300" : "hidden"}>
-            <ProductCarousel itemCount={MOCK_NEW_ARRIVALS.length}>
-              {MOCK_NEW_ARRIVALS.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  price={product.price}
-                />
-              ))}
-            </ProductCarousel>
-          </div>
+          {activeTab === "best" ? (
+            <div className="animate-in fade-in duration-300">
+              <ProductCarousel itemCount={MOCK_BEST_SELLERS.length}>
+                {MOCK_BEST_SELLERS.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    price={product.price}
+                  />
+                ))}
+              </ProductCarousel>
+            </div>
+          ) : (
+            <div className="animate-in fade-in duration-300">
+              <ProductCarousel itemCount={MOCK_NEW_ARRIVALS.length}>
+                {MOCK_NEW_ARRIVALS.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    price={product.price}
+                  />
+                ))}
+              </ProductCarousel>
+            </div>
+          )}
         </div>
       </div>
     </section>
