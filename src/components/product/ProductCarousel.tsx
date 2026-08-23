@@ -33,12 +33,9 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }
             {pageProducts.map((child, i) => (
               <div 
                 key={i} 
-                className="w-full flex justify-center"
+                className="w-full"
               >
-                {/* Each child (ProductCard) already has responsive sizing internally or is wrapped correctly */}
-                <div className="w-full max-w-[180px] md:max-w-none">
-                  {child}
-                </div>
+                {child}
               </div>
             ))}
           </div>
