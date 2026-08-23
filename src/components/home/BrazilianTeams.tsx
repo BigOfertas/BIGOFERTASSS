@@ -1,4 +1,7 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
+import flamengoAsset from "@/assets/teams/flamengo.png.asset.json";
+import atleticoMGAsset from "@/assets/teams/atletico_mineiro.png.asset.json";
+import cruzeiroAsset from "@/assets/teams/cruzeiro.png.asset.json";
 
 interface Team {
   id: string;
@@ -18,15 +21,15 @@ const TeamLogo: React.FC<TeamLogoProps> = ({ team }) => {
       href={team.href}
       className="flex flex-col items-center justify-center group transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
     >
-      <div className="w-[110px] h-[110px] md:w-28 md:h-28 flex items-center justify-center bg-gray-50 rounded-full overflow-hidden p-2 group-hover:opacity-90 transition-opacity">
+      <div className="w-[110px] h-[110px] md:w-[120px] md:h-[120px] lg:w-[140px] lg:h-[140px] flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden p-0 group-hover:opacity-90 transition-opacity">
         {team.logoUrl ? (
           <img
             src={team.logoUrl}
             alt={team.name}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 rounded-full border-2 border-dashed border-gray-300">
+          <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 rounded-lg border-2 border-dashed border-gray-300">
             <span className="text-xs sm:text-sm font-bold uppercase text-center px-1 leading-tight">
               {team.name}
             </span>
@@ -38,9 +41,9 @@ const TeamLogo: React.FC<TeamLogoProps> = ({ team }) => {
 };
 
 const teams: Team[] = [
-  { id: "flamengo", name: "Flamengo", slug: "flamengo", href: "/times/flamengo" },
-  { id: "atletico-mg", name: "Atlético-MG", slug: "atletico-mg", href: "/times/atletico-mg" },
-  { id: "cruzeiro", name: "Cruzeiro", slug: "cruzeiro", href: "/times/cruzeiro" },
+  { id: "flamengo", name: "Flamengo", slug: "flamengo", href: "/times/flamengo", logoUrl: flamengoAsset.url },
+  { id: "atletico-mg", name: "Atlético-MG", slug: "atletico-mg", href: "/times/atletico-mg", logoUrl: atleticoMGAsset.url },
+  { id: "cruzeiro", name: "Cruzeiro", slug: "cruzeiro", href: "/times/cruzeiro", logoUrl: cruzeiroAsset.url },
   { id: "sao-paulo", name: "São Paulo", slug: "sao-paulo", href: "/times/sao-paulo" },
   { id: "corinthians", name: "Corinthians", slug: "corinthians", href: "/times/corinthians" },
   { id: "palmeiras", name: "Palmeiras", slug: "palmeiras", href: "/times/palmeiras" },
