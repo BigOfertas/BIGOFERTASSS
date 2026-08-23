@@ -23,7 +23,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   }).format(price);
 
   return (
-    <div className={`group bg-white rounded-md border border-gray-100 p-3 flex flex-col h-full transition-all duration-300 hover:shadow-md ${className}`}>
+    <div className={`group bg-white rounded-md border border-gray-100 p-2 sm:p-3 flex flex-col h-full transition-all duration-300 hover:shadow-md ${className}`}>
       {/* Product Image Container */}
       <div className="relative aspect-[4/5] mb-3 bg-gray-50 rounded-sm overflow-hidden flex items-center justify-center group-hover:bg-white transition-colors duration-300">
         {imageUrl ? (
@@ -51,20 +51,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
       {/* Info Content */}
       <div className="flex flex-col flex-1">
-        <h3 className="text-[13px] font-medium text-gray-800 mb-2 line-clamp-2 h-[32px] leading-tight group-hover:text-red-600 transition-colors">
+        <h3 className="text-[11px] sm:text-[13px] font-medium text-gray-800 mb-1 sm:mb-2 line-clamp-2 h-[28px] sm:h-[32px] leading-tight group-hover:text-red-600 transition-colors">
           {name}
         </h3>
         
-        <div className="mt-auto mb-3">
-          <span className="text-lg font-extrabold text-gray-900 tracking-tight">
+        <div className="mt-auto mb-2 sm:mb-3">
+          <span className="text-sm sm:text-lg font-extrabold text-gray-900 tracking-tight">
             {formattedPrice}
           </span>
         </div>
 
         <Button 
-          className="w-full bg-[#E60000] hover:bg-black text-white font-bold text-[11px] uppercase tracking-wider h-10 rounded-sm transition-colors duration-300 flex items-center justify-center gap-2"
+          className="w-full bg-[#E60000] hover:bg-black text-white font-bold text-[10px] sm:text-[11px] uppercase tracking-wider h-8 sm:h-10 rounded-sm transition-colors duration-300 flex items-center justify-center gap-1 sm:gap-2"
         >
-          <ShoppingCart className="w-4 h-4" />
+          <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
           ADICIONAR AO CARRINHO
         </Button>
       </div>
