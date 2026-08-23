@@ -236,6 +236,7 @@ import Header from "@/components/layout/Header";
 import BestSellers from "@/components/home/BestSellers";
 import VisualCategories from "@/components/home/VisualCategories";
 import BrazilianProducts from "@/components/home/BrazilianProducts";
+import BrazilianTeams from "@/components/home/BrazilianTeams";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -282,6 +283,9 @@ function Index() {
             />
           </div>
         </section>
+
+        {/* 5. TIMES BRASILEIROS */}
+        <BrazilianTeams />
 
         {/* 6. PRODUTOS DO BRASILEIRÃO */}
         <BrazilianProducts />

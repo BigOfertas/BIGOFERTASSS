@@ -192,4 +192,21 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #aaa;
   }
+
+  /* Specific mobile-only scrollbar indicator */
+  @media (max-width: 768px) {
+    .custom-scrollbar-mobile::-webkit-scrollbar {
+      height: 2px;
+      display: block;
+    }
+    .custom-scrollbar-mobile::-webkit-scrollbar-track {
+      background: #f3f4f6;
+      margin: 0 35%;
+      border-radius: 10px;
+    }
+    .custom-scrollbar-mobile::-webkit-scrollbar-thumb {
+      background: #000;
+      border-radius: 10px;
+    }
+  }
 }
