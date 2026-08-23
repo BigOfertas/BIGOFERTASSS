@@ -9,21 +9,21 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      {/* 1. ARTE PROMOCIONAL SUPERIOR - FAIXA FINA (1920x300) */}
+      {/* 1. ARTE PROMOCIONAL SUPERIOR - FAIXA FINA (1920x100) */}
       <PromoBanner 
         id="superior" 
-        style={{ aspectRatio: '1920/300' }}
-        className="max-h-[300px]"
+        style={{ aspectRatio: '1920/100' }}
+        className="max-h-[100px]"
       />
 
       {/* 2. HEADER PRINCIPAL (Includes CategoryNav in desktop) */}
       <Header />
 
-      {/* 3. ARTE PROMOCIONAL INFERIOR - BANNER GRANDE (1920x1265) */}
+      {/* 3. ARTE PROMOCIONAL INFERIOR - BANNER GRANDE (1920x550) */}
       <PromoBanner 
         id="inferior" 
-        style={{ aspectRatio: '1920/1265' }}
-        className="min-h-[460px] md:min-h-[920px]"
+        style={{ aspectRatio: '1920/550' }}
+        className="min-h-[200px] md:min-h-[400px]"
       />
 
       {/* Espaço neutro da página */}
