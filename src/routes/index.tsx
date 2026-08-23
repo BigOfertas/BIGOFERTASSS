@@ -29,7 +29,7 @@ function Index() {
       <PromoBanner 
         id="inferior" 
         style={{ aspectRatio: '1920/550' }}
-        className="min-h-[200px] md:min-h-[400px] max-md:!aspect-[1920/1265] max-md:min-h-none"
+        className="min-h-[200px] md:min-h-[400px] max-md:!aspect-[1920/1897] max-md:min-h-none"
       />
 
       {/* 4. SEÇÃO MAIS VENDIDOS */}
