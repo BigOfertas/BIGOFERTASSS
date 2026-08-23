@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
 import Header from "@/components/layout/Header";
 import BestSellers from "@/components/home/BestSellers";
+import VisualCategories from "@/components/home/VisualCategories";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -35,6 +36,7 @@ function Index() {
       {/* 4. SEÇÃO MAIS VENDIDOS */}
       <main className="flex-1">
         <BestSellers />
+        <VisualCategories />
       </main>
     </div>
   );
