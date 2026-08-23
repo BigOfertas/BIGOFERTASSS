@@ -62,7 +62,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         <Button 
-          className="w-full bg-[#E60000] hover:bg-black text-white font-bold text-[11px] uppercase tracking-wider h-10 rounded-sm transition-colors duration-300 flex items-center justify-center gap-2"
+          className="w-full bg-[#E60000] hover:bg-black text-white font-bold text-[10px] sm:text-[11px] uppercase tracking-wider h-8 sm:h-10 rounded-sm transition-colors duration-300 flex items-center justify-center gap-1 sm:gap-2"
         >
           <ShoppingCart className="w-4 h-4" />
           ADICIONAR AO CARRINHO
