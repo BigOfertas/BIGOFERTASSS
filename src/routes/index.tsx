@@ -288,7 +288,7 @@ function Index() {
         <BrazilianTeams />
 
         {/* 6. PRODUTOS DO BRASILEIRÃO */}
-        <div className="mt-8">
+        <div className="mt-4 sm:mt-8">
           <BrazilianProducts />
         </div>
       </main>
