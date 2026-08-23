@@ -58,7 +58,7 @@ const BestSellers: React.FC = () => {
 
         {/* Seção de Produtos com Crossfade e Paginação Independente */}
         <div className="relative">
-          {activeTab === "best" ? (
+          {activeTab === "best" && (
             <div className="animate-in fade-in duration-300">
               <ProductCarousel itemCount={MOCK_BEST_SELLERS.length}>
                 {MOCK_BEST_SELLERS.map((product) => (
@@ -71,7 +71,9 @@ const BestSellers: React.FC = () => {
                 ))}
               </ProductCarousel>
             </div>
-          ) : (
+          )}
+
+          {activeTab === "new" && (
             <div className="animate-in fade-in duration-300">
               <ProductCarousel itemCount={MOCK_NEW_ARRIVALS.length}>
                 {MOCK_NEW_ARRIVALS.map((product) => (
