@@ -5,31 +5,27 @@ Adjust the height of the top and bottom promotional banners exclusively for mobi
 ## User Review Required
 
 > [!IMPORTANT]
-> - **Top Banner (Mobile)**: Vertical height will increase by **3x** compared to the current mobile state.
-> - **Bottom Banner (Mobile)**: Vertical height will increase by **2.3x** compared to the current mobile state.
-> - **Desktop**: No changes will be made to dimensions, ratios, or framing.
+> - **Top Banner (Mobile)**: Vertical height will increase by **3x** compared to current mobile baseline.
+> - **Bottom Banner (Mobile)**: Vertical height will increase by **2.3x** compared to current mobile baseline.
+> - **Desktop**: Absolutely no changes to dimensions, aspect ratios, or framing.
 
 ## Proposed Changes
 
 ### Components & Routes
 
-#### [src/components/layout/PromoBanner.tsx]
-- Ensure the component correctly handles responsive aspect ratios or height overrides passed via `className` or `style`.
-- Maintain `object-cover` and `object-center` for predictable cropping without distortion.
+#### src/components/layout/PromoBanner.tsx
+- Ensure styles properly support responsive aspect ratio overrides.
+- Confirm `object-cover` and `object-center` usage for stable cropping.
 
-#### [src/routes/index.tsx]
+#### src/routes/index.tsx
 - **Superior Banner**:
-  - Maintain desktop `aspect-ratio: 1920/100`.
-  - Add mobile-specific height classes to achieve the 3x increase (targeting roughly `h-[150px]` or a specific mobile aspect ratio like `320/50` -> `320/150`).
+  - Keep desktop `aspect-ratio: 1920/100`.
+  - Apply mobile-specific aspect ratio for 3x height (`aspect-[1920/300]` or equivalent height classes).
 - **Inferior Banner**:
-  - Maintain desktop `aspect-ratio: 1920/550`.
-  - Add mobile-specific height classes to achieve the 2.3x increase (targeting roughly `h-[450px]` or a specific mobile aspect ratio).
+  - Keep desktop `aspect-ratio: 1920/550`.
+  - Apply mobile-specific aspect ratio for 2.3x height (`aspect-[1920/1265]` or equivalent height classes).
 
 ## Technical Details
-- Use Tailwind responsive prefixes (`max-md:`, `md:`) to isolate changes.
-- Calculate mobile heights based on current rendered values:
-  - Current Superior Mobile: ~50px (based on 1920/100 ratio on a 320px screen) -> New: ~150px.
-  - Current Inferior Mobile: ~180px (based on 1920/550 ratio on a 320px screen) -> New: ~414px.
-- Use `aspect-ratio` overrides for mobile:
-  - Superior: `aspect-[1920/300]` (3x height ratio).
-  - Inferior: `aspect-[1920/1265]` (2.3x height ratio).
+- Use Tailwind responsive classes (e.g., `aspect-[1920/100] md:aspect-[1920/100]` with a mobile override).
+- Verify no horizontal overflow occurs by keeping width at `w-full`.
+- Ensure images remain undistorted by leveraging `object-cover`.
