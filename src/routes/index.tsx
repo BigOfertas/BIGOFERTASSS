@@ -1,30 +1,34 @@
 /**
- * PROMPT PARA LOVABLE — ETAPA 16 (FINALIZADA)
-
- * Integrar Imagens dos Escudos - Times Brasileiros (Imagens 1 a 3)
+ * PROMPT PARA LOVABLE — ETAPA 16B (PARTE 2)
+ * Integrar Imagens dos Escudos - Times Brasileiros (Imagens 4 a 6)
  * 
  * ================================================================================
  * 
  * CONTEXTO
  * 
- * Você vai receber as PRIMEIRAS 3 IMAGENS de escudos para integrar na seção
+ * Você vai receber as PRÓXIMAS 3 IMAGENS de escudos para integrar na seção
  * "Times Brasileiros" (BrazilianTeams).
  * 
- * Esta é PARTE 1 de 3:
- * - PARTE 1 (AGORA): Imagens 1, 2, 3 (primeiras 3 escudos à esquerda)
- * - PARTE 2: Imagens 4, 5, 6 (próximos 3 escudos)
+ * Esta é PARTE 2 de 3:
+ * - PARTE 1 (COMPLETA): Imagens 1, 2, 3 ✅
+ * - PARTE 2 (AGORA): Imagens 4, 5, 6 (próximos 3 escudos)
  * - PARTE 3: Imagens 7, 8, 9, 10, 11 (últimos 5 escudos)
+ * 
+ * Status atual:
+ * - Posições 1-3 já têm imagens reais
+ * - Posições 4-11 têm placeholders
+ * - Agora vamos preencher posições 4-6
  * 
  * ================================================================================
  * 
  * OBJETIVO
  * 
- * Integrar as 3 PRIMEIRAS imagens de escudos no carrossel "Times Brasileiros"
+ * Integrar as 3 PRÓXIMAS imagens (4, 5, 6) no carrossel "Times Brasileiros"
  * 
  * Ordem EXATA:
- * - Imagem 1 anexada = Posição 1 (1ª esquerda)
- * - Imagem 2 anexada = Posição 2
- * - Imagem 3 anexada = Posição 3
+ * - Imagem 1 anexada (PARTE 2) = Posição 4 (4ª esquerda do carrossel)
+ * - Imagem 2 anexada (PARTE 2) = Posição 5
+ * - Imagem 3 anexada (PARTE 2) = Posição 6
  * 
  * ================================================================================
  * 
@@ -33,36 +37,41 @@
  * Arquivo: src/components/home/BrazilianTeams.tsx
  * 
  * Contexto:
- * Array de teams que exibe 11 escudos em carrossel
+ * Array de teams com 11 itens
  * 
- * Integração PARTE 1:
- * Substituir as PRIMEIRAS 3 posições do array com as imagens anexadas
+ * Status atual:
+ * - Posições 1-3: Imagens reais ✅
+ * - Posições 4-11: Placeholders (cinza/vazio)
  * 
- * Estrutura esperada (primeiras 3 items):
+ * Integração PARTE 2:
+ * Substituir as POSIÇÕES 4, 5, 6 com as 3 imagens anexadas
+ * 
+ * Estrutura esperada (posições 4-6):
  * 
  * const teams = [
- *   {
- *     id: 1,
- *     name: "Time 1",
- *     image: "[IMAGEM 1 ANEXADA - PRIMEIRA ESQUERDA]"
- *   },
- *   {
- *     id: 2,
- *     name: "Time 2",
- *     image: "[IMAGEM 2 ANEXADA - SEGUNDA ESQUERDA]"
- *   },
- *   {
- *     id: 3,
- *     name: "Time 3",
- *     image: "[IMAGEM 3 ANEXADA - TERCEIRA ESQUERDA]"
- *   },
- *   // [RESTO DO ARRAY MANTÉM COMO ESTAVA - PLACEHOLDERS POR ENQUANTO]
+ *   // ... posições 1-3 já têm imagens (não alterar)
  *   {
  *     id: 4,
  *     name: "Time 4",
- *     image: "[PLACEHOLDER - SERÁ PREENCHIDO NA PARTE 2]"
+ *     image: "[IMAGEM 1 ANEXADA PARTE 2 - POSIÇÃO 4]"
  *   },
- *   // ... items 5-11 continuam com placeholder
+ *   {
+ *     id: 5,
+ *     name: "Time 5",
+ *     image: "[IMAGEM 2 ANEXADA PARTE 2 - POSIÇÃO 5]"
+ *   },
+ *   {
+ *     id: 6,
+ *     name: "Time 6",
+ *     image: "[IMAGEM 3 ANEXADA PARTE 2 - POSIÇÃO 6]"
+ *   },
+ *   // [RESTO DO ARRAY (7-11) MANTÉM COMO PLACEHOLDER - SERÁ PREENCHIDO NA PARTE 3]
+ *   {
+ *     id: 7,
+ *     name: "Time 7",
+ *     image: "[PLACEHOLDER - SERÁ PREENCHIDO NA PARTE 3]"
+ *   },
+ *   // ... items 8-11 continuam com placeholder
  * ];
  */
 import { createFileRoute } from "@tanstack/react-router";
@@ -101,38 +110,49 @@ function Index() {
       <PromoBanner 
         id="inferior" 
         style={{ aspectRatio: '1920/550' }}
-        className="min-h-[200px] md:min-h-[400px] max-md:!aspect-[1920/1897] max-md:min-h-none"
+        className="max-h-[550px] max-md:!aspect-[1920/1897] max-md:max-h-none"
+        images={[
+          "", // Slot 1
+        ]}
       />
 
-      {/* 4. SEÇÃO MAIS VENDIDOS */}
-      <main className="flex-1 pb-12">
+      <main className="flex-grow overflow-x-hidden">
+        {/* Mais Vendidos / Lançamentos */}
         <BestSellers />
-        <VisualCategories />
-        
-        {/* BANNER BRASILEIRÃO - SLOT CLICÁVEL */}
-        <section className="mt-8 sm:mt-12">
-          <div className="container mx-auto px-4">
-            <PromoBanner 
-              id="Brasileirão" 
-              style={{ aspectRatio: '1920/500' }}
-              className="rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow max-md:!aspect-[1920/750]"
-              href="#" // Deixado preparado para receber o link futuramente
-            />
-          </div>
-        </section>
 
-        {/* 5. TIMES BRASILEIROS */}
+        {/* Diversifique seu Pedido (Categorias Visuais) */}
+        <VisualCategories />
+
+        {/* BANNER CLICÁVEL BRASILEIRÃO */}
+        <PromoBanner 
+          id="brasileirao" 
+          style={{ aspectRatio: '1920/300' }}
+          className="max-h-[300px] max-md:!aspect-[1920/750] max-md:max-h-none"
+          href="/brasileirao"
+          images={[
+            "", // PNG Slot: Brasileirão
+          ]}
+        />
+
+        {/* TIMES BRASILEIROS */}
         <BrazilianTeams />
 
-        {/* 6. PRODUTOS DO BRASILEIRÃO */}
-        <div className="mt-4 sm:mt-8">
-          <BrazilianProducts />
-        </div>
+        {/* PRODUTOS DO BRASILEIRÃO */}
+        <BrazilianProducts />
 
-        {/* 7. COMPRE POR LIGA */}
+        {/* COMPRE POR LIGA */}
         <ShopByLeague />
+
+        {/* FAQ */}
         <FAQ />
       </main>
+
+      {/* Footer Placeholder */}
+      <footer className="bg-gray-900 text-white py-12 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-gray-400">© 2026 BIGofertas. Todos os direitos reservados.</p>
+        </div>
+      </footer>
     </div>
   );
 }
