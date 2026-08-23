@@ -98,7 +98,7 @@ const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
     strokeWidth="2" 
     strokeLinecap="round" 
     strokeLinejoin="round"
-    className={`text-red-600 w-5 h-5 flex-shrink-0 transition-transform duration-300 ease-in-out ${
+    className={`text-red-600 w-5 h-5 flex-shrink-0 transition-transform duration-300 ease-in-out transform ${
       isOpen ? 'rotate-180' : 'rotate-0'
     }`}
   >
