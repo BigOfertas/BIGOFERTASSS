@@ -3,6 +3,7 @@ import React from "react";
 interface PromoBannerProps {
   id: string;
   imageUrl?: string;
+  images?: string[];
   altText?: string;
   className?: string;
   aspectRatio?: string;
@@ -12,13 +13,23 @@ interface PromoBannerProps {
 const PromoBanner: React.FC<PromoBannerProps> = ({
   id,
   imageUrl,
+  images,
   altText = "Banner Promocional",
   className = "",
-  aspectRatio = "aspect-auto", // Default to auto if not provided
+  aspectRatio = "aspect-auto",
   style = {},
 }) => {
-  // Safe area concept: The image is centered so mobile crop remains predictable.
-  // No HTML/Text layers here, just the PNG slot as requested.
+  // Use images array if provided, otherwise fallback to single imageUrl
+  // If no images at all, we might still want multiple "slots" for the marquee
+  const bannerImages = images && images.length > 0 ? images : imageUrl ? [imageUrl] : [];
+  
+  // If it's the superior banner and we want a marquee, ensure we have slots even without images
+  const slots = bannerImages.length > 0 ? bannerImages : id === 'superior' ? ['', '', ''] : [];
+  const isCarousel = slots.length > 1;
+
+  // For the continuous marquee effect, we duplicate the list to ensure a seamless infinite loop
+  const displayItems = isCarousel ? [...slots, ...slots] : slots;
+
   return (
     <div 
       className={`w-full overflow-hidden bg-gray-100 ${className}`}
@@ -28,12 +39,27 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
         aspectRatio: style.aspectRatio || (aspectRatio !== 'aspect-auto' ? aspectRatio.replace('aspect-', '').replace('[', '').replace(']', '').replace('/', ' / ') : undefined)
       }}
     >
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt={altText}
-          className="w-full h-full object-cover object-center"
-        />
+      {displayItems.length > 0 ? (
+        <div className={isCarousel ? "animate-marquee h-full" : "w-full h-full"}>
+          {displayItems.map((src, index) => (
+            <div 
+              key={`${id}-${index}`} 
+              className={isCarousel ? "h-full w-screen shrink-0" : "w-full h-full"}
+            >
+              {src ? (
+                <img
+                  src={src}
+                  alt={`${altText} ${index + 1}`}
+                  className="w-full h-full object-cover object-center"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 border-x border-gray-300">
+                  <span className="text-sm font-medium">PNG Slot: {id} {isCarousel ? (index % slots.length) + 1 : ''}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
           <span className="text-sm font-medium">PNG Slot: {id}</span>

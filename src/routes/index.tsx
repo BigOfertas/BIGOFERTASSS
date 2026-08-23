@@ -9,11 +9,16 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      {/* 1. ARTE PROMOCIONAL SUPERIOR - FAIXA FINA (1920x100) */}
+      {/* 1. ARTE PROMOCIONAL SUPERIOR - CARROSSEL CONTÍNUO (1920x100) */}
       <PromoBanner 
         id="superior" 
         style={{ aspectRatio: '1920/100' }}
         className="max-h-[100px] max-md:!aspect-[1920/300] max-md:max-h-none"
+        images={[
+          "", // Slot 1
+          "", // Slot 2
+          "", // Slot 3
+        ]}
       />
 
       {/* 2. HEADER PRINCIPAL (Includes CategoryNav in desktop) */}
