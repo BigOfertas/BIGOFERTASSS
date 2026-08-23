@@ -1,30 +1,33 @@
 /**
- * PROMPT PARA LOVABLE — ETAPA BÔNUS
- * Adicionar PNG no Slot Inferior (PromoBanner) — Mobile com Scroll Horizontal
+ * PROMPT PARA LOVABLE — ETAPA BÔNUS 2
+ * Adicionar PNG no Slot Superior do PromoBanner (1774x300)
  * 
  * ================================================================================
  * 
  * CONTEXTO
  * 
- * Você vai receber 1 imagem PNG que deve ser colocada em um "slot" (espaço vazio)
- * que já existe na moldura do PromoBanner (faixa promocional).
+ * Você vai receber 1 imagem PNG com resolução específica 1774x300px que deve ser
+ * colocada em um "slot superior" (espaço vazio) na moldura do PromoBanner.
  * 
- * Comportamento diferente por plataforma:
- * - MOBILE (< 768px): Imagem aparece DESLOCADA à esquerda (como se deslizasse)
- *   → Mostra APENAS a parte esquerda da imagem (resto fica fora da moldura)
- * - PC (≥ 768px): Imagem aparece INTEIRA dentro da moldura
+ * Dimensões da imagem:
+ * - Largura: 1774px
+ * - Altura: 300px
+ * - Proporção: 5.9:1 (muito larga, pouco alta)
+ * - Formato: PNG
  * 
- * Objetivo: Usar a mesma imagem, mas com posicionamento diferente em cada breakpoint
+ * Objetivo: Integrar esta imagem no slot superior respeitando sua proporção
+ * e garantindo que apareça corretamente em todos os breakpoints (mobile/tablet/desktop)
  * 
  * ================================================================================
  * 
  * OBJETIVO
  * 
- * 1. Integrar 1 imagem PNG no slot inferior do PromoBanner
+ * 1. Integrar 1 imagem PNG (1774x300) no slot superior do PromoBanner
  * 2. A imagem deve FIT dentro da moldura existente (não sair dos limites)
- * 3. Mobile: Mostrar apenas a PARTE ESQUERDA (como scrollado para direita)
- * 4. PC: Mostrar a imagem INTEIRA
- * 5. Manter estilo e responsividade existentes
+ * 3. Respeitar a proporção 1774x300 (não distorcer)
+ * 4. Responsividade: Mobile/Tablet/Desktop OK
+ * 5. Manter estilo e layout existentes
+ * 6. Imagem deve ser visível e legível em todos os breakpoints
  * 
  * ================================================================================
  * 
@@ -33,51 +36,56 @@
  * Arquivo: src/components/layout/PromoBanner.tsx
  * 
  * Contexto:
- * - PromoBanner já existe com 1 slot para imagem (moldura vazia)
- * - Precisa integrar PNG neste slot
- * - Comportamento diferente mobile/desktop
+ * - PromoBanner já existe com moldura
+ * - Há um slot superior vazio (acima ou antes do slot inferior)
+ * - Precisa integrar PNG (1774x300) neste espaço
+ * - Manter proporção original
  * 
  * Integração:
  * 
- * MOBILE (< 768px):
- * - Imagem posicionada à ESQUERDA
- * - Deslocamento: Como se o usuário deslizasse a imagem com mouse para DIREITA
- * - Resultado: Mostra apenas a PARTE ESQUERDA da imagem
- * - Resto da imagem fica FORA da moldura (oculto)
- * - CSS: object-position: left center (ou ajustado)
- * - overflow: hidden (para não sair da moldura)
+ * Container do slot superior (moldura existente):
+ * - Deve acomodar imagem 1774x300
+ * - Aspect ratio: 5.9:1
  * 
- * PC (≥ 768px):
- * - Imagem posicionada no CENTRO
- * - Mostra a imagem INTEIRA dentro da moldura
- * - CSS: object-position: center center
- * - overflow: hidden (para respeitar limites da moldura)
+ * Imagem:
+ * - src: [IMAGEM ANEXADA]
+ * - alt: "Promoção" ou "Banner Superior"
+ * - width: 1774
+ * - height: 300
+ * - Ou usar CSS: aspect-ratio: 1774 / 300
  * 
- * Implementação com object-fit e object-position:
+ * Renderização esperada:
+ * 
+ * <div className="slot-superior-container">
+ *   {/* Moldura para 1774x300 */}
+ *   <img
+ *     src="[IMAGEM ANEXADA]"
+ *     alt="Banner Superior"
+ *     className="w-full h-auto object-cover"
+ *     style={{
+ *       aspectRatio: '1774 / 300'
+ *     }}
+ *   />
+ * </div>
+ * 
+ * Ou com Tailwind (se suportar aspect-ratio):
  * 
  * <img
  *   src="[IMAGEM ANEXADA]"
- *   alt="Promoção"
- *   className={`w-full h-full object-cover
- *     md:object-position-center
- *     object-position-left
- *   `}
+ *   alt="Banner Superior"
+ *   className="w-full h-auto object-cover aspect-[1774/300]"
  * />
- * 
- * Ou com Tailwind (se suporte custom):
- * 
- * Mobile: object-left (ou com style inline)
- * Desktop: object-center
  * 
  * ================================================================================
  * 
  * ESPECIFICAÇÕES TÉCNICAS
  * 
- * Imagem:
+ * Imagem PNG:
+ * - Resolução: 1774px × 300px
  * - Formato: PNG
- * - Localização: Slot inferior do PromoBanner (moldura existente)
- * - Tamanho container: [verificar em PromoBanner.tsx]
- * - Deve preencher o espaço (object-cover)
+ * - Proporção: 1774:300 (5.9:1)
+ * - Localização: Slot superior do PromoBanner
+ * - Não distorcer
  */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
