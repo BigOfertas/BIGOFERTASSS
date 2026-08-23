@@ -1,3 +1,16 @@
+import { createFileRoute } from "@tanstack/react-router";
+import PromoBanner from "@/components/layout/PromoBanner";
+import Header from "@/components/layout/Header";
+import BestSellers from "@/components/home/BestSellers";
+import VisualCategories from "@/components/home/VisualCategories";
+import BrazilianProducts from "@/components/home/BrazilianProducts";
+import BrazilianTeams from "@/components/home/BrazilianTeams";
+import ShopByLeague from "@/components/home/ShopByLeague";
+import FAQ from "@/components/home/FAQ";
+
+import bannerInferiorAsset from "@/assets/promos/banner-promo-inferior.png.asset.json";
+import bannerSuperiorAsset from "@/assets/promos/banner-promo-superior.png.asset.json";
+
 /**
  * PROMPT PARA LOVABLE — ETAPA BÔNUS 2
  * Adicionar PNG no Slot Superior do PromoBanner (1774x300)
@@ -87,19 +100,6 @@
  * - Localização: Slot superior do PromoBanner
  * - Não distorcer
  */
-import { createFileRoute } from "@tanstack/react-router";
-import PromoBanner from "@/components/layout/PromoBanner";
-import Header from "@/components/layout/Header";
-import BestSellers from "@/components/home/BestSellers";
-import VisualCategories from "@/components/home/VisualCategories";
-import BrazilianProducts from "@/components/home/BrazilianProducts";
-import BrazilianTeams from "@/components/home/BrazilianTeams";
-import ShopByLeague from "@/components/home/ShopByLeague";
-import FAQ from "@/components/home/FAQ";
-
-import bannerInferiorAsset from "@/assets/promos/banner-promo-inferior.png.asset.json";
-import bannerSuperiorAsset from "@/assets/promos/banner-promo-superior.png.asset.json";
-
 export const Route = createFileRoute("/")({
   component: Index,
 });
