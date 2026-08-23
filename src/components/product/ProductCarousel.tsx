@@ -51,7 +51,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount, 
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {React.Children.map(children, (child) => (
-          <div className="flex-shrink-0 w-[80%] sm:w-[45%] md:w-[calc((100%-80px)/5)] snap-start">
+          <div className="flex-shrink-0 w-[46%] sm:w-[45%] md:w-[calc((100%-80px)/5)] snap-start">
             {child}
           </div>
         ))}
