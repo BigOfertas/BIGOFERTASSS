@@ -1,75 +1,69 @@
 /**
- * PROMPT PARA LOVABLE — ETAPA 15B (PARTE 2)
- * Atualizar FAQ: Remover Pergunta 1 + Atualizar Todas as Respostas
+ * PROMPT PARA LOVABLE — ETAPA 16 (FINALIZADA)
+
+ * Integrar Imagens dos Escudos - Times Brasileiros (Imagens 1 a 3)
  * 
  * ================================================================================
  * 
  * CONTEXTO
  * 
- * O componente FAQ.tsx foi criado com 13 perguntas, mas precisam de atualizações:
+ * Você vai receber as PRIMEIRAS 3 IMAGENS de escudos para integrar na seção
+ * "Times Brasileiros" (BrazilianTeams).
  * 
- * 1. REMOVER: Pergunta 1 (📣 Como funciona a promoção Recompra Garantida?)
- * 2. ATUALIZAR: Todas as respostas (nova formatação fornecida)
- * 
- * Resultado: 12 perguntas com respostas atualizadas
+ * Esta é PARTE 1 de 3:
+ * - PARTE 1 (AGORA): Imagens 1, 2, 3 (primeiras 3 escudos à esquerda)
+ * - PARTE 2: Imagens 4, 5, 6 (próximos 3 escudos)
+ * - PARTE 3: Imagens 7, 8, 9, 10, 11 (últimos 5 escudos)
  * 
  * ================================================================================
  * 
  * OBJETIVO
  * 
- * 1. Remover a pergunta 1 (Recompra Garantida)
- * 2. Atualizar TODAS as 12 respostas restantes com texto novo
- * 3. Renumerar perguntas (de 1-12)
- * 4. Manter: Structure, animações, estilos, responsividade
+ * Integrar as 3 PRIMEIRAS imagens de escudos no carrossel "Times Brasileiros"
+ * 
+ * Ordem EXATA:
+ * - Imagem 1 anexada = Posição 1 (1ª esquerda)
+ * - Imagem 2 anexada = Posição 2
+ * - Imagem 3 anexada = Posição 3
  * 
  * ================================================================================
  * 
- * MUDANÇA ESPECÍFICA: ARQUIVO FAQ.tsx
+ * MUDANÇA ESPECÍFICA: ARQUIVO BrazilianTeams.tsx
  * 
- * Arquivo: src/components/home/FAQ.tsx
+ * Arquivo: src/components/home/BrazilianTeams.tsx
  * 
- * REMOVER COMPLETAMENTE:
+ * Contexto:
+ * Array de teams que exibe 11 escudos em carrossel
  * 
- * ID 1:
- * - Emoji: 📣
- * - Question: "Como funciona a promoção Recompra Garantida?"
- * - Answer: "[PLACEHOLDER]"
+ * Integração PARTE 1:
+ * Substituir as PRIMEIRAS 3 posições do array com as imagens anexadas
  * 
- * MANTER (renumerar de 1 a 12):
+ * Estrutura esperada (primeiras 3 items):
  * 
- * Nova pergunta 1 (era 2):
- * ID: 1 (RENUMERAR)
- * Emoji: ✅
- * Question: Quais formas de pagamento vocês aceitam?
- * Answer: Aceitamos pagamentos via pix, cartão de crédito e débito, e boleto.
- * 
- * Nova pergunta 2 (era 3):
- * ID: 2 (RENUMERAR)
- * Emoji: ⏳
- * Question: Qual o prazo para envio e entrega?
- * Answer: Após a confirmação do pagamento, o pedido entra em processo de separação.
- * Separação e entrega: 5 dias úteis para a separação após a confirmação do pagamento e 15 a 25 dias úteis para a entrega, podendo variar conforme a localização do cliente e as condições de envio.
- * 
- * Os prazos informados têm como base a média de entrega dos pedidos anteriores e podem variar conforme fatores externos.
- * 
- * Nova pergunta 3 (era 4):
- * ID: 3 (RENUMERAR)
- * Emoji: 📏
- * Question: Como escolher o tamanho certo?
- * Answer: Disponibilizamos uma tabela de medidas na página de cada produto para ajudar na escolha do tamanho ideal.
- * Em caso de dúvidas, nossa equipe pode auxiliar antes da compra.
- * 
- * Nova pergunta 4 (era 5):
- * ID: 4 (RENUMERAR)
- * Emoji: 🎨
- * Question: Posso personalizar minha camisa?
- * Answer: Sim. Alguns produtos permitem personalização, como nome e número.
- * Recomendamos revisar todas as informações antes de finalizar a compra, pois produtos personalizados seguem regras específicas de cancelamento, conforme nossos Termos e Condições.
- * 
- * Nova pergunta 5 (era 6):
- * ID: 5 (RENUMERAR)
- * Emoji: 💰
- * Question: Preciso pagar alguma taxa de importação?
+ * const teams = [
+ *   {
+ *     id: 1,
+ *     name: "Time 1",
+ *     image: "[IMAGEM 1 ANEXADA - PRIMEIRA ESQUERDA]"
+ *   },
+ *   {
+ *     id: 2,
+ *     name: "Time 2",
+ *     image: "[IMAGEM 2 ANEXADA - SEGUNDA ESQUERDA]"
+ *   },
+ *   {
+ *     id: 3,
+ *     name: "Time 3",
+ *     image: "[IMAGEM 3 ANEXADA - TERCEIRA ESQUERDA]"
+ *   },
+ *   // [RESTO DO ARRAY MANTÉM COMO ESTAVA - PLACEHOLDERS POR ENQUANTO]
+ *   {
+ *     id: 4,
+ *     name: "Time 4",
+ *     image: "[PLACEHOLDER - SERÁ PREENCHIDO NA PARTE 2]"
+ *   },
+ *   // ... items 5-11 continuam com placeholder
+ * ];
  */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
