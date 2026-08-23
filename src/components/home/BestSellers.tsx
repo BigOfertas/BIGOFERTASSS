@@ -2,32 +2,18 @@ import React, { useState } from "react";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
 
-// Mock data conforme solicitado
-const MOCK_BEST_SELLERS = [
-  { id: "1", name: "Camisa Brasil I 2024 - Torcedor Nike Masculina", price: 349.99 },
-  { id: "2", name: "Camisa Real Madrid Home 24/25 - Adidas Masculina", price: 399.99 },
-  { id: "3", name: "Camisa Argentina I 2024 - Campeão do Mundo Masculina", price: 349.99 },
-  { id: "4", name: "Camisa Portugal Home 24/25 Nike Masculina", price: 349.99 },
-  { id: "5", name: "Camisa Manchester City Home 24/25 Puma Masculina", price: 399.99 },
-  { id: "6", name: "Camisa Flamengo Home 2024 Adidas Masculina", price: 349.99 },
-  { id: "7", name: "Camisa Palmeiras Home 2024 Puma Masculina", price: 349.99 },
-  { id: "8", name: "Camisa São Paulo Home 2024 New Balance Masculina", price: 349.99 },
-  { id: "9", name: "Camisa Liverpool Home 24/25 Nike Masculina", price: 399.99 },
-  { id: "10", name: "Camisa Barcelona Home 24/25 Nike Masculina", price: 399.99 },
-];
+// Mock data conforme solicitado - 15 produtos por categoria
+const MOCK_BEST_SELLERS = Array.from({ length: 15 }, (_, i) => ({
+  id: `best-${i + 1}`,
+  name: `Produto Mais Vendido ${i + 1} - Camisa Profissional`,
+  price: 349.99 + (i * 10),
+}));
 
-const MOCK_NEW_ARRIVALS = [
-  { id: "11", name: "Camisa Inter de Milão Home 24/25 Nike Masculina", price: 399.99 },
-  { id: "12", name: "Camisa Bayern de Munique Home 24/25 Adidas Masculina", price: 399.99 },
-  { id: "13", name: "Camisa Chelsea Home 24/25 Nike Masculina", price: 399.99 },
-  { id: "14", name: "Camisa Juventus Home 24/25 Adidas Masculina", price: 399.99 },
-  { id: "15", name: "Camisa Arsenal Home 24/25 Adidas Masculina", price: 399.99 },
-  { id: "16", name: "Camisa Milan Home 24/25 Puma Masculina", price: 399.99 },
-  { id: "17", name: "Camisa PSG Home 24/25 Nike Masculina", price: 399.99 },
-  { id: "18", name: "Camisa Tottenham Home 24/25 Nike Masculina", price: 399.99 },
-  { id: "19", name: "Camisa Borussia Dortmund Home 24/25 Puma Masculina", price: 399.99 },
-  { id: "20", name: "Camisa Manchester United Home 24/25 Adidas Masculina", price: 399.99 },
-];
+const MOCK_NEW_ARRIVALS = Array.from({ length: 15 }, (_, i) => ({
+  id: `new-${i + 1}`,
+  name: `Lançamento ${i + 1} - Nova Coleção 2024`,
+  price: 399.99 - (i * 5),
+}));
 
 const BestSellers: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"best" | "new">("best");
@@ -70,12 +56,10 @@ const BestSellers: React.FC = () => {
           </button>
         </div>
 
-        {/* Carrossel de Produtos */}
+        {/* Seção de Produtos com Crossfade e 3 Bolinhas */}
         <div className="relative">
           <ProductCarousel 
             itemCount={products.length}
-            activePage={currentPage}
-            onPageChange={setCurrentPage}
           >
             {products.map((product) => (
               <ProductCard
@@ -86,22 +70,6 @@ const BestSellers: React.FC = () => {
               />
             ))}
           </ProductCarousel>
-        </div>
-
-        {/* Bolinhas de Navegação */}
-        <div className="flex justify-center items-center gap-3 mt-8">
-          {[0, 1].map((page) => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                currentPage === page 
-                  ? "bg-red-600 w-8" 
-                  : "bg-gray-300 hover:bg-gray-400"
-              }`}
-              aria-label={`Página ${page + 1}`}
-            />
-          ))}
         </div>
       </div>
     </section>
