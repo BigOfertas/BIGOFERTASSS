@@ -45,28 +45,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount, 
 
   return (
     <div className="relative group/carousel">
-      {/* Navigation Arrows - Desktop Only */}
-      <button
-        onClick={() => scroll("left")}
-        disabled={!canScrollLeft}
-        className={`absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center transition-all duration-300 ${
-          canScrollLeft ? "opacity-0 group-hover/carousel:opacity-100 visible" : "opacity-0 invisible pointer-events-none"
-        } hover:bg-red-600 hover:text-white text-gray-600`}
-        aria-label="Anterior"
-      >
-        <ChevronLeft className="w-6 h-6" />
-      </button>
-
-      <button
-        onClick={() => scroll("right")}
-        disabled={!canScrollRight}
-        className={`absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center transition-all duration-300 ${
-          canScrollRight ? "opacity-0 group-hover/carousel:opacity-100 visible" : "opacity-0 invisible pointer-events-none"
-        } hover:bg-red-600 hover:text-white text-gray-600`}
-        aria-label="Próximo"
-      >
-        <ChevronRight className="w-6 h-6" />
-      </button>
+      {/* Arrows removed per instructions to use dots for group navigation */}
 
       {/* Carousel Container */}
       <div
