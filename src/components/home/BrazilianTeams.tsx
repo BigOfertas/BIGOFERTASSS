@@ -2,6 +2,11 @@ import React, { useRef, useState } from "react";
 import flamengoAsset from "@/assets/teams/flamengo.png.asset.json";
 import atleticoMGAsset from "@/assets/teams/atletico_mineiro.png.asset.json";
 import cruzeiroAsset from "@/assets/teams/cruzeiro.png.asset.json";
+import corinthiansAsset from "@/assets/teams/corinthians.png.asset.json";
+import santosAsset from "@/assets/teams/santos.png.asset.json";
+import botafogoAsset from "@/assets/teams/botafogo.png.asset.json";
+import fluminenseAsset from "@/assets/teams/fluminense.png.asset.json";
+import gremioAsset from "@/assets/teams/gremio.png.asset.json";
 
 interface Team {
   id: string;
@@ -45,12 +50,12 @@ const teams: Team[] = [
   { id: "atletico-mg", name: "Atlético-MG", slug: "atletico-mg", href: "/times/atletico-mg", logoUrl: atleticoMGAsset.url },
   { id: "cruzeiro", name: "Cruzeiro", slug: "cruzeiro", href: "/times/cruzeiro", logoUrl: cruzeiroAsset.url },
   { id: "sao-paulo", name: "São Paulo", slug: "sao-paulo", href: "/times/sao-paulo" },
-  { id: "corinthians", name: "Corinthians", slug: "corinthians", href: "/times/corinthians" },
+  { id: "corinthians", name: "Corinthians", slug: "corinthians", href: "/times/corinthians", logoUrl: corinthiansAsset.url },
   { id: "palmeiras", name: "Palmeiras", slug: "palmeiras", href: "/times/palmeiras" },
-  { id: "santos", name: "Santos", slug: "santos", href: "/times/santos" },
-  { id: "botafogo", name: "Botafogo", slug: "botafogo", href: "/times/botafogo" },
-  { id: "fluminense", name: "Fluminense", slug: "fluminense", href: "/times/fluminense" },
-  { id: "gremio", name: "Grêmio", slug: "gremio", href: "/times/gremio" },
+  { id: "santos", name: "Santos", slug: "santos", href: "/times/santos", logoUrl: santosAsset.url },
+  { id: "botafogo", name: "Botafogo", slug: "botafogo", href: "/times/botafogo", logoUrl: botafogoAsset.url },
+  { id: "fluminense", name: "Fluminense", slug: "fluminense", href: "/times/fluminense", logoUrl: fluminenseAsset.url },
+  { id: "gremio", name: "Grêmio", slug: "gremio", href: "/times/gremio", logoUrl: gremioAsset.url },
   { id: "internacional", name: "Internacional", slug: "internacional", href: "/times/internacional" },
 ];
 
