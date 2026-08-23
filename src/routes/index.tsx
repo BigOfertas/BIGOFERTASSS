@@ -1,34 +1,36 @@
 /**
- * PROMPT PARA LOVABLE — ETAPA 16B (PARTE 2)
- * Integrar Imagens dos Escudos - Times Brasileiros (Imagens 4 a 6)
+ * PROMPT PARA LOVABLE — ETAPA 16C (PARTE 3)
+ * Integrar Imagens dos Escudos - Times Brasileiros (Imagens 7 a 11)
  * 
  * ================================================================================
  * 
  * CONTEXTO
  * 
- * Você vai receber as PRÓXIMAS 3 IMAGENS de escudos para integrar na seção
+ * Você vai receber as ÚLTIMAS 5 IMAGENS de escudos para integrar na seção
  * "Times Brasileiros" (BrazilianTeams).
  * 
- * Esta é PARTE 2 de 3:
+ * Esta é PARTE 3 (FINAL) de 3:
  * - PARTE 1 (COMPLETA): Imagens 1, 2, 3 ✅
- * - PARTE 2 (AGORA): Imagens 4, 5, 6 (próximos 3 escudos)
- * - PARTE 3: Imagens 7, 8, 9, 10, 11 (últimos 5 escudos)
+ * - PARTE 2 (COMPLETA): Imagens 4, 5, 6 ✅
+ * - PARTE 3 (AGORA): Imagens 7, 8, 9, 10, 11 (últimos 5 escudos)
  * 
  * Status atual:
- * - Posições 1-3 já têm imagens reais
- * - Posições 4-11 têm placeholders
- * - Agora vamos preencher posições 4-6
+ * - Posições 1-6 já têm imagens reais
+ * - Posições 7-11 têm placeholders
+ * - Agora vamos preencher posições 7-11 (FINAL)
  * 
  * ================================================================================
  * 
  * OBJETIVO
  * 
- * Integrar as 3 PRÓXIMAS imagens (4, 5, 6) no carrossel "Times Brasileiros"
+ * Integrar as 5 ÚLTIMAS imagens (7, 8, 9, 10, 11) no carrossel
  * 
  * Ordem EXATA:
- * - Imagem 1 anexada (PARTE 2) = Posição 4 (4ª esquerda do carrossel)
- * - Imagem 2 anexada (PARTE 2) = Posição 5
- * - Imagem 3 anexada (PARTE 2) = Posição 6
+ * - Imagem 1 anexada (PARTE 3) = Posição 7
+ * - Imagem 2 anexada (PARTE 3) = Posição 8
+ * - Imagem 3 anexada (PARTE 3) = Posição 9
+ * - Imagem 4 anexada (PARTE 3) = Posição 10
+ * - Imagem 5 anexada (PARTE 3) = Posição 11 (última à direita)
  * 
  * ================================================================================
  * 
@@ -40,39 +42,44 @@
  * Array de teams com 11 itens
  * 
  * Status atual:
- * - Posições 1-3: Imagens reais ✅
- * - Posições 4-11: Placeholders (cinza/vazio)
+ * - Posições 1-6: Imagens reais ✅
+ * - Posições 7-11: Placeholders (cinza/vazio)
  * 
- * Integração PARTE 2:
- * Substituir as POSIÇÕES 4, 5, 6 com as 3 imagens anexadas
+ * Integração PARTE 3 (FINAL):
+ * Substituir as POSIÇÕES 7, 8, 9, 10, 11 com as 5 imagens anexadas
  * 
- * Estrutura esperada (posições 4-6):
+ * Estrutura esperada (posições 7-11):
  * 
  * const teams = [
- *   // ... posições 1-3 já têm imagens (não alterar)
- *   {
- *     id: 4,
- *     name: "Time 4",
- *     image: "[IMAGEM 1 ANEXADA PARTE 2 - POSIÇÃO 4]"
- *   },
- *   {
- *     id: 5,
- *     name: "Time 5",
- *     image: "[IMAGEM 2 ANEXADA PARTE 2 - POSIÇÃO 5]"
- *   },
- *   {
- *     id: 6,
- *     name: "Time 6",
- *     image: "[IMAGEM 3 ANEXADA PARTE 2 - POSIÇÃO 6]"
- *   },
- *   // [RESTO DO ARRAY (7-11) MANTÉM COMO PLACEHOLDER - SERÁ PREENCHIDO NA PARTE 3]
+ *   // ... posições 1-6 já têm imagens (não alterar)
  *   {
  *     id: 7,
  *     name: "Time 7",
- *     image: "[PLACEHOLDER - SERÁ PREENCHIDO NA PARTE 3]"
+ *     image: "[IMAGEM 1 ANEXADA PARTE 3 - POSIÇÃO 7]"
  *   },
- *   // ... items 8-11 continuam com placeholder
+ *   {
+ *     id: 8,
+ *     name: "Time 8",
+ *     image: "[IMAGEM 2 ANEXADA PARTE 3 - POSIÇÃO 8]"
+ *   },
+ *   {
+ *     id: 9,
+ *     name: "Time 9",
+ *     image: "[IMAGEM 3 ANEXADA PARTE 3 - POSIÇÃO 9]"
+ *   },
+ *   {
+ *     id: 10,
+ *     name: "Time 10",
+ *     image: "[IMAGEM 4 ANEXADA PARTE 3 - POSIÇÃO 10]"
+ *   },
+ *   {
+ *     id: 11,
+ *     name: "Time 11",
+ *     image: "[IMAGEM 5 ANEXADA PARTE 3 - POSIÇÃO 11]"
+ *   }
  * ];
+ * 
+ * ETAPA 16 COMPLETA APÓS ESTA PARTE! 🎉
  */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
