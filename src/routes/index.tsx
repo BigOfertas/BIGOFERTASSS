@@ -13,7 +13,7 @@ function Index() {
       <PromoBanner 
         id="superior" 
         style={{ aspectRatio: '1920/100' }}
-        className="max-h-[100px]"
+        className="max-h-[100px] max-md:!aspect-[1920/300] max-md:max-h-none"
       />
 
       {/* 2. HEADER PRINCIPAL (Includes CategoryNav in desktop) */}
@@ -23,7 +23,7 @@ function Index() {
       <PromoBanner 
         id="inferior" 
         style={{ aspectRatio: '1920/550' }}
-        className="min-h-[200px] md:min-h-[400px]"
+        className="min-h-[200px] md:min-h-[400px] max-md:!aspect-[1920/1265] max-md:min-h-none"
       />
 
       {/* Espaço neutro da página */}

@@ -21,9 +21,12 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
   // No HTML/Text layers here, just the PNG slot as requested.
   return (
     <div 
-      className={`w-full overflow-hidden bg-gray-100 ${className} ${aspectRatio}`}
+      className={`w-full overflow-hidden bg-gray-100 ${className}`}
       data-banner-id={id}
-      style={style}
+      style={{
+        ...style,
+        aspectRatio: style.aspectRatio || (aspectRatio !== 'aspect-auto' ? aspectRatio.replace('aspect-', '').replace('[', '').replace(']', '').replace('/', ' / ') : undefined)
+      }}
     >
       {imageUrl ? (
         <img
