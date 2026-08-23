@@ -49,7 +49,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }
               className={`w-3 h-3 rounded-full border-2 transition-all duration-300 ease-in-out cursor-pointer ${
                 activePage === i 
                   ? "bg-black border-black scale-110" 
-                  : "bg-white border-gray-400 hover:border-black"
+                  : "bg-white border-black hover:bg-gray-100"
               }`}
               aria-label={`Página ${i + 1}`}
             />

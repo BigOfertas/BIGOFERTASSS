@@ -13,7 +13,7 @@ const BrazilianProducts: React.FC = () => {
     <section className="py-16 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <h2 className="mb-12 text-center text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none text-gray-900">
-          PRODUTOS DO <span className="text-green-600">BRASILEIRÃO</span>
+          PRODUTOS DO <span className="text-red-600">BRASILEIRÃO</span>
         </h2>
 
         <div className="relative">
