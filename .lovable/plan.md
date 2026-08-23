@@ -33,5 +33,5 @@ Transform the static superior promotional banner into a professional continuous 
 
 ## Technical Details
 - **CSS Animation**: Use `translateX` from 0% to -50% (since we duplicate the content) with `linear` timing.
-- **Accessibility**: Wrap the animation in a `@media (prefers-reduced-motion: no-preference)` query to respect user settings.
+- **Accessibility**: Wrap the animation in a `@media (prefers-reduced-motion: no-preference)\` query to respect user settings.
 - **Loop Logic**: Duplicate the image array once in the DOM (`[A, B, C, A, B, C]`). When the first set finishes, it snaps back instantly to the start, which is visually identical.
