@@ -59,11 +59,11 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }
 
       {/* Mobile Version: Horizontal Scroll (Diversifique-style) */}
       <div className="md:hidden">
-        <div className="flex overflow-x-auto pb-6 no-scrollbar gap-4 scroll-smooth snap-x">
+        <div className="flex overflow-x-auto pb-4 gap-4 scroll-smooth snap-x custom-scrollbar">
           {products.map((child, index) => (
             <div 
               key={index} 
-              className="flex-shrink-0 w-[46%] snap-start"
+              className="flex-shrink-0 w-[46%] snap-start mb-2"
             >
               {child}
             </div>
