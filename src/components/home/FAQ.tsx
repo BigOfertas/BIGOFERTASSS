@@ -88,7 +88,7 @@ const faqData: FAQItem[] = [
   }
 ];
 
-const ChevronIcon = ({ rotation }: { rotation: number }) => (
+const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
   <svg 
     width="20" 
     height="20" 
@@ -98,7 +98,9 @@ const ChevronIcon = ({ rotation }: { rotation: number }) => (
     strokeWidth="2" 
     strokeLinecap="round" 
     strokeLinejoin="round"
-    style={{ transform: `rotate(${rotation}deg)`, transition: 'transform 0.2s' }}
+    className={`text-red-600 w-5 h-5 flex-shrink-0 transition-transform duration-300 ease-in-out ${
+      isOpen ? 'rotate-180' : 'rotate-0'
+    }`}
   >
     <path d="m6 9 6 6 6-6"/>
   </svg>
