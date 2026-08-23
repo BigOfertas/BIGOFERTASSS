@@ -1,206 +1,251 @@
 /**
- * # ETAPA 6 — Criar Banner Clicável do Brasileirão
+ * # ETAPA 8 — Finalizar seção “PRODUTOS DO BRASILEIRÃO”
  * 
  * Considere o **estado ATUAL do projeto BIGofertas** como fonte de verdade.
  * 
- * Faça SOMENTE a criação da área destinada à **arte/banner do Brasileirão** na Home.
+ * Faça SOMENTE a criação/refinamento da seção:
  * 
- * A posição correta será:
+ * **PRODUTOS DO BRASILEIRÃO**
+ * 
+ * Essa seção deverá permanecer logo abaixo da área do Brasileirão/Times Brasileiros já existente.
+ * 
+ * Não avance ainda para “Compre por Liga”.
+ * 
+ * ---
+ * 
+ * ## 1. TÍTULO
+ * 
+ * Manter o título:
+ * 
+ * **PRODUTOS DO BRASILEIRÃO**
+ * 
+ * Centralizado e seguindo a identidade visual atual da BIGofertas.
+ * 
+ * Não exagerar no tamanho.
+ * 
+ * Não alterar os títulos das seções anteriores.
+ * 
+ * ---
+ * 
+ * # 2. DESKTOP — 5 PRODUTOS POR VEZ
+ * 
+ * No desktop, mostrar exatamente:
+ * 
+ * **5 produtos por grupo**
+ * 
+ * Estrutura:
+ * 
+ * * grupo 1 → produtos 1–5
+ * * grupo 2 → produtos 6–10
+ * * grupo 3 → produtos 11–15
+ * 
+ * Nunca mostrar os 15 simultaneamente.
+ * 
+ * Cada card deve conter a estrutura de produto já utilizada no projeto:
+ * 
+ * * imagem;
+ * * nome;
+ * * preço;
+ * * botão “ADICIONAR AO CARRINHO”.
+ * 
+ * Reutilizar o mesmo padrão visual dos cards de **Mais Vendidos/Lançamentos**.
+ * 
+ * Não criar um novo estilo de card.
+ * 
+ * ---
+ * 
+ * # 3. DESKTOP — 3 BOLINHAS
+ * 
+ * Abaixo dos produtos, exibir exatamente:
+ * 
+ * **3 bolinhas centralizadas**
+ * 
+ * Representação:
+ * 
+ * `●  ○  ○`
+ * 
+ * Cada bolinha corresponde a um grupo de 5 produtos.
+ * 
+ * ### Bolinha ativa
+ * 
+ * * fundo preto/escuro;
+ * * contorno visível;
+ * * claramente destacada.
+ * 
+ * ### Bolinhas inativas
+ * 
+ * * fundo claro;
+ * * contorno preto/cinza-escuro;
+ * * claramente visíveis e clicáveis.
+ * 
+ * Todas as bolinhas devem possuir contorno.
+ * 
+ * Deixar os indicadores mais destacados, mas ainda elegantes.
+ * 
+ * ---
+ * 
+ * # 4. DESKTOP — TROCA POR FADE
+ * 
+ * Ao clicar em outra bolinha, trocar os produtos através exclusivamente de:
+ * 
+ * **FADE OUT + FADE IN**
+ * 
+ * O grupo atual:
+ * 
+ * `opacity: 1 → 0`
+ * 
+ * Enquanto o novo grupo:
+ * 
+ * `opacity: 0 → 1`
+ * 
+ * As duas animações devem acontecer simultaneamente, criando um **crossfade**.
+ * 
+ * Duração aproximada:
+ * 
+ * **250–350ms**
+ * 
+ * Não utilizar:
+ * 
+ * * slide;
+ * * deslocamento lateral;
+ * * zoom;
+ * * scale;
+ * * movimento vertical.
+ * 
+ * Apenas opacidade.
+ * 
+ * ---
+ * 
+ * # 5. MOBILE — SEM BOLINHAS
+ * 
+ * No MOBILE:
+ * 
+ * **NÃO utilizar as 3 bolinhas.**
+ * 
+ * A navegação deve funcionar por rolagem horizontal natural.
+ * 
+ * Quero:
+ * 
+ * * produtos lado a lado;
+ * * swipe com o dedo;
+ * * usuário deslizando livremente para direita/esquerda;
+ * * sem divisão visual em páginas;
+ * * sem fade ao deslizar;
+ * * sem setas;
+ * * sem dots.
+ * 
+ * ---
+ * 
+ * # 6. MOBILE — BARRA ABAIXO DOS PRODUTOS
+ * 
+ * No mobile, colocar apenas uma:
+ * 
+ * **barra horizontal discreta abaixo dos cards**
+ * 
+ * Essa barra deverá indicar a posição atual da rolagem.
+ * 
+ * Seguir a mesma lógica visual utilizada nas outras áreas horizontais mobile do projeto.
+ * 
+ * A barra deve:
+ * 
+ * * ser fina;
+ * * discreta;
+ * * centralizada;
+ * * acompanhar o scroll;
+ * * não ocupar espaço exagerado;
+ * * não causar overflow horizontal na página.
+ * 
+ * ---
+ * 
+ * # 7. MOBILE — PRESERVAR TAMANHOS
+ * 
+ * Não alterar novamente a escala dos cards mobile.
+ * 
+ * Usar exatamente o mesmo tamanho de card de produto já aprovado em:
  * 
  * **Mais Vendidos / Lançamentos**
- * ↓
- * **Diversifique seu pedido / Categorias**
- * ↓
- * **BANNER BRASILEIRÃO**
- * ↓
- * **futura seção Times Brasileiros**
  * 
- * Não criar ainda a seção Times Brasileiros.
+ * Não aumentar.
+ * 
+ * Não diminuir.
+ * 
+ * A seção Brasileirão deve ter consistência com os demais produtos da Home.
  * 
  * ---
  * 
- * ## OBJETIVO
+ * # 8. PRODUTOS REAIS VIRÃO DEPOIS
  * 
- * Criar um espaço específico para uma futura **arte PNG/WebP clicável do Brasileirão**.
+ * Por enquanto, se ainda não houver produtos reais:
  * 
- * Essa arte será fornecida posteriormente.
+ * * manter placeholders/mocks existentes;
+ * * não buscar imagens na internet;
+ * * não inventar camisas;
+ * * não inventar preços adicionais;
+ * * não gerar imagens.
  * 
- * Por enquanto, utilizar somente um placeholder neutro indicando:
- * 
- * **PNG Slot: Brasileirão**
- * 
- * Não gerar nenhuma imagem.
- * 
- * Não criar arte fictícia.
+ * A estrutura deve ficar preparada para futuramente receber os produtos do Supabase.
  * 
  * ---
  * 
- * ## BANNER INTEIRO CLICÁVEL
+ * # 9. FUTURA FILTRAGEM POR TIME
  * 
- * O banner completo deve ser preparado para funcionar como um único link.
+ * Deixar a arquitetura preparada para que, futuramente, ao clicar em um time na seção:
  * 
- * Futuramente, ao clicar na arte, o usuário deverá ser direcionado para a área/categoria:
+ * **TIMES BRASILEIROS**
  * 
- * **Brasileirão**
+ * seja possível exibir produtos correspondentes àquele clube.
  * 
- * Estrutura conceitual:
+ * Exemplo futuro:
  * 
- * ```tsx
- * <PromoBanner
- *   image="..."
- *   href="/brasileirao"
- * />
- * ```
+ * `Flamengo → produtos do Flamengo`
  * 
- * ou solução equivalente compatível com a arquitetura atual.
+ * `Palmeiras → produtos do Palmeiras`
  * 
- * Se a rota definitiva ainda não existir, não criar lógica complexa nem link quebrado apenas para simular.
+ * `Corinthians → produtos do Corinthians`
  * 
- * Deixar preparado para receber o `href` futuramente.
+ * Mas NÃO implementar banco/filtro definitivo nesta etapa.
+ * 
+ * Apenas evitar uma estrutura que impeça essa integração posteriormente.
  * 
  * ---
  * 
- * ## POSICIONAMENTO
+ * # 10. REUTILIZAÇÃO
  * 
- * O banner deve aparecer imediatamente DEPOIS da seção:
+ * Reutilizar, sempre que possível, o mesmo componente de produto/paginação já utilizado em:
  * 
- * **Diversifique seu pedido**
+ * * Mais Vendidos;
+ * * Lançamentos.
  * 
- * e ANTES da futura seção:
+ * A lógica responsiva deve permanecer:
  * 
- * **Times Brasileiros**
+ * ### Desktop
  * 
- * Manter espaçamento profissional entre as seções.
+ * 5 produtos + 3 bolinhas + crossfade.
  * 
- * Não deixar um espaço vazio exagerado.
+ * ### Mobile
  * 
- * ---
+ * scroll horizontal + barra.
  * 
- * ## DESKTOP
- * 
- * No desktop:
- * 
- * * banner horizontal;
- * * centralizado;
- * * alinhado ao container principal da Home;
- * * largura semelhante às grandes artes promocionais da referência;
- * * não ultrapassar a largura útil do conteúdo;
- * * não ficar excessivamente alto;
- * * aparência de banner profissional de e-commerce.
- * 
- * Não alterar nenhuma seção anterior para acomodar o banner.
+ * Não duplicar código desnecessariamente.
  * 
  * ---
  * 
- * ## MOBILE
- * 
- * No mobile:
- * 
- * * continuar horizontal;
- * * ocupar praticamente toda a largura disponível;
- * * manter margens laterais coerentes com o restante da Home;
- * * não ficar exageradamente alto;
- * * adaptar responsivamente;
- * * não criar overflow horizontal.
- * 
- * A futura imagem deve preencher o container sem deformação.
- * 
- * ---
- * 
- * ## IMAGEM FUTURA
- * 
- * Quando a arte real for inserida, preservar:
- * 
- * * `width: 100%`;
- * * proporção da arte;
- * * boa resolução;
- * * ausência de deformação.
- * 
- * Preferir:
- * 
- * * `object-cover` quando necessário para preencher o espaço;
- * 
- * ou outra solução já utilizada pelo projeto que preserve corretamente a imagem.
- * 
- * Não usar `object-fill`.
- * 
- * ---
- * 
- * ## CONTEÚDO TEMPORÁRIO
- * 
- * Neste momento mostrar apenas algo discreto como:
- * 
- * **PNG Slot: Brasileirão**
- * 
- * O placeholder é apenas estrutural.
- * 
- * Não adicionar:
- * 
- * * jogadores fictícios;
- * * escudos;
- * * textos promocionais inventados;
- * * logos;
- * * imagens externas;
- * * gradientes chamativos;
- * * elementos gerados por IA.
- * 
- * A arte definitiva será fornecida depois.
- * 
- * ---
- * 
- * ## COMPONENTIZAÇÃO
- * 
- * Antes de criar um novo componente, verificar se o projeto já possui:
- * 
- * `PromoBanner.tsx`
- * 
- * ou componente equivalente.
- * 
- * Se for adequado, reutilizá-lo.
- * 
- * Não duplicar componente apenas para este banner se a estrutura existente já atende à necessidade.
- * 
- * O comportamento deste banner é:
- * 
- * **imagem estática + clicável**
- * 
- * Ele NÃO é carrossel.
- * 
- * ---
- * 
- * ## NÃO IMPLEMENTAR AINDA
- * 
- * Não criar nesta etapa:
- * 
- * * Times Brasileiros;
- * * logos dos clubes;
- * * carrossel de times;
- * * produtos do Brasileirão;
- * * filtros;
- * * página completa do Brasileirão;
- * * integração com R2;
- * * integração de produtos com Supabase.
- * 
- * Essas serão etapas posteriores.
- * 
- * ---
- * 
- * ## NÃO ALTERAR
+ * # 11. NÃO ALTERAR
  * 
  * Não modificar:
  * 
- * * PNG Slot Superior;
- * * carrossel superior;
- * * PNG Slot Inferior;
  * * Header;
  * * busca;
  * * menu;
+ * * PNG Slot Superior;
+ * * PNG Slot Inferior;
+ * * Diversifique seu pedido;
+ * * cards das categorias;
+ * * PNG Slot Brasileirão;
+ * * tamanho mobile já corrigido do banner Brasileirão;
+ * * Times Brasileiros;
  * * Mais Vendidos;
  * * Lançamentos;
- * * cards de produtos;
- * * bolinhas de paginação;
- * * Diversifique seu pedido;
- * * tamanho dos cards de categoria;
  * * Supabase;
  * * Auth;
  * * RLS;
@@ -209,26 +254,29 @@
  * * `.lovable`;
  * * rodapé.
  * 
- * Não realizar refatorações extras.
+ * Não realizar refatorações fora dessa seção.
  * 
  * ---
  * 
- * ## VALIDAÇÃO FINAL
+ * # 12. VALIDAÇÃO FINAL
  * 
- * Antes de finalizar, confirmar:
+ * Confirmar:
  * 
- * 1. Existe um novo slot para a arte do Brasileirão.
- * 2. Ele está imediatamente abaixo de “Diversifique seu pedido”.
- * 3. Ele está preparado para receber uma PNG/WebP real.
- * 4. O banner poderá ser clicável futuramente.
- * 5. Desktop apresenta formato horizontal e profissional.
- * 6. Mobile está responsivo e sem overflow.
- * 7. Placeholder contém apenas “PNG Slot: Brasileirão”.
- * 8. Não foi gerada nenhuma imagem.
- * 9. Não foi criada ainda a seção Times Brasileiros.
- * 10. Todas as seções anteriores permanecem visualmente intactas.
+ * 1. Desktop mostra exatamente 5 produtos por vez.
+ * 2. Existem 3 grupos possíveis de produtos.
+ * 3. Existem exatamente 3 bolinhas no desktop.
+ * 4. Todas possuem contorno.
+ * 5. A ativa está preenchida em preto.
+ * 6. A troca desktop acontece somente por crossfade de opacidade.
+ * 7. Mobile não apresenta bolinhas.
+ * 8. Mobile funciona por swipe horizontal.
+ * 9. Mobile possui barra horizontal abaixo dos produtos.
+ * 10. Cards mantêm exatamente o tamanho já aprovado.
+ * 11. Não existe overflow horizontal na página.
+ * 12. Seções anteriores permanecem intactas.
+ * 13. A estrutura está preparada para integração futura com produtos reais e times.
  * 
- * **Faça exclusivamente esta etapa.**
+ * **Faça exclusivamente esta etapa da seção “PRODUTOS DO BRASILEIRÃO”.**
  */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
