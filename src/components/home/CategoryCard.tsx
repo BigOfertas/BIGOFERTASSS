@@ -13,7 +13,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ name, image, href }) => {
       to={href}
       className="group flex flex-col items-center gap-2 min-w-[100px] sm:min-w-[140px] md:min-w-0 md:w-full"
     >
-      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-gray-100 border border-gray-100 transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1">
+      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-100 border border-gray-100 transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1">
         {image ? (
           <img
             src={image}
