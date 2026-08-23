@@ -30,7 +30,7 @@ const generateMockProducts = (leagueId: string) => {
 };
 
 const ShopByLeague: React.FC = () => {
-  const [activeLeagueId, setActiveLeagueId] = useState(LEAGUES[0].id);
+  const [activeLeagueId, setActiveLeagueId] = useState(LEAGUES[0]?.id || "");
 
   const activeProducts = generateMockProducts(activeLeagueId);
 
