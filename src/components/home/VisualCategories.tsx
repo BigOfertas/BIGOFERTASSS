@@ -37,11 +37,11 @@ const VisualCategories: React.FC = () => {
         </h2>
         
         {/* Desktop: Grid | Mobile: Simple Horizontal Scroll */}
-        <div className="flex md:grid md:grid-cols-6 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 no-scrollbar gap-3 md:gap-6 items-center">
+        <div className="flex md:grid md:grid-cols-6 overflow-x-auto md:overflow-x-visible pb-6 md:pb-0 no-scrollbar gap-3 md:gap-6 items-center scroll-smooth">
           {categories.map((category, index) => (
             <div 
               key={index} 
-              className="flex-shrink-0 w-[140px] h-[140px] md:w-auto md:h-auto"
+              className="flex-shrink-0 w-[160px] h-[240px] md:w-auto md:h-auto"
             >
               <CategoryCard
                 name={category.name}
@@ -50,6 +50,9 @@ const VisualCategories: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* Barra Cinza Indicadora (Padrão similar a BestSellers) */}
+        <div className="w-full h-1 bg-gray-300 mt-6 md:mt-8"></div>
       </div>
     </section>
   );

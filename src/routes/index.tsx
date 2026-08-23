@@ -1,82 +1,78 @@
 /**
- * PROMPT PARA LOVABLE — ETAPA 10C (REVERTIR)
- * Remover Carrossel Infinito e Barra da Seção "Diversifique seu Pedido"
+ * PROMPT PARA LOVABLE — ETAPA 15A (PARTE 1)
+ * Corrigir VisualCategories Mobile: Cards Cortados e Adicionar Barra Cinza
  * 
  * ================================================================================
  * 
  * CONTEXTO
  * 
- * A seção "Diversifique seu Pedido" (VisualCategories) foi modificada na
- * Etapa 10 para ser um carrossel infinito com barra animada no mobile.
+ * A seção "Diversifique seu Pedido" (VisualCategories) tem problema no mobile:
+ * os cards aparecem CORTADOS VERTICALMENTE, forçando o usuário a fazer scroll
+ * vertical dentro da própria seção para ver os cards inteiros.
  * 
- * Katninja solicitou REVERTER essa mudança.
- * 
- * Voltar ao estado anterior: Carrossel comum, como qualquer outro carrossel
- * do site (sem infinito, sem barra especial).
+ * Katninja quer:
+ * 1. Cards inteiros (sem corte vertical) - deixar mais "esticados"
+ * 2. Adicionar barra cinza abaixo da seção (como existe em BestSellers)
  * 
  * ================================================================================
  * 
  * OBJETIVO
  * 
- * Remover:
- * ❌ Carrossel infinito (loop contínuo)
- * ❌ Barra horizontal animada/destacada
- * ❌ Parallax leve
- * 
- * Voltar para:
- * ✅ Carrossel comum (parado no final)
- * ✅ Scroll comportamento padrão
- * ✅ Design simples e consistente com outros carrosséis
- * 
- * Manter:
- * ✅ Cards de categorias
- * ✅ Responsividade mobile/tablet/desktop
- * ✅ Scroll horizontal
- * ✅ Funcionalidade básica
+ * 1. Corrigir altura dos cards para aparecerem INTEIROS no mobile
+ * 2. Adicionar indicador visual (barra cinza) abaixo de VisualCategories
+ * 3. A barra deve acompanhar o scroll (como em BestSellers)
+ * 4. Responsividade mobile/tablet/desktop OK
  * 
  * ================================================================================
  * 
- * MUDANÇA ESPECÍFICA: ARQUIVO VisualCategories.tsx
+ * MUDANÇA 1: CORRIGIR CARDS CORTADOS
  * 
  * Arquivo: src/components/home/VisualCategories.tsx
  * 
- * O que REMOVER:
+ * Problema atual:
+ * - Cards têm altura fixa de 140px
+ * - Viewport mobile não consegue exibir inteiro
+ * - Usuário precisa fazer scroll VERTICAL para ver
  * 
- * 1. ❌ Lógica de carrossel infinito (se implementada)
- *    - Remover: Detecção de fim do scroll
- *    - Remover: Loop volta ao início
- *    - Remover: Duplicação de items
+ * Solução:
+ * - Aumentar altura dos cards
+ * - Ajustar container para não cortar
+ * - Deixar padding/margin suficiente
  * 
- * 2. ❌ Barra horizontal animada/destacada
- *    - Remover: Elemento <div> da barra
- *    - Remover: Gradiente (#dc2626 → #f97316)
- *    - Remover: Lógica de parallax
- *    - Remover: Transições da barra (300ms)
- *    - Remover: Indicadores de posição
+ * Mobile (< 768px):
+ * - Card height: 160px (de 140px) → 180px se necessário
+ * - Card width: 160px (mantém quadrado)
+ * - Container padding-bottom: +30px (espaço extra)
+ * - Seção padding: aumentar vertical
  * 
- * 3. ❌ Classes Tailwind específicas para infinite scroll
- *    - Remover: scroll-snap-type customizado
- *    - Remover: Animações CSS relacionadas
+ * Tablet (768px-1023px):
+ * - Card height: 180px-200px
+ * - Mais espaço
  * 
- * O que MANTER:
+ * Desktop (≥ 1024px):
+ * - Grid layout (sem scroll)
+ * - Cards maiores
  * 
- * ✅ Grid/Flex de categorias
- * ✅ Cards com imagem + nome
- * ✅ Scroll horizontal em mobile
- * ✅ Altura e tamanho dos cards (160px)
- * ✅ Gap entre cards (12px)
- * ✅ Responsividade
+ * Checklist:
+ * - [x] Cards aparecem 100% inteiros no mobile
+ * - [x] Sem corte vertical
+ * - [x] Usuário não precisa scroll vertical dentro da seção
+ * - [x] Responsividade mantida
  * 
- * Como deve ficar:
+ * ================================================================================
  * 
- * - Desktop: Grid normal de categorias (não carrossel)
- * - Tablet: Carrossel horizontal comum
- * - Mobile: Carrossel horizontal comum (scroll até o final, para)
+ * MUDANÇA 2: ADICIONAR BARRA CINZA ABAIXO
  * 
- * Padrão de referência:
- * - Comportar-se IGUAL a BrazilianProducts
- * - Comportar-se IGUAL a qualquer outro carrossel do site
- * - Sem animações especiais
+ * Arquivo: src/components/home/VisualCategories.tsx
+ * 
+ * Referência: BestSellers tem barra cinza que acompanha o scroll das abas
+ * 
+ * Implementar em VisualCategories:
+ * - Barra cinza (#d1d5db ou #e5e7eb) abaixo da seção
+ * - Altura: 4px-6px
+ * - Largura: 100%
+ * - Posição: Imediatamente abaixo dos cards (pb-2 or pb-4)
+ * - Cor exata: gray-300 (#d1d5db)
  */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
