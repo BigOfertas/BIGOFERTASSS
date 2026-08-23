@@ -1,109 +1,400 @@
 /**
- * # PROMPT CORRETIVO — TIMES BRASILEIROS + CARROSSEL INFINITO DE CATEGORIAS NO DESKTOP
+ * # ETAPA 9 — Criar seção “COMPRE POR LIGA” na Home
  * 
  * Considere o **estado ATUAL do projeto BIGofertas** como fonte de verdade.
  * 
- * Faça SOMENTE as duas correções abaixo.
+ * Faça SOMENTE a criação da seção:
+ * 
+ * **COMPRE POR LIGA**
+ * 
+ * Ela deverá ficar imediatamente abaixo da seção:
+ * 
+ * **PRODUTOS DO BRASILEIRÃO**
+ * 
+ * Não avance ainda para FAQ, rodapé ou banners promocionais posteriores.
  * 
  * ---
  * 
- * # 1. DESKTOP — “TIMES BRASILEIROS” COM 11 TIMES SIMÉTRICOS
+ * # 1. ESTRUTURA DA SEÇÃO
  * 
- * Na seção **TIMES BRASILEIROS**, existe uma lista com exatamente **11 clubes**.
+ * Criar o título centralizado:
  * 
- * No DESKTOP, quero que os 11 apareçam na mesma linha, com:
+ * ## **COMPRE POR LIGA**
  * 
- * * espaçamento perfeitamente uniforme;
- * * distribuição simétrica;
- * * nenhum escudo cortado;
- * * nenhum item parcialmente escondido;
- * * nenhum clube encostando no outro;
- * * mesmas áreas reservadas para cada clube;
- * * alinhamento vertical consistente;
- * * primeiro e último clubes com margens laterais equivalentes.
+ * Logo abaixo, criar exatamente estas 5 opções:
  * 
- * Os 11 clubes devem ocupar a largura útil da seção de maneira equilibrada.
+ * * **LA LIGA**
+ * * **PREMIER LEAGUE**
+ * * **SERIE A**
+ * * **BUNDESLIGA**
+ * * **LIGUE 1**
  * 
- * ## Estrutura visual desejada
+ * Essas opções funcionarão como abas/filtros.
  * 
- * Algo conceitualmente equivalente a:
- * 
- * `[1]   [2]   [3]   [4]   [5]   [6]   [7]   [8]   [9]   [10]   [11]`
- * 
- * Todos com exatamente o mesmo espaço reservado.
- * 
- * Não quero:
- * 
- * * último escudo cortado;
- * * primeiro escudo grudado na borda;
- * * espaços muito maiores entre alguns clubes;
- * * logos sobrepostos;
- * * largura irregular entre os itens.
+ * Não adicionar outras ligas nesta etapa.
  * 
  * ---
  * 
- * ## COMO DISTRIBUIR
+ * # 2. FUNCIONAMENTO DAS ABAS
  * 
- * Utilizar uma estrutura própria para os **11 itens**, como grid/flex adequadamente dimensionado.
+ * Ao clicar em uma liga, os produtos exibidos abaixo devem corresponder somente àquela liga.
  * 
- * Cada time deve possuir um slot de largura equivalente.
+ * Exemplo:
  * 
- * O escudo deve ficar centralizado dentro desse slot.
+ * **LA LIGA selecionada**
+ * → produtos da La Liga
  * 
- * A proporção original de cada escudo deve continuar preservada.
+ * **PREMIER LEAGUE selecionada**
+ * → produtos da Premier League
  * 
- * Usar comportamento equivalente a:
+ * **BUNDESLIGA selecionada**
+ * → produtos da Bundesliga
  * 
- * `object-contain`
+ * etc.
  * 
- * Nunca deformar logos para fazê-los ocupar a mesma forma.
+ * Por enquanto, se ainda não existirem dados reais, utilizar somente os mocks/placeholders já existentes no projeto.
  * 
- * O que deve ser igual é **a área/slot destinada ao clube**, não necessariamente a largura real do desenho do escudo.
+ * Não inventar produtos.
  * 
- * ---
+ * Não buscar imagens externas.
  * 
- * ## NÃO REDUZIR DEMAIS OS ESCUDOS
- * 
- * Não resolver o problema simplesmente tornando todos os escudos minúsculos.
- * 
- * Eles devem continuar com boa presença visual.
- * 
- * Se necessário:
- * 
- * * utilizar melhor a largura disponível da seção;
- * * ajustar `max-width` do container específico dos times;
- * * diminuir moderadamente apenas os gaps;
- * * distribuir os 11 slots de forma matemática e uniforme.
- * 
- * Não mexer no container global da Home.
+ * Não gerar imagens.
  * 
  * ---
  * 
- * # 2. DESKTOP — “DIVERSIFIQUE SEU PEDIDO” COM ROLAGEM INFINITA
+ * # 3. VISUAL DAS ABAS — DESKTOP
  * 
- * No DESKTOP, transformar os cards da seção:
+ * No desktop, as 5 ligas devem ficar:
  * 
- * **DIVERSIFIQUE SEU PEDIDO**
+ * * na mesma linha;
+ * * centralizadas;
+ * * bem espaçadas;
+ * * visualmente equilibradas;
+ * * sem ocupar largura exagerada.
  * 
- * em um carrossel horizontal automático e infinito.
+ * A liga selecionada precisa ter estado ativo claramente perceptível.
  * 
- * ## COMPORTAMENTO
+ * Pode utilizar o padrão visual já existente no projeto, por exemplo:
  * 
- * Os cards devem ficar constantemente se movimentando horizontalmente de maneira:
+ * * texto mais escuro/negrito;
+ * * pequeno underline;
+ * * detalhe na cor vermelha da BIGofertas.
  * 
- * * suave;
- * * contínua;
- * * lenta;
- * * elegante;
- * * linear;
- * * sem travadas;
- * * sem saltos.
+ * Não criar botões enormes.
  * 
- * Preferencialmente da direita para a esquerda.
+ * A aparência deve ser semelhante a navegação por categoria de um e-commerce profissional.
  * 
- * Não quero um slider tradicional que troca uma página inteira por outra.
+ * ---
  * 
- * Quero uma **esteira horizontal contínua**.\n\n---\n\n# LOOP REALMENTE INFINITO\n\nA animação deve formar um loop visual perfeito.\n\nQuando o último card passar, a sequência deve continuar imediatamente pelo primeiro, sem:\n\n* espaço em branco;\n* piscada;\n* salto;\n* reposicionamento perceptível.\n\nPode duplicar visualmente a sequência para criar o loop.\n\nExemplo conceitual:\n\n`[1][2][3][4][5][6] [1][2][3][4][5][6]`\n\nEssa duplicação é apenas visual para a animação.\n\nNão duplicar dados reais.\n\n---\n\n# PAUSAR QUANDO PASSAR O MOUSE\n\nNo DESKTOP:\n\nQuando o usuário colocar o mouse sobre qualquer parte do carrossel:\n\n**a animação deve pausar suavemente exatamente na posição atual.**\n\nNão voltar para o início.\n\nNão mudar a posição dos cards.\n\nNão fazer fade.\n\nApenas congelar o movimento horizontal.\n\n---\n\n# VOLTAR AO RETIRAR O MOUSE\n\nQuando o usuário retirar o mouse da seção:\n\n**a animação deve continuar automaticamente a partir do mesmo ponto.**\n\nNão reiniciar.\n\nNão pular.\n\nNão acelerar bruscamente.\n\nRetomar na mesma velocidade suave utilizada antes.\n\nComportamento esperado:\n\n`movendo → hover → pausa → mouse sai → continua`\n\n---\n\n# VELOCIDADE\n\nUsar uma velocidade confortável para leitura.\n\nNão quero:\n\n* movimento muito rápido;\n* categorias passando antes do usuário conseguir identificá-las;\n* sensação de ticker de notícias.\n\nQuero uma movimentação lenta de e-commerce premium.\n\nA animação deve utilizar velocidade constante, sem aceleração/desaceleração entre cards.\n\n---\n\n# TAMANHO DOS CARDS\n\nMuito importante:\n\n**NÃO ALTERAR O TAMANHO JÁ APROVADO DOS CARDS DE “DIVERSIFIQUE SEU PEDIDO”.**\n\nEles já possuem regra própria de tamanho.\n\nManter:\n\n* largura;\n* altura;\n* proporção 2:3;\n* espaçamento interno;\n* nome das categorias;\n* futura área da arte clicável.\n\nAdicionar somente a mecânica de movimento.\n\n---\n\n# MOBILE — NÃO ALTERAR\n\nEssas mudanças de carrossel infinito são exclusivamente para DESKTOP.\n\nNo MOBILE, a seção Diversifique deve continuar exatamente com o comportamento atual:\n\n* rolagem horizontal manual;\n* swipe;\n* usuário controla o movimento;\n* sem autoplay;\n* sem carrossel automático infinito.\n\nNão adicionar pausa por toque.\n\nNão alterar tamanho dos cards mobile.\n\n---\n\n# TIMES BRASILEIROS NO MOBILE\n\nTambém NÃO alterar o comportamento mobile já definido para Times Brasileiros.\n\nManter:\n\n* scroll horizontal;\n* swipe;\n* barra indicadora;\n* tamanhos atuais.\n\nA correção de distribuição dos 11 clubes é exclusivamente desktop.\n\n---\n\n# PERFORMANCE\n\nNão instalar biblioteca externa apenas para fazer esse movimento.\n\nPreferir:\n\n* CSS;\n* Tailwind;\n* React atual.\n\nSe utilizar animação CSS, implementar loop contínuo eficiente.\n\nEvitar re-renderização React a cada frame.\n\n---\n\n# ACESSIBILIDADE\n\nRespeitar `prefers-reduced-motion`.\n\nSe o usuário tiver redução de movimento ativada, evitar autoplay contínuo agressivo.\n\n---\n\n# NÃO ALTERAR\n\nNão modificar:\n\n* Header;\n* menu;\n* busca;\n* PNG Slot Superior;\n* PNG Slot Inferior;\n* Banner Brasileirão;\n* tamanho do Banner Brasileirão;\n* Mais Vendidos;\n* Lançamentos;\n* cards de produtos;\n* Produtos do Brasileirão;\n* tamanho dos cards de categorias;\n* Supabase;\n* Auth;\n* RLS;\n* migrations;\n* TanStack Router;\n* `.lovable`.\n\nNão gerar imagens.\n\nNão realizar refatorações adicionais.\n\n---\n\n# VALIDAÇÃO FINAL\n\nAntes de finalizar, confirmar:\n\n### Times Brasileiros — Desktop\n\n1. Existem exatamente 11 clubes.\n2. Todos estão visíveis simultaneamente.\n3. Nenhum escudo está cortado.\n4. Primeiro e último possuem margens equivalentes.\n5. Espaçamento entre os 11 é uniforme.\n6. Cada clube possui um slot simétrico.\n7. Escudos permanecem com proporção original.\n\n### Diversifique — Desktop\n\n8. Cards se movimentam automaticamente.\n9. Movimento é horizontal e contínuo.\n10. Loop é infinito.\n11. Não existe salto ao reiniciar.\n12. Não existe espaço vazio.\n13. Ao colocar o mouse sobre a seção, o movimento pausa.\n14. Ao retirar o mouse, continua exatamente de onde parou.\n15. Velocidade permanece suave e constante.\n16. Tamanho dos cards não foi alterado.\n\n### Mobile\n\n17. Diversifique continua com swipe manual.\n18. Times Brasileiros continua com comportamento mobile existente.\n19. Nenhum tamanho mobile foi alterado.\n\n**Faça exclusivamente estas duas correções.**\n */
+ * # 4. TRANSIÇÃO ENTRE LIGAS
+ * 
+ * Ao selecionar outra liga, quero uma transição discreta nos produtos.
+ * 
+ * Utilizar:
+ * 
+ * **fade out + fade in somente por opacidade.**
+ * 
+ * Não utilizar:
+ * 
+ * * slide;
+ * * movimento lateral;
+ * * zoom;
+ * * scale;
+ * * animação vertical.
+ * 
+ * A troca deve parecer suave e rápida.
+ * 
+ * Referência:
+ * 
+ * **250–350ms**
+ * 
+ * O grupo atual desaparece enquanto o novo aparece.
+ * 
+ * ---
+ * 
+ * # 5. DESKTOP — PRODUTOS
+ * 
+ * No DESKTOP, utilizar exatamente o mesmo padrão já aprovado para:
+ * 
+ * **Mais Vendidos / Lançamentos / Produtos do Brasileirão.**
+ * 
+ * Mostrar:
+ * 
+ * **5 produtos por vez.**
+ * 
+ * Estrutura:
+ * 
+ * * imagem;
+ * * nome;
+ * * preço;
+ * * botão **ADICIONAR AO CARRINHO**.
+ * 
+ * Não criar um estilo novo de ProductCard.
+ * 
+ * Reutilizar o componente existente.
+ * 
+ * ---
+ * 
+ * # 6. DESKTOP — 3 BOLINHAS
+ * 
+ * Cada liga deve comportar até:
+ * 
+ * **15 produtos**
+ * 
+ * divididos em:
+ * 
+ * * bolinha 1 → produtos 1–5
+ * * bolinha 2 → produtos 6–10
+ * * bolinha 3 → produtos 11–15
+ * 
+ * Mostrar exatamente:
+ * 
+ * **3 bolinhas abaixo dos produtos.**
+ * 
+ * As bolinhas devem seguir o padrão já aprovado:
+ * 
+ * ### Ativa
+ * 
+ * * preenchida em preto/escuro;
+ * * contorno visível.
+ * 
+ * ### Inativas
+ * 
+ * * fundo claro;
+ * * contorno preto/cinza;
+ * * claramente perceptíveis.
+ * 
+ * As 3 devem ficar centralizadas.
+ * 
+ * ---
+ * 
+ * # 7. DESKTOP — PAGINAÇÃO COM CROSSFADE
+ * 
+ * Ao clicar em uma das 3 bolinhas:
+ * 
+ * * os 5 produtos atuais fazem fade out;
+ * * os próximos 5 fazem fade in simultaneamente.
+ * 
+ * Somente opacidade.
+ * 
+ * Não deslizar os produtos lateralmente.
+ * 
+ * Manter exatamente a mesma mecânica já utilizada nas demais seções de produto do desktop.
+ * 
+ * ---
+ * 
+ * # 8. ESTADO INDEPENDENTE POR LIGA
+ * 
+ * Cada liga deve controlar corretamente seus próprios produtos.
+ * 
+ * Exemplo:
+ * 
+ * Se estiver em:
+ * 
+ * **Premier League → página 2**
+ * 
+ * e depois selecionar:
+ * 
+ * **La Liga**
+ * 
+ * a seção deve mostrar corretamente os produtos da La Liga.
+ * 
+ * Não misturar produtos entre ligas.
+ * 
+ * Não manter itens de uma liga anterior durante a troca.
+ * 
+ * ---
+ * 
+ * # 9. MOBILE — ABAS DAS LIGAS
+ * 
+ * No MOBILE, as 5 ligas podem ficar em uma linha horizontal rolável.
+ * 
+ * Quero:
+ * 
+ * * nomes das ligas lado a lado;
+ * * swipe/scroll horizontal caso não caibam;
+ * * aba ativa claramente destacada;
+ * * sem quebrar nomes em várias linhas desnecessariamente;
+ * * sem scrollbar feia visível.
+ * 
+ * Não comprimir os textos até ficarem ilegíveis apenas para colocar todas as ligas simultaneamente na tela.
+ * 
+ * ---
+ * 
+ * # 10. MOBILE — PRODUTOS
+ * 
+ * No mobile, seguir EXATAMENTE a mecânica que já definimos para produtos:
+ * 
+ * * SEM bolinhas;
+ * * SEM paginação em grupos;
+ * * SEM fade durante o swipe;
+ * * produtos em sequência horizontal;
+ * * usuário desliza com o dedo;
+ * * uma barra horizontal discreta abaixo indicando a posição.
+ * 
+ * Não alterar o tamanho dos cards mobile já aprovado.
+ * 
+ * ---
+ * 
+ * # 11. MOBILE — BARRA DE ROLAGEM
+ * 
+ * A barra deve:
+ * 
+ * * ficar abaixo dos produtos;
+ * * ser fina;
+ * * discreta;
+ * * acompanhar a posição horizontal;
+ * * não gerar overflow na página inteira.
+ * 
+ * O scroll horizontal deve existir somente dentro da seção.
+ * 
+ * ---
+ * 
+ * # 12. NÃO CRIAR LOGOS DE LIGAS AGORA
+ * 
+ * Nesta etapa, utilizar apenas os nomes:
+ * 
+ * **LA LIGA**
+ * **PREMIER LEAGUE**
+ * **SERIE A**
+ * **BUNDESLIGA**
+ * **LIGUE 1**
+ * 
+ * Não pesquisar logos.
+ * 
+ * Não gerar logos.
+ * 
+ * Não usar imagens externas.
+ * 
+ * Futuramente poderemos associar artes/logos vindos do Cloudflare R2.
+ * 
+ * ---
+ * 
+ * # 13. PREPARAÇÃO PARA SUPABASE
+ * 
+ * Não integrar o banco ainda.
+ * 
+ * Porém, deixar a estrutura preparada para futuramente receber dados semelhantes a:
+ * 
+ * ```tsx
+ * {
+ *   id: 'premier-league',
+ *   name: 'Premier League',
+ *   slug: 'premier-league',
+ *   active: true,
+ *   position: 2
+ * }
+ * ```
+ * 
+ * e produtos relacionados por `league_id` ou estrutura equivalente definida posteriormente.
+ * 
+ * Não criar migrations agora.
+ * 
+ * ---
+ * 
+ * # 14. REUTILIZAÇÃO DE COMPONENTES
+ * 
+ * Antes de criar componentes novos, verificar os existentes.
+ * 
+ * Reutilizar:
+ * 
+ * * ProductCard;
+ * * estrutura de ProductSection;
+ * * paginação desktop;
+ * * scroll mobile;
+ * * fade/crossfade;
+ * 
+ * quando já existirem.
+ * 
+ * Não duplicar a mesma lógica para cada liga.
+ * 
+ * A troca de liga deve mudar apenas os dados exibidos.
+ * 
+ * ---
+ * 
+ * # 15. POSIÇÃO FINAL NA HOME
+ * 
+ * A ordem deverá ficar:
+ * 
+ * **Banner Brasileirão**
+ * 
+ * ↓
+ * 
+ * **Times Brasileiros**
+ * 
+ * ↓
+ * 
+ * **Produtos do Brasileirão**
+ * 
+ * ↓
+ * 
+ * ## **COMPRE POR LIGA**
+ * 
+ * `LA LIGA | PREMIER LEAGUE | SERIE A | BUNDESLIGA | LIGUE 1`
+ * 
+ * ↓
+ * 
+ * **Produtos da liga selecionada**
+ * 
+ * ↓
+ * 
+ * **próximas seções da Home**
+ * 
+ * ---
+ * 
+ * # 16. NÃO ALTERAR
+ * 
+ * Não modificar:
+ * 
+ * * Header;
+ * * busca;
+ * * menus;
+ * * PNG Slot Superior;
+ * * PNG Slot Inferior;
+ * * Mais Vendidos;
+ * * Lançamentos;
+ * * Diversifique seu pedido;
+ * * carrossel infinito desktop de Diversifique;
+ * * Banner Brasileirão;
+ * * tamanho mobile do Banner Brasileirão;
+ * * Times Brasileiros;
+ * * distribuição dos 11 times;
+ * * Produtos do Brasileirão;
+ * * tamanho dos ProductCards;
+ * * Supabase;
+ * * Auth;
+ * * RLS;
+ * * migrations;
+ * * TanStack Router;
+ * * `.lovable`;
+ * * rodapé.
+ * 
+ * Não fazer refatorações extras.
+ * 
+ * ---
+ * 
+ * # 17. VALIDAÇÃO FINAL
+ * 
+ * Antes de finalizar, confirmar:
+ * 
+ * 1. Existe o título **COMPRE POR LIGA**.
+ * 2. Existem exatamente 5 ligas.
+ * 3. As ligas funcionam como abas.
+ * 4. Apenas uma liga fica ativa por vez.
+ * 5. Desktop mostra 5 produtos por vez.
+ * 6. Desktop possui 3 bolinhas com contorno.
+ * 7. Paginação desktop utiliza apenas crossfade de opacidade.
+ * 8. Mobile não possui bolinhas.
+ * 9. Mobile possui scroll horizontal dos produtos.
+ * 10. Mobile possui barra horizontal abaixo dos produtos.
+ * 11. Tamanho dos ProductCards não mudou.
+ * 12. Trocar de liga não mistura produtos.
+ * 13. Nenhuma imagem externa foi adicionada.
+ * 14. Nenhuma integração Supabase foi criada nesta etapa.
+ * 15. Todas as seções anteriores permaneceram intactas.
+ * 
+ * **Faça exclusivamente a criação da seção “COMPRE POR LIGA”.**
+ */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
 import Header from "@/components/layout/Header";
@@ -111,6 +402,7 @@ import BestSellers from "@/components/home/BestSellers";
 import VisualCategories from "@/components/home/VisualCategories";
 import BrazilianProducts from "@/components/home/BrazilianProducts";
 import BrazilianTeams from "@/components/home/BrazilianTeams";
+import ShopByLeague from "@/components/home/ShopByLeague";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -165,6 +457,9 @@ function Index() {
         <div className="mt-4 sm:mt-8">
           <BrazilianProducts />
         </div>
+
+        {/* 7. COMPRE POR LIGA */}
+        <ShopByLeague />
       </main>
     </div>
   );
