@@ -20,9 +20,11 @@ const LEAGUES: League[] = [
 
 // Helper to generate mock products for a specific league
 const generateMockProducts = (leagueId: string) => {
+  const league = LEAGUES.find(l => l.id === leagueId);
+  const leagueName = league ? league.name : 'Liga';
   return Array.from({ length: 15 }, (_, i) => ({
     id: `${leagueId}-prod-${i + 1}`,
-    name: `Camisa ${LEAGUES.find(l => l.id === leagueId)?.name} Mod. ${i + 1}`,
+    name: `Camisa ${leagueName} Mod. ${i + 1}`,
     price: 289.90 + (i * 10),
   }));
 };
