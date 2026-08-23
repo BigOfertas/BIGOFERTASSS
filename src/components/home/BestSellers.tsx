@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
 
@@ -17,13 +17,20 @@ const MOCK_NEW_ARRIVALS = Array.from({ length: 15 }, (_, i) => ({
 
 const BestSellers: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"best" | "new">("best");
-  // Removido o estado currentPage daqui para deixar interno no ProductCarousel
-  // ou permitir que cada aba tenha o seu.
-
-  const products = activeTab === "best" ? MOCK_BEST_SELLERS : MOCK_NEW_ARRIVALS;
+  const [displayTab, setDisplayTab] = useState<"best" | "new">("best");
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleTabChange = (tab: "best" | "new") => {
+    if (tab === activeTab || isTransitioning) return;
+    
+    setIsTransitioning(true);
     setActiveTab(tab);
+    
+    // Fade out (150ms) -> Switch data -> Fade in (150ms)
+    setTimeout(() => {
+      setDisplayTab(tab);
+      setIsTransitioning(false);
+    }, 150);
   };
 
   return (
@@ -49,7 +56,7 @@ const BestSellers: React.FC = () => {
               activeTab === "new" ? "text-gray-900" : "text-gray-400 hover:text-gray-600"
             }`}
           >
-            LANÇA<span className={activeTab === "new" ? "text-red-600" : ""}>MENTOS</span>
+            LANÇAMENTOS
             {activeTab === "new" && (
               <span className="absolute -bottom-2 left-0 w-full h-1 bg-red-600 rounded-full"></span>
             )}
@@ -57,9 +64,13 @@ const BestSellers: React.FC = () => {
         </div>
 
         {/* Seção de Produtos com Crossfade e Paginação Independente */}
-        <div className="relative">
-          {activeTab === "best" && (
-            <div className="animate-in fade-in duration-300">
+        <div 
+          className={`relative transition-opacity duration-150 ease-in-out ${
+            isTransitioning ? "opacity-0" : "opacity-100"
+          }`}
+        >
+          {displayTab === "best" && (
+            <div>
               <ProductCarousel itemCount={MOCK_BEST_SELLERS.length}>
                 {MOCK_BEST_SELLERS.map((product) => (
                   <ProductCard
@@ -73,8 +84,8 @@ const BestSellers: React.FC = () => {
             </div>
           )}
 
-          {activeTab === "new" && (
-            <div className="animate-in fade-in duration-300">
+          {displayTab === "new" && (
+            <div>
               <ProductCarousel itemCount={MOCK_NEW_ARRIVALS.length}>
                 {MOCK_NEW_ARRIVALS.map((product) => (
                   <ProductCard
