@@ -403,6 +403,7 @@ import VisualCategories from "@/components/home/VisualCategories";
 import BrazilianProducts from "@/components/home/BrazilianProducts";
 import BrazilianTeams from "@/components/home/BrazilianTeams";
 import ShopByLeague from "@/components/home/ShopByLeague";
+import FAQ from "@/components/home/FAQ";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -460,6 +461,7 @@ function Index() {
 
         {/* 7. COMPRE POR LIGA */}
         <ShopByLeague />
+        <FAQ />
       </main>
     </div>
   );
