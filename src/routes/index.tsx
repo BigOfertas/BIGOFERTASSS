@@ -1,399 +1,180 @@
 /**
- * # ETAPA 9 — Criar seção “COMPRE POR LIGA” na Home
+ * PROMPT PARA LOVABLE — ETAPA 11B
+ * Estilo, Animações e Integração FAQ (Parte 2 de 2)
  * 
- * Considere o **estado ATUAL do projeto BIGofertas** como fonte de verdade.
+ * ================================================================================
  * 
- * Faça SOMENTE a criação da seção:
+ * CONTEXTO
  * 
- * **COMPRE POR LIGA**
+ * PARTE 1 concluída: Componente FAQ.tsx criado com estrutura e lógica.
  * 
- * Ela deverá ficar imediatamente abaixo da seção:
+ * Esta é PARTE 2: Adicionar estilos, animações e integração à Home.
  * 
- * **PRODUTOS DO BRASILEIRÃO**
+ * Pressupostos: Componente já existe e funciona.
  * 
- * Não avance ainda para FAQ, rodapé ou banners promocionais posteriores.
+ * ================================================================================
  * 
- * ---
+ * OBJETIVO
  * 
- * # 1. ESTRUTURA DA SEÇÃO
+ * Estilizar o componente FAQ com:
+ * - Cores BIG Ofertas
+ * - Espaçamento profissional
+ * - Animações suaves ao expandir/recolher
+ * - Responsividade mobile/tablet/desktop
+ * - Integração visual com o restante da Home
  * 
- * Criar o título centralizado:
+ * ================================================================================
  * 
- * ## **COMPRE POR LIGA**
+ * MUDANÇA 1: ADICIONAR ESTILOS AO COMPONENTE FAQ
  * 
- * Logo abaixo, criar exatamente estas 5 opções:
+ * Arquivo: src/components/home/FAQ.tsx (já existe)
  * 
- * * **LA LIGA**
- * * **PREMIER LEAGUE**
- * * **SERIE A**
- * * **BUNDESLIGA**
- * * **LIGUE 1**
+ * Atualizar: Adicionar classes Tailwind aos elementos
  * 
- * Essas opções funcionarão como abas/filtros.
+ * Título "PERGUNTAS FREQUENTES":
+ * className="text-center text-3xl md:text-2xl font-bold italic uppercase mb-12 text-black"
  * 
- * Não adicionar outras ligas nesta etapa.
+ * Seção Container:
+ * className="py-16 md:py-12 sm:py-8 bg-white"
  * 
- * ---
+ * Container Interno:
+ * className="max-w-7xl mx-auto px-4 lg:px-8"
  * 
- * # 2. FUNCIONAMENTO DAS ABAS
+ * Grid de Accordions:
+ * className="max-w-2xl mx-auto space-y-3"
  * 
- * Ao clicar em uma liga, os produtos exibidos abaixo devem corresponder somente àquela liga.
+ * Cada Item (Accordion):
+ * className="border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all duration-200"
  * 
- * Exemplo:
+ * Button (Header - Clicável):
+ * className="w-full px-5 py-4 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors duration-200"
  * 
- * **LA LIGA selecionada**
- * → produtos da La Liga
+ * Texto da Pergunta (dentro do button):
+ * className="flex items-center gap-3 text-left"
+ * Emoji: className="text-xl"
+ * Pergunta: className="font-semibold text-gray-800 text-sm md:text-base"
  * 
- * **PREMIER LEAGUE selecionada**
- * → produtos da Premier League
+ * Chevron Icon (seta):
+ * className="text-red-600 w-5 h-5 flex-shrink-0"
+ * rotation: 0deg (fechado) → 180deg (aberto)
+ * transform: transition-transform duration-300 ease-in-out
  * 
- * **BUNDESLIGA selecionada**
- * → produtos da Bundesliga
+ * Content (Resposta):
+ * className="px-5 py-4 text-gray-600 text-sm leading-relaxed whitespace-pre-wrap"
  * 
- * etc.
+ * ================================================================================
  * 
- * Por enquanto, se ainda não existirem dados reais, utilizar somente os mocks/placeholders já existentes no projeto.
+ * MUDANÇA 2: ADICIONAR ANIMAÇÕES
  * 
- * Não inventar produtos.
+ * Arquivo: src/components/home/FAQ.tsx
  * 
- * Não buscar imagens externas.
+ * Chevron Rotation Animação:
+ * - Quando aberto: rotate-180
+ * - Quando fechado: rotate-0
+ * - Transição: duration-300 ease-in-out
+ * - Implementar com className ternário:
+ *   `transition-transform duration-300 ease-in-out ${
+ *     openId === item.id ? 'rotate-180' : 'rotate-0'
+ *   }`
  * 
- * Não gerar imagens.
+ * Content Fade Animação:
+ * - Usar max-height para controlar abertura
+ * - Estado fechado: max-height-0, opacity-0
+ * - Estado aberto: max-height-500px, opacity-1
+ * - Transição: 300ms ease-in-out
+ * - Implementar com conditional rendering + className:
+ *   `overflow-hidden transition-all duration-300 ease-in-out ${
+ *     openId === item.id 
+ *       ? 'max-h-96 opacity-100' 
+ *       : 'max-h-0 opacity-0'
+ *   }`
  * 
- * ---
+ * Duração Total: 300ms (mesmo padrão ShopByLeague/BestSellers)
+ * Easing: ease-in-out
  * 
- * # 3. VISUAL DAS ABAS — DESKTOP
+ * ================================================================================
  * 
- * No desktop, as 5 ligas devem ficar:
+ * MUDANÇA 3: ADICIONAR CORES EXATAS
  * 
- * * na mesma linha;
- * * centralizadas;
- * * bem espaçadas;
- * * visualmente equilibradas;
- * * sem ocupar largura exagerada.
+ * Arquivo: src/components/home/FAQ.tsx
  * 
- * A liga selecionada precisa ter estado ativo claramente perceptível.
+ * Substituir cores genéricas:
  * 
- * Pode utilizar o padrão visual já existente no projeto, por exemplo:
- * 
- * * texto mais escuro/negrito;
- * * pequeno underline;
- * * detalhe na cor vermelha da BIGofertas.
- * 
- * Não criar botões enormes.
- * 
- * A aparência deve ser semelhante a navegação por categoria de um e-commerce profissional.
- * 
- * ---
- * 
- * # 4. TRANSIÇÃO ENTRE LIGAS
- * 
- * Ao selecionar outra liga, quero uma transição discreta nos produtos.
- * 
- * Utilizar:
- * 
- * **fade out + fade in somente por opacidade.**
- * 
- * Não utilizar:
- * 
- * * slide;
- * * movimento lateral;
- * * zoom;
- * * scale;
- * * animação vertical.
- * 
- * A troca deve parecer suave e rápida.
- * 
- * Referência:
- * 
- * **250–350ms**
- * 
- * O grupo atual desaparece enquanto o novo aparece.
- * 
- * ---
- * 
- * # 5. DESKTOP — PRODUTOS
- * 
- * No DESKTOP, utilizar exatamente o mesmo padrão já aprovado para:
- * 
- * **Mais Vendidos / Lançamentos / Produtos do Brasileirão.**
- * 
- * Mostrar:
- * 
- * **5 produtos por vez.**
- * 
- * Estrutura:
- * 
- * * imagem;
- * * nome;
- * * preço;
- * * botão **ADICIONAR AO CARRINHO**.
- * 
- * Não criar um estilo novo de ProductCard.
- * 
- * Reutilizar o componente existente.
- * 
- * ---
- * 
- * # 6. DESKTOP — 3 BOLINHAS
- * 
- * Cada liga deve comportar até:
- * 
- * **15 produtos**
- * 
- * divididos em:
- * 
- * * bolinha 1 → produtos 1–5
- * * bolinha 2 → produtos 6–10
- * * bolinha 3 → produtos 11–15
- * 
- * Mostrar exatamente:
- * 
- * **3 bolinhas abaixo dos produtos.**
- * 
- * As bolinhas devem seguir o padrão já aprovado:
- * 
- * ### Ativa
- * 
- * * preenchida em preto/escuro;
- * * contorno visível.
- * 
- * ### Inativas
- * 
- * * fundo claro;
- * * contorno preto/cinza;
- * * claramente perceptíveis.
- * 
- * As 3 devem ficar centralizadas.
- * 
- * ---
- * 
- * # 7. DESKTOP — PAGINAÇÃO COM CROSSFADE
- * 
- * Ao clicar em uma das 3 bolinhas:
- * 
- * * os 5 produtos atuais fazem fade out;
- * * os próximos 5 fazem fade in simultaneamente.
- * 
- * Somente opacidade.
- * 
- * Não deslizar os produtos lateralmente.
- * 
- * Manter exatamente a mesma mecânica já utilizada nas demais seções de produto do desktop.
- * 
- * ---
- * 
- * # 8. ESTADO INDEPENDENTE POR LIGA
- * 
- * Cada liga deve controlar corretamente seus próprios produtos.
- * 
- * Exemplo:
- * 
- * Se estiver em:
- * 
- * **Premier League → página 2**
- * 
- * e depois selecionar:
- * 
- * **La Liga**
- * 
- * a seção deve mostrar corretamente os produtos da La Liga.
- * 
- * Não misturar produtos entre ligas.
- * 
- * Não manter itens de uma liga anterior durante a troca.
- * 
- * ---
- * 
- * # 9. MOBILE — ABAS DAS LIGAS
- * 
- * No MOBILE, as 5 ligas podem ficar em uma linha horizontal rolável.
- * 
- * Quero:
- * 
- * * nomes das ligas lado a lado;
- * * swipe/scroll horizontal caso não caibam;
- * * aba ativa claramente destacada;
- * * sem quebrar nomes em várias linhas desnecessariamente;
- * * sem scrollbar feia visível.
- * 
- * Não comprimir os textos até ficarem ilegíveis apenas para colocar todas as ligas simultaneamente na tela.
- * 
- * ---
- * 
- * # 10. MOBILE — PRODUTOS
- * 
- * No mobile, seguir EXATAMENTE a mecânica que já definimos para produtos:
- * 
- * * SEM bolinhas;
- * * SEM paginação em grupos;
- * * SEM fade durante o swipe;
- * * produtos em sequência horizontal;
- * * usuário desliza com o dedo;
- * * uma barra horizontal discreta abaixo indicando a posição.
- * 
- * Não alterar o tamanho dos cards mobile já aprovado.
- * 
- * ---
- * 
- * # 11. MOBILE — BARRA DE ROLAGEM
- * 
- * A barra deve:
- * 
- * * ficar abaixo dos produtos;
- * * ser fina;
- * * discreta;
- * * acompanhar a posição horizontal;
- * * não gerar overflow na página inteira.
- * 
- * O scroll horizontal deve existir somente dentro da seção.
- * 
- * ---
- * 
- * # 12. NÃO CRIAR LOGOS DE LIGAS AGORA
- * 
- * Nesta etapa, utilizar apenas os nomes:
- * 
- * **LA LIGA**
- * **PREMIER LEAGUE**
- * **SERIE A**
- * **BUNDESLIGA**
- * **LIGUE 1**
- * 
- * Não pesquisar logos.
- * 
- * Não gerar logos.
- * 
- * Não usar imagens externas.
- * 
- * Futuramente poderemos associar artes/logos vindos do Cloudflare R2.
- * 
- * ---
- * 
- * # 13. PREPARAÇÃO PARA SUPABASE
- * 
- * Não integrar o banco ainda.
- * 
- * Porém, deixar a estrutura preparada para futuramente receber dados semelhantes a:
- * 
- * ```tsx
- * {
- *   id: 'premier-league',
- *   name: 'Premier League',
- *   slug: 'premier-league',
- *   active: true,
- *   position: 2
- * }
- * ```
- * 
- * e produtos relacionados por `league_id` ou estrutura equivalente definida posteriormente.
- * 
- * Não criar migrations agora.
- * 
- * ---
- * 
- * # 14. REUTILIZAÇÃO DE COMPONENTES
- * 
- * Antes de criar componentes novos, verificar os existentes.
- * 
- * Reutilizar:
- * 
- * * ProductCard;
- * * estrutura de ProductSection;
- * * paginação desktop;
- * * scroll mobile;
- * * fade/crossfade;
- * 
- * quando já existirem.
- * 
- * Não duplicar a mesma lógica para cada liga.
- * 
- * A troca de liga deve mudar apenas os dados exibidos.
- * 
- * ---
- * 
- * # 15. POSIÇÃO FINAL NA HOME
- * 
- * A ordem deverá ficar:
- * 
- * **Banner Brasileirão**
- * 
- * ↓
- * 
- * **Times Brasileiros**
- * 
- * ↓
- * 
- * **Produtos do Brasileirão**
- * 
- * ↓
- * 
- * ## **COMPRE POR LIGA**
- * 
- * `LA LIGA | PREMIER LEAGUE | SERIE A | BUNDESLIGA | LIGUE 1`
- * 
- * ↓
- * 
- * **Produtos da liga selecionada**
- * 
- * ↓
- * 
- * **próximas seções da Home**
- * 
- * ---
- * 
- * # 16. NÃO ALTERAR
- * 
- * Não modificar:
- * 
- * * Header;
- * * busca;
- * * menus;
- * * PNG Slot Superior;
- * * PNG Slot Inferior;
- * * Mais Vendidos;
- * * Lançamentos;
- * * Diversifique seu pedido;
- * * carrossel infinito desktop de Diversifique;
- * * Banner Brasileirão;
- * * tamanho mobile do Banner Brasileirão;
- * * Times Brasileiros;
- * * distribuição dos 11 times;
- * * Produtos do Brasileirão;
- * * tamanho dos ProductCards;
- * * Supabase;
- * * Auth;
- * * RLS;
- * * migrations;
- * * TanStack Router;
- * * `.lovable`;
- * * rodapé.
- * 
- * Não fazer refatorações extras.
- * 
- * ---
- * 
- * # 17. VALIDAÇÃO FINAL
- * 
- * Antes de finalizar, confirmar:
- * 
- * 1. Existe o título **COMPRE POR LIGA**.
- * 2. Existem exatamente 5 ligas.
- * 3. As ligas funcionam como abas.
- * 4. Apenas uma liga fica ativa por vez.
- * 5. Desktop mostra 5 produtos por vez.
- * 6. Desktop possui 3 bolinhas com contorno.
- * 7. Paginação desktop utiliza apenas crossfade de opacidade.
- * 8. Mobile não possui bolinhas.
- * 9. Mobile possui scroll horizontal dos produtos.
- * 10. Mobile possui barra horizontal abaixo dos produtos.
- * 11. Tamanho dos ProductCards não mudou.
- * 12. Trocar de liga não mistura produtos.
- * 13. Nenhuma imagem externa foi adicionada.
- * 14. Nenhuma integração Supabase foi criada nesta etapa.
- * 15. Todas as seções anteriores permaneceram intactas.
- * 
- * **Faça exclusivamente a criação da seção “COMPRE POR LIGA”.**
+ * Fundo: #ffffff (branco)
+ * Fundo Item: #f9fafb (gray-50)
+ * Fundo Hover: #f3f4f6 (gray-100)
+ * Border: #e5e7eb (gray-200)
+ * Texto Pergunta: #1f2937 (gray-800)
+ * Texto Resposta: #4b5563 (gray-600)
+ * Icon Chevron: #dc2626 (vermelho BIG Ofertas)
+ * Icon Hover: #991b1b (vermelho escuro)
+ * 
+ * No Tailwind:
+ * - bg-white
+ * - bg-gray-50
+ * - hover:bg-gray-100
+ * - border-gray-200
+ * - text-gray-800
+ * - text-gray-600
+ * - text-red-600
+ * 
+ * ================================================================================
+ * 
+ * MUDANÇA 4: RESPONSIVIDADE
+ * 
+ * Arquivo: src/components/home/FAQ.tsx
+ * 
+ * Desktop (lg ≥ 1024px):
+ * - Titulo: text-3xl
+ * - Pergunta: text-base
+ * - Resposta: text-sm
+ * - Padding: px-5 py-4
+ * - Padding seção: py-16
+ * 
+ * Tablet (md 768px-1023px):
+ * - Titulo: text-2xl
+ * - Pergunta: text-base (mesmo)
+ * - Resposta: text-sm (mesmo)
+ * - Padding: px-4 py-3
+ * - Padding seção: py-12
+ * 
+ * Mobile (< 768px):
+ * - Titulo: text-xl
+ * - Pergunta: text-sm
+ * - Resposta: text-xs
+ * - Padding: px-4 py-3
+ * - Padding seção: py-8
+ * 
+ * Implementar com Tailwind breakpoints:
+ * - text-xl md:text-2xl lg:text-3xl
+ * - px-4 md:px-5
+ * - py-8 md:py-12 lg:py-16
+ * 
+ * ================================================================================
+ * 
+ * MUDANÇA 5: INTEGRAÇÃO NA HOME
+ * 
+ * Arquivo: src/routes/index.tsx
+ * 
+ * Adicionar import no topo:
+ * import FAQ from "@/components/home/FAQ";
+ * 
+ * Encontrar: <ShopByLeague />
+ * 
+ * Adicionar APÓS:
+ * <FAQ />
+ * 
+ * Ordem completa deve ser:
+ * 1. BestSellers
+ * 2. VisualCategories
+ * 3. PromoBanner (Brasileirão)
+ * 4. BrazilianTeams
+ * 5. BrazilianProducts
+ * 6. ShopByLeague
+ * 7. FAQ ← NOVO (aqui)
+ * 8. (Footer virá depois)
+ * 
+ * Sem outras alterações em index.tsx.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
