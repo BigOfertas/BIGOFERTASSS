@@ -118,29 +118,39 @@ export default function FAQ() {
   };
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-8 md:py-12 lg:py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <h2 className="text-2xl font-bold mb-8 text-center uppercase">PERGUNTAS FREQUENTES</h2>
+        <h2 className="text-center text-xl md:text-2xl lg:text-3xl font-bold italic uppercase mb-12 text-black">
+          PERGUNTAS FREQUENTES
+        </h2>
         
-        <div className="max-w-[800px] mx-auto space-y-3">
+        <div className="max-w-2xl mx-auto space-y-3">
           {faqData.map((item) => (
-            <div key={item.id} className="border rounded-lg overflow-hidden">
+            <div key={item.id} className="border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all duration-200 overflow-hidden">
               <button 
                 onClick={() => toggle(item.id)} 
-                className="w-full p-4 flex justify-between items-center text-left hover:bg-gray-50 transition-colors"
+                className="w-full px-4 py-3 md:px-5 md:py-4 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors duration-200 text-left"
               >
-                <span className="font-medium text-gray-800">
-                  <span className="mr-2">{item.emoji}</span>
-                  {item.question}
+                <span className="flex items-center gap-3 text-left">
+                  <span className="text-xl">{item.emoji}</span>
+                  <span className="font-semibold text-gray-800 text-sm md:text-base">
+                    {item.question}
+                  </span>
                 </span>
-                <ChevronIcon rotation={openId === item.id ? 180 : 0} />
+                <ChevronIcon isOpen={openId === item.id} />
               </button>
               
-              {openId === item.id && (
-                <div className="p-4 pt-0 text-sm text-gray-600 whitespace-pre-line border-t bg-white">
+              <div 
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                  openId === item.id 
+                    ? 'max-h-96 opacity-100' 
+                    : 'max-h-0 opacity-0'
+                }`}
+              >
+                <div className="px-4 py-3 md:px-5 md:py-4 text-gray-600 text-xs md:text-sm leading-relaxed whitespace-pre-wrap border-t border-gray-100">
                   {item.answer}
                 </div>
-              )}
+              </div>
             </div>
           ))}
         </div>
