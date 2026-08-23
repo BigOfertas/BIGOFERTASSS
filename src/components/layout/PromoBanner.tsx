@@ -8,6 +8,7 @@ interface PromoBannerProps {
   className?: string;
   aspectRatio?: string;
   style?: React.CSSProperties;
+  href?: string;
 }
 
 const PromoBanner: React.FC<PromoBannerProps> = ({
@@ -18,6 +19,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
   className = "",
   aspectRatio = "aspect-auto",
   style = {},
+  href,
 }) => {
   // Use images array if provided, otherwise fallback to single imageUrl
   // If no images at all, we might still want multiple "slots" for the marquee
@@ -30,9 +32,9 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
   // For the continuous marquee effect, we duplicate the list to ensure a seamless infinite loop
   const displayItems = isCarousel ? [...slots, ...slots] : slots;
 
-  return (
+  const content = (
     <div 
-      className={`w-full overflow-hidden bg-gray-100 ${className}`}
+      className={`w-full overflow-hidden bg-gray-100 transition-all duration-300 ${href ? 'hover:shadow-lg cursor-pointer' : ''} ${className}`}
       data-banner-id={id}
       style={{
         ...style,
@@ -67,6 +69,16 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
       )}
     </div>
   );
+
+  if (href) {
+    return (
+      <a href={href} className="block w-full">
+        {content}
+      </a>
+    );
+  }
+
+  return content;
 };
 
 export default PromoBanner;
