@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ProductCarouselProps {
   children: React.ReactNode;
@@ -10,14 +9,22 @@ interface ProductCarouselProps {
 
 const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount, activePage = 0, onPageChange }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [, setCanScrollLeft] = useState(false);
+  const [, setCanScrollRight] = useState(true);
 
   const checkScroll = () => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       setCanScrollLeft(scrollLeft > 5);
       setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
+      
+      // Update page state if scrolled manually (mobile swipe)
+      if (onPageChange) {
+        const page = Math.round(scrollLeft / clientWidth);
+        if (page !== activePage && page >= 0 && page < 2) {
+          onPageChange(page);
+        }
+      }
     }
   };
 
@@ -34,19 +41,8 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount, 
     }
   }, [activePage]);
 
-  const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current) {
-      const { clientWidth } = scrollRef.current;
-      // No desktop mostramos 5, então scrollamos por bloco de 5 ou parcial
-      const scrollAmount = direction === "left" ? -clientWidth : clientWidth;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-    }
-  };
-
   return (
     <div className="relative group/carousel">
-      {/* Arrows removed per instructions to use dots for group navigation */}
-
       {/* Carousel Container */}
       <div
         ref={scrollRef}
