@@ -278,7 +278,7 @@ function Index() {
             <PromoBanner 
               id="Brasileirão" 
               style={{ aspectRatio: '1920/500' }}
-              className="rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow max-md:!aspect-[1920/750]"
+              className="rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow max-md:!aspect-[1920/1125]"
               href="#" // Deixado preparado para receber o link futuramente
             />
           </div>
