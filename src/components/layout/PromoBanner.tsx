@@ -3,6 +3,7 @@ import React from "react";
 interface PromoBannerProps {
   id: string;
   imageUrl?: string;
+  images?: string[];
   altText?: string;
   className?: string;
   aspectRatio?: string;
@@ -12,13 +13,19 @@ interface PromoBannerProps {
 const PromoBanner: React.FC<PromoBannerProps> = ({
   id,
   imageUrl,
+  images,
   altText = "Banner Promocional",
   className = "",
-  aspectRatio = "aspect-auto", // Default to auto if not provided
+  aspectRatio = "aspect-auto",
   style = {},
 }) => {
-  // Safe area concept: The image is centered so mobile crop remains predictable.
-  // No HTML/Text layers here, just the PNG slot as requested.
+  // Use images array if provided, otherwise fallback to single imageUrl
+  const bannerImages = images && images.length > 0 ? images : imageUrl ? [imageUrl] : [];
+  const isCarousel = bannerImages.length > 1;
+
+  // For the continuous marquee effect, we duplicate the list of images
+  const displayImages = isCarousel ? [...bannerImages, ...bannerImages] : bannerImages;
+
   return (
     <div 
       className={`w-full overflow-hidden bg-gray-100 ${className}`}
@@ -28,12 +35,21 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
         aspectRatio: style.aspectRatio || (aspectRatio !== 'aspect-auto' ? aspectRatio.replace('aspect-', '').replace('[', '').replace(']', '').replace('/', ' / ') : undefined)
       }}
     >
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt={altText}
-          className="w-full h-full object-cover object-center"
-        />
+      {displayImages.length > 0 ? (
+        <div className={isCarousel ? "animate-marquee h-full" : "w-full h-full"}>
+          {displayImages.map((src, index) => (
+            <div 
+              key={`${id}-${index}`} 
+              className={isCarousel ? "h-full w-screen shrink-0" : "w-full h-full"}
+            >
+              <img
+                src={src}
+                alt={`${altText} ${index + 1}`}
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
           <span className="text-sm font-medium">PNG Slot: {id}</span>
