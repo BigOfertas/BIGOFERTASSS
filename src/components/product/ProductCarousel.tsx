@@ -19,7 +19,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }
 
   return (
     <div className="w-full">
-      {/* Desktop Version: Crossfade + Dots */}
+      {/* Desktop Version: Crossfade + Dots (Hidden on mobile) */}
       <div className="hidden md:block">
         <div className="relative">
           {pages.map((pageProducts, pageIndex) => (
@@ -57,7 +57,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }
         </div>
       </div>
 
-      {/* Mobile Version: Horizontal Scroll (Diversifique-style) */}
+      {/* Mobile Version: Horizontal Scroll (Hidden on desktop) */}
       <div className="md:hidden">
         <div className="flex overflow-x-auto pb-4 gap-4 scroll-smooth snap-x custom-scrollbar">
           {products.map((child, index) => (
