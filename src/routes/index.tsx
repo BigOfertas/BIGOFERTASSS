@@ -461,6 +461,7 @@ function Index() {
 
         {/* 7. COMPRE POR LIGA */}
         <ShopByLeague />
+        <FAQ />
       </main>
     </div>
   );
