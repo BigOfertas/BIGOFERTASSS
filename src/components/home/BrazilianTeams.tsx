@@ -66,17 +66,17 @@ const BrazilianTeams: React.FC = () => {
 
         {/* Desktop: Centered distribution / Mobile: Horizontal swipe */}
         <div className="relative group/scroll">
-          <div className="flex overflow-x-auto pb-6 no-scrollbar custom-scrollbar-mobile gap-6 sm:gap-8 md:gap-10 scroll-smooth snap-x md:justify-center items-center">
+          <div className="flex overflow-x-auto pb-6 no-scrollbar custom-scrollbar-mobile gap-4 sm:gap-8 md:gap-10 scroll-smooth snap-x md:justify-center items-center">
             {teams.map((team) => (
-              <div key={team.id} className="snap-center">
+              <div key={team.id} className="snap-center px-1">
                 <TeamLogo team={team} />
               </div>
             ))}
           </div>
           
-          {/* Mobile Discrete Progress Bar Indicator (managed by CSS scrollbar) */}
-          <div className="md:hidden mt-2 h-[2px] w-24 mx-auto bg-gray-100 rounded-full overflow-hidden">
-             {/* This is a visual anchor, the actual progress is handled by the custom-scrollbar utility in styles.css applied to the container */}
+          {/* Mobile Discrete Progress Bar Indicator */}
+          <div className="md:hidden mt-1 h-[2px] w-16 mx-auto bg-gray-100 rounded-full overflow-hidden">
+             {/* The progress is handled by the custom-scrollbar-mobile utility in styles.css */}
           </div>
         </div>
       </div>
