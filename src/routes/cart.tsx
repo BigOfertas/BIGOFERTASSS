@@ -180,7 +180,7 @@ function CartPage() {
               <div className="space-y-3 pt-2">
                 <Button 
                   className="w-full bg-red-600 hover:bg-red-700 text-white py-6 text-lg font-bold transition-transform active:scale-95"
-                  onClick={() => navigate({ to: '/checkout' })}
+                  onClick={() => alert('Integração com Checkout em breve!')}
                 >
                   Finalizar Compra
                 </Button>
