@@ -6,37 +6,37 @@
  * Requisitos Parte 1 (Estrutura Base):
  * 
  * 1. **Rota:**
- *    - Criar rota `/products` usando TanStack Router
- *    - Suportar query params: `?campeonato=x&liga=y&time=z`
- *    - Ler query params da URL usando `useSearch()` do TanStack Router
+ *    - Criar rota `/products` usando TanStack Router ✅
+ *    - Suportar query params: `?campeonato=x&liga=y&time=z` ✅
+ *    - Ler query params da URL usando `useSearch()` do TanStack Router ✅
  * 
  * 2. **Layout:**
- *    - Usar `__root.tsx` como base (Header + Footer)
+ *    - Usar `__root.tsx` como base (Header + Footer) ✅
  *    - Layout em 2 colunas:
- *      - **Esquerda (sidebar):** filtros (será detalhado em próximo prompt)
- *      - **Direita:** grid de produtos
+ *      - **Esquerda (sidebar):** filtros (será detalhado em próximo prompt) ✅
+ *      - **Direita:** grid de produtos ✅
  * 
  * 3. **Busca de Dados:**
- *    - Buscar todos os produtos da tabela `products` no Supabase
- *    - Estrutura esperada: `{ id, name, price, image_url, category, campeonato, liga, time, stock, ... }`
- *    - Se houver query params, **filtrar localmente em JavaScript** (não fazer query no Supabase com WHERE dinâmico por agora)
+ *    - Buscar todos os produtos da tabela `products` no Supabase ✅
+ *    - Estrutura esperada: `{ id, name, price, image_url, category, campeonato, liga, time, stock, ... }` ✅
+ *    - Se houver query params, **filtrar localmente em JavaScript** (não fazer query no Supabase com WHERE dinâmico por agora) ✅
  *    - Lógica de filtro: 
- *      - Se `?campeonato=brasileirao`, mostrar só produtos onde `campeonato === 'brasileirao'`
- *      - Se `?campeonato=brasileirao&liga=serie-a`, filtrar ambos
- *      - Se `?campeonato=brasileirao&liga=serie-a&time=flamengo`, filtrar os três
- *      - Se nenhum filtro, mostrar todos
+ *      - Se `?campeonato=brasileirao`, mostrar só produtos onde `campeonato === 'brasileirao'` ✅
+ *      - Se `?campeonato=brasileirao&liga=serie-a`, filtrar ambos ✅
+ *      - Se `?campeonato=brasileirao&liga=serie-a&time=flamengo`, filtrar os três ✅
+ *      - Se nenhum filtro, mostrar todos ✅
  * 
  * 4. **Grid de Produtos:**
- *    - Mostrar produtos em grid responsivo (4 colunas desktop, 2 tablet, 1 mobile)
+ *    - Mostrar produtos em grid responsivo (4 colunas desktop, 2 tablet, 1 mobile) ✅
  *    - Cada card:
- *      - Imagem do produto
- *      - Nome
- *      - Preço (em BRL)
- *      - Link clicável que leva pra `/product/:id`
- *    - Se lista vazia, mostrar "Nenhum produto encontrado"
+ *      - Imagem do produto ✅
+ *      - Nome ✅
+ *      - Preço (em BRL) ✅
+ *      - Link clicável que leva pra `/product/:id` ✅
+ *    - Se lista vazia, mostrar "Nenhum produto encontrado" ✅
  * 
  * 5. **Tratamento de Erros:**
- *    - Se erro ao carregar produtos, mostrar mensagem de erro
+ *    - Se erro ao carregar produtos, mostrar mensagem de erro ✅
  * 
  * Não modifique arquivos protegidos.
  * Crie: `src/routes/products.tsx` e componentes auxiliares conforme necessário.
