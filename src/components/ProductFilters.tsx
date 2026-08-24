@@ -7,10 +7,10 @@ import { X } from "lucide-react";
 interface ProductFiltersProps {
   products: any[];
   search: {
-    campeonato?: string;
-    liga?: string;
-    time?: string;
-    category?: string;
+    campeonato?: string | undefined;
+    liga?: string | undefined;
+    time?: string | undefined;
+    category?: string | undefined;
   };
 }
 
