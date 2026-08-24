@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "@/components/product/ProductCard";
 import Header from "@/components/layout/Header";
+import ProductFilters from "@/components/ProductFilters";
 import { z } from "zod";
 
 // Validação dos query params
@@ -81,26 +82,29 @@ function ProductsPage() {
         {/* Layout em 2 colunas: Sidebar (vazia por enquanto) + Grid */}
         <div className="flex flex-col md:flex-row gap-8">
           
-          {/* Coluna Esquerda: Sidebar (Placeholder para filtros da Parte 2) */}
+          {/* Coluna Esquerda: Sidebar com Filtros */}
           <aside className="w-full md:w-64 flex-shrink-0">
             <div className="sticky top-24">
-              <h2 className="text-lg font-black uppercase tracking-tight mb-4 text-gray-900 border-b pb-2">
-                Filtros
-              </h2>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-500 italic">
-                  Filtros detalhados serão implementados na próxima etapa.
-                </p>
-                {/* Link para limpar filtros se houver algum ativo */}
-                {(search.campeonato || search.liga || search.time) && (
-                  <Link 
-                    to="/products" 
-                    className="text-xs font-bold text-red-600 uppercase hover:underline"
-                  >
-                    Limpar Filtros
-                  </Link>
-                )}
-              </div>
+              {products && (
+                <ProductFilters 
+                  products={products} 
+                  search={search} 
+                />
+              )}
+              {isLoading && (
+                <div className="space-y-8">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="h-4 w-24 bg-gray-100 mb-4" />
+                      <div className="space-y-2">
+                        {Array.from({ length: 4 }).map((_, j) => (
+                          <div key={j} className="h-3 w-32 bg-gray-50" />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </aside>
 
