@@ -70,7 +70,8 @@ function ProductDetail() {
     currency: 'BRL',
   }).format(product.price);
 
-  const inStock = product.stock > 0;
+  const stock = product.stock ?? 0;
+  const inStock = stock > 0;
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
@@ -152,14 +153,14 @@ function ProductDetail() {
                       {quantity}
                     </span>
                     <button 
-                      onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
+                      onClick={() => setQuantity(q => Math.min(stock, q + 1))}
                       className="px-4 py-2 hover:bg-gray-50 text-gray-600 transition-colors font-bold"
                     >
                       +
                     </button>
                   </div>
                   <span className="text-xs text-gray-400 font-medium">
-                    {product.stock} unidades disponíveis
+                    {stock} unidades disponíveis
                   </span>
                 </div>
               )}

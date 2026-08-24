@@ -1,6 +1,7 @@
 import React from "react";
 import { Heart, Eye, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 
 interface ProductCardProps {
   id: string;
@@ -62,10 +63,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         <Button 
+          asChild
           className="w-full bg-[#E60000] hover:bg-black text-white font-bold text-[10px] sm:text-[11px] uppercase tracking-wider h-8 sm:h-10 rounded-sm transition-colors duration-300 flex items-center justify-center gap-1 sm:gap-2"
         >
-          <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-          ADICIONAR AO CARRINHO
+          <Link to="/product/$id" params={{ id }}>
+            <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+            VER DETALHES
+          </Link>
         </Button>
       </div>
     </div>
