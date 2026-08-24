@@ -1,27 +1,24 @@
 /**
- * PROMPT PARA LOVABLE — ETAPA 18B1 (PARTE 2A)
- * Footer BIGofertas: Estilo Tailwind CSS Base
+ * PROMPT PARA LOVABLE — ETAPA 18B2 (PARTE 2B)
+ * Footer BIGofertas: Accordions + Animações + Hover Effects
  * 
  * ================================================================================
  * 
  * CONTEXTO
  * 
- * Você vai criar a PARTE 2A do Footer profissional para BIGofertas.
+ * Você vai criar a PARTE 2B do Footer profissional para BIGofertas.
  * 
- * Esta é PARTE 2A de 3:
+ * Esta é PARTE 2B de 3:
  * - PARTE 1 (COMPLETA): Estrutura HTML + Conteúdo ✅
- * - PARTE 2A (AGORA): Estilo Tailwind CSS (cores, layout, tipografia)
- * - PARTE 2B: Accordions (mobile) + Animações
- * 
- * Arquivo: src/components/layout/Footer.tsx (JÁ EXISTE COM ESTRUTURA)
+ * - PARTE 2A (COMPLETA): Estilo Tailwind CSS ✅
+ * - PARTE 2B (AGORA): Accordions (mobile) + Animações + Hover
  * 
  * O que fazer:
- * - Aplicar cores BIGofertas em todo footer
- * - Estilizar layout (desktop 4 colunas, mobile 1 coluna)
- * - Tipografia correta (tamanhos, pesos)
- * - Espaçamento e padding
- * - Sem accordions ainda (será PARTE 2B)
- * - Sem animações ainda (será PARTE 2B)
+ * - Implementar accordions para mobile (2 seções)
+ * - Adicionar hover effects em links
+ * - Adicionar animações suaves (chevron + content)
+ * - useState para gerenciar estado accordions
+ * - Transições fluidas (300ms)
  * 
  * ================================================================================
  */
