@@ -1,52 +1,23 @@
 /**
- * Contexto: BIGofertas é uma plataforma de e-commerce de loja única. Estamos criando a rota de listagem de produtos com filtros.
+ * PROMPT PARA LOVABLE — ETAPA 20
+ * Sidebar de Filtros Dinâmicos na Listagem de Produtos
  * 
- * Tarefa: Criar a rota `/products` que lista produtos com filtros aplicáveis via query params.
+ * ================================================================================
  * 
- * Requisitos Parte 1 (Estrutura Base):
+ * CONTEXTO
  * 
- * 1. **Rota:**
- *    - Criar rota `/products` usando TanStack Router ✅
- *    - Suportar query params: `?campeonato=x&liga=y&time=z` ✅
- *    - Ler query params da URL usando `useSearch()` do TanStack Router ✅
+ * Finalizamos a implementação do sidebar de filtros para a rota `/products`.
  * 
- * 2. **Layout:**
- *    - Usar `__root.tsx` como base (Header + Footer) ✅
- *    - Layout em 2 colunas:
- *      - **Esquerda (sidebar):** filtros (será detalhado em próximo prompt) ✅
- *      - **Direita:** grid de produtos ✅
+ * O que foi feito:
+ * - Criação do componente `ProductFilters.tsx` com extração dinâmica de valores.
+ * - Seções para Campeonato, Liga e Time com checkboxes estilizados.
+ * - Lógica de filtros dependentes (Liga depende de Campeonato, Time de Liga).
+ * - Sincronização em tempo real com query params da URL via TanStack Router.
+ * - Botão "Limpar Tudo" e opção de limpar filtros individuais.
+ * - Integração completa em `src/routes/products.tsx`.
+ * - Layout responsivo e visual alinhado à identidade da marca (Vermelho/Branco/Preto).
  * 
- * 3. **Busca de Dados:**
- *    - Buscar todos os produtos da tabela `products` no Supabase ✅
- *    - Estrutura esperada: `{ id, name, price, image_url, category, campeonato, liga, time, stock, ... }` ✅
- *    - Se houver query params, **filtrar localmente em JavaScript** (não fazer query no Supabase com WHERE dinâmico por agora) ✅
- *    - Lógica de filtro: 
- *      - Se `?campeonato=brasileirao`, mostrar só produtos onde `campeonato === 'brasileirao'` ✅
- *      - Se `?campeonato=brasileirao&liga=serie-a`, filtrar ambos ✅
- *      - Se `?campeonato=brasileirao&liga=serie-a&time=flamengo`, filtrar os três ✅
- *      - Se nenhum filtro, mostrar todos ✅
- * 
- * 4. **Grid de Produtos:**
- *    - Mostrar produtos em grid responsivo (4 colunas desktop, 2 tablet, 1 mobile) ✅
- *    - Cada card:
- *      - Imagem do produto ✅
- *      - Nome ✅
- *      - Preço (em BRL) ✅
- *      - Link clicável que leva pra `/product/:id` ✅
- *    - Se lista vazia, mostrar "Nenhum produto encontrado" ✅
- * 
- * 5. **Tratamento de Erros:**
- *    - Se erro ao carregar produtos, mostrar mensagem de erro ✅
- * 
- * Não modifique arquivos protegidos.
- * Crie: `src/routes/products.tsx` e componentes auxiliares conforme necessário.
- *    - Usar Tailwind CSS v4 ✅
- *    - Paleta: vermelho/branco/preto ✅
- *    - Checkboxes estilizadas (cor vermelha quando marcadas) ✅
- *    - Sem dark mode ✅
- * 
- * Não modifique arquivos protegidos.
- * Crie: `src/components/ProductFilters.tsx` e integre em `src/routes/products.tsx` ✅
+ * ================================================================================
  */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
