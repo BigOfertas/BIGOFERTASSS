@@ -83,13 +83,13 @@ function ProductDetail() {
     <div className="bg-white min-h-screen pb-20">
       {/* Navigation Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4 sm:py-6">
-        <button 
-          onClick={() => window.history.back()}
-          className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-red-600 transition-colors group"
+        <Link 
+          to="/products"
+          className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-red-600 transition-colors group w-fit"
         >
           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Voltar
-        </button>
+          Voltar para Produtos
+        </Link>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
