@@ -28,12 +28,20 @@ function ProductsPage() {
   const { data: products, isLoading, error } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
+      // Mock data for initial testing if database is empty or missing fields
       const { data, error } = await supabase
         .from("products")
         .select("*");
       
       if (error) throw error;
-      return data;
+      
+      // If we only have the test product, let's enhance it with mock values for demonstration
+      return data.map(p => ({
+        ...p,
+        campeonato: p.campeonato || "Brasileirão",
+        liga: p.liga || "Série A",
+        time: p.time || "Flamengo"
+      }));
     },
   });
 
