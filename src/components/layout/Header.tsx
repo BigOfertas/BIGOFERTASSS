@@ -21,11 +21,11 @@ const Header: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-5">
           <div className="flex items-center justify-between gap-12">
             {/* Logo */}
-            <div className="flex-shrink-0 w-56 flex items-center">
+            <Link to="/" className="flex-shrink-0 w-56 flex items-center">
               <div className="w-full h-14 bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center rounded-sm text-gray-400 font-black italic text-2xl tracking-tighter">
                 <span className="text-red-600">BIG</span>ofertas
               </div>
-            </div>
+            </Link>
 
             {/* Search Bar - Elemento de maior destaque */}
             <div className="flex-1 max-w-2xl relative">
