@@ -85,7 +85,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ products, search }) => 
   }: { 
     title: string; 
     items: string[]; 
-    currentValue?: string; 
+    currentValue: string | undefined; 
     filterKey: string;
     emptyMessage?: string;
   }) => (
