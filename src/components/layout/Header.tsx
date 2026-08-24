@@ -3,7 +3,7 @@ import { Search, User, ShoppingCart, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/context/CartContext";
 import CategoryNav from "./CategoryNav";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, Link } from "@tanstack/react-router";
 
 const Header: React.FC = () => {
   const { totalItems } = useCart();
@@ -78,11 +78,11 @@ const Header: React.FC = () => {
           </button>
           
           {/* Logo (Center) */}
-          <div className="flex-1 flex justify-center">
+          <Link to="/" className="flex-1 flex justify-center">
             <div className="w-36 h-10 bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center rounded-sm text-gray-400 font-black italic text-lg tracking-tighter">
               <span className="text-red-600">BIG</span>ofertas
             </div>
-          </div>
+          </Link>
 
           {/* Icons (Right) */}
           <div className="flex items-center gap-4 -mr-1">
