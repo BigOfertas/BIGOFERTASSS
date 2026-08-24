@@ -2,10 +2,12 @@ import React from "react";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
 
+const REAL_PRODUCT_ID = "42981de6-11e1-4951-98f9-4914a35c20a4";
+
 const MOCK_BRASILEIRAO = Array.from({ length: 15 }, (_, i) => ({
-  id: `br-${i + 1}`,
-  name: `Camisa Oficial Brasileirão ${i + 1}`,
-  price: 299.99,
+  id: i === 0 ? REAL_PRODUCT_ID : `br-${i + 1}`,
+  name: i === 0 ? "Camisa Profissional BIGofertas 2024" : `Camisa Oficial Brasileirão ${i + 1}`,
+  price: i === 0 ? 199.90 : 299.99,
 }));
 
 const BrazilianProducts: React.FC = () => {

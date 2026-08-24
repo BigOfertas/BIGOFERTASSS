@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      products: {
+        Row: {
+          campeonato: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string
+          liga: string | null
+          name: string
+          price: number
+          specifications: string | null
+          stock: number | null
+          time: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          campeonato?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url: string
+          liga?: string | null
+          name: string
+          price: number
+          specifications?: string | null
+          stock?: number | null
+          time?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          campeonato?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string
+          liga?: string | null
+          name?: string
+          price?: number
+          specifications?: string | null
+          stock?: number | null
+          time?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

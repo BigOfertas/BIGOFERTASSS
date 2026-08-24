@@ -2,17 +2,20 @@ import React, { useState, useEffect } from "react";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
 
+// Real product ID from database for testing
+const REAL_PRODUCT_ID = "42981de6-11e1-4951-98f9-4914a35c20a4";
+
 // Mock data conforme solicitado - 15 produtos por categoria
 const MOCK_BEST_SELLERS = Array.from({ length: 15 }, (_, i) => ({
-  id: `best-${i + 1}`,
-  name: `Produto Mais Vendido ${i + 1} - Camisa Profissional`,
-  price: 349.99 + (i * 10),
+  id: i === 0 ? REAL_PRODUCT_ID : `best-${i + 1}`,
+  name: i === 0 ? "Camisa Profissional BIGofertas 2024" : `Produto Mais Vendido ${i + 1} - Camisa Profissional`,
+  price: i === 0 ? 199.90 : 349.99 + (i * 10),
 }));
 
 const MOCK_NEW_ARRIVALS = Array.from({ length: 15 }, (_, i) => ({
-  id: `new-${i + 1}`,
-  name: `Lançamento ${i + 1} - Nova Coleção 2024`,
-  price: 399.99 - (i * 5),
+  id: i === 0 ? REAL_PRODUCT_ID : `new-${i + 1}`,
+  name: i === 0 ? "Camisa Profissional BIGofertas 2024" : `Lançamento ${i + 1} - Nova Coleção 2024`,
+  price: i === 0 ? 199.90 : 399.99 - (i * 5),
 }));
 
 const BestSellers: React.FC = () => {
