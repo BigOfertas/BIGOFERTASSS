@@ -109,13 +109,23 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ products, search }) => 
       ) : (
         <div className="space-y-2.5">
           {items.map((item) => (
-            <div key={item} className="flex items-center space-x-3 group cursor-pointer" onClick={() => handleFilterChange(filterKey, item)}>
+            <div 
+              key={item} 
+              className="flex items-center space-x-3 group cursor-pointer" 
+              onClick={(e) => {
+                e.preventDefault();
+                handleFilterChange(filterKey, item);
+              }}
+            >
               <div className="relative flex items-center justify-center">
                 <Checkbox 
                   id={`${filterKey}-${item}`}
                   checked={currentValue === item}
-                  onCheckedChange={() => handleFilterChange(filterKey, item)}
-                  className="border-gray-300 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 rounded-none w-4 h-4 transition-all"
+                  onCheckedChange={(checked) => {
+                    // Checkbox already triggers a state change, but our div click also does.
+                    // Let's rely on one source.
+                  }}
+                  className="border-gray-300 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 rounded-none w-4 h-4 transition-all pointer-events-none"
                 />
               </div>
               <label 
