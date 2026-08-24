@@ -12,93 +12,10 @@ import bannerInferiorAsset from "@/assets/promos/banner-promo-inferior.png.asset
 import bannerSuperiorAsset from "@/assets/promos/banner-promo-superior.png.asset.json";
 
 /**
- * PROMPT PARA LOVABLE — ETAPA BÔNUS 2
- * Adicionar PNG no Slot Superior do PromoBanner (1774x300)
- * 
- * ================================================================================
- * 
- * CONTEXTO
- * 
- * Você vai receber 1 imagem PNG com resolução específica 1774x300px que deve ser
- * colocada em um "slot superior" (espaço vazio) na moldura do PromoBanner.
- * 
- * Dimensões da imagem:
- * - Largura: 1774px
- * - Altura: 300px
- * - Proporção: 5.9:1 (muito larga, pouco alta)
- * - Formato: PNG
- * 
- * Objetivo: Integrar esta imagem no slot superior respeitando sua proporção
- * e garantindo que apareça corretamente em todos os breakpoints (mobile/tablet/desktop)
- * 
- * ================================================================================
- * 
- * OBJETIVO
- * 
- * 1. Integrar 1 imagem PNG (1774x300) no slot superior do PromoBanner
- * 2. A imagem deve FIT dentro da moldura existente (não sair dos limites)
- * 3. Respeitar a proporção 1774x300 (não distorcer)
- * 4. Responsividade: Mobile/Tablet/Desktop OK
- * 5. Manter estilo e layout existentes
- * 6. Imagem deve ser visível e legível em todos os breakpoints
- * 
- * ================================================================================
- * 
- * MUDANÇA ESPECÍFICA: ARQUIVO PromoBanner.tsx
- * 
- * Arquivo: src/components/layout/PromoBanner.tsx
- * 
- * Contexto:
- * - PromoBanner já existe com moldura
- * - Há um slot superior vazio (acima ou antes do slot inferior)
- * - Precisa integrar PNG (1774x300) neste espaço
- * - Manter proporção original
- * 
- * Integração:
- * 
- * Container do slot superior (moldura existente):
- * - Deve acomodar imagem 1774x300
- * - Aspect ratio: 5.9:1
- * 
- * Imagem:
- * - src: [IMAGEM ANEXADA]
- * - alt: "Promoção" ou "Banner Superior"
- * - width: 1774
- * - height: 300
- * - Ou usar CSS: aspect-ratio: 1774 / 300
- * 
- * Renderização esperada:
- * 
- * <div className="slot-superior-container">
- *   {/* Moldura para 1774x300 */}
- *   <img
- *     src="[IMAGEM ANEXADA]"
- *     alt="Banner Superior"
- *     className="w-full h-auto object-cover"
- *     style={{
- *       aspectRatio: '1774 / 300'
- *     }}
- *   />
- * </div>
- * 
- * Ou com Tailwind (se suportar aspect-ratio):
- * 
- * <img
- *   src="[IMAGEM ANEXADA]"
- *   alt="Banner Superior"
- *   className="w-full h-auto object-cover aspect-[1774/300]"
- * />
- * 
- * ================================================================================
- * 
- * ESPECIFICAÇÕES TÉCNICAS
- * 
- * Imagem PNG:
- * - Resolução: 1774px × 300px
- * - Formato: PNG
- * - Proporção: 1774:300 (5.9:1)
- * - Localização: Slot superior do PromoBanner
- * - Não distorcer
+ * ETAPA BONUS 2 — PNG no Slot Superior do PromoBanner (1774x300)
+ * - Imagem 1774x300 integrada no slot superior
+ * - Proporcao 1774/300 respeitada (sem distorcer)
+ * - Responsivo em mobile, tablet e desktop
  */
 export const Route = createFileRoute("/")({
   component: Index,
