@@ -11,6 +11,7 @@ const productSearchSchema = z.object({
   campeonato: z.string().optional(),
   liga: z.string().optional(),
   time: z.string().optional(),
+  category: z.string().optional(),
 });
 
 type ProductSearch = z.infer<typeof productSearchSchema>;
@@ -48,6 +49,10 @@ function ProductsPage() {
     }
     
     if (search.time && product.time !== search.time) {
+      matches = false;
+    }
+    
+    if (search.category && product.category !== search.category) {
       matches = false;
     }
     
