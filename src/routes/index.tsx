@@ -1,24 +1,20 @@
 /**
- * PROMPT PARA LOVABLE — ETAPA 18B2 (PARTE 2B)
- * Footer BIGofertas: Accordions + Animações + Hover Effects
+ * PROMPT PARA LOVABLE — ETAPA 19
+ * Rota de Detalhes do Produto e Gerenciamento de Carrinho
  * 
  * ================================================================================
  * 
  * CONTEXTO
  * 
- * Você vai criar a PARTE 2B do Footer profissional para BIGofertas.
+ * Finalizamos a criação da rota dinâmica `/product/:id` e a integração com Supabase.
  * 
- * Esta é PARTE 2B de 3:
- * - PARTE 1 (COMPLETA): Estrutura HTML + Conteúdo ✅
- * - PARTE 2A (COMPLETA): Estilo Tailwind CSS ✅
- * - PARTE 2B (AGORA): Accordions (mobile) + Animações + Hover
- * 
- * O que fazer:
- * - Implementar accordions para mobile (2 seções)
- * - Adicionar hover effects em links
- * - Adicionar animações suaves (chevron + content)
- * - useState para gerenciar estado accordions
- * - Transições fluidas (300ms)
+ * O que foi feito:
+ * - Criação da tabela `products` no Supabase com RLS e GRANTs.
+ * - Implementação do `CartContext` para gerenciamento global do carrinho.
+ * - Criação da página de detalhes do produto (`src/routes/product/$id.tsx`).
+ * - Layout responsivo com Tailwind CSS v4 seguindo a identidade BIGofertas.
+ * - Integração do contador de itens no Header.
+ * - Vinculação dos cards de produtos da Home com a nova rota de detalhes.
  * 
  * ================================================================================
  */
