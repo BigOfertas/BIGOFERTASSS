@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { AuthProvider } from "../lib/auth";
 import Footer from "../components/layout/Footer";
+import { CartProvider } from "../context/CartContext";
+import { Toaster } from "@/components/ui/sonner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -171,8 +173,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Outlet />
-          <Footer />
+          <CartProvider>
+            <Outlet />
+            <Footer />
+            <Toaster position="top-center" richColors />
+          </CartProvider>
         </AuthProvider>
     </QueryClientProvider>
   );
