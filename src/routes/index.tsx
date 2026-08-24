@@ -40,6 +40,13 @@
  * 
  * Não modifique arquivos protegidos.
  * Crie: `src/routes/products.tsx` e componentes auxiliares conforme necessário.
+ *    - Usar Tailwind CSS v4 ✅
+ *    - Paleta: vermelho/branco/preto ✅
+ *    - Checkboxes estilizadas (cor vermelha quando marcadas) ✅
+ *    - Sem dark mode ✅
+ * 
+ * Não modifique arquivos protegidos.
+ * Crie: `src/components/ProductFilters.tsx` e integre em `src/routes/products.tsx` ✅
  */
 import { createFileRoute } from "@tanstack/react-router";
 import PromoBanner from "@/components/layout/PromoBanner";
