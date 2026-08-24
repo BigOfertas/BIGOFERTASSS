@@ -3,9 +3,17 @@ import { Search, User, ShoppingCart, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/context/CartContext";
 import CategoryNav from "./CategoryNav";
+import { useNavigate } from "@tanstack/react-router";
 
 const Header: React.FC = () => {
   const { totalItems } = useCart();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigate({ to: "/products" });
+  };
   return (
     <header className="bg-white sticky top-0 z-50 shadow-sm border-b border-gray-100">
       {/* Desktop Header */}
@@ -21,16 +29,18 @@ const Header: React.FC = () => {
 
             {/* Search Bar - Elemento de maior destaque */}
             <div className="flex-1 max-w-2xl relative">
-              <div className="relative group">
+              <form onSubmit={handleSearch} className="relative group">
                 <Input
                   type="text"
                   placeholder="O que você está procurando?"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full h-12 pl-5 pr-14 border-gray-300 focus:border-red-600 focus:ring-0 focus-visible:ring-0 rounded-md bg-white transition-all text-sm placeholder:text-gray-400"
                 />
-                <button className="absolute right-0 top-0 h-full w-14 flex items-center justify-center text-gray-500 group-focus-within:text-red-600 transition-colors">
+                <button type="submit" className="absolute right-0 top-0 h-full w-14 flex items-center justify-center text-gray-500 group-focus-within:text-red-600 transition-colors">
                   <Search className="w-6 h-6" />
                 </button>
-              </div>
+              </form>
             </div>
 
             {/* Actions (Right Group) */}
@@ -92,16 +102,18 @@ const Header: React.FC = () => {
         
         {/* Mobile Search Row (Below main line) */}
         <div className="px-4 pb-4">
-          <div className="relative group">
+          <form onSubmit={handleSearch} className="relative group">
             <Input
               type="text"
               placeholder="O que você está procurando?"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-11 pl-4 pr-12 border-gray-300 focus:border-red-600 focus:ring-0 focus-visible:ring-0 rounded-md bg-white text-sm"
             />
-            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-red-600">
+            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-red-600">
               <Search className="w-5 h-5" />
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </header>
