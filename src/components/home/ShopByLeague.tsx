@@ -18,14 +18,16 @@ const LEAGUES: League[] = [
   { id: 'ligue-1', name: 'LIGUE 1', slug: 'ligue-1', active: true, position: 5 },
 ];
 
+const REAL_PRODUCT_ID = "42981de6-11e1-4951-98f9-4914a35c20a4";
+
 // Helper to generate mock products for a specific league
 const generateMockProducts = (leagueId: string) => {
   const league = LEAGUES.find(l => l.id === leagueId);
   const leagueName = league ? league.name : 'Liga';
   return Array.from({ length: 15 }, (_, i) => ({
-    id: `${leagueId}-prod-${i + 1}`,
-    name: `Camisa ${leagueName} Mod. ${i + 1}`,
-    price: 289.90 + (i * 10),
+    id: i === 0 ? REAL_PRODUCT_ID : `${leagueId}-prod-${i + 1}`,
+    name: i === 0 ? "Camisa Profissional BIGofertas 2024" : `Camisa ${leagueName} Mod. ${i + 1}`,
+    price: i === 0 ? 199.90 : 289.90 + (i * 10),
   }));
 };
 

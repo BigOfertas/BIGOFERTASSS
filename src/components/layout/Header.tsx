@@ -1,9 +1,11 @@
 import React from "react";
 import { Search, User, ShoppingCart, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useCart } from "@/context/CartContext";
 import CategoryNav from "./CategoryNav";
 
 const Header: React.FC = () => {
+  const { totalItems } = useCart();
   return (
     <header className="bg-white sticky top-0 z-50 shadow-sm border-b border-gray-100">
       {/* Desktop Header */}
@@ -44,7 +46,11 @@ const Header: React.FC = () => {
               <button className="flex items-center gap-3 group relative">
                 <div className="relative">
                   <ShoppingCart className="w-8 h-8 text-gray-900 group-hover:text-red-600 transition-colors" />
-                  {/* Espaço para futuro contador de itens, sem número fictício agora */}
+                  {totalItems > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                      {totalItems}
+                    </span>
+                  )}
                 </div>
               </button>
             </div>
@@ -73,8 +79,13 @@ const Header: React.FC = () => {
             <button className="text-gray-900 active:text-red-600 p-1">
               <User className="w-7 h-7" />
             </button>
-            <button className="text-gray-900 active:text-red-600 p-1">
+            <button className="text-gray-900 active:text-red-600 p-1 relative">
               <ShoppingCart className="w-7 h-7" />
+              {totalItems > 0 && (
+                <span className="absolute top-0 right-0 bg-red-600 text-white text-[8px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center">
+                  {totalItems}
+                </span>
+              )}
             </button>
           </div>
         </div>
