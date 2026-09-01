@@ -1,5 +1,5 @@
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
 
 import { useAuth } from "@/lib/auth";
 
@@ -8,8 +8,7 @@ export const Route = createFileRoute("/cadastro")({
 });
 
 function RegisterPage() {
-  const navigate = useNavigate();
-  const { user, loading, isOwner, signUp } = useAuth();
+  const { user, loading, isOwner, signUp, signOut } = useAuth();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -17,19 +16,9 @@ function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-
-  useEffect(() => {
-    if (loading || !user) {
-      return;
-    }
-
-    void navigate({
-      to: isOwner ? "/admin" : "/",
-      replace: true,
-    });
-  }, [user, loading, isOwner, navigate]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -68,10 +57,100 @@ function RegisterPage() {
     setSubmitting(false);
   }
 
-  if (loading && user) {
+  async function handleSignOut() {
+    if (signingOut) {
+      return;
+    }
+
+    setErrorMessage("");
+    setSigningOut(true);
+
+    const { error } = await signOut();
+
+    if (error) {
+      setErrorMessage(error.message);
+    }
+
+    setSigningOut(false);
+  }
+
+  if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-4">
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <p className="text-sm text-muted-foreground">Carregando conta...</p>
+      </main>
+    );
+  }
+
+  if (user) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 text-center">
+            <Link
+              to="/"
+              className="text-2xl font-bold tracking-tight text-foreground"
+            >
+              BIGofertas
+            </Link>
+
+            <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">
+              Conta já conectada
+            </h1>
+
+            <p className="mt-2 text-sm text-muted-foreground">
+              Para criar outra conta, saia da sessão atual primeiro.
+            </p>
+          </div>
+
+          <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-lg bg-muted px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                E-mail conectado
+              </p>
+              <p className="mt-1 break-all text-sm font-medium text-foreground">
+                {user.email ?? "Conta autenticada"}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Perfil: {isOwner ? "owner" : "customer"}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              disabled={signingOut}
+              className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {signingOut ? "Saindo..." : "Sair para criar outra conta"}
+            </button>
+
+            {isOwner ? (
+              <Link
+                to="/admin"
+                className="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+              >
+                Voltar ao painel administrativo
+              </Link>
+            ) : (
+              <Link
+                to="/"
+                className="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+              >
+                Voltar à loja
+              </Link>
+            )}
+
+            {errorMessage ? (
+              <p
+                role="alert"
+                className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
+                {errorMessage}
+              </p>
+            ) : null}
+          </div>
+        </div>
       </main>
     );
   }
