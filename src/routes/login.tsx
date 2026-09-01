@@ -1,4 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { useAuth } from "@/lib/auth";
@@ -12,6 +13,7 @@ function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -26,7 +28,7 @@ function LoginPage() {
     setErrorMessage("");
     setSubmitting(true);
 
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(email.trim(), password);
 
     if (error) {
       setErrorMessage(
@@ -59,7 +61,10 @@ function LoginPage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-4">
-        <p className="text-sm text-muted-foreground">Carregando conta...</p>
+        <div className="text-center text-muted-foreground">
+          <Loader2 className="mx-auto h-6 w-6 animate-spin" aria-hidden="true" />
+          <p className="mt-3 text-sm">Carregando sua conta...</p>
+        </div>
       </main>
     );
   }
@@ -71,9 +76,9 @@ function LoginPage() {
           <div className="mb-8 text-center">
             <Link
               to="/"
-              className="text-2xl font-bold tracking-tight text-foreground"
+              className="text-2xl font-black italic tracking-tight text-foreground"
             >
-              BIGofertas
+              <span className="text-red-600">BIG</span>ofertas
             </Link>
 
             <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">
@@ -93,22 +98,19 @@ function LoginPage() {
               <p className="mt-1 break-all text-sm font-medium text-foreground">
                 {user.email ?? "Conta autenticada"}
               </p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Perfil: {isOwner ? "owner" : "customer"}
-              </p>
             </div>
 
             {isOwner ? (
               <Link
                 to="/admin"
-                className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                className="inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99]"
               >
                 Abrir painel administrativo
               </Link>
             ) : (
               <Link
                 to="/conta"
-                className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                className="inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99]"
               >
                 Abrir minha conta
               </Link>
@@ -127,7 +129,14 @@ function LoginPage() {
               disabled={signingOut}
               className="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {signingOut ? "Saindo..." : "Sair para entrar com outra conta"}
+              {signingOut ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saindo...
+                </>
+              ) : (
+                "Sair para entrar com outra conta"
+              )}
             </button>
 
             {errorMessage ? (
@@ -145,17 +154,17 @@ function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+    <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7] px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <Link
             to="/"
-            className="text-2xl font-bold tracking-tight text-foreground"
+            className="text-2xl font-black italic tracking-tight text-foreground"
           >
-            BIGofertas
+            <span className="text-red-600">BIG</span>ofertas
           </Link>
 
-          <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">
+          <h1 className="mt-6 text-2xl font-bold tracking-tight text-foreground">
             Entrar
           </h1>
 
@@ -166,6 +175,7 @@ function LoginPage() {
 
         <form
           onSubmit={handleSubmit}
+          aria-busy={submitting}
           className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
         >
           <div className="space-y-2">
@@ -180,10 +190,14 @@ function LoginPage() {
               id="email"
               type="email"
               autoComplete="email"
+              autoFocus
               required
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+              onChange={(event) => {
+                setEmail(event.target.value);
+                if (errorMessage) setErrorMessage("");
+              }}
+              className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
               placeholder="seuemail@exemplo.com"
             />
           </div>
@@ -196,22 +210,40 @@ function LoginPage() {
               Senha
             </label>
 
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-              placeholder="Sua senha"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  if (errorMessage) setErrorMessage("");
+                }}
+                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 pr-11 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
+                placeholder="Sua senha"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                aria-pressed={showPassword}
+                className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground transition hover:text-foreground"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4.5 w-4.5" aria-hidden="true" />
+                ) : (
+                  <Eye className="h-4.5 w-4.5" aria-hidden="true" />
+                )}
+              </button>
+            </div>
           </div>
 
           {errorMessage ? (
             <p
               role="alert"
-              className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
             >
               {errorMessage}
             </p>
@@ -220,21 +252,32 @@ function LoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {submitting ? "Entrando..." : "Entrar"}
+            {submitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Entrando...
+              </>
+            ) : (
+              "Entrar"
+            )}
           </button>
 
           <p className="text-center text-sm text-muted-foreground">
             Ainda não tem uma conta?{" "}
             <Link
               to="/cadastro"
-              className="font-medium text-foreground underline underline-offset-4"
+              className="font-semibold text-red-600 underline-offset-4 hover:underline"
             >
               Criar conta
             </Link>
           </p>
         </form>
+
+        <p className="mt-4 text-center text-xs leading-relaxed text-muted-foreground">
+          Você pode voltar à loja a qualquer momento sem perder o carrinho salvo neste navegador.
+        </p>
       </div>
     </main>
   );
