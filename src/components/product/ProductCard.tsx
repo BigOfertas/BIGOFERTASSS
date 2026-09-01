@@ -1,78 +1,90 @@
 import React from "react";
-import { Heart, Eye, ShoppingCart } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
+import { ShoppingCart } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 interface ProductCardProps {
   id: string;
+  slug?: string;
   name: string;
   price: number;
-  imageUrl?: string;
+  promotionalPrice?: number | null;
+  imageUrl?: string | null;
   className?: string;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
   id,
+  slug,
   name,
   price,
+  promotionalPrice,
   imageUrl,
   className = "",
 }) => {
-  const formattedPrice = new Intl.NumberFormat("pt-BR", {
+  const [imageFailed, setImageFailed] = React.useState(false);
+  const currency = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(price);
+  });
+  const hasPromotion =
+    promotionalPrice !== null &&
+    promotionalPrice !== undefined &&
+    promotionalPrice >= 0 &&
+    promotionalPrice < price;
+  const formattedPrice = currency.format(hasPromotion ? promotionalPrice : price);
+  const formattedOriginalPrice = hasPromotion ? currency.format(price) : null;
+
+  const showImage = Boolean(imageUrl) && !imageFailed;
 
   return (
-    <div className={`group bg-white rounded-md border border-gray-100 p-2 sm:p-3 flex flex-col h-full transition-all duration-300 hover:shadow-md ${className}`}>
-      {/* Product Image Container */}
-      <div className="relative aspect-[4/5] mb-3 bg-gray-50 rounded-sm overflow-hidden flex items-center justify-center group-hover:bg-white transition-colors duration-300">
-        {imageUrl ? (
+    <article
+      className={`group flex h-full flex-col rounded-md border border-gray-100 bg-white p-2 transition-all duration-300 hover:shadow-md sm:p-3 ${className}`}
+    >
+      <div className="relative mb-3 flex aspect-[4/5] items-center justify-center overflow-hidden rounded-sm bg-gray-50 transition-colors duration-300 group-hover:bg-white">
+        {showImage ? (
           <img
-            src={imageUrl}
+            src={imageUrl ?? undefined}
             alt={name}
-            className="w-full h-full object-contain mix-blend-multiply p-2 transform group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+            onError={() => setImageFailed(true)}
+            className="h-full w-full object-contain p-2 transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold italic text-lg uppercase">
-            <span className="text-red-500/20">BIG</span>
-          </div>
+          <span className="px-4 text-center text-xs font-medium text-gray-400">
+            Imagem indisponível
+          </span>
         )}
-
-        {/* Overlay Actions (Prepared for Heart/Eye) */}
-        <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button className="w-8 h-8 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-gray-600 hover:text-red-600 hover:border-red-600 transition-all">
-            <Heart className="w-4 h-4" />
-          </button>
-          <button className="w-8 h-8 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-gray-600 hover:text-red-600 hover:border-red-600 transition-all">
-            <Eye className="w-4 h-4" />
-          </button>
-        </div>
       </div>
 
-      {/* Info Content */}
-      <div className="flex flex-col flex-1">
-        <h3 className="text-[11px] sm:text-[13px] font-medium text-gray-800 mb-1 sm:mb-2 line-clamp-2 h-[28px] sm:h-[32px] leading-tight group-hover:text-red-600 transition-colors">
+      <div className="flex flex-1 flex-col">
+        <h2 className="mb-1 h-[28px] line-clamp-2 text-[11px] font-medium leading-tight text-gray-800 transition-colors group-hover:text-red-600 sm:mb-2 sm:h-[32px] sm:text-[13px]">
           {name}
-        </h3>
-        
-        <div className="mt-auto mb-2 sm:mb-3">
-          <span className="text-sm sm:text-lg font-extrabold text-gray-900 tracking-tight">
+        </h2>
+
+        <div className="mb-2 mt-auto sm:mb-3">
+          {formattedOriginalPrice ? (
+            <span className="mr-2 text-[10px] font-medium text-gray-400 line-through sm:text-xs">
+              {formattedOriginalPrice}
+            </span>
+          ) : null}
+          <span className="text-sm font-extrabold tracking-tight text-gray-900 sm:text-lg">
             {formattedPrice}
           </span>
         </div>
 
-        <Button 
+        <Button
           asChild
-          className="w-full bg-[#E60000] hover:bg-black text-white font-bold text-[10px] sm:text-[11px] uppercase tracking-wider h-8 sm:h-10 rounded-sm transition-colors duration-300 flex items-center justify-center gap-1 sm:gap-2"
+          className="flex h-8 w-full items-center justify-center gap-1 rounded-sm bg-[#E60000] text-[10px] font-bold uppercase tracking-wider text-white transition-colors duration-300 hover:bg-black sm:h-10 sm:gap-2 sm:text-[11px]"
         >
-          <Link to="/product/$id" params={{ id }}>
-            <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-            VER DETALHES
+          <Link to="/product/$id" params={{ id: slug || id }}>
+            <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
+            Ver detalhes
           </Link>
         </Button>
       </div>
-    </div>
+    </article>
   );
 };
 

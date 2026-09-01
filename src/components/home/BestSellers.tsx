@@ -1,107 +1,48 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
 
-// Real product ID from database for testing
-const REAL_PRODUCT_ID = "42981de6-11e1-4951-98f9-4914a35c20a4";
-
-// Mock data conforme solicitado - 15 produtos por categoria
-const MOCK_BEST_SELLERS = Array.from({ length: 15 }, (_, i) => ({
-  id: i === 0 ? REAL_PRODUCT_ID : `best-${i + 1}`,
-  name: i === 0 ? "Camisa Profissional BIGofertas 2024" : `Produto Mais Vendido ${i + 1} - Camisa Profissional`,
-  price: i === 0 ? 199.90 : 349.99 + (i * 10),
-}));
-
-const MOCK_NEW_ARRIVALS = Array.from({ length: 15 }, (_, i) => ({
-  id: i === 0 ? REAL_PRODUCT_ID : `new-${i + 1}`,
-  name: i === 0 ? "Camisa Profissional BIGofertas 2024" : `Lançamento ${i + 1} - Nova Coleção 2024`,
-  price: i === 0 ? 199.90 : 399.99 - (i * 5),
-}));
-
 const BestSellers: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"best" | "new">("best");
-  const [displayTab, setDisplayTab] = useState<"best" | "new">("best");
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const { data, isLoading, error } = useCatalogProducts({ pageSize: 12 });
+  const recentProducts = data?.items ?? [];
 
-  const handleTabChange = (tab: "best" | "new") => {
-    if (tab === activeTab || isTransitioning) return;
-    
-    setIsTransitioning(true);
-    setActiveTab(tab);
-    
-    // Fade out (150ms) -> Switch data -> Fade in (150ms)
-    setTimeout(() => {
-      setDisplayTab(tab);
-      setIsTransitioning(false);
-    }, 150);
-  };
+  if (error || (!isLoading && recentProducts.length === 0)) {
+    return null;
+  }
 
   return (
-    <section className="py-16 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        {/* Títulos das Abas Centralizados */}
-        <div className="flex justify-center items-center gap-6 md:gap-12 mb-12">
-          <button
-            onClick={() => handleTabChange("best")}
-            className={`text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none transition-all relative ${
-              activeTab === "best" ? "text-gray-900" : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            MAIS <span className={activeTab === "best" ? "text-red-600" : ""}>VENDIDOS</span>
-            {activeTab === "best" && (
-              <span className="absolute -bottom-2 left-0 w-full h-1 bg-red-600 rounded-full"></span>
-            )}
-          </button>
-          
-          <button
-            onClick={() => handleTabChange("new")}
-            className={`text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none transition-all relative ${
-              activeTab === "new" ? "text-gray-900" : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            LANÇAMENTOS
-            {activeTab === "new" && (
-              <span className="absolute -bottom-2 left-0 w-full h-1 bg-red-600 rounded-full"></span>
-            )}
-          </button>
-        </div>
+    <section className="overflow-hidden bg-white py-16">
+      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+        <h2 className="mb-12 text-center text-xl font-black uppercase leading-none tracking-tighter text-gray-900 md:text-2xl">
+          PRODUTOS <span className="text-red-600">RECENTES</span>
+        </h2>
 
-        {/* Seção de Produtos com Crossfade e Paginação Independente */}
-        <div 
-          className={`relative transition-opacity duration-150 ease-in-out ${
-            isTransitioning ? "opacity-0" : "opacity-100"
-          }`}
-        >
-          {displayTab === "best" && (
-            <div>
-              <ProductCarousel itemCount={MOCK_BEST_SELLERS.length}>
-                {MOCK_BEST_SELLERS.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    id={product.id}
-                    name={product.name}
-                    price={product.price}
-                  />
-                ))}
-              </ProductCarousel>
-            </div>
-          )}
-
-          {displayTab === "new" && (
-            <div>
-              <ProductCarousel itemCount={MOCK_NEW_ARRIVALS.length}>
-                {MOCK_NEW_ARRIVALS.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    id={product.id}
-                    name={product.name}
-                    price={product.price}
-                  />
-                ))}
-              </ProductCarousel>
-            </div>
-          )}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-5">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div
+                key={index}
+                className="aspect-[4/5] animate-pulse rounded-md bg-gray-100"
+              />
+            ))}
+          </div>
+        ) : (
+          <ProductCarousel itemCount={recentProducts.length}>
+            {recentProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                id={product.id}
+                slug={product.slug}
+                name={product.name}
+                price={product.price}
+                promotionalPrice={product.promotional_price}
+                imageUrl={product.displayImageUrl}
+              />
+            ))}
+          </ProductCarousel>
+        )}
       </div>
     </section>
   );

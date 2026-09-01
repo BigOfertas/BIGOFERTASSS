@@ -121,9 +121,7 @@ function AdminPage() {
           </h1>
 
           <p className="mt-3 text-muted-foreground">
-            A fundação da área administrativa está funcionando.
-            Os módulos de produtos, pedidos e clientes serão
-            adicionados nas próximas fases.
+            Área restrita para administração da BIGofertas.
           </p>
 
           <div className="mt-8 rounded-xl border border-border bg-card p-6">

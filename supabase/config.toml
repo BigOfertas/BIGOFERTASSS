@@ -1,1 +1,7 @@
 project_id = "rtmrmevofybapduihasf"
+
+[functions.r2-image-presign]
+verify_jwt = true
+
+[functions.r2-image-complete]
+verify_jwt = true

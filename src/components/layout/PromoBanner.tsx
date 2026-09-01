@@ -15,75 +15,73 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
   id,
   imageUrl,
   images,
-  altText = "Banner Promocional",
+  altText = "Banner promocional",
   className = "",
   aspectRatio = "aspect-auto",
   style = {},
   href,
 }) => {
-  // Use images array if provided, otherwise fallback to single imageUrl
-  // If no images at all, we might still want multiple "slots" for the marquee
-  const bannerImages = images && images.length > 0 ? images : imageUrl ? [imageUrl] : [];
-  
-  // If it's the superior banner and we want a marquee, ensure we have slots even without images
-  const slots = bannerImages.length > 0 ? bannerImages : id === 'superior' ? ['', '', ''] : [];
-  const isCarousel = slots.length > 1;
+  const bannerImages = (images?.length ? images : imageUrl ? [imageUrl] : []).filter(
+    Boolean,
+  );
 
-  // For the continuous marquee effect, we duplicate the list to ensure a seamless infinite loop
-  const displayItems = isCarousel ? [...slots, ...slots] : slots;
+  if (bannerImages.length === 0) {
+    return null;
+  }
+
+  const isCarousel = bannerImages.length > 1;
+  const displayItems = isCarousel
+    ? [...bannerImages, ...bannerImages]
+    : bannerImages;
+
+  const parsedAspectRatio =
+    style.aspectRatio || aspectRatio === "aspect-auto"
+      ? style.aspectRatio
+      : aspectRatio
+          .replace("aspect-", "")
+          .replace("[", "")
+          .replace("]", "")
+          .replace("/", " / ");
 
   const content = (
-    <div 
-      className={`w-full overflow-hidden bg-gray-100 transition-all duration-300 ${href ? 'hover:shadow-lg cursor-pointer' : ''} ${className}`}
+    <div
+      className={`w-full overflow-hidden bg-gray-100 transition-all duration-300 ${
+        href ? "cursor-pointer hover:shadow-lg" : ""
+      } ${className}`}
       data-banner-id={id}
-      style={{
-        ...style,
-        aspectRatio: style.aspectRatio || (aspectRatio !== 'aspect-auto' ? aspectRatio.replace('aspect-', '').replace('[', '').replace(']', '').replace('/', ' / ') : undefined)
-      }}
+      style={{ ...style, aspectRatio: parsedAspectRatio }}
     >
-      {displayItems.length > 0 ? (
-        <div className={isCarousel ? "animate-marquee h-full" : "w-full h-full"}>
-          {displayItems.map((src, index) => (
-            <div 
-              key={`${id}-${index}`} 
-              className={isCarousel ? "h-full w-screen shrink-0" : "w-full h-full"}
-            >
-              {src ? (
-                <img
-                  src={src}
-                  alt={`${altText} ${index + 1}`}
-                  className={`w-full h-full object-cover transition-all duration-300 ${
-                    id === 'inferior' ? 'object-left md:object-center' : 
-                    id === 'superior' ? 'aspect-[1774/300]' : 
-                    'object-center'
-                  }`}
-                  style={id === 'superior' ? { aspectRatio: '1774 / 300' } : {}}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 border-x border-gray-300">
-                  <span className="text-sm font-medium">PNG Slot: {id} {isCarousel ? (index % slots.length) + 1 : ''}</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-          <span className="text-sm font-medium">PNG Slot: {id}</span>
-        </div>
-      )}
+      <div className={isCarousel ? "animate-marquee h-full" : "h-full w-full"}>
+        {displayItems.map((src, index) => (
+          <div
+            key={`${id}-${index}`}
+            className={isCarousel ? "h-full w-screen shrink-0" : "h-full w-full"}
+          >
+            <img
+              src={src}
+              alt={isCarousel ? `${altText} ${index + 1}` : altText}
+              className={`h-full w-full object-cover transition-all duration-300 ${
+                id === "inferior"
+                  ? "object-left md:object-center"
+                  : id === "superior"
+                    ? "aspect-[1774/300]"
+                    : "object-center"
+              }`}
+              style={id === "superior" ? { aspectRatio: "1774 / 300" } : {}}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 
-  if (href) {
-    return (
-      <a href={href} className="block w-full">
-        {content}
-      </a>
-    );
-  }
-
-  return content;
+  return href ? (
+    <a href={href} className="block w-full">
+      {content}
+    </a>
+  ) : (
+    content
+  );
 };
 
 export default PromoBanner;

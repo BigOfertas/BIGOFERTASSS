@@ -30,3 +30,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Supabase Edge Functions secrets
+supabase/functions/.env
+supabase/functions/.env.*
+!supabase/functions/.env.example

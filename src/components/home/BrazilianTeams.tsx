@@ -1,114 +1,111 @@
 import React, { useRef, useState } from "react";
-import flamengoAsset from "@/assets/teams/flamengo.png.asset.json";
+import { Link } from "@tanstack/react-router";
+
 import atleticoMGAsset from "@/assets/teams/atletico_mineiro.png.asset.json";
-import cruzeiroAsset from "@/assets/teams/cruzeiro.png.asset.json";
-import saoPauloAsset from "@/assets/teams/sao_paulo.png.asset.json";
-import corinthiansAsset from "@/assets/teams/corinthians_v2.png.asset.json";
-import palmeirasAsset from "@/assets/teams/palmeiras.png.asset.json";
-import santosAsset from "@/assets/teams/santos_final.png.asset.json";
 import botafogoAsset from "@/assets/teams/botafogo_final.png.asset.json";
+import corinthiansAsset from "@/assets/teams/corinthians_v2.png.asset.json";
+import cruzeiroAsset from "@/assets/teams/cruzeiro.png.asset.json";
+import flamengoAsset from "@/assets/teams/flamengo.png.asset.json";
 import fluminenseAsset from "@/assets/teams/fluminense_final.png.asset.json";
 import gremioAsset from "@/assets/teams/gremio_final.png.asset.json";
 import internacionalAsset from "@/assets/teams/internacional.png.asset.json";
+import palmeirasAsset from "@/assets/teams/palmeiras.png.asset.json";
+import santosAsset from "@/assets/teams/santos_final.png.asset.json";
+import saoPauloAsset from "@/assets/teams/sao_paulo.png.asset.json";
 
 interface Team {
   id: string;
   name: string;
-  slug: string;
-  logoUrl?: string;
-  href: string;
+  logoUrl: string;
 }
-
-interface TeamLogoProps {
-  team: Team;
-}
-
-const TeamLogo: React.FC<TeamLogoProps> = ({ team }) => {
-  return (
-    <a
-      href={team.href}
-      className="flex flex-col items-center justify-center group transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
-    >
-      <div className="w-[110px] h-[110px] md:w-[120px] md:h-[120px] lg:w-[140px] lg:h-[140px] flex items-center justify-center bg-gray-50 rounded-lg overflow-hidden p-0 group-hover:opacity-90 transition-opacity">
-        {team.logoUrl ? (
-          <img
-            src={team.logoUrl}
-            alt={team.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 rounded-lg border-2 border-dashed border-gray-300">
-            <span className="text-xs sm:text-sm font-bold uppercase text-center px-1 leading-tight">
-              {team.name}
-            </span>
-          </div>
-        )}
-      </div>
-    </a>
-  );
-};
 
 const teams: Team[] = [
-  { id: "flamengo", name: "Flamengo", slug: "flamengo", href: "/times/flamengo", logoUrl: flamengoAsset.url },
-  { id: "atletico-mg", name: "Atlético-MG", slug: "atletico-mg", href: "/times/atletico-mg", logoUrl: atleticoMGAsset.url },
-  { id: "cruzeiro", name: "Cruzeiro", slug: "cruzeiro", href: "/times/cruzeiro", logoUrl: cruzeiroAsset.url },
-  { id: "sao-paulo", name: "São Paulo", slug: "sao-paulo", href: "/times/sao-paulo", logoUrl: saoPauloAsset.url },
-  { id: "corinthians", name: "Corinthians", slug: "corinthians", href: "/times/corinthians", logoUrl: corinthiansAsset.url },
-  { id: "palmeiras", name: "Palmeiras", slug: "palmeiras", href: "/times/palmeiras", logoUrl: palmeirasAsset.url },
-  { id: "santos", name: "Santos", slug: "santos", href: "/times/santos", logoUrl: santosAsset.url },
-  { id: "botafogo", name: "Botafogo", slug: "botafogo", href: "/times/botafogo", logoUrl: botafogoAsset.url },
-  { id: "fluminense", name: "Fluminense", slug: "fluminense", href: "/times/fluminense", logoUrl: fluminenseAsset.url },
-  { id: "gremio", name: "Grêmio", slug: "gremio", href: "/times/gremio", logoUrl: gremioAsset.url },
-  { id: "internacional", name: "Internacional", slug: "internacional", href: "/times/internacional", logoUrl: internacionalAsset.url },
+  { id: "flamengo", name: "Flamengo", logoUrl: flamengoAsset.url },
+  { id: "atletico-mg", name: "Atlético-MG", logoUrl: atleticoMGAsset.url },
+  { id: "cruzeiro", name: "Cruzeiro", logoUrl: cruzeiroAsset.url },
+  { id: "sao-paulo", name: "São Paulo", logoUrl: saoPauloAsset.url },
+  { id: "corinthians", name: "Corinthians", logoUrl: corinthiansAsset.url },
+  { id: "palmeiras", name: "Palmeiras", logoUrl: palmeirasAsset.url },
+  { id: "santos", name: "Santos", logoUrl: santosAsset.url },
+  { id: "botafogo", name: "Botafogo", logoUrl: botafogoAsset.url },
+  { id: "fluminense", name: "Fluminense", logoUrl: fluminenseAsset.url },
+  { id: "gremio", name: "Grêmio", logoUrl: gremioAsset.url },
+  {
+    id: "internacional",
+    name: "Internacional",
+    logoUrl: internacionalAsset.url,
+  },
 ];
+
+const TeamLogo: React.FC<{ team: Team }> = ({ team }) => (
+  <Link
+    to="/products"
+    search={{ time: team.id }}
+    aria-label={`Ver produtos do ${team.name}`}
+    className="group flex flex-shrink-0 flex-col items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95"
+  >
+    <div className="flex h-[110px] w-[110px] items-center justify-center overflow-hidden rounded-lg bg-gray-50 p-0 transition-opacity group-hover:opacity-90 md:h-[120px] md:w-[120px] lg:h-[140px] lg:w-[140px]">
+      <img
+        src={team.logoUrl}
+        alt={team.name}
+        loading="lazy"
+        className="h-full w-full object-cover"
+      />
+    </div>
+  </Link>
+);
 
 const BrazilianTeams: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   const handleScroll = () => {
-    if (!scrollRef.current) return;
+    if (!scrollRef.current) {
+      return;
+    }
+
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-    const progress = scrollLeft / (scrollWidth - clientWidth);
-    setScrollProgress(progress);
+    const maxScroll = scrollWidth - clientWidth;
+    setScrollProgress(maxScroll > 0 ? scrollLeft / maxScroll : 0);
   };
 
-  // 5 pips: 0%, 25%, 50%, 75%, 100%
   const dots = [0, 1, 2, 3, 4];
-  const activeDotIndex = Math.round(scrollProgress * 4);
+  const activeDotIndex = Math.round(scrollProgress * (dots.length - 1));
 
   return (
-    <section className="py-8 sm:py-12 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <div className="text-center mb-6 sm:mb-10">
-          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
-            FUTEBOL É A PAIXÃO DO BRASILEIRO, VENDA CERTA! ⚽
+    <section className="overflow-hidden bg-white py-8 sm:py-12">
+      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+        <div className="mb-6 text-center sm:mb-10">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 sm:text-xs">
+            FUTEBOL É A PAIXÃO DO BRASILEIRO ⚽
           </p>
-          <h2 className="text-xl sm:text-3xl font-black uppercase tracking-tight text-gray-900">
+          <h2 className="text-xl font-black uppercase tracking-tight text-gray-900 sm:text-3xl">
             TIMES BRASILEIROS
           </h2>
         </div>
 
-        <div className="relative group/scroll h-[140px] md:h-[160px] lg:h-[180px]">
-          <div 
+        <div className="relative h-[140px] md:h-[160px] lg:h-[180px]">
+          <div
             ref={scrollRef}
             onScroll={handleScroll}
-            className="flex overflow-x-auto md:overflow-visible pb-6 no-scrollbar gap-3 md:gap-0 scroll-smooth snap-x mandatory md:grid md:grid-cols-11 md:w-full h-full items-center"
-            style={{ scrollSnapType: 'x mandatory' }}
+            className="flex h-full snap-x items-center gap-3 overflow-x-auto scroll-smooth pb-6 no-scrollbar md:grid md:w-full md:grid-cols-11 md:gap-0 md:overflow-visible"
+            style={{ scrollSnapType: "x mandatory" }}
           >
             {teams.map((team) => (
-              <div key={team.id} className="snap-center md:snap-align-none flex justify-center items-center shrink-0">
+              <div
+                key={team.id}
+                className="flex flex-shrink-0 snap-center items-center justify-center"
+              >
                 <TeamLogo team={team} />
               </div>
             ))}
           </div>
-          
-          {/* Mobile Discrete Dots Indicator */}
-          <div className="md:hidden flex justify-center gap-2 mt-4">
+
+          <div className="mt-4 flex justify-center gap-2 md:hidden">
             {dots.map((dot) => (
-              <div 
+              <div
                 key={dot}
-                className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
+                className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 ${
                   activeDotIndex === dot ? "bg-red-600" : "bg-gray-200"
                 }`}
               />

@@ -1,35 +1,51 @@
 import React from "react";
+
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
 
-const REAL_PRODUCT_ID = "42981de6-11e1-4951-98f9-4914a35c20a4";
-
-const MOCK_BRASILEIRAO = Array.from({ length: 15 }, (_, i) => ({
-  id: i === 0 ? REAL_PRODUCT_ID : `br-${i + 1}`,
-  name: i === 0 ? "Camisa Profissional BIGofertas 2024" : `Camisa Oficial Brasileirão ${i + 1}`,
-  price: i === 0 ? 199.90 : 299.99,
-}));
-
 const BrazilianProducts: React.FC = () => {
+  const { data, isLoading, error } = useCatalogProducts({
+    campeonato: "brasileirao",
+    pageSize: 12,
+  });
+  const brazilianProducts = data?.items ?? [];
+
+  if (error || (!isLoading && brazilianProducts.length === 0)) {
+    return null;
+  }
+
   return (
-    <section className="py-16 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <h2 className="mb-12 text-center text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none text-gray-900">
+    <section className="overflow-hidden bg-white py-16">
+      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+        <h2 className="mb-12 text-center text-xl font-black uppercase leading-none tracking-tighter text-gray-900 md:text-2xl">
           PRODUTOS DO <span className="text-red-600">BRASILEIRÃO</span>
         </h2>
 
-        <div className="relative">
-          <ProductCarousel itemCount={MOCK_BRASILEIRAO.length}>
-            {MOCK_BRASILEIRAO.map((product) => (
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-5">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div
+                key={index}
+                className="aspect-[4/5] animate-pulse rounded-md bg-gray-100"
+              />
+            ))}
+          </div>
+        ) : (
+          <ProductCarousel itemCount={brazilianProducts.length}>
+            {brazilianProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 id={product.id}
+                slug={product.slug}
                 name={product.name}
                 price={product.price}
+                promotionalPrice={product.promotional_price}
+                imageUrl={product.displayImageUrl}
               />
             ))}
           </ProductCarousel>
-        </div>
+        )}
       </div>
     </section>
   );

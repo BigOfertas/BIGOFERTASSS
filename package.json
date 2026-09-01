@@ -9,7 +9,12 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "validate:phase2": "node scripts/validate-phase-02.mjs",
+    "validate:phase3": "node scripts/validate-phase-03.mjs",
+    "validate:phase4": "node scripts/validate-phase-04.mjs",
+    "validate:phase5": "node scripts/validate-phase-05.mjs",
+    "validate:phase6": "node scripts/validate-phase-06.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
