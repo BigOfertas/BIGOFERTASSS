@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -46,10 +47,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authReady, setAuthReady] = useState(false);
   const [roleLoading, setRoleLoading] = useState(false);
 
+  const currentUserIdRef = useRef<string | null>(null);
   const userId = user?.id;
 
   useEffect(() => {
     let active = true;
+
+    function applySession(nextSession: Session | null) {
+      if (!active) {
+        return;
+      }
+
+      const nextUser = nextSession?.user ?? null;
+      const nextUserId = nextUser?.id ?? null;
+      const identityChanged = currentUserIdRef.current !== nextUserId;
+
+      currentUserIdRef.current = nextUserId;
+      setSession(nextSession);
+      setUser(nextUser);
+
+      // TOKEN_REFRESHED, USER_UPDATED and duplicate INITIAL_SESSION events can
+      // arrive while the same account is active (notably after returning to a
+      // background browser tab). Keep the already-resolved role in that case.
+      // Invalidating roleLoading without changing userId would leave loading
+      // stuck because the role effect below would not run again.
+      if (identityChanged) {
+        setRole(null);
+        setRoleLoading(Boolean(nextUser));
+      }
+
+      setAuthReady(true);
+    }
 
     void supabase.auth.getSession().then(({ data, error }) => {
       if (!active) {
@@ -59,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error("Failed to restore auth session:", error);
 
+        currentUserIdRef.current = null;
         setSession(null);
         setUser(null);
         setRole(null);
@@ -68,30 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const currentSession = data.session;
-      const currentUser = currentSession?.user ?? null;
-
-      setSession(currentSession);
-      setUser(currentUser);
-      setRole(null);
-      setRoleLoading(Boolean(currentUser));
-      setAuthReady(true);
+      applySession(data.session);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (!active) {
-        return;
-      }
-
-      const nextUser = nextSession?.user ?? null;
-
-      setSession(nextSession);
-      setUser(nextUser);
-      setRole(null);
-      setRoleLoading(Boolean(nextUser));
-      setAuthReady(true);
+      applySession(nextSession);
     });
 
     return () => {
@@ -183,6 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signOut();
 
     if (!error) {
+      currentUserIdRef.current = null;
       setSession(null);
       setUser(null);
       setRole(null);
