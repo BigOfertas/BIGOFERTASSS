@@ -13,24 +13,24 @@ const categories = [
 
 const VisualCategories: React.FC = () => {
   return (
-    <section className="overflow-hidden bg-white py-8 md:py-12 lg:py-16">
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <h2 className="mb-6 text-center text-lg font-black uppercase tracking-tight text-gray-900 sm:mb-10 sm:text-2xl">
+    <section className="py-8 md:py-12 lg:py-16 bg-white overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8">
+        <h2 className="mb-6 sm:mb-10 text-center text-lg sm:text-2xl font-black uppercase tracking-tight text-gray-900">
           Diversifique seu pedido
         </h2>
 
-        <div className="flex items-center gap-3 overflow-x-auto pb-6 no-scrollbar scroll-smooth md:grid md:grid-cols-6 md:gap-6 md:overflow-x-visible md:pb-0">
+        <div className="flex md:grid md:grid-cols-6 overflow-x-auto md:overflow-x-visible pb-6 md:pb-0 no-scrollbar gap-3 md:gap-6 items-center scroll-smooth">
           {categories.map((category) => (
             <div
               key={category.name}
-              className="h-[240px] w-[160px] flex-shrink-0 md:h-auto md:w-auto"
+              className="flex-shrink-0 w-[160px] h-[240px] md:w-auto md:h-auto"
             >
               <CategoryCard name={category.name} search={category.search} />
             </div>
           ))}
         </div>
 
-        <div className="mt-6 h-1 w-full bg-gray-300 md:mt-8" />
+        <div className="w-full h-1 bg-gray-300 mt-6 md:mt-8" />
       </div>
     </section>
   );
