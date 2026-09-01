@@ -105,7 +105,7 @@ const checks = [
     /isOwner \? "\/admin" : user \? "\/conta" : "\/login"/.test(header),
   ],
   [
-    "footer expõe conta e enderecos quando autenticado",
+    "footer expoe conta e enderecos quando autenticado",
     /to="\/conta"/.test(footer) && /secao: "enderecos"/.test(footer),
   ],
   [
@@ -115,6 +115,53 @@ const checks = [
   [
     "fase 08 nao cria pedidos checkout ou pagamento",
     !/CREATE TABLE IF NOT EXISTS public\.(orders|payments|checkouts)/.test(migration),
+  ],
+  [
+    "cep pode preencher endereco automaticamente usando consulta publica",
+    /lookupBrazilianPostalCode/.test(accountUi) &&
+      /viacep\.com\.br\/ws\//.test(accountLib) &&
+      /normalizedPostalCode\.length !== 8/.test(accountLib),
+  ],
+  [
+    "falha de consulta de cep nao bloqueia preenchimento manual",
+    /Consulta de CEP indisponível agora\. Preencha manualmente\./.test(accountUi) &&
+      /CEP não encontrado\. Você pode preencher o endereço manualmente\./.test(
+        accountUi,
+      ),
+  ],
+  [
+    "edicao de endereco nao recarrega todo o painel",
+    /refreshAddresses/.test(accountUi) &&
+      /await refreshAddresses\(\)/.test(accountUi),
+  ],
+  [
+    "feedback de perfil distingue dados salvos de alteracoes pendentes",
+    /profileDirty/.test(accountUi) &&
+      /Tudo salvo/.test(accountUi) &&
+      /alterações ainda não salvas/.test(accountUi),
+  ],
+  [
+    "loading principal usa skeleton em vez de tela vazia",
+    /function AccountSkeleton/.test(accountUi) && /animate-pulse/.test(accountUi),
+  ],
+  [
+    "exclusao de endereco evita confirm nativo do navegador",
+    !/window\.confirm/.test(accountUi) &&
+      /Confirmar exclusão/.test(accountUi) &&
+      /deleteConfirmId/.test(accountUi),
+  ],
+  [
+    "formulario de endereco ganha foco e scroll contextual",
+    /scrollIntoView/.test(accountUi) &&
+      /numberInputRef\.current\?\.focus/.test(accountUi),
+  ],
+  [
+    "navegacao de conta funciona como faixa horizontal no mobile",
+    /overflow-x-auto/.test(accountUi) && /lg:sticky lg:top-28/.test(accountUi),
+  ],
+  [
+    "sucesso aparece em feedback persistente e acessivel",
+    /aria-live="polite"/.test(accountUi) && /fixed bottom-4/.test(accountUi),
   ],
 ];
 
