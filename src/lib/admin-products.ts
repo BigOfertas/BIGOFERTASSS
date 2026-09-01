@@ -1,8 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type {
-  Enums,
-  Tables,
-} from "@/integrations/supabase/types";
+import type { Enums, Tables } from "@/integrations/supabase/types";
 
 type ProductRow = Tables<"products">;
 type VariantRow = Tables<"product_variants">;
@@ -26,6 +23,13 @@ export type AdminDefaultVariant = Pick<
 >;
 
 type AdminVariantLookup = AdminDefaultVariant & Pick<VariantRow, "product_id">;
+
+type ProductIdentityReservation = {
+  reservation_id: number;
+  product_sku: string;
+  product_slug: string;
+  default_variant_sku: string;
+};
 
 export type AdminProduct = Pick<
   ProductRow,
@@ -57,8 +61,6 @@ export type AdminProduct = Pick<
 export type AdminProductInput = {
   id?: string;
   name: string;
-  sku: string;
-  slug: string;
   description: string;
   price: number;
   promotionalPrice: number | null;
@@ -74,7 +76,6 @@ export type AdminProductInput = {
   widthCm: number | null;
   heightCm: number | null;
   defaultVariantId?: string;
-  variantSku: string;
   variantName: string;
   stockQuantity: number;
 };
@@ -94,14 +95,6 @@ function validateInput(input: AdminProductInput) {
     throw new Error("Informe o nome do produto.");
   }
 
-  if (input.sku.trim().length < 3) {
-    throw new Error("O SKU do produto precisa ter pelo menos 3 caracteres.");
-  }
-
-  if (input.variantSku.trim().length < 3) {
-    throw new Error("O SKU da variante precisa ter pelo menos 3 caracteres.");
-  }
-
   if (!Number.isFinite(input.price) || input.price < 0) {
     throw new Error("Informe um preço válido.");
   }
@@ -116,7 +109,9 @@ function validateInput(input: AdminProductInput) {
   }
 
   if (!Number.isInteger(input.stockQuantity) || input.stockQuantity < 0) {
-    throw new Error("O estoque precisa ser um número inteiro igual ou maior que zero.");
+    throw new Error(
+      "O estoque precisa ser um número inteiro igual ou maior que zero.",
+    );
   }
 
   const dimensions = [input.lengthCm, input.widthCm, input.heightCm];
@@ -132,6 +127,40 @@ function validateInput(input: AdminProductInput) {
 
   if (input.weightGrams !== null && input.weightGrams <= 0) {
     throw new Error("O peso precisa ser maior que zero.");
+  }
+}
+
+async function allocateProductIdentity(): Promise<ProductIdentityReservation> {
+  const { data, error } = await (supabase as any).rpc(
+    "allocate_product_identity",
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+
+  if (
+    !row ||
+    typeof row.reservation_id !== "number" ||
+    typeof row.product_sku !== "string" ||
+    typeof row.product_slug !== "string" ||
+    typeof row.default_variant_sku !== "string"
+  ) {
+    throw new Error("O banco não retornou uma reserva de identificadores válida.");
+  }
+
+  return row as ProductIdentityReservation;
+}
+
+async function releaseProductIdentity(reservationId: number): Promise<void> {
+  const { error } = await (supabase as any).rpc("release_product_identity", {
+    target_reservation_id: reservationId,
+  });
+
+  if (error) {
+    console.error("Failed to release product identity reservation:", error);
   }
 }
 
@@ -203,8 +232,6 @@ export async function saveAdminProduct(
 
   const productPayload = {
     name: input.name.trim(),
-    sku: input.sku.trim(),
-    slug: input.slug.trim(),
     description: optionalText(input.description),
     price: input.price,
     promotional_price: input.promotionalPrice,
@@ -221,7 +248,6 @@ export async function saveAdminProduct(
   };
 
   const variantPayload = {
-    sku: input.variantSku.trim(),
     name: optionalText(input.variantName),
     stock_quantity: input.stockQuantity,
     status: "active" as const,
@@ -241,9 +267,20 @@ export async function saveAdminProduct(
         throw variantResult.error;
       }
     } else {
+      const productIdentityResult = await supabase
+        .from("products")
+        .select("sku")
+        .eq("id", input.id)
+        .single();
+
+      if (productIdentityResult.error) {
+        throw productIdentityResult.error;
+      }
+
       const variantResult = await supabase.from("product_variants").insert({
         ...variantPayload,
         product_id: input.id,
+        sku: `${productIdentityResult.data.sku}-STD`,
       });
 
       if (variantResult.error) {
@@ -266,16 +303,21 @@ export async function saveAdminProduct(
     return input.id;
   }
 
+  const identity = await allocateProductIdentity();
+
   const createResult = await supabase
     .from("products")
     .insert({
       ...productPayload,
+      sku: identity.product_sku,
+      slug: identity.product_slug,
       status: "draft",
     })
     .select("id")
     .single();
 
   if (createResult.error) {
+    await releaseProductIdentity(identity.reservation_id);
     throw createResult.error;
   }
 
@@ -284,10 +326,12 @@ export async function saveAdminProduct(
   const variantResult = await supabase.from("product_variants").insert({
     ...variantPayload,
     product_id: productId,
+    sku: identity.default_variant_sku,
   });
 
   if (variantResult.error) {
     await supabase.from("products").delete().eq("id", productId);
+    await releaseProductIdentity(identity.reservation_id);
     throw variantResult.error;
   }
 
