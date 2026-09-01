@@ -35,52 +35,51 @@ const ProductCard: React.FC<ProductCardProps> = ({
     promotionalPrice < price;
   const formattedPrice = currency.format(hasPromotion ? promotionalPrice : price);
   const formattedOriginalPrice = hasPromotion ? currency.format(price) : null;
-
   const showImage = Boolean(imageUrl) && !imageFailed;
 
   return (
     <article
-      className={`group flex h-full flex-col rounded-md border border-gray-100 bg-white p-2 transition-all duration-300 hover:shadow-md sm:p-3 ${className}`}
+      className={`group bg-white rounded-md border border-gray-100 p-2 sm:p-3 flex flex-col h-full transition-all duration-300 hover:shadow-md ${className}`}
     >
-      <div className="relative mb-3 flex aspect-[4/5] items-center justify-center overflow-hidden rounded-sm bg-gray-50 transition-colors duration-300 group-hover:bg-white">
+      <div className="relative aspect-[4/5] mb-3 bg-gray-50 rounded-sm overflow-hidden flex items-center justify-center group-hover:bg-white transition-colors duration-300">
         {showImage ? (
           <img
             src={imageUrl ?? undefined}
             alt={name}
             loading="lazy"
             onError={() => setImageFailed(true)}
-            className="h-full w-full object-contain p-2 transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-contain mix-blend-multiply p-2 transform group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <span className="px-4 text-center text-xs font-medium text-gray-400">
-            Imagem indisponível
-          </span>
+          <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold italic text-lg uppercase">
+            <span className="text-red-500/20">BIG</span>
+          </div>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col">
-        <h2 className="mb-1 h-[28px] line-clamp-2 text-[11px] font-medium leading-tight text-gray-800 transition-colors group-hover:text-red-600 sm:mb-2 sm:h-[32px] sm:text-[13px]">
+      <div className="flex flex-col flex-1">
+        <h2 className="text-[11px] sm:text-[13px] font-medium text-gray-800 mb-1 sm:mb-2 line-clamp-2 h-[28px] sm:h-[32px] leading-tight group-hover:text-red-600 transition-colors">
           {name}
         </h2>
 
-        <div className="mb-2 mt-auto sm:mb-3">
+        <div className="mt-auto mb-2 sm:mb-3">
           {formattedOriginalPrice ? (
             <span className="mr-2 text-[10px] font-medium text-gray-400 line-through sm:text-xs">
               {formattedOriginalPrice}
             </span>
           ) : null}
-          <span className="text-sm font-extrabold tracking-tight text-gray-900 sm:text-lg">
+          <span className="text-sm sm:text-lg font-extrabold text-gray-900 tracking-tight">
             {formattedPrice}
           </span>
         </div>
 
         <Button
           asChild
-          className="flex h-8 w-full items-center justify-center gap-1 rounded-sm bg-[#E60000] text-[10px] font-bold uppercase tracking-wider text-white transition-colors duration-300 hover:bg-black sm:h-10 sm:gap-2 sm:text-[11px]"
+          className="w-full bg-[#E60000] hover:bg-black text-white font-bold text-[10px] sm:text-[11px] uppercase tracking-wider h-8 sm:h-10 rounded-sm transition-colors duration-300 flex items-center justify-center gap-1 sm:gap-2"
         >
           <Link to="/product/$id" params={{ id: slug || id }}>
-            <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
-            Ver detalhes
+            <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+            VER DETALHES
           </Link>
         </Button>
       </div>
