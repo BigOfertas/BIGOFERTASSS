@@ -25,6 +25,8 @@ export type AdminDefaultVariant = Pick<
   | "is_default"
 >;
 
+type AdminVariantLookup = AdminDefaultVariant & Pick<VariantRow, "product_id">;
+
 export type AdminProduct = Pick<
   ProductRow,
   | "id"
@@ -159,8 +161,7 @@ export async function fetchAdminCatalog(): Promise<AdminCatalogSnapshot> {
 
   const products = productsResult.data ?? [];
   const productIds = products.map((product) => product.id);
-
-  let variants: AdminDefaultVariant[] & { product_id?: string }[] = [] as never;
+  let variants: AdminVariantLookup[] = [];
 
   if (productIds.length > 0) {
     const variantsResult = await supabase
@@ -174,17 +175,15 @@ export async function fetchAdminCatalog(): Promise<AdminCatalogSnapshot> {
       throw variantsResult.error;
     }
 
-    variants = (variantsResult.data ?? []) as typeof variants;
+    variants = variantsResult.data ?? [];
   }
 
   const firstVariantByProduct = new Map<string, AdminDefaultVariant>();
 
   for (const variant of variants) {
-    const productId = variant.product_id;
-
-    if (productId && !firstVariantByProduct.has(productId)) {
+    if (!firstVariantByProduct.has(variant.product_id)) {
       const { product_id: _productId, ...defaultVariant } = variant;
-      firstVariantByProduct.set(productId, defaultVariant);
+      firstVariantByProduct.set(variant.product_id, defaultVariant);
     }
   }
 
