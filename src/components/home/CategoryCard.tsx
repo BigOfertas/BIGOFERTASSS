@@ -14,20 +14,22 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ name, image, search }) => {
     <Link
       to="/products"
       search={search}
-      className="group flex min-w-[100px] flex-col items-center gap-2 sm:min-w-[140px] md:w-full md:min-w-0"
+      className="group flex flex-col items-center gap-2 min-w-[100px] sm:min-w-[140px] md:min-w-0 md:w-full"
     >
-      <div className="relative flex aspect-[2/3] w-full items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-gray-50 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
+      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-100 border border-gray-100 transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1">
         {image ? (
           <img
             src={image}
             alt={name}
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
         ) : (
-          <span className="px-4 text-center text-sm font-black uppercase tracking-tight text-gray-700 transition-colors group-hover:text-red-600">
-            {name}
-          </span>
+          <div className="flex h-full w-full items-center justify-center bg-gray-200 text-gray-400">
+            <span className="text-[10px] font-bold uppercase italic tracking-tighter opacity-20 text-red-600 sm:text-xs">
+              BIG
+            </span>
+          </div>
         )}
       </div>
       <span className="text-center text-[10px] font-bold uppercase tracking-wide text-gray-900 transition-colors group-hover:text-red-600 sm:text-xs">
