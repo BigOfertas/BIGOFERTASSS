@@ -19,9 +19,10 @@ import {
 type ProductFormState = {
   id: string;
   defaultVariantId: string;
+  assignedSku: string;
+  assignedSlug: string;
+  assignedVariantSku: string;
   name: string;
-  sku: string;
-  slug: string;
   description: string;
   price: string;
   promotionalPrice: string;
@@ -35,7 +36,6 @@ type ProductFormState = {
   lengthCm: string;
   widthCm: string;
   heightCm: string;
-  variantSku: string;
   variantName: string;
   stockQuantity: string;
 };
@@ -43,9 +43,10 @@ type ProductFormState = {
 const EMPTY_FORM: ProductFormState = {
   id: "",
   defaultVariantId: "",
+  assignedSku: "",
+  assignedSlug: "",
+  assignedVariantSku: "",
   name: "",
-  sku: "",
-  slug: "",
   description: "",
   price: "",
   promotionalPrice: "",
@@ -59,7 +60,6 @@ const EMPTY_FORM: ProductFormState = {
   lengthCm: "",
   widthCm: "",
   heightCm: "",
-  variantSku: "",
   variantName: "",
   stockQuantity: "0",
 };
@@ -68,9 +68,10 @@ function productToForm(product: AdminProduct): ProductFormState {
   return {
     id: product.id,
     defaultVariantId: product.defaultVariant?.id ?? "",
+    assignedSku: product.sku,
+    assignedSlug: product.slug,
+    assignedVariantSku: product.defaultVariant?.sku ?? `${product.sku}-STD`,
     name: product.name,
-    sku: product.sku,
-    slug: product.slug,
     description: product.description ?? "",
     price: String(product.price),
     promotionalPrice:
@@ -88,7 +89,6 @@ function productToForm(product: AdminProduct): ProductFormState {
     lengthCm: product.length_cm === null ? "" : String(product.length_cm),
     widthCm: product.width_cm === null ? "" : String(product.width_cm),
     heightCm: product.height_cm === null ? "" : String(product.height_cm),
-    variantSku: product.defaultVariant?.sku ?? `${product.sku}-PADRAO`,
     variantName: product.defaultVariant?.name ?? "",
     stockQuantity: String(product.defaultVariant?.stock_quantity ?? 0),
   };
@@ -135,6 +135,19 @@ function statusLabel(status: AdminProductStatus) {
       return "Arquivado";
     default:
       return "Rascunho";
+  }
+}
+
+function statusClassName(status: AdminProductStatus) {
+  switch (status) {
+    case "active":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "inactive":
+      return "border-amber-200 bg-amber-50 text-amber-700";
+    case "archived":
+      return "border-gray-200 bg-gray-100 text-gray-500";
+    default:
+      return "border-blue-200 bg-blue-50 text-blue-700";
   }
 }
 
@@ -249,8 +262,6 @@ export function ProductAdmin() {
         id: form.id || undefined,
         defaultVariantId: form.defaultVariantId || undefined,
         name: form.name,
-        sku: form.sku,
-        slug: form.slug,
         description: form.description,
         price: parseRequiredNumber(form.price, "um preço"),
         promotionalPrice: parseOptionalNumber(form.promotionalPrice),
@@ -265,7 +276,6 @@ export function ProductAdmin() {
         lengthCm: parseOptionalNumber(form.lengthCm),
         widthCm: parseOptionalNumber(form.widthCm),
         heightCm: parseOptionalNumber(form.heightCm),
-        variantSku: form.variantSku,
         variantName: form.variantName,
         stockQuantity: parseRequiredNumber(form.stockQuantity, "um estoque"),
       };
@@ -274,7 +284,9 @@ export function ProductAdmin() {
       await loadCatalog();
 
       setSuccessMessage(
-        form.id ? "Produto atualizado com sucesso." : "Produto criado com sucesso.",
+        form.id
+          ? "Produto atualizado com sucesso."
+          : "Produto criado com identificadores automáticos.",
       );
       setForm(EMPTY_FORM);
       setShowForm(false);
@@ -327,8 +339,9 @@ export function ProductAdmin() {
             Produtos
           </h2>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-            Cadastre e mantenha o catálogo. O estoque exibido em produtos é
-            calculado pelas variantes; não é alterado diretamente.
+            Cadastre e mantenha o catálogo. SKU, slug e SKU da variante são
+            atribuídos automaticamente; o estoque do produto é calculado pelas
+            variantes.
           </p>
         </div>
 
@@ -351,7 +364,7 @@ export function ProductAdmin() {
       ) : null}
 
       {successMessage ? (
-        <div className="mt-5 rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">
+        <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           {successMessage}
         </div>
       ) : null}
@@ -359,16 +372,17 @@ export function ProductAdmin() {
       {showForm ? (
         <form
           onSubmit={(event) => void handleSubmit(event)}
-          className="mt-6 rounded-xl border border-border bg-card p-5 sm:p-6"
+          className="mt-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
         >
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-4 border-b border-border bg-muted/20 p-5 sm:p-6">
             <div>
               <h3 className="text-lg font-semibold text-foreground">
                 {form.id ? "Editar produto" : "Novo produto"}
               </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Produtos novos são criados com uma variante padrão para manter
-                preço, estoque e ativação consistentes.
+              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                {form.id
+                  ? "Os identificadores internos permanecem fixos para preservar integrações e URLs."
+                  : "Ao salvar, o banco consome automaticamente uma reserva livre de SKU e slug e cria a variante padrão."}
               </p>
             </div>
 
@@ -381,181 +395,84 @@ export function ProductAdmin() {
             </button>
           </div>
 
-          <div className="mt-6 grid gap-5 md:grid-cols-2">
-            <label className="text-sm font-medium text-foreground md:col-span-2">
-              Nome
-              <input
-                required
-                value={form.name}
-                onChange={(event) => updateField("name", event.target.value)}
-                className={fieldClassName()}
-                placeholder="Ex.: Camisa Brasil Torcedor 2026"
-              />
-            </label>
+          <div className="p-5 sm:p-6">
+            <div className="rounded-lg border border-border bg-muted/20 p-4">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    Identificadores automáticos
+                  </p>
+                  <p className="mt-1 text-sm text-foreground">
+                    Você não precisa preencher SKU ou slug.
+                  </p>
+                </div>
+                {!form.id ? (
+                  <span className="mt-2 inline-flex w-fit rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground sm:mt-0">
+                    Reserva atribuída ao criar
+                  </span>
+                ) : null}
+              </div>
 
-            <label className="text-sm font-medium text-foreground">
-              SKU do produto
-              <input
-                required
-                value={form.sku}
-                onChange={(event) => updateField("sku", event.target.value)}
-                className={fieldClassName()}
-                placeholder="BIG-BRA-001"
-              />
-            </label>
+              {form.id ? (
+                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                  <div>
+                    <dt className="text-xs text-muted-foreground">SKU do produto</dt>
+                    <dd className="mt-1 font-mono font-medium text-foreground">
+                      {form.assignedSku}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-foreground">Slug</dt>
+                    <dd className="mt-1 font-mono font-medium text-foreground">
+                      /{form.assignedSlug}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-foreground">SKU da variante</dt>
+                    <dd className="mt-1 font-mono font-medium text-foreground">
+                      {form.assignedVariantSku}
+                    </dd>
+                  </div>
+                </dl>
+              ) : (
+                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                  O sistema mantém 20 reservas livres para produtos futuros e
+                  repõe automaticamente uma nova reserva sempre que uma é usada.
+                </p>
+              )}
+            </div>
 
-            <label className="text-sm font-medium text-foreground">
-              Slug
-              <input
-                value={form.slug}
-                onChange={(event) => updateField("slug", event.target.value)}
-                className={fieldClassName()}
-                placeholder="Deixe vazio para gerar pelo nome"
-              />
-            </label>
-
-            <label className="text-sm font-medium text-foreground">
-              Preço
-              <input
-                required
-                inputMode="decimal"
-                value={form.price}
-                onChange={(event) => updateField("price", event.target.value)}
-                className={fieldClassName()}
-                placeholder="199,90"
-              />
-            </label>
-
-            <label className="text-sm font-medium text-foreground">
-              Preço promocional
-              <input
-                inputMode="decimal"
-                value={form.promotionalPrice}
-                onChange={(event) =>
-                  updateField("promotionalPrice", event.target.value)
-                }
-                className={fieldClassName()}
-                placeholder="Opcional"
-              />
-            </label>
-
-            <label className="text-sm font-medium text-foreground">
-              Status
-              <select
-                value={form.status}
-                onChange={(event) =>
-                  updateField(
-                    "status",
-                    event.target.value as AdminProductStatus,
-                  )
-                }
-                className={fieldClassName()}
-              >
-                <option value="draft">Rascunho</option>
-                <option value="active">Ativo</option>
-                <option value="inactive">Inativo</option>
-                <option value="archived">Arquivado</option>
-              </select>
-            </label>
-
-            <label className="text-sm font-medium text-foreground">
-              Categoria principal
-              <select
-                value={form.primaryCategoryId}
-                onChange={(event) =>
-                  updateField("primaryCategoryId", event.target.value)
-                }
-                className={fieldClassName()}
-              >
-                <option value="">Sem categoria</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                    {category.is_active ? "" : " (inativa)"}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="text-sm font-medium text-foreground">
-              Campeonato
-              <input
-                value={form.campeonato}
-                onChange={(event) =>
-                  updateField("campeonato", event.target.value)
-                }
-                className={fieldClassName()}
-              />
-            </label>
-
-            <label className="text-sm font-medium text-foreground">
-              Liga
-              <input
-                value={form.liga}
-                onChange={(event) => updateField("liga", event.target.value)}
-                className={fieldClassName()}
-              />
-            </label>
-
-            <label className="text-sm font-medium text-foreground md:col-span-2">
-              Time / seleção
-              <input
-                value={form.time}
-                onChange={(event) => updateField("time", event.target.value)}
-                className={fieldClassName()}
-              />
-            </label>
-
-            <label className="text-sm font-medium text-foreground md:col-span-2">
-              Descrição
-              <textarea
-                value={form.description}
-                onChange={(event) =>
-                  updateField("description", event.target.value)
-                }
-                className={textareaClassName()}
-              />
-            </label>
-
-            <label className="text-sm font-medium text-foreground md:col-span-2">
-              Especificações
-              <textarea
-                value={form.specifications}
-                onChange={(event) =>
-                  updateField("specifications", event.target.value)
-                }
-                className={textareaClassName()}
-                placeholder="Material, composição, origem e demais detalhes"
-              />
-            </label>
-          </div>
-
-          <div className="mt-7 border-t border-border pt-6">
-            <h4 className="font-semibold text-foreground">Variante padrão e estoque</h4>
-            <p className="mt-1 text-sm text-muted-foreground">
-              A Fase 07 administra a variante padrão. Combinações avançadas de
-              opções continuam compatíveis com a modelagem existente.
-            </p>
-
-            <div className="mt-4 grid gap-5 md:grid-cols-3">
-              <label className="text-sm font-medium text-foreground">
-                SKU da variante
+            <div className="mt-6 grid gap-5 md:grid-cols-2">
+              <label className="text-sm font-medium text-foreground md:col-span-2">
+                Nome
                 <input
                   required
-                  value={form.variantSku}
-                  onChange={(event) =>
-                    updateField("variantSku", event.target.value)
-                  }
+                  value={form.name}
+                  onChange={(event) => updateField("name", event.target.value)}
                   className={fieldClassName()}
+                  placeholder="Ex.: Camisa Brasil Torcedor 2026"
                 />
               </label>
 
               <label className="text-sm font-medium text-foreground">
-                Nome da variante
+                Preço
                 <input
-                  value={form.variantName}
+                  required
+                  inputMode="decimal"
+                  value={form.price}
+                  onChange={(event) => updateField("price", event.target.value)}
+                  className={fieldClassName()}
+                  placeholder="199,90"
+                />
+              </label>
+
+              <label className="text-sm font-medium text-foreground">
+                Preço promocional
+                <input
+                  inputMode="decimal"
+                  value={form.promotionalPrice}
                   onChange={(event) =>
-                    updateField("variantName", event.target.value)
+                    updateField("promotionalPrice", event.target.value)
                   }
                   className={fieldClassName()}
                   placeholder="Opcional"
@@ -563,92 +480,217 @@ export function ProductAdmin() {
               </label>
 
               <label className="text-sm font-medium text-foreground">
-                Estoque
-                <input
-                  required
-                  inputMode="numeric"
-                  value={form.stockQuantity}
+                Status
+                <select
+                  value={form.status}
                   onChange={(event) =>
-                    updateField("stockQuantity", event.target.value)
+                    updateField(
+                      "status",
+                      event.target.value as AdminProductStatus,
+                    )
+                  }
+                  className={fieldClassName()}
+                >
+                  <option value="draft">Rascunho</option>
+                  <option value="active">Ativo</option>
+                  <option value="inactive">Inativo</option>
+                  <option value="archived">Arquivado</option>
+                </select>
+              </label>
+
+              <label className="text-sm font-medium text-foreground">
+                Categoria principal
+                <select
+                  value={form.primaryCategoryId}
+                  onChange={(event) =>
+                    updateField("primaryCategoryId", event.target.value)
+                  }
+                  className={fieldClassName()}
+                >
+                  <option value="">Sem categoria</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                      {category.is_active ? "" : " (inativa)"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="text-sm font-medium text-foreground">
+                Campeonato
+                <input
+                  value={form.campeonato}
+                  onChange={(event) =>
+                    updateField("campeonato", event.target.value)
                   }
                   className={fieldClassName()}
                 />
               </label>
-            </div>
-          </div>
 
-          <div className="mt-7 border-t border-border pt-6">
-            <h4 className="font-semibold text-foreground">Peso e dimensões</h4>
-            <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               <label className="text-sm font-medium text-foreground">
-                Peso (g)
+                Liga
                 <input
-                  inputMode="numeric"
-                  value={form.weightGrams}
+                  value={form.liga}
+                  onChange={(event) => updateField("liga", event.target.value)}
+                  className={fieldClassName()}
+                />
+              </label>
+
+              <label className="text-sm font-medium text-foreground md:col-span-2">
+                Time / seleção
+                <input
+                  value={form.time}
+                  onChange={(event) => updateField("time", event.target.value)}
+                  className={fieldClassName()}
+                />
+              </label>
+
+              <label className="text-sm font-medium text-foreground md:col-span-2">
+                Descrição
+                <textarea
+                  value={form.description}
                   onChange={(event) =>
-                    updateField("weightGrams", event.target.value)
+                    updateField("description", event.target.value)
                   }
-                  className={fieldClassName()}
+                  className={textareaClassName()}
                 />
               </label>
 
-              <label className="text-sm font-medium text-foreground">
-                Comprimento (cm)
-                <input
-                  inputMode="decimal"
-                  value={form.lengthCm}
-                  onChange={(event) => updateField("lengthCm", event.target.value)}
-                  className={fieldClassName()}
-                />
-              </label>
-
-              <label className="text-sm font-medium text-foreground">
-                Largura (cm)
-                <input
-                  inputMode="decimal"
-                  value={form.widthCm}
-                  onChange={(event) => updateField("widthCm", event.target.value)}
-                  className={fieldClassName()}
-                />
-              </label>
-
-              <label className="text-sm font-medium text-foreground">
-                Altura (cm)
-                <input
-                  inputMode="decimal"
-                  value={form.heightCm}
-                  onChange={(event) => updateField("heightCm", event.target.value)}
-                  className={fieldClassName()}
+              <label className="text-sm font-medium text-foreground md:col-span-2">
+                Especificações
+                <textarea
+                  value={form.specifications}
+                  onChange={(event) =>
+                    updateField("specifications", event.target.value)
+                  }
+                  className={textareaClassName()}
+                  placeholder="Material, composição, origem e demais detalhes"
                 />
               </label>
             </div>
-          </div>
 
-          <div className="mt-7 flex flex-wrap items-center gap-3">
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {saving ? "Salvando..." : form.id ? "Salvar alterações" : "Criar produto"}
-            </button>
+            <div className="mt-7 border-t border-border pt-6">
+              <h4 className="font-semibold text-foreground">
+                Variante padrão e estoque
+              </h4>
+              <p className="mt-1 text-sm text-muted-foreground">
+                O SKU da variante também é automático. Nesta fase administramos
+                a variante padrão; combinações avançadas continuam compatíveis
+                com a modelagem existente.
+              </p>
 
-            <button
-              type="button"
-              onClick={cancelEditing}
-              className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-5 text-sm font-medium text-foreground hover:bg-accent"
-            >
-              Cancelar
-            </button>
+              <div className="mt-4 grid gap-5 md:grid-cols-2">
+                <label className="text-sm font-medium text-foreground">
+                  Nome da variante
+                  <input
+                    value={form.variantName}
+                    onChange={(event) =>
+                      updateField("variantName", event.target.value)
+                    }
+                    className={fieldClassName()}
+                    placeholder="Opcional"
+                  />
+                </label>
 
-            <p className="text-xs text-muted-foreground">
-              Imagens reais/R2 não são carregadas nesta etapa.
-            </p>
+                <label className="text-sm font-medium text-foreground">
+                  Estoque
+                  <input
+                    required
+                    inputMode="numeric"
+                    value={form.stockQuantity}
+                    onChange={(event) =>
+                      updateField("stockQuantity", event.target.value)
+                    }
+                    className={fieldClassName()}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-7 border-t border-border pt-6">
+              <h4 className="font-semibold text-foreground">Peso e dimensões</h4>
+              <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <label className="text-sm font-medium text-foreground">
+                  Peso (g)
+                  <input
+                    inputMode="numeric"
+                    value={form.weightGrams}
+                    onChange={(event) =>
+                      updateField("weightGrams", event.target.value)
+                    }
+                    className={fieldClassName()}
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-foreground">
+                  Comprimento (cm)
+                  <input
+                    inputMode="decimal"
+                    value={form.lengthCm}
+                    onChange={(event) =>
+                      updateField("lengthCm", event.target.value)
+                    }
+                    className={fieldClassName()}
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-foreground">
+                  Largura (cm)
+                  <input
+                    inputMode="decimal"
+                    value={form.widthCm}
+                    onChange={(event) =>
+                      updateField("widthCm", event.target.value)
+                    }
+                    className={fieldClassName()}
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-foreground">
+                  Altura (cm)
+                  <input
+                    inputMode="decimal"
+                    value={form.heightCm}
+                    onChange={(event) =>
+                      updateField("heightCm", event.target.value)
+                    }
+                    className={fieldClassName()}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-7 flex flex-wrap items-center gap-3 border-t border-border pt-6">
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {saving
+                  ? "Salvando..."
+                  : form.id
+                    ? "Salvar alterações"
+                    : "Criar produto"}
+              </button>
+
+              <button
+                type="button"
+                onClick={cancelEditing}
+                className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-5 text-sm font-medium text-foreground hover:bg-accent"
+              >
+                Cancelar
+              </button>
+
+              <p className="text-xs text-muted-foreground">
+                Imagens reais/R2 não são carregadas nesta etapa.
+              </p>
+            </div>
           </div>
         </form>
       ) : null}
 
-      <div className="mt-6 rounded-xl border border-border bg-card">
+      <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="flex flex-col gap-4 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-semibold text-foreground">Catálogo administrativo</p>
@@ -678,13 +720,13 @@ export function ProductAdmin() {
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {products.length === 0
-                ? "Use “Novo produto” para criar o primeiro registro real quando estiver pronto."
+                ? "Use “Novo produto” quando estiver pronto para criar o primeiro registro real."
                 : "Tente outro termo de busca."}
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[850px] text-left text-sm">
+            <table className="w-full min-w-[900px] text-left text-sm">
               <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 font-medium">Produto</th>
@@ -697,15 +739,19 @@ export function ProductAdmin() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} className="align-top">
+                  <tr key={product.id} className="align-top hover:bg-muted/20">
                     <td className="px-4 py-4">
                       <p className="font-medium text-foreground">{product.name}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="mt-1 font-mono text-xs text-muted-foreground">
                         {product.sku} · /{product.slug}
                       </p>
                     </td>
                     <td className="px-4 py-4">
-                      <span className="inline-flex rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground">
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${statusClassName(
+                          product.status,
+                        )}`}
+                      >
                         {statusLabel(product.status)}
                       </span>
                     </td>
@@ -723,7 +769,9 @@ export function ProductAdmin() {
                         formatMoney(product.price)
                       )}
                     </td>
-                    <td className="px-4 py-4 text-foreground">{product.stock}</td>
+                    <td className="px-4 py-4 font-medium text-foreground">
+                      {product.stock}
+                    </td>
                     <td className="px-4 py-4 text-muted-foreground">
                       {product.category ?? "—"}
                     </td>
