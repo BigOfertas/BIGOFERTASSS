@@ -14,7 +14,8 @@
     "validate:phase3": "node scripts/validate-phase-03.mjs",
     "validate:phase4": "node scripts/validate-phase-04.mjs",
     "validate:phase5": "node scripts/validate-phase-05.mjs",
-    "validate:phase6": "node scripts/validate-phase-06.mjs"
+    "validate:phase6": "node scripts/validate-phase-06.mjs",
+    "validate:phase7": "node scripts/validate-phase-07.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -87,7 +88,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
-    "nitro": "3.0.260603-beta",
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
