@@ -9,6 +9,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { useAuth } from "@/lib/auth";
+
 const WHATSAPP_URL = "https://wa.me/5584981347939";
 
 const trustItems = [
@@ -30,6 +32,7 @@ const trustItems = [
 ] as const;
 
 export default function Footer() {
+  const { user, isOwner } = useAuth();
   const [expandedAccordions, setExpandedAccordions] = useState({
     acessoRapido: false,
     minhaConta: false,
@@ -173,19 +176,46 @@ export default function Footer() {
                   : "max-h-0 opacity-0"
               }`}
             >
-              <li>
-                <Link to="/login" className="transition-colors hover:text-white">
-                  Entrar
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/cadastro"
-                  className="transition-colors hover:text-white"
-                >
-                  Criar conta
-                </Link>
-              </li>
+              {isOwner ? (
+                <li>
+                  <Link to="/admin" className="transition-colors hover:text-white">
+                    Painel administrativo
+                  </Link>
+                </li>
+              ) : user ? (
+                <>
+                  <li>
+                    <Link to="/conta" className="transition-colors hover:text-white">
+                      Minha conta
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/conta"
+                      search={{ secao: "enderecos" }}
+                      className="transition-colors hover:text-white"
+                    >
+                      Endereços
+                    </Link>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li>
+                    <Link to="/login" className="transition-colors hover:text-white">
+                      Entrar
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/cadastro"
+                      className="transition-colors hover:text-white"
+                    >
+                      Criar conta
+                    </Link>
+                  </li>
+                </>
+              )}
               <li>
                 <Link to="/cart" className="transition-colors hover:text-white">
                   Meu carrinho
