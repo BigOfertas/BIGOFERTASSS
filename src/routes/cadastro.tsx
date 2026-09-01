@@ -1,4 +1,11 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import {
+  CheckCircle2,
+  Circle,
+  Eye,
+  EyeOff,
+  Loader2,
+} from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { useAuth } from "@/lib/auth";
@@ -14,11 +21,17 @@ function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  const passwordLongEnough = password.length >= 6;
+  const passwordsMatch =
+    confirmPassword.length > 0 && password === confirmPassword;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,19 +43,19 @@ function RegisterPage() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    if (password.length < 6) {
+    if (!passwordLongEnough) {
       setErrorMessage("A senha deve ter pelo menos 6 caracteres.");
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (!passwordsMatch) {
       setErrorMessage("As senhas não coincidem.");
       return;
     }
 
     setSubmitting(true);
 
-    const { error } = await signUp(email, password, fullName);
+    const { error } = await signUp(email.trim(), password, fullName.trim());
 
     if (error) {
       setErrorMessage(error.message);
@@ -53,7 +66,8 @@ function RegisterPage() {
     setSuccessMessage(
       "Conta criada com sucesso. Se a confirmação de e-mail estiver ativada, verifique sua caixa de entrada.",
     );
-
+    setPassword("");
+    setConfirmPassword("");
     setSubmitting(false);
   }
 
@@ -77,7 +91,10 @@ function RegisterPage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-4">
-        <p className="text-sm text-muted-foreground">Carregando conta...</p>
+        <div className="text-center text-muted-foreground">
+          <Loader2 className="mx-auto h-6 w-6 animate-spin" aria-hidden="true" />
+          <p className="mt-3 text-sm">Carregando sua conta...</p>
+        </div>
       </main>
     );
   }
@@ -89,9 +106,9 @@ function RegisterPage() {
           <div className="mb-8 text-center">
             <Link
               to="/"
-              className="text-2xl font-bold tracking-tight text-foreground"
+              className="text-2xl font-black italic tracking-tight text-foreground"
             >
-              BIGofertas
+              <span className="text-red-600">BIG</span>ofertas
             </Link>
 
             <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">
@@ -111,31 +128,19 @@ function RegisterPage() {
               <p className="mt-1 break-all text-sm font-medium text-foreground">
                 {user.email ?? "Conta autenticada"}
               </p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Perfil: {isOwner ? "owner" : "customer"}
-              </p>
             </div>
-
-            <button
-              type="button"
-              onClick={() => void handleSignOut()}
-              disabled={signingOut}
-              className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {signingOut ? "Saindo..." : "Sair para criar outra conta"}
-            </button>
 
             {isOwner ? (
               <Link
                 to="/admin"
-                className="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                className="inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99]"
               >
                 Voltar ao painel administrativo
               </Link>
             ) : (
               <Link
                 to="/conta"
-                className="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                className="inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99]"
               >
                 Abrir minha conta
               </Link>
@@ -147,6 +152,22 @@ function RegisterPage() {
             >
               Voltar à loja
             </Link>
+
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              disabled={signingOut}
+              className="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {signingOut ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saindo...
+                </>
+              ) : (
+                "Sair para criar outra conta"
+              )}
+            </button>
 
             {errorMessage ? (
               <p
@@ -163,27 +184,28 @@ function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+    <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7] px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <Link
             to="/"
-            className="text-2xl font-bold tracking-tight text-foreground"
+            className="text-2xl font-black italic tracking-tight text-foreground"
           >
-            BIGofertas
+            <span className="text-red-600">BIG</span>ofertas
           </Link>
 
-          <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">
+          <h1 className="mt-6 text-2xl font-bold tracking-tight text-foreground">
             Criar conta
           </h1>
 
           <p className="mt-2 text-sm text-muted-foreground">
-            Crie sua conta de cliente.
+            Leva menos de um minuto e você pode completar seus dados depois.
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
+          aria-busy={submitting}
           className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
         >
           <div className="space-y-2">
@@ -198,9 +220,13 @@ function RegisterPage() {
               id="fullName"
               type="text"
               autoComplete="name"
+              autoFocus
               value={fullName}
-              onChange={(event) => setFullName(event.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+              onChange={(event) => {
+                setFullName(event.target.value);
+                if (errorMessage) setErrorMessage("");
+              }}
+              className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
               placeholder="Seu nome"
             />
           </div>
@@ -219,8 +245,11 @@ function RegisterPage() {
               autoComplete="email"
               required
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+              onChange={(event) => {
+                setEmail(event.target.value);
+                if (errorMessage) setErrorMessage("");
+              }}
+              className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
               placeholder="seuemail@exemplo.com"
             />
           </div>
@@ -233,17 +262,50 @@ function RegisterPage() {
               Senha
             </label>
 
-            <input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-              placeholder="Mínimo de 6 caracteres"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  if (errorMessage) setErrorMessage("");
+                }}
+                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 pr-11 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
+                placeholder="Mínimo de 6 caracteres"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                aria-pressed={showPassword}
+                className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground transition hover:text-foreground"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4.5 w-4.5" aria-hidden="true" />
+                ) : (
+                  <Eye className="h-4.5 w-4.5" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs">
+              {passwordLongEnough ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+              ) : (
+                <Circle className="h-3.5 w-3.5 text-gray-300" />
+              )}
+              <span
+                className={
+                  passwordLongEnough ? "text-emerald-700" : "text-muted-foreground"
+                }
+              >
+                Pelo menos 6 caracteres
+              </span>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -254,52 +316,107 @@ function RegisterPage() {
               Confirmar senha
             </label>
 
-            <input
-              id="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={6}
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-              placeholder="Digite a senha novamente"
-            />
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                minLength={6}
+                value={confirmPassword}
+                onChange={(event) => {
+                  setConfirmPassword(event.target.value);
+                  if (errorMessage) setErrorMessage("");
+                }}
+                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 pr-11 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
+                placeholder="Digite a senha novamente"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setShowConfirmPassword((visible) => !visible)
+                }
+                aria-label={
+                  showConfirmPassword
+                    ? "Ocultar confirmação da senha"
+                    : "Mostrar confirmação da senha"
+                }
+                aria-pressed={showConfirmPassword}
+                className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground transition hover:text-foreground"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4.5 w-4.5" aria-hidden="true" />
+                ) : (
+                  <Eye className="h-4.5 w-4.5" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+
+            {confirmPassword ? (
+              <div className="flex items-center gap-2 text-xs">
+                {passwordsMatch ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                ) : (
+                  <Circle className="h-3.5 w-3.5 text-amber-500" />
+                )}
+                <span
+                  className={
+                    passwordsMatch ? "text-emerald-700" : "text-amber-700"
+                  }
+                >
+                  {passwordsMatch ? "As senhas coincidem" : "As senhas ainda não coincidem"}
+                </span>
+              </div>
+            ) : null}
           </div>
 
           {errorMessage ? (
             <p
               role="alert"
-              className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
             >
               {errorMessage}
             </p>
           ) : null}
 
           {successMessage ? (
-            <p className="rounded-md bg-muted px-3 py-2 text-sm text-foreground">
+            <p
+              role="status"
+              className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+            >
               {successMessage}
             </p>
           ) : null}
 
           <button
             type="submit"
-            disabled={submitting}
-            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={submitting || !passwordLongEnough || !passwordsMatch}
+            className="inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
           >
-            {submitting ? "Criando conta..." : "Criar conta"}
+            {submitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Criando conta...
+              </>
+            ) : (
+              "Criar conta"
+            )}
           </button>
 
           <p className="text-center text-sm text-muted-foreground">
             Já possui uma conta?{" "}
             <Link
               to="/login"
-              className="font-medium text-foreground underline underline-offset-4"
+              className="font-semibold text-red-600 underline-offset-4 hover:underline"
             >
               Entrar
             </Link>
           </p>
         </form>
+
+        <p className="mt-4 text-center text-xs leading-relaxed text-muted-foreground">
+          Depois do cadastro, você poderá salvar dados de contato e endereços na sua área de cliente.
+        </p>
       </div>
     </main>
   );
