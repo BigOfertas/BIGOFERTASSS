@@ -50,7 +50,7 @@ WHERE product_sku = 'BIG-P000001'
   AND product_slug = 'produto-000001'
   AND claimed_product_id IS NULL;
 
-PERFORM public.ensure_product_identity_pool(20);
+SELECT public.ensure_product_identity_pool(20);
 
 -- O consumo do teste criou uma reserva extra. Mantemos as 20 de menor numero,
 -- devolvendo BIG-P000001 para que o primeiro produto real possa usa-la.
