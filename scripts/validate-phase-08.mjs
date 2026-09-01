@@ -19,6 +19,7 @@ const accountLib = read("src/lib/customer-account.ts");
 const header = read("src/components/layout/Header.tsx");
 const footer = read("src/components/layout/Footer.tsx");
 const login = read("src/routes/login.tsx");
+const cadastro = read("src/routes/cadastro.tsx");
 
 const checks = [
   [
@@ -162,6 +163,19 @@ const checks = [
   [
     "sucesso aparece em feedback persistente e acessivel",
     /aria-live="polite"/.test(accountUi) && /fixed bottom-4/.test(accountUi),
+  ],
+  [
+    "login permite visualizar senha e mostra progresso de envio",
+    /showPassword/.test(login) &&
+      /Mostrar senha/.test(login) &&
+      /Entrando\.\.\./.test(login) &&
+      /Loader2/.test(login),
+  ],
+  [
+    "cadastro explica requisito de senha e confirma correspondencia",
+    /Pelo menos 6 caracteres/.test(cadastro) &&
+      /As senhas coincidem/.test(cadastro) &&
+      /showConfirmPassword/.test(cadastro),
   ],
 ];
 
