@@ -14,7 +14,7 @@ const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
-  const accountDestination = isOwner ? "/admin" : "/login";
+  const accountDestination = isOwner ? "/admin" : user ? "/conta" : "/login";
   const accountTopLabel = isOwner ? "Painel" : user ? "Minha" : "Acessar";
   const accountBottomLabel = isOwner ? "Admin" : "Conta";
 
