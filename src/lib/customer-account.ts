@@ -37,6 +37,25 @@ export type CustomerAddressInput = {
   isDefault: boolean;
 };
 
+export type BrazilianPostalCodeLookup = {
+  postalCode: string;
+  street: string;
+  complement: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+};
+
+type ViaCepResponse = {
+  erro?: boolean | string;
+  cep?: string;
+  logradouro?: string;
+  complemento?: string;
+  bairro?: string;
+  localidade?: string;
+  uf?: string;
+};
+
 type RpcError = {
   message: string;
 };
@@ -85,6 +104,44 @@ function throwRpcError(error: RpcError | null, fallback: string) {
   if (error) {
     throw new Error(error.message || fallback);
   }
+}
+
+export async function lookupBrazilianPostalCode(
+  postalCode: string,
+): Promise<BrazilianPostalCodeLookup | null> {
+  const normalizedPostalCode = postalCode.replace(/\D/g, "").slice(0, 8);
+
+  if (normalizedPostalCode.length !== 8) {
+    throw new Error("Digite um CEP com 8 números.");
+  }
+
+  const response = await fetch(
+    `https://viacep.com.br/ws/${normalizedPostalCode}/json/`,
+    {
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Não foi possível consultar o CEP agora.");
+  }
+
+  const data = (await response.json()) as ViaCepResponse;
+
+  if (data.erro === true || data.erro === "true") {
+    return null;
+  }
+
+  return {
+    postalCode: normalizedPostalCode,
+    street: data.logradouro?.trim() ?? "",
+    complement: data.complemento?.trim() ?? "",
+    neighborhood: data.bairro?.trim() ?? "",
+    city: data.localidade?.trim() ?? "",
+    state: data.uf?.trim().toUpperCase() ?? "",
+  };
 }
 
 export async function fetchCustomerAccount() {
