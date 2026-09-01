@@ -19,10 +19,19 @@ BEGIN
   LIMIT 1;
 
   IF target_product_id IS NOT NULL THEN
+    -- A integridade da Fase 02 impede remover a ultima variante ativa
+    -- enquanto o produto pai ainda estiver ativo. Primeiro retiramos o
+    -- produto do catalogo ativo; depois o DELETE pode cascatar com seguranca.
+    UPDATE public.products
+    SET status = 'inactive'::public.product_status
+    WHERE id = target_product_id;
+
     DELETE FROM public.products
     WHERE id = target_product_id;
   END IF;
 
+  -- O FK claimed_product_id usa ON DELETE SET NULL. Depois que o produto
+  -- some, a reserva pode ser devolvida ao estado available.
   UPDATE public.product_identity_slots
   SET
     status = 'available',
