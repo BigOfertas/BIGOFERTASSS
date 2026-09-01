@@ -5,6 +5,7 @@ import bannerSuperiorAsset from "@/assets/promos/banner-promo-superior.png.asset
 import BestSellers from "@/components/home/BestSellers";
 import BrazilianProducts from "@/components/home/BrazilianProducts";
 import BrazilianTeams from "@/components/home/BrazilianTeams";
+import FAQ from "@/components/home/FAQ";
 import ShopByLeague from "@/components/home/ShopByLeague";
 import VisualCategories from "@/components/home/VisualCategories";
 import Header from "@/components/layout/Header";
@@ -56,6 +57,7 @@ function Index() {
         <BrazilianTeams />
         <BrazilianProducts />
         <ShopByLeague />
+        <FAQ />
       </main>
     </div>
   );
