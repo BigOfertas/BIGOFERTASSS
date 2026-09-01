@@ -25,49 +25,51 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-100 bg-white shadow-sm">
+    <header className="bg-white sticky top-0 z-50 shadow-sm border-b border-gray-100">
       <div className="hidden md:block">
-        <div className="mx-auto max-w-7xl px-4 py-5 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-5">
           <div className="flex items-center justify-between gap-12">
             <Link
               to="/"
-              className="flex w-56 flex-shrink-0 items-center text-3xl font-black italic tracking-tighter text-gray-900"
+              className="flex-shrink-0 w-56 flex items-center"
               aria-label="BIGofertas - Início"
             >
-              <span className="text-red-600">BIG</span>ofertas
+              <div className="w-full h-14 bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center rounded-sm text-gray-400 font-black italic text-2xl tracking-tighter">
+                <span className="text-red-600">BIG</span>ofertas
+              </div>
             </Link>
 
-            <div className="relative max-w-2xl flex-1">
-              <form onSubmit={handleSearch} className="group relative" role="search">
+            <div className="flex-1 max-w-2xl relative">
+              <form onSubmit={handleSearch} className="relative group" role="search">
                 <Input
                   type="search"
                   aria-label="Buscar produtos"
                   placeholder="O que você está procurando?"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  className="h-12 w-full rounded-md border-gray-300 bg-white pl-5 pr-14 text-sm transition-all placeholder:text-gray-400 focus:border-red-600 focus:ring-0 focus-visible:ring-0"
+                  className="w-full h-12 pl-5 pr-14 border-gray-300 focus:border-red-600 focus:ring-0 focus-visible:ring-0 rounded-md bg-white transition-all text-sm placeholder:text-gray-400"
                 />
                 <button
                   type="submit"
                   aria-label="Buscar"
-                  className="absolute right-0 top-0 flex h-full w-14 items-center justify-center text-gray-500 transition-colors group-focus-within:text-red-600"
+                  className="absolute right-0 top-0 h-full w-14 flex items-center justify-center text-gray-500 group-focus-within:text-red-600 transition-colors"
                 >
-                  <Search className="h-6 w-6" />
+                  <Search className="w-6 h-6" />
                 </button>
               </form>
             </div>
 
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-10">
               <Link
                 to="/login"
-                className="group flex items-center gap-3 transition-colors"
+                className="flex items-center gap-3 group transition-colors"
               >
-                <User className="h-7 w-7 text-gray-900 transition-colors group-hover:text-red-600" />
+                <User className="w-7 h-7 text-gray-900 group-hover:text-red-600 transition-colors" />
                 <div className="flex flex-col items-start leading-tight">
-                  <span className="text-[11px] font-medium uppercase tracking-tight text-gray-500">
+                  <span className="text-[11px] text-gray-500 font-medium uppercase tracking-tight">
                     Acessar
                   </span>
-                  <span className="text-sm font-bold text-gray-900 transition-colors group-hover:text-red-600">
+                  <span className="text-sm font-bold text-gray-900 group-hover:text-red-600 transition-colors">
                     Conta
                   </span>
                 </div>
@@ -76,12 +78,12 @@ const Header: React.FC = () => {
               <Link
                 to="/cart"
                 aria-label={`Carrinho com ${totalItems} item(ns)`}
-                className="group relative flex items-center gap-3"
+                className="flex items-center gap-3 group relative"
               >
                 <div className="relative">
-                  <ShoppingCart className="h-8 w-8 text-gray-900 transition-colors group-hover:text-red-600" />
+                  <ShoppingCart className="w-8 h-8 text-gray-900 group-hover:text-red-600 transition-colors" />
                   {totalItems > 0 ? (
-                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold min-w-4 h-4 px-1 rounded-full flex items-center justify-center">
                       {totalItems}
                     </span>
                   ) : null}
@@ -94,46 +96,48 @@ const Header: React.FC = () => {
       </div>
 
       <div className="md:hidden">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="px-4 py-3 flex items-center justify-between">
           <button
             type="button"
             onClick={() => setMobileMenuOpen((open) => !open)}
             aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
             aria-expanded={mobileMenuOpen}
-            className="-ml-1 p-1 text-gray-900 transition-colors active:text-red-600"
+            className="p-1 -ml-1 text-gray-900 active:text-red-600 transition-colors"
           >
             {mobileMenuOpen ? (
-              <X className="h-8 w-8" />
+              <X className="w-8 h-8" />
             ) : (
-              <Menu className="h-8 w-8" />
+              <Menu className="w-8 h-8" />
             )}
           </button>
 
           <Link
             to="/"
-            className="flex flex-1 justify-center text-2xl font-black italic tracking-tighter text-gray-900"
+            className="flex-1 flex justify-center"
             aria-label="BIGofertas - Início"
             onClick={() => setMobileMenuOpen(false)}
           >
-            <span className="text-red-600">BIG</span>ofertas
+            <div className="w-36 h-10 bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center rounded-sm text-gray-400 font-black italic text-lg tracking-tighter">
+              <span className="text-red-600">BIG</span>ofertas
+            </div>
           </Link>
 
-          <div className="-mr-1 flex items-center gap-3">
+          <div className="flex items-center gap-4 -mr-1">
             <Link
               to="/login"
               aria-label="Acessar conta"
-              className="p-1 text-gray-900 active:text-red-600"
+              className="text-gray-900 active:text-red-600 p-1"
             >
-              <User className="h-7 w-7" />
+              <User className="w-7 h-7" />
             </Link>
             <Link
               to="/cart"
               aria-label={`Carrinho com ${totalItems} item(ns)`}
-              className="relative p-1 text-gray-900 active:text-red-600"
+              className="text-gray-900 active:text-red-600 p-1 relative"
             >
-              <ShoppingCart className="h-7 w-7" />
+              <ShoppingCart className="w-7 h-7" />
               {totalItems > 0 ? (
-                <span className="absolute right-0 top-0 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[8px] font-bold text-white">
+                <span className="absolute top-0 right-0 bg-red-600 text-white text-[8px] font-bold min-w-3.5 h-3.5 px-0.5 rounded-full flex items-center justify-center">
                   {totalItems}
                 </span>
               ) : null}
@@ -142,21 +146,21 @@ const Header: React.FC = () => {
         </div>
 
         <div className="px-4 pb-4">
-          <form onSubmit={handleSearch} className="group relative" role="search">
+          <form onSubmit={handleSearch} className="relative group" role="search">
             <Input
               type="search"
               aria-label="Buscar produtos"
               placeholder="O que você está procurando?"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              className="h-11 w-full rounded-md border-gray-300 bg-white pl-4 pr-12 text-sm focus:border-red-600 focus:ring-0 focus-visible:ring-0"
+              className="w-full h-11 pl-4 pr-12 border-gray-300 focus:border-red-600 focus:ring-0 focus-visible:ring-0 rounded-md bg-white text-sm"
             />
             <button
               type="submit"
               aria-label="Buscar"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-red-600"
             >
-              <Search className="h-5 w-5" />
+              <Search className="w-5 h-5" />
             </button>
           </form>
         </div>
