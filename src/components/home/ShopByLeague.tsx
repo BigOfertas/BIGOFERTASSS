@@ -1,62 +1,45 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
-import {
-  useCatalogFacets,
-  useCatalogProducts,
-} from "@/hooks/useCatalogProducts";
+import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
-import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
+import { useCatalogProducts } from "@/hooks/useCatalogProducts";
+
+interface League {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+const LEAGUES: League[] = [
+  { id: "la-liga", name: "LA LIGA", slug: "la-liga" },
+  { id: "premier-league", name: "PREMIER LEAGUE", slug: "premier-league" },
+  { id: "serie-a", name: "SERIE A", slug: "serie-a" },
+  { id: "bundesliga", name: "BUNDESLIGA", slug: "bundesliga" },
+  { id: "ligue-1", name: "LIGUE 1", slug: "ligue-1" },
+];
 
 const SHOWCASE_SIZE = 15;
-const TAB_PLACEHOLDERS = ["w-20", "w-32", "w-20", "w-28", "w-20"];
 
 const ShopByLeague: React.FC = () => {
-  const { data: facets, isLoading: facetsLoading, error: facetsError } =
-    useCatalogFacets();
-  const leagues = facets?.ligas ?? [];
-
-  const [activeLeagueId, setActiveLeagueId] = useState<string>("");
-  const [displayLeagueId, setDisplayLeagueId] = useState<string>("");
+  const [activeLeagueId, setActiveLeagueId] = useState(LEAGUES[0].id);
+  const [displayLeagueId, setDisplayLeagueId] = useState(LEAGUES[0].id);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  useEffect(() => {
-    if (leagues.length === 0) {
-      return;
-    }
+  const displayLeague =
+    LEAGUES.find((league) => league.id === displayLeagueId) ?? LEAGUES[0];
 
-    const firstLeague = leagues[0]?.value ?? "";
-    const activeStillExists = leagues.some(
-      (league) => league.value === activeLeagueId,
-    );
-    const displayStillExists = leagues.some(
-      (league) => league.value === displayLeagueId,
-    );
+  const { data, isLoading, error } = useCatalogProducts({
+    liga: displayLeague.slug,
+    pageSize: 24,
+    sort: "newest",
+  });
 
-    if (!activeStillExists) {
-      setActiveLeagueId(firstLeague);
-    }
-    if (!displayStillExists) {
-      setDisplayLeagueId(firstLeague);
-    }
-  }, [leagues, activeLeagueId, displayLeagueId]);
-
-  const { data, isLoading: productsLoading, error: productsError } =
-    useCatalogProducts(
-      displayLeagueId
-        ? { liga: displayLeagueId, pageSize: 12 }
-        : { pageSize: 12 },
-    );
-
-  const activeProducts = displayLeagueId ? (data?.items ?? []) : [];
-  const placeholderCount = Math.max(0, SHOWCASE_SIZE - activeProducts.length);
-  const isLoading = facetsLoading || productsLoading;
-  const error = facetsError || productsError;
+  const products = (data?.items ?? []).slice(0, SHOWCASE_SIZE);
+  const placeholderCount = Math.max(0, SHOWCASE_SIZE - products.length);
 
   const handleLeagueChange = (id: string) => {
-    if (id === activeLeagueId || isTransitioning) {
-      return;
-    }
+    if (id === activeLeagueId || isTransitioning) return;
 
     setIsTransitioning(true);
     setActiveLeagueId(id);
@@ -74,49 +57,34 @@ const ShopByLeague: React.FC = () => {
           COMPRE POR <span className="text-red-600">LIGA</span>
         </h2>
 
-        {leagues.length > 0 ? (
-          <div className="flex flex-wrap justify-center gap-x-4 md:gap-x-10 gap-y-3 mb-12">
-            {leagues.map((league) => (
-              <button
-                type="button"
-                key={league.value}
-                onClick={() => handleLeagueChange(league.value)}
-                className={`whitespace-nowrap text-base font-bold tracking-tight uppercase transition-all relative px-4 py-2 min-h-[44px] ${
-                  activeLeagueId === league.value
-                    ? "text-gray-900"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
-              >
-                {league.label}
-                {activeLeagueId === league.value ? (
-                  <span className="absolute bottom-0 left-0 w-full h-[3px] bg-red-600 rounded-full transition-all duration-200 ease-in-out" />
-                ) : null}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div
-            aria-hidden="true"
-            className="flex flex-wrap justify-center gap-x-4 md:gap-x-10 gap-y-3 mb-12"
-          >
-            {TAB_PLACEHOLDERS.map((width, index) => (
-              <div
-                key={index}
-                className={`h-11 ${width} rounded bg-gray-100 ${
-                  facetsLoading ? "animate-pulse" : ""
-                }`}
-              />
-            ))}
-          </div>
-        )}
+        <div className="flex flex-wrap justify-center gap-x-4 md:gap-x-10 gap-y-3 mb-12">
+          {LEAGUES.map((league) => (
+            <button
+              type="button"
+              key={league.id}
+              onClick={() => handleLeagueChange(league.id)}
+              aria-pressed={activeLeagueId === league.id}
+              className={`whitespace-nowrap text-base font-bold tracking-tight uppercase transition-colors duration-200 relative px-4 py-2 min-h-[44px] ${
+                activeLeagueId === league.id
+                  ? "text-gray-900"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {league.name}
+              {activeLeagueId === league.id ? (
+                <span className="absolute bottom-0 left-0 w-full h-[3px] bg-red-600 rounded-full transition-all duration-200 ease-in-out" />
+              ) : null}
+            </button>
+          ))}
+        </div>
 
         <div
-          className={`relative transition-opacity duration-150 ease-in-out ${
-            isTransitioning ? "opacity-0" : "opacity-100"
+          className={`relative transition-all duration-150 ease-in-out ${
+            isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"
           }`}
         >
-          <ProductCarousel itemCount={SHOWCASE_SIZE}>
-            {activeProducts.map((product) => (
+          <ProductCarousel key={displayLeagueId} itemCount={SHOWCASE_SIZE}>
+            {products.map((product) => (
               <ProductCard
                 key={product.id}
                 id={product.id}
@@ -129,7 +97,7 @@ const ShopByLeague: React.FC = () => {
             ))}
             {Array.from({ length: placeholderCount }).map((_, index) => (
               <ProductCardPlaceholder
-                key={`league-placeholder-${index}`}
+                key={`${displayLeagueId}-placeholder-${index}`}
                 loading={isLoading}
               />
             ))}
@@ -137,7 +105,9 @@ const ShopByLeague: React.FC = () => {
         </div>
 
         {error ? (
-          <span className="sr-only">Não foi possível carregar as ligas do catálogo.</span>
+          <span className="sr-only">
+            Não foi possível carregar os produtos da liga selecionada.
+          </span>
         ) : null}
       </div>
     </section>
