@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   useCatalogFacets,
@@ -6,73 +6,116 @@ import {
 } from "@/hooks/useCatalogProducts";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
+import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
+
+const SHOWCASE_SIZE = 15;
+const TAB_PLACEHOLDERS = ["w-20", "w-32", "w-20", "w-28", "w-20"];
 
 const ShopByLeague: React.FC = () => {
   const { data: facets, isLoading: facetsLoading, error: facetsError } =
     useCatalogFacets();
-  const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
-
   const leagues = facets?.ligas ?? [];
-  const activeLeague =
-    selectedLeague && leagues.some((league) => league.value === selectedLeague)
-      ? selectedLeague
-      : (leagues[0]?.value ?? null);
+
+  const [activeLeagueId, setActiveLeagueId] = useState<string>("");
+  const [displayLeagueId, setDisplayLeagueId] = useState<string>("");
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (leagues.length === 0) {
+      return;
+    }
+
+    const firstLeague = leagues[0]?.value ?? "";
+    const activeStillExists = leagues.some(
+      (league) => league.value === activeLeagueId,
+    );
+    const displayStillExists = leagues.some(
+      (league) => league.value === displayLeagueId,
+    );
+
+    if (!activeStillExists) {
+      setActiveLeagueId(firstLeague);
+    }
+    if (!displayStillExists) {
+      setDisplayLeagueId(firstLeague);
+    }
+  }, [leagues, activeLeagueId, displayLeagueId]);
 
   const { data, isLoading: productsLoading, error: productsError } =
     useCatalogProducts(
-      activeLeague ? { liga: activeLeague, pageSize: 12 } : { pageSize: 12 },
+      displayLeagueId
+        ? { liga: displayLeagueId, pageSize: 12 }
+        : { pageSize: 12 },
     );
 
-  const activeProducts = activeLeague ? (data?.items ?? []) : [];
+  const activeProducts = displayLeagueId ? (data?.items ?? []) : [];
+  const placeholderCount = Math.max(0, SHOWCASE_SIZE - activeProducts.length);
   const isLoading = facetsLoading || productsLoading;
   const error = facetsError || productsError;
 
-  if (error || (!isLoading && leagues.length === 0)) {
-    return null;
-  }
+  const handleLeagueChange = (id: string) => {
+    if (id === activeLeagueId || isTransitioning) {
+      return;
+    }
+
+    setIsTransitioning(true);
+    setActiveLeagueId(id);
+
+    window.setTimeout(() => {
+      setDisplayLeagueId(id);
+      setIsTransitioning(false);
+    }, 150);
+  };
 
   return (
-    <section className="overflow-hidden bg-white py-16">
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <h2 className="mb-8 text-center text-xl font-black uppercase leading-none tracking-tighter text-gray-900 md:text-2xl">
+    <section className="py-16 bg-white overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8">
+        <h2 className="mb-8 text-center text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none text-gray-900">
           COMPRE POR <span className="text-red-600">LIGA</span>
         </h2>
 
-        {facetsLoading ? (
-          <div className="mx-auto mb-12 h-10 max-w-xl animate-pulse rounded bg-gray-100" />
-        ) : (
-          <div className="mb-12 flex flex-wrap justify-center gap-x-4 gap-y-3 md:gap-x-10">
+        {leagues.length > 0 ? (
+          <div className="flex flex-wrap justify-center gap-x-4 md:gap-x-10 gap-y-3 mb-12">
             {leagues.map((league) => (
               <button
                 type="button"
                 key={league.value}
-                onClick={() => setSelectedLeague(league.value)}
-                className={`relative min-h-11 whitespace-nowrap px-4 py-2 text-base font-bold uppercase tracking-tight transition-all ${
-                  activeLeague === league.value
+                onClick={() => handleLeagueChange(league.value)}
+                className={`whitespace-nowrap text-base font-bold tracking-tight uppercase transition-all relative px-4 py-2 min-h-[44px] ${
+                  activeLeagueId === league.value
                     ? "text-gray-900"
                     : "text-gray-400 hover:text-gray-600"
                 }`}
               >
                 {league.label}
-                {activeLeague === league.value ? (
-                  <span className="absolute bottom-0 left-0 h-[3px] w-full rounded-full bg-red-600" />
+                {activeLeagueId === league.value ? (
+                  <span className="absolute bottom-0 left-0 w-full h-[3px] bg-red-600 rounded-full transition-all duration-200 ease-in-out" />
                 ) : null}
               </button>
             ))}
           </div>
-        )}
-
-        {productsLoading ? (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-5">
-            {Array.from({ length: 5 }).map((_, index) => (
+        ) : (
+          <div
+            aria-hidden="true"
+            className="flex flex-wrap justify-center gap-x-4 md:gap-x-10 gap-y-3 mb-12"
+          >
+            {TAB_PLACEHOLDERS.map((width, index) => (
               <div
                 key={index}
-                className="aspect-[4/5] animate-pulse rounded-md bg-gray-100"
+                className={`h-11 ${width} rounded bg-gray-100 ${
+                  facetsLoading ? "animate-pulse" : ""
+                }`}
               />
             ))}
           </div>
-        ) : activeProducts.length > 0 ? (
-          <ProductCarousel itemCount={activeProducts.length}>
+        )}
+
+        <div
+          className={`relative transition-opacity duration-150 ease-in-out ${
+            isTransitioning ? "opacity-0" : "opacity-100"
+          }`}
+        >
+          <ProductCarousel itemCount={SHOWCASE_SIZE}>
             {activeProducts.map((product) => (
               <ProductCard
                 key={product.id}
@@ -84,7 +127,17 @@ const ShopByLeague: React.FC = () => {
                 imageUrl={product.displayImageUrl}
               />
             ))}
+            {Array.from({ length: placeholderCount }).map((_, index) => (
+              <ProductCardPlaceholder
+                key={`league-placeholder-${index}`}
+                loading={isLoading}
+              />
+            ))}
           </ProductCarousel>
+        </div>
+
+        {error ? (
+          <span className="sr-only">Não foi possível carregar as ligas do catálogo.</span>
         ) : null}
       </div>
     </section>
