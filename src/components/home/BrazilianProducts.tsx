@@ -3,6 +3,9 @@ import React from "react";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
+import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
+
+const SHOWCASE_SIZE = 15;
 
 const BrazilianProducts: React.FC = () => {
   const { data, isLoading, error } = useCatalogProducts({
@@ -10,29 +13,17 @@ const BrazilianProducts: React.FC = () => {
     pageSize: 12,
   });
   const brazilianProducts = data?.items ?? [];
-
-  if (error || (!isLoading && brazilianProducts.length === 0)) {
-    return null;
-  }
+  const placeholderCount = Math.max(0, SHOWCASE_SIZE - brazilianProducts.length);
 
   return (
-    <section className="overflow-hidden bg-white py-16">
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <h2 className="mb-12 text-center text-xl font-black uppercase leading-none tracking-tighter text-gray-900 md:text-2xl">
+    <section className="py-16 bg-white overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8">
+        <h2 className="mb-12 text-center text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none text-gray-900">
           PRODUTOS DO <span className="text-red-600">BRASILEIRÃO</span>
         </h2>
 
-        {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-5">
-            {Array.from({ length: 5 }).map((_, index) => (
-              <div
-                key={index}
-                className="aspect-[4/5] animate-pulse rounded-md bg-gray-100"
-              />
-            ))}
-          </div>
-        ) : (
-          <ProductCarousel itemCount={brazilianProducts.length}>
+        <div className="relative">
+          <ProductCarousel itemCount={SHOWCASE_SIZE}>
             {brazilianProducts.map((product) => (
               <ProductCard
                 key={product.id}
@@ -44,8 +35,18 @@ const BrazilianProducts: React.FC = () => {
                 imageUrl={product.displayImageUrl}
               />
             ))}
+            {Array.from({ length: placeholderCount }).map((_, index) => (
+              <ProductCardPlaceholder
+                key={`brasileirao-placeholder-${index}`}
+                loading={isLoading}
+              />
+            ))}
           </ProductCarousel>
-        )}
+        </div>
+
+        {error ? (
+          <span className="sr-only">Não foi possível carregar os produtos do Brasileirão.</span>
+        ) : null}
       </div>
     </section>
   );
