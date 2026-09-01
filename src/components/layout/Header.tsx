@@ -4,13 +4,19 @@ import { Menu, Search, ShoppingCart, User, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/lib/auth";
 import CategoryNav from "./CategoryNav";
 
 const Header: React.FC = () => {
   const { totalItems } = useCart();
+  const { user, isOwner } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
+  const accountDestination = isOwner ? "/admin" : "/login";
+  const accountTopLabel = isOwner ? "Painel" : user ? "Minha" : "Acessar";
+  const accountBottomLabel = isOwner ? "Admin" : "Conta";
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -61,16 +67,16 @@ const Header: React.FC = () => {
 
             <div className="flex items-center gap-10">
               <Link
-                to="/login"
+                to={accountDestination}
                 className="flex items-center gap-3 group transition-colors"
               >
                 <User className="w-7 h-7 text-gray-900 group-hover:text-red-600 transition-colors" />
                 <div className="flex flex-col items-start leading-tight">
                   <span className="text-[11px] text-gray-500 font-medium uppercase tracking-tight">
-                    Acessar
+                    {accountTopLabel}
                   </span>
                   <span className="text-sm font-bold text-gray-900 group-hover:text-red-600 transition-colors">
-                    Conta
+                    {accountBottomLabel}
                   </span>
                 </div>
               </Link>
@@ -124,8 +130,8 @@ const Header: React.FC = () => {
 
           <div className="flex items-center gap-4 -mr-1">
             <Link
-              to="/login"
-              aria-label="Acessar conta"
+              to={accountDestination}
+              aria-label={isOwner ? "Abrir painel administrativo" : user ? "Abrir conta" : "Acessar conta"}
               className="text-gray-900 active:text-red-600 p-1"
             >
               <User className="w-7 h-7" />
