@@ -3,33 +3,41 @@ import React from "react";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
+import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
+
+const SHOWCASE_SIZE = 15;
 
 const BestSellers: React.FC = () => {
   const { data, isLoading, error } = useCatalogProducts({ pageSize: 12 });
   const recentProducts = data?.items ?? [];
-
-  if (error || (!isLoading && recentProducts.length === 0)) {
-    return null;
-  }
+  const placeholderCount = Math.max(0, SHOWCASE_SIZE - recentProducts.length);
 
   return (
-    <section className="overflow-hidden bg-white py-16">
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <h2 className="mb-12 text-center text-xl font-black uppercase leading-none tracking-tighter text-gray-900 md:text-2xl">
-          PRODUTOS <span className="text-red-600">RECENTES</span>
-        </h2>
+    <section className="py-16 bg-white overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8">
+        <div className="flex justify-center items-center gap-6 md:gap-12 mb-12">
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            title="Disponível quando houver histórico real de vendas"
+            className="text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none transition-all relative text-gray-400 cursor-default"
+          >
+            MAIS VENDIDOS
+          </button>
 
-        {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-5">
-            {Array.from({ length: 5 }).map((_, index) => (
-              <div
-                key={index}
-                className="aspect-[4/5] animate-pulse rounded-md bg-gray-100"
-              />
-            ))}
-          </div>
-        ) : (
-          <ProductCarousel itemCount={recentProducts.length}>
+          <button
+            type="button"
+            aria-current="true"
+            className="text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none transition-all relative text-gray-900 cursor-default"
+          >
+            LANÇAMENTOS
+            <span className="absolute -bottom-2 left-0 w-full h-1 bg-red-600 rounded-full" />
+          </button>
+        </div>
+
+        <div className="relative transition-opacity duration-150 ease-in-out opacity-100">
+          <ProductCarousel itemCount={SHOWCASE_SIZE}>
             {recentProducts.map((product) => (
               <ProductCard
                 key={product.id}
@@ -41,8 +49,18 @@ const BestSellers: React.FC = () => {
                 imageUrl={product.displayImageUrl}
               />
             ))}
+            {Array.from({ length: placeholderCount }).map((_, index) => (
+              <ProductCardPlaceholder
+                key={`recent-placeholder-${index}`}
+                loading={isLoading}
+              />
+            ))}
           </ProductCarousel>
-        )}
+        </div>
+
+        {error ? (
+          <span className="sr-only">Não foi possível carregar os produtos recentes.</span>
+        ) : null}
       </div>
     </section>
   );
