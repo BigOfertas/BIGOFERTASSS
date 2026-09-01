@@ -354,7 +354,7 @@ export function ProductAdmin() {
         </button>
       </div>
 
-      {errorMessage ? (
+      {errorMessage && !showForm ? (
         <div
           role="alert"
           className="mt-5 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
@@ -661,30 +661,41 @@ export function ProductAdmin() {
               </div>
             </div>
 
-            <div className="mt-7 flex flex-wrap items-center gap-3 border-t border-border pt-6">
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {saving
-                  ? "Salvando..."
-                  : form.id
-                    ? "Salvar alterações"
-                    : "Criar produto"}
-              </button>
+            <div className="mt-7 border-t border-border pt-6">
+              {errorMessage ? (
+                <div
+                  role="alert"
+                  className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+                >
+                  {errorMessage}
+                </div>
+              ) : null}
 
-              <button
-                type="button"
-                onClick={cancelEditing}
-                className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-5 text-sm font-medium text-foreground hover:bg-accent"
-              >
-                Cancelar
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {saving
+                    ? "Salvando..."
+                    : form.id
+                      ? "Salvar alterações"
+                      : "Criar produto"}
+                </button>
 
-              <p className="text-xs text-muted-foreground">
-                Imagens reais/R2 não são carregadas nesta etapa.
-              </p>
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-5 text-sm font-medium text-foreground hover:bg-accent"
+                >
+                  Cancelar
+                </button>
+
+                <p className="text-xs text-muted-foreground">
+                  Imagens reais/R2 não são carregadas nesta etapa.
+                </p>
+              </div>
             </div>
           </div>
         </form>
