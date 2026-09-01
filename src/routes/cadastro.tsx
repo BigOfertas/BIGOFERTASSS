@@ -134,12 +134,19 @@ function RegisterPage() {
               </Link>
             ) : (
               <Link
-                to="/"
+                to="/conta"
                 className="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
               >
-                Voltar à loja
+                Abrir minha conta
               </Link>
             )}
+
+            <Link
+              to="/"
+              className="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              Voltar à loja
+            </Link>
 
             {errorMessage ? (
               <p
