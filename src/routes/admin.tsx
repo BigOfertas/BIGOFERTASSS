@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import { ProductAdmin } from "@/components/admin/ProductAdmin";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/admin")({
@@ -92,12 +93,18 @@ function AdminPage() {
     <main className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link
-            to="/"
-            className="text-xl font-bold tracking-tight text-foreground"
-          >
-            BIGofertas
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              to="/"
+              className="text-xl font-bold tracking-tight text-foreground"
+            >
+              BIGofertas
+            </Link>
+
+            <span className="hidden rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground sm:inline-flex">
+              Administração
+            </span>
+          </div>
 
           <button
             type="button"
@@ -110,43 +117,45 @@ function AdminPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="max-w-2xl">
-          <p className="text-sm font-medium text-muted-foreground">
-            Administração
-          </p>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-sm font-medium text-muted-foreground">
+              Administração
+            </p>
 
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
-            Painel BIGofertas
-          </h1>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
+              Painel BIGofertas
+            </h1>
 
-          <p className="mt-3 text-muted-foreground">
-            Área restrita para administração da BIGofertas.
-          </p>
+            <p className="mt-3 text-muted-foreground">
+              Área restrita para manutenção do catálogo e das operações internas.
+            </p>
+          </div>
 
-          <div className="mt-8 rounded-xl border border-border bg-card p-6">
-            <p className="text-sm text-muted-foreground">
+          <div className="rounded-xl border border-border bg-card px-5 py-4 lg:min-w-72">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Conta conectada
             </p>
-
-            <p className="mt-1 font-medium text-foreground">
+            <p className="mt-1 truncate text-sm font-medium text-foreground">
               {user.email}
             </p>
-
-            <p className="mt-4 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground">
+            <p className="mt-2 inline-flex rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
               owner
             </p>
-
-            {errorMessage ? (
-              <p
-                role="alert"
-                className="mt-4 text-sm text-destructive"
-              >
-                {errorMessage}
-              </p>
-            ) : null}
           </div>
         </div>
+
+        {errorMessage ? (
+          <p
+            role="alert"
+            className="mt-5 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            {errorMessage}
+          </p>
+        ) : null}
+
+        <ProductAdmin />
       </div>
     </main>
   );
