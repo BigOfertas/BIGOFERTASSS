@@ -14,6 +14,9 @@ const auth = read("src/lib/auth.tsx");
 const phase02 = read(
   "supabase/migrations/20260831233500_phase_02_definitive_product_model.sql",
 );
+const phase07Identity = read(
+  "supabase/migrations/20260901183000_phase_07_product_identity_pool.sql",
+);
 
 const checks = [
   [
@@ -29,7 +32,7 @@ const checks = [
     /<ProductAdmin\s*\/>/.test(adminRoute),
   ],
   [
-    "administracao lista produtos sem RPC publica",
+    "administracao lista produtos sem RPC publica de catalogo",
     /from\("products"\)/.test(adminLib) && /limit\(500\)/.test(adminLib),
   ],
   [
@@ -64,8 +67,27 @@ const checks = [
     /status: "archived"/.test(adminLib) && /Arquivar/.test(adminUi),
   ],
   [
-    "formulario inclui identidade comercial",
-    /SKU do produto/.test(adminUi) && /Slug/.test(adminUi),
+    "pool de identificadores mantem reservas para produtos futuros",
+    /CREATE TABLE IF NOT EXISTS public\.product_identity_slots/.test(
+      phase07Identity,
+    ) && /ensure_product_identity_pool\(20\)/.test(phase07Identity),
+  ],
+  [
+    "somente owner pode alocar identificadores",
+    /allocate_product_identity/.test(phase07Identity) &&
+      /has_role\('owner'::public\.app_role\)/.test(phase07Identity),
+  ],
+  [
+    "sku slug e sku da variante sao alocados automaticamente",
+    /allocateProductIdentity/.test(adminLib) &&
+      /sku: identity\.product_sku/.test(adminLib) &&
+      /slug: identity\.product_slug/.test(adminLib) &&
+      /sku: identity\.default_variant_sku/.test(adminLib),
+  ],
+  [
+    "formulario nao exige digitacao de sku ou slug",
+    /Você não precisa preencher SKU ou slug/.test(adminUi) &&
+      /Reserva atribuída ao criar/.test(adminUi),
   ],
   [
     "formulario inclui precificacao e status",
