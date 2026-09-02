@@ -3,12 +3,16 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import {
+  handleInfinitePayWebhookRequest,
+  handleStartCheckoutRequest,
+} from "./lib/infinitepay-server";
+import type { InfinitePayEnvironment } from "./lib/infinitepay-server";
+import {
   createShippingAdapterErrorResponse,
   handleShippingQuoteRequest,
 } from "./lib/shipping-server";
-import type { ShippingEnvironment } from "./lib/shipping-server";
 
-type WorkerEnvironment = ShippingEnvironment;
+type WorkerEnvironment = InfinitePayEnvironment;
 
 type ServerEntry = {
   fetch: (
@@ -66,15 +70,19 @@ function asWorkerEnvironment(value: unknown): WorkerEnvironment {
 export default {
   async fetch(request: Request, env: unknown, _ctx: unknown) {
     let isShippingRequest = false;
+    let isCheckoutRequest = false;
+    let isInfinitePayWebhook = false;
 
     try {
       // Nitro's Cloudflare adapter calls this SSR service with `request` only.
-      // It preserves Worker bindings on `request.runtime.cloudflare.env`; the
-      // shipping handler reads that location first and uses this argument only
-      // for runtimes that call the entrypoint directly with `(request, env)`.
+      // Runtime bindings can also be preserved on `request.runtime.cloudflare.env`;
+      // each server handler resolves both locations defensively.
       const workerEnv = asWorkerEnvironment(env);
       const url = new URL(request.url);
       isShippingRequest = url.pathname === "/api/shipping/quote";
+      isCheckoutRequest = url.pathname === "/api/checkout/start";
+      isInfinitePayWebhook =
+        url.pathname === "/api/payments/infinitepay/webhook";
 
       if (isShippingRequest) {
         try {
@@ -86,6 +94,14 @@ export default {
         }
       }
 
+      if (isCheckoutRequest) {
+        return await handleStartCheckoutRequest(request, workerEnv);
+      }
+
+      if (isInfinitePayWebhook) {
+        return await handleInfinitePayWebhookRequest(request, workerEnv);
+      }
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, {
         context: { workerEnv },
@@ -94,6 +110,34 @@ export default {
     } catch (error) {
       if (isShippingRequest) {
         return createShippingAdapterErrorResponse(error);
+      }
+
+      if (isCheckoutRequest) {
+        console.error(error);
+        return new Response(
+          JSON.stringify({
+            error: "Não foi possível iniciar o pagamento agora.",
+            code: "CHECKOUT_ENTRY_ERROR",
+          }),
+          {
+            status: 500,
+            headers: { "content-type": "application/json; charset=utf-8" },
+          },
+        );
+      }
+
+      if (isInfinitePayWebhook) {
+        console.error(error);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Não foi possível processar a notificação.",
+          }),
+          {
+            status: 500,
+            headers: { "content-type": "application/json; charset=utf-8" },
+          },
+        );
       }
 
       console.error(error);
