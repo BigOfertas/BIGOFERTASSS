@@ -9,7 +9,6 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
-import { ProductionNotice } from "@/components/orders/ProductionNotice";
 import {
   fetchMyOrders,
   getOrderDisplayStatus,
@@ -34,7 +33,7 @@ function OrdersSkeleton() {
           key={index}
           className="overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6"
         >
-          <div className="flex animate-pulse flex-col gap-5 sm:flex-row sm:items-center">
+          <div className="flex animate-pulse flex-col gap-5 sm:flex-row sm:items-center motion-reduce:animate-none">
             <div className="h-20 w-20 rounded-xl bg-gray-100" />
             <div className="flex-1 space-y-3">
               <div className="h-4 w-44 rounded bg-gray-200" />
@@ -60,11 +59,9 @@ export function CustomerOrders() {
 
     try {
       setOrders(await fetchMyOrders());
-    } catch (error) {
+    } catch {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível carregar seus pedidos.",
+        "Não foi possível carregar seus pedidos agora. Tente novamente.",
       );
     } finally {
       setLoading(false);
@@ -84,7 +81,7 @@ export function CustomerOrders() {
           <RefreshCw className="h-5 w-5" aria-hidden="true" />
         </div>
         <h2 className="mt-4 text-lg font-black text-gray-950">
-          Não foi possível abrir seu histórico
+          Não foi possível abrir seus pedidos
         </h2>
         <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-gray-500">
           {errorMessage}
@@ -92,7 +89,7 @@ export function CustomerOrders() {
         <button
           type="button"
           onClick={() => void loadOrders()}
-          className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-gray-950 px-4 text-sm font-bold text-white transition hover:bg-red-600 active:scale-[0.99]"
+          className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-gray-950 px-4 text-sm font-bold text-white transition hover:bg-red-600 active:scale-[0.99] motion-reduce:transition-none"
         >
           Tentar novamente
         </button>
@@ -102,29 +99,25 @@ export function CustomerOrders() {
 
   if (orders.length === 0) {
     return (
-      <div className="space-y-5">
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 py-12 text-center shadow-sm sm:px-8 sm:py-14">
-          <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-950 text-white shadow-xl shadow-gray-900/15">
-            <ShoppingBag className="h-7 w-7" aria-hidden="true" />
-            <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-red-600 ring-4 ring-white" />
-          </div>
-          <h2 className="mt-6 text-xl font-black tracking-tight text-gray-950">
-            Seu primeiro pedido aparecerá aqui
-          </h2>
-          <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-gray-500">
-            Quando o checkout definitivo estiver disponível e você fizer uma
-            compra real, poderá acompanhar cada etapa por esta área.
-          </p>
-          <Link
-            to="/products"
-            search={{}}
-            className="mt-6 inline-flex h-11 items-center justify-center rounded-lg bg-red-600 px-5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-lg active:translate-y-0"
-          >
-            Conhecer produtos
-            <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-          </Link>
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 py-12 text-center shadow-sm sm:px-8 sm:py-14">
+        <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-950 text-white shadow-xl shadow-gray-900/15">
+          <ShoppingBag className="h-7 w-7" aria-hidden="true" />
+          <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-red-600 ring-4 ring-white" />
         </div>
-        <ProductionNotice compact />
+        <h2 className="mt-6 text-xl font-black tracking-tight text-gray-950">
+          Seus pedidos aparecerão aqui
+        </h2>
+        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-gray-500">
+          Depois da sua primeira compra, você poderá acompanhar cada etapa nesta área.
+        </p>
+        <Link
+          to="/products"
+          search={{}}
+          className="mt-6 inline-flex h-11 items-center justify-center rounded-lg bg-red-600 px-5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-lg active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none"
+        >
+          Ver produtos
+          <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+        </Link>
       </div>
     );
   }
@@ -132,14 +125,9 @@ export function CustomerOrders() {
   return (
     <div className="space-y-4">
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-red-600">
-            Histórico real
-          </p>
-          <h2 className="mt-1 text-2xl font-black tracking-tight text-gray-950">
-            Meus pedidos
-          </h2>
-        </div>
+        <h2 className="text-2xl font-black tracking-tight text-gray-950">
+          Meus pedidos
+        </h2>
         <p className="text-sm text-gray-500">
           {orders.length} {orders.length === 1 ? "pedido" : "pedidos"}
         </p>
@@ -156,7 +144,7 @@ export function CustomerOrders() {
         return (
           <article
             key={order.id}
-            className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-lg"
+            className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none"
           >
             <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6">
               <div className="flex h-20 w-20 flex-none items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
@@ -168,7 +156,7 @@ export function CustomerOrders() {
                       previewItem?.product_name ??
                       "Pedido"
                     }
-                    className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-105"
+                    className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-105 motion-reduce:transform-none motion-reduce:transition-none"
                   />
                 ) : (
                   <Package
@@ -205,11 +193,11 @@ export function CustomerOrders() {
                 <Link
                   to="/conta/pedidos/$orderNumber"
                   params={{ orderNumber: order.public_number }}
-                  className="mt-0 inline-flex h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-4 text-sm font-bold text-gray-800 transition hover:border-red-600 hover:bg-red-50 hover:text-red-700 sm:mt-3"
+                  className="mt-0 inline-flex h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-4 text-sm font-bold text-gray-800 transition hover:border-red-600 hover:bg-red-50 hover:text-red-700 sm:mt-3 motion-reduce:transition-none"
                 >
                   Ver detalhes
                   <ArrowRight
-                    className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                    className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none"
                     aria-hidden="true"
                   />
                 </Link>
