@@ -71,3 +71,44 @@ export function isValidBrazilianCpf(value: string) {
     calculateDigit(10) === Number(cpf[10])
   );
 }
+
+export function formatBrazilianCnpj(value: string) {
+  const digits = onlyDigits(value, 14);
+
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+  if (digits.length <= 8) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+  }
+  if (digits.length <= 12) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+  }
+
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+}
+
+export function isValidBrazilianCnpj(value: string) {
+  const cnpj = onlyDigits(value, 14);
+
+  if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) {
+    return false;
+  }
+
+  const calculateDigit = (baseLength: 12 | 13) => {
+    const weights =
+      baseLength === 12
+        ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+        : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const sum = weights.reduce(
+      (total, weight, index) => total + Number(cnpj[index]) * weight,
+      0,
+    );
+    const remainder = sum % 11;
+    return remainder < 2 ? 0 : 11 - remainder;
+  };
+
+  return (
+    calculateDigit(12) === Number(cnpj[12]) &&
+    calculateDigit(13) === Number(cnpj[13])
+  );
+}
