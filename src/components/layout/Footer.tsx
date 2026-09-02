@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
-  BadgeCheck,
   ChevronDown,
   CreditCard,
   LockKeyhole,
@@ -19,17 +18,17 @@ const trustItems = [
   {
     icon: ShieldCheck,
     title: "SITE SEGURO",
-    description: "Conexão HTTPS no ambiente publicado.",
+    description: "Navegação protegida por HTTPS.",
   },
   {
     icon: LockKeyhole,
     title: "CONTA PROTEGIDA",
-    description: "Autenticação e regras de acesso por usuário.",
+    description: "Acesso seguro à sua conta.",
   },
   {
-    icon: BadgeCheck,
-    title: "CHECKOUT CONTROLADO",
-    description: "Pagamento só será ativado após integração e validação.",
+    icon: MessageCircle,
+    title: "ATENDIMENTO",
+    description: "Suporte pelos nossos canais oficiais.",
   },
 ] as const;
 
@@ -86,8 +85,7 @@ export default function Footer() {
             </Link>
 
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-gray-400">
-              Loja esportiva BIGofertas. Atendimento pelos canais oficiais
-              exibidos neste site.
+              Camisas esportivas com atendimento pelos canais oficiais da BIGofertas.
             </p>
 
             <div className="mt-6 space-y-3 text-sm text-gray-300">
@@ -202,6 +200,15 @@ export default function Footer() {
                       Endereços
                     </Link>
                   </li>
+                  <li>
+                    <Link
+                      to="/conta"
+                      search={{ secao: "pedidos" }}
+                      className="transition-colors hover:text-white motion-reduce:transition-none"
+                    >
+                      Pedidos
+                    </Link>
+                  </li>
                 </>
               ) : (
                 <>
@@ -230,29 +237,20 @@ export default function Footer() {
 
           <div>
             <h3 className="pb-4 text-xs font-black uppercase tracking-[0.14em] text-white">
-              Segurança e transparência
+              Compra segura
             </h3>
             <ul className="space-y-4 text-sm leading-relaxed text-gray-400">
               <li className="flex gap-3">
                 <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" />
-                <span>
-                  O site publicado usa conexão HTTPS para proteger o tráfego entre
-                  navegador e servidor.
-                </span>
+                <span>Navegação protegida por HTTPS.</span>
               </li>
               <li className="flex gap-3">
                 <LockKeyhole className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" />
-                <span>
-                  A área de conta utiliza autenticação e permissões de acesso no
-                  backend.
-                </span>
+                <span>Acesso protegido à sua conta.</span>
               </li>
               <li className="flex gap-3">
-                <BadgeCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" />
-                <span>
-                  O checkout permanece indisponível até a integração de pagamento
-                  ser concluída e validada.
-                </span>
+                <MessageCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" />
+                <span>Suporte pelos canais oficiais da BIGofertas.</span>
               </li>
             </ul>
           </div>
@@ -267,9 +265,9 @@ export default function Footer() {
               </h3>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-gray-400">
-              Meios aceitos pela integração InfinitePay planejada para o checkout.
+              Pix e principais cartões no pagamento online.
             </p>
-            <div className="mt-4 flex flex-wrap gap-2" aria-label="Meios de pagamento aceitos pela InfinitePay">
+            <div className="mt-4 flex flex-wrap gap-2" aria-label="Formas de pagamento">
               {paymentMethods.map((method) => (
                 <span
                   key={method}
@@ -302,10 +300,6 @@ export default function Footer() {
                 Acesso protegido
               </span>
             </div>
-            <p className="mt-3 max-w-xl text-xs leading-relaxed text-gray-400">
-              No checkout, os dados de pagamento serão processados pela InfinitePay;
-              a BIGofertas não armazenará dados completos do cartão.
-            </p>
           </section>
         </div>
 
@@ -313,7 +307,7 @@ export default function Footer() {
 
         <div className="flex flex-col items-center justify-between gap-3 text-center text-xs text-gray-500 md:flex-row md:text-left">
           <p>Copyright © BIGofertas 2026. Todos os direitos reservados.</p>
-          <p>Ambiente publicado com conexão HTTPS.</p>
+          <p>Conexão segura por HTTPS.</p>
         </div>
       </div>
     </footer>
