@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -11,12 +11,14 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { ShippingCalculator } from "@/components/cart/ShippingCalculator";
 import Header from "@/components/layout/Header";
 import { ProductionNotice } from "@/components/orders/ProductionNotice";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/context/CartContext";
 import { getCartQuantityLimit, type CartItem } from "@/lib/cart";
+import type { ShippingQuote } from "@/lib/shipping";
 
 export const Route = createFileRoute("/cart")({
   component: CartPage,
@@ -62,10 +64,15 @@ function CartPage() {
     totalPrice,
   } = useCart();
   const navigate = useNavigate();
+  const [selectedShipping, setSelectedShipping] = useState<ShippingQuote | null>(
+    null,
+  );
 
   useEffect(() => {
     void validateCart();
   }, [validateCart]);
+
+  const estimatedTotal = totalPrice + (selectedShipping?.totalPrice ?? 0);
 
   if (cart.length === 0) {
     return (
@@ -113,7 +120,7 @@ function CartPage() {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Meu Carrinho</h1>
                 <p className="mt-1 text-xs text-gray-500">
-                  Preços e disponibilidade são conferidos novamente antes da compra.
+                  Preços, disponibilidade e frete são conferidos com dados reais.
                 </p>
               </div>
             </div>
@@ -292,6 +299,14 @@ function CartPage() {
                   Resumo do pedido
                 </h2>
 
+                <ShippingCalculator
+                  cart={cart}
+                  selectedQuote={selectedShipping}
+                  onSelectionChange={setSelectedShipping}
+                />
+
+                <Separator />
+
                 <div className="space-y-4">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal estimado</span>
@@ -300,23 +315,28 @@ function CartPage() {
 
                   <div className="flex justify-between text-gray-600">
                     <span>Frete</span>
-                    <span className="font-medium text-gray-900">A calcular</span>
+                    <span className="font-medium text-gray-900">
+                      {selectedShipping
+                        ? currency.format(selectedShipping.totalPrice)
+                        : "A calcular"}
+                    </span>
                   </div>
 
                   <Separator />
 
-                  <div className="flex items-end justify-between">
+                  <div className="flex items-end justify-between gap-4">
                     <span className="text-lg font-bold text-gray-900">
                       TOTAL ESTIMADO
                     </span>
                     <span className="text-2xl font-black text-red-600">
-                      {currency.format(totalPrice)}
+                      {currency.format(estimatedTotal)}
                     </span>
                   </div>
 
                   <p className="text-xs leading-relaxed text-gray-500">
-                    O total não inclui frete. Preço e disponibilidade serão
-                    validados novamente no fluxo de checkout.
+                    {selectedShipping
+                      ? `Frete ${selectedShipping.service} calculado em tempo real. O checkout definitivo revalidará a cotação antes do pagamento.`
+                      : "Calcule o frete para ver o total estimado. Preço e disponibilidade serão revalidados no checkout."}
                   </p>
 
                   {hasBlockingIssues ? (
