@@ -1,10 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
+import {
+  isValidBrazilianCpf,
+  isValidBrazilianPhone,
+  onlyDigits,
+} from "@/lib/brasil";
 
 export type CustomerProfile = {
   id: string;
   email: string | null;
   full_name: string | null;
   phone: string | null;
+  cpf: string | null;
 };
 
 export type CustomerAddress = {
@@ -66,10 +72,10 @@ type RpcResult<T> = Promise<{
 }>;
 
 type CustomerAccountRpcClient = {
-  rpc(name: "get_my_account_profile"): RpcResult<CustomerProfile[]>;
+  rpc(name: "get_my_customer_identity"): RpcResult<CustomerProfile[]>;
   rpc(
-    name: "update_my_account_profile",
-    args: { p_full_name: string; p_phone: string },
+    name: "update_my_customer_identity",
+    args: { p_full_name: string; p_phone: string; p_cpf: string },
   ): RpcResult<CustomerProfile[]>;
   rpc(name: "list_my_customer_addresses"): RpcResult<CustomerAddress[]>;
   rpc(
@@ -109,7 +115,7 @@ function throwRpcError(error: RpcError | null, fallback: string) {
 export async function lookupBrazilianPostalCode(
   postalCode: string,
 ): Promise<BrazilianPostalCodeLookup | null> {
-  const normalizedPostalCode = postalCode.replace(/\D/g, "").slice(0, 8);
+  const normalizedPostalCode = onlyDigits(postalCode, 8);
 
   if (normalizedPostalCode.length !== 8) {
     throw new Error("Digite um CEP com 8 números.");
@@ -146,7 +152,7 @@ export async function lookupBrazilianPostalCode(
 
 export async function fetchCustomerAccount() {
   const [profileResult, addressesResult] = await Promise.all([
-    accountRpc.rpc("get_my_account_profile"),
+    accountRpc.rpc("get_my_customer_identity"),
     accountRpc.rpc("list_my_customer_addresses"),
   ]);
 
@@ -168,10 +174,29 @@ export async function fetchCustomerAccount() {
   };
 }
 
-export async function saveCustomerProfile(fullName: string, phone: string) {
-  const result = await accountRpc.rpc("update_my_account_profile", {
-    p_full_name: fullName,
-    p_phone: phone,
+export async function saveCustomerProfile(
+  fullName: string,
+  phone: string,
+  cpf: string,
+) {
+  const normalizedName = fullName.trim();
+
+  if (normalizedName.length < 2) {
+    throw new Error("Informe seu nome completo.");
+  }
+
+  if (!isValidBrazilianPhone(phone)) {
+    throw new Error("Informe um telefone com um DDD brasileiro válido.");
+  }
+
+  if (!isValidBrazilianCpf(cpf)) {
+    throw new Error("Informe um CPF válido.");
+  }
+
+  const result = await accountRpc.rpc("update_my_customer_identity", {
+    p_full_name: normalizedName,
+    p_phone: onlyDigits(phone, 11),
+    p_cpf: onlyDigits(cpf, 11),
   });
 
   throwRpcError(result.error, "Não foi possível atualizar seus dados.");
