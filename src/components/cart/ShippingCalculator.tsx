@@ -4,7 +4,6 @@ import {
   Gift,
   LoaderCircle,
   MapPin,
-  PackageCheck,
   RefreshCw,
   Truck,
 } from "lucide-react";
@@ -31,11 +30,6 @@ type ShippingCalculatorProps = {
   onSelectionChange: (quote: ShippingQuote | null) => void;
   freeShipping?: boolean;
 };
-
-function serviceSubtitle(quote: ShippingQuote) {
-  if (quote.service === "Loggi") return "Postagem em Mossoró/RN";
-  return `Correios · ${quote.service}`;
-}
 
 function ShippingSkeleton() {
   return (
@@ -121,9 +115,7 @@ export function ShippingCalculator({
             <h3 id="shipping-calculator-title" className="text-sm font-bold text-gray-900">
               Calcular entrega
             </h3>
-            <p className="text-[11px] text-gray-500">
-              PAC, SEDEX e Loggi com cotação real.
-            </p>
+            <p className="text-[11px] text-gray-500">PAC, SEDEX e Loggi.</p>
           </div>
         </div>
 
@@ -205,50 +197,28 @@ export function ShippingCalculator({
                 </span>
 
                 <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <strong className="text-sm text-gray-950">{quote.service}</strong>
-                    {quote.packageCount > 1 ? (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
-                        {quote.packageCount} volumes
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="mt-0.5 block text-[11px] text-gray-500">
-                    {serviceSubtitle(quote)}
-                  </span>
-                  <span className="mt-1 block text-[11px] font-semibold text-gray-700">
-                    Transporte: {formatTransitLabel(quote)}
+                  <strong className="text-sm text-gray-950">{quote.service}</strong>
+                  <span className="mt-1 block text-[11px] font-semibold text-gray-600">
+                    Prazo: {formatTransitLabel(quote)}
                   </span>
                 </span>
 
                 <span className="flex-none text-right">
                   {freeShipping ? (
-                    <>
-                      <strong className="block text-sm text-emerald-700">Grátis</strong>
-                      <span className="text-[10px] text-gray-400 line-through">
-                        {currency.format(quote.totalPrice)}
-                      </span>
-                    </>
+                    <strong className="block text-sm text-emerald-700">Grátis</strong>
                   ) : (
-                    <>
-                      <strong className="block text-sm text-gray-950">
-                        {currency.format(quote.totalPrice)}
-                      </strong>
-                      <span className="text-[10px] text-gray-500">valor final</span>
-                    </>
+                    <strong className="block text-sm text-gray-950">
+                      {currency.format(quote.totalPrice)}
+                    </strong>
                   )}
                 </span>
               </button>
             );
           })}
 
-          <div className="mt-3 flex items-start gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-[11px] leading-relaxed text-emerald-900">
-            <PackageCheck className="mt-0.5 h-4 w-4 flex-none text-emerald-700" />
-            <p>
-              <strong>Produção em até {result.productionBusinessDays} dias úteis antes do envio.</strong>{" "}
-              O prazo acima é apenas o transporte e começa depois da produção.
-            </p>
-          </div>
+          <p className="px-1 pt-1 text-[11px] leading-relaxed text-gray-500">
+            Produção em até {result.productionBusinessDays} dias úteis antes do envio.
+          </p>
         </div>
       ) : null}
     </section>
