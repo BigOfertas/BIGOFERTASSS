@@ -17,7 +17,7 @@
     "validate:phase6": "node scripts/validate-phase-06.mjs",
     "validate:phase7": "node scripts/validate-phase-07.mjs",
     "validate:phase8": "node scripts/validate-phase-08.mjs",
-    "validate:phase10": "node scripts/validate-phase-10.mjs && node scripts/validate-phase-10-hardening.mjs"
+    "validate:phase10": "node scripts/validate-phase-10.mjs && node scripts/validate-phase-10-hardening.mjs && node scripts/validate-admin-dashboard.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
