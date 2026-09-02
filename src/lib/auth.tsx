@@ -10,6 +10,7 @@ import type { AuthError, Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { onlyDigits } from "@/lib/brasil";
 
 export type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -28,7 +29,9 @@ type AuthContextValue = {
   signUp: (
     email: string,
     password: string,
-    fullName?: string,
+    fullName: string,
+    phone: string,
+    cpf: string,
   ) => Promise<AuthActionResult>;
 
   resendSignUpConfirmation: (email: string) => Promise<AuthActionResult>;
@@ -177,9 +180,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signUp(
     email: string,
     password: string,
-    fullName?: string,
+    fullName: string,
+    phone: string,
+    cpf: string,
   ): Promise<AuthActionResult> {
-    const normalizedFullName = fullName?.trim();
     const emailRedirectTo = getEmailConfirmationRedirectUrl();
 
     const { error } = await supabase.auth.signUp({
@@ -187,11 +191,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         emailRedirectTo,
-        data: normalizedFullName
-          ? {
-              full_name: normalizedFullName,
-            }
-          : undefined,
+        data: {
+          full_name: fullName.trim(),
+          phone: onlyDigits(phone, 11),
+          cpf: onlyDigits(cpf, 11),
+        },
       },
     });
 
