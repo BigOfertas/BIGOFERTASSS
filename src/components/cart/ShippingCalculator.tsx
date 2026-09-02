@@ -181,7 +181,7 @@ export function ShippingCalculator({
                 className={`group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition duration-200 hover:-translate-y-0.5 hover:shadow-sm ${
                   selected
                     ? "border-red-300 bg-red-50/60 shadow-sm"
-                    : "border-gray-150 bg-white hover:border-gray-300"
+                    : "border-gray-200 bg-white hover:border-gray-300"
                 }`}
               >
                 <span
