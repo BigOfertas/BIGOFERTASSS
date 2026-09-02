@@ -6,7 +6,9 @@ Data de fechamento técnico: 2026-09-02
 
 **Código da Fase 10: implementado e auditado.**
 
-**Aplicação no Supabase remoto: pendente de confirmação/aplicação das migrations da Fase 10.**
+**Aplicação no Supabase remoto: confirmada com sucesso em 2026-09-02.**
+
+As migrations `20260902040000_phase_10_definitive_order_core.sql` e `20260902041000_phase_10_order_integrity_hardening.sql` foram executadas no projeto Supabase real e o usuário confirmou `success` para ambas.
 
 A Fase 09 continua bloqueada por dependências externas de frete. A antiga Fase 11 baseada em estoque/reservas foi cancelada porque a BIGofertas trabalha com produção sob encomenda.
 
@@ -310,14 +312,14 @@ O validador de hardening foi executado isoladamente após a auditoria final e ob
 
 A execução Work anterior informou sucesso do validador principal, regressões relevantes e build antes do hardening. Nesta sessão não foi possível repetir o build completo porque o ambiente local disponível não contém a árvore/dependências do repositório e não possui conectividade direta com o GitHub. As alterações posteriores ao build são SQL, script de validação e o comando de validação do `package.json`; nenhuma lógica runtime do frontend foi alterada nesta auditoria final.
 
-## Aplicação remota pendente
+## Aplicação remota
 
-Antes de declarar a Fase 10 encerrada no ambiente remoto, aplicar no Supabase, nesta ordem:
+Aplicadas e confirmadas com sucesso no Supabase remoto, nesta ordem:
 
 1. `20260902040000_phase_10_definitive_order_core.sql`
 2. `20260902041000_phase_10_order_integrity_hardening.sql`
 
-Não declarar aplicação remota até receber confirmação real de sucesso.
+A confirmação de sucesso foi fornecida pelo usuário imediatamente após a execução no SQL Editor em 2026-09-02.
 
 ## Fase 11 antiga
 
@@ -332,11 +334,10 @@ Novo escopo ainda não definido.
 - `3f665877b5be607d032c98f76ac1ff645a3e118a` — validador do hardening.
 - `8d587a78d82eb82d31220139eff6cb12c6ad90a8` — preservação explícita do toolchain original com o novo validator encadeado.
 
-## Pendências para fechamento 100%
+## Pendências para fechamento de runtime
 
-1. aplicar as duas migrations da Fase 10 no Supabase remoto;
-2. confirmar que ambas concluíram sem erro;
-3. validar a interface autenticada no staging depois que o schema remoto existir;
-4. corrigir eventual incompatibilidade encontrada apenas no ambiente remoto.
+1. confirmar que o deploy de staging incorporou a `main` atual;
+2. validar a interface autenticada de cliente e owner no staging;
+3. corrigir eventual incompatibilidade encontrada apenas no ambiente remoto.
 
-Até esses passos, o código está pronto, mas a Fase 10 não deve ser rotulada como concluída em produção.
+A infraestrutura de banco da Fase 10 está aplicada. O fechamento restante é exclusivamente de runtime/staging, não de schema.
