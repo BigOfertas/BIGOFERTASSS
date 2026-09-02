@@ -358,7 +358,7 @@ function CartPage() {
                           <>
                             <Gift className="mt-0.5 h-4 w-4 flex-none" />
                             <p>
-                              Você liberou <strong>35% de desconto e frete grátis</strong>.
+                              Você liberou <strong>{discount.percent}% de desconto e frete grátis</strong>.
                             </p>
                           </>
                         ) : discount.nextTier ? (
@@ -430,7 +430,7 @@ function CartPage() {
 
                   <p className="text-xs leading-relaxed text-gray-500">
                     {discount.freeShipping
-                      ? "A faixa de 45+ peças aplica 35% de desconto e zera o frete cobrado do cliente. A cotação real continua sendo calculada para a operação da loja."
+                      ? `A partir de 8 peças o frete é grátis. Nesta faixa, o desconto progressivo é de ${discount.percent}%. A cotação real continua sendo calculada para a operação da loja.`
                       : selectedShipping
                         ? `Frete ${selectedShipping.service} calculado em tempo real. O checkout definitivo revalidará preço, desconto e frete antes do pagamento.`
                         : "Calcule o frete para ver o total estimado. Preço, desconto e disponibilidade serão revalidados no checkout."}
