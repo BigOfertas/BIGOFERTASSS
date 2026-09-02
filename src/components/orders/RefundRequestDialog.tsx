@@ -51,11 +51,9 @@ export function RefundRequestDialog({
 
     try {
       await onSubmit(reason, message);
-    } catch (error) {
+    } catch {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível registrar sua solicitação.",
+        "Não foi possível enviar sua solicitação agora. Tente novamente.",
       );
     }
   }
@@ -76,8 +74,7 @@ export function RefundRequestDialog({
                 Solicitar reembolso
               </DialogTitle>
               <DialogDescription className="leading-6 text-gray-600">
-                O proprietário receberá sua solicitação e entrará em contato
-                diretamente para resolver a situação.
+                A BIGofertas receberá sua solicitação e entrará em contato.
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -122,9 +119,7 @@ export function RefundRequestDialog({
             </label>
 
             <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-900">
-              Esta solicitação não realiza uma transferência automática. O
-              resultado será registrado depois que você e o proprietário
-              conversarem.
+              O reembolso será analisado após o contato com você.
             </div>
 
             {errorMessage ? (
