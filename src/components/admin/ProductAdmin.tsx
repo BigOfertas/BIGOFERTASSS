@@ -6,6 +6,7 @@ import {
   type FormEvent,
 } from "react";
 
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   archiveAdminProduct,
   fetchAdminCatalog,
@@ -75,17 +76,14 @@ function productToForm(product: AdminProduct): ProductFormState {
     description: product.description ?? "",
     price: String(product.price),
     promotionalPrice:
-      product.promotional_price === null
-        ? ""
-        : String(product.promotional_price),
+      product.promotional_price === null ? "" : String(product.promotional_price),
     status: product.status,
     primaryCategoryId: product.primary_category_id ?? "",
     campeonato: product.campeonato ?? "",
     liga: product.liga ?? "",
     time: product.time ?? "",
     specifications: product.specifications ?? "",
-    weightGrams:
-      product.weight_grams === null ? "" : String(product.weight_grams),
+    weightGrams: product.weight_grams === null ? "" : String(product.weight_grams),
     lengthCm: product.length_cm === null ? "" : String(product.length_cm),
     widthCm: product.width_cm === null ? "" : String(product.width_cm),
     heightCm: product.height_cm === null ? "" : String(product.height_cm),
@@ -96,25 +94,14 @@ function productToForm(product: AdminProduct): ProductFormState {
 
 function parseRequiredNumber(value: string, label: string): number {
   const parsed = Number(value.replace(",", "."));
-
-  if (!Number.isFinite(parsed)) {
-    throw new Error(`Informe ${label} válido.`);
-  }
-
+  if (!Number.isFinite(parsed)) throw new Error(`Informe ${label} válido.`);
   return parsed;
 }
 
 function parseOptionalNumber(value: string): number | null {
-  if (!value.trim()) {
-    return null;
-  }
-
+  if (!value.trim()) return null;
   const parsed = Number(value.replace(",", "."));
-
-  if (!Number.isFinite(parsed)) {
-    throw new Error("Há um campo numérico inválido.");
-  }
-
+  if (!Number.isFinite(parsed)) throw new Error("Há um campo numérico inválido.");
   return parsed;
 }
 
@@ -166,6 +153,8 @@ export function ProductAdmin() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [archiving, setArchiving] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState<AdminProduct | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -195,10 +184,7 @@ export function ProductAdmin() {
 
   const filteredProducts = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("pt-BR");
-
-    if (!query) {
-      return products;
-    }
+    if (!query) return products;
 
     return products.filter((product) =>
       [
@@ -216,10 +202,7 @@ export function ProductAdmin() {
     key: K,
     value: ProductFormState[K],
   ) {
-    setForm((current) => ({
-      ...current,
-      [key]: value,
-    }));
+    setForm((current) => ({ ...current, [key]: value }));
   }
 
   function startNewProduct() {
@@ -244,10 +227,7 @@ export function ProductAdmin() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (saving) {
-      return;
-    }
+    if (saving) return;
 
     setSaving(true);
     setErrorMessage("");
@@ -292,34 +272,25 @@ export function ProductAdmin() {
       setShowForm(false);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível salvar o produto.",
+        error instanceof Error ? error.message : "Não foi possível salvar o produto.",
       );
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleArchive(product: AdminProduct) {
-    if (product.status === "archived") {
-      return;
-    }
+  async function confirmArchive() {
+    const product = archiveTarget;
+    if (!product || archiving || product.status === "archived") return;
 
-    const confirmed = window.confirm(
-      `Arquivar “${product.name}”? Ele deixará de aparecer no catálogo público.`,
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+    setArchiving(true);
     setErrorMessage("");
     setSuccessMessage("");
 
     try {
       await archiveAdminProduct(product.id);
       await loadCatalog();
+      setArchiveTarget(null);
       setSuccessMessage("Produto arquivado com sucesso.");
     } catch (error) {
       setErrorMessage(
@@ -327,6 +298,8 @@ export function ProductAdmin() {
           ? error.message
           : "Não foi possível arquivar o produto.",
       );
+    } finally {
+      setArchiving(false);
     }
   }
 
@@ -340,8 +313,7 @@ export function ProductAdmin() {
           </h2>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Cadastre e mantenha o catálogo. SKU, slug e SKU da variante são
-            atribuídos automaticamente; o estoque do produto é calculado pelas
-            variantes.
+            atribuídos automaticamente; o estoque do produto é calculado pelas variantes.
           </p>
         </div>
 
@@ -364,7 +336,10 @@ export function ProductAdmin() {
       ) : null}
 
       {successMessage ? (
-        <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div
+          role="status"
+          className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+        >
           {successMessage}
         </div>
       ) : null}
@@ -385,7 +360,6 @@ export function ProductAdmin() {
                   : "Ao salvar, o banco consome automaticamente uma reserva livre de SKU e slug e cria a variante padrão."}
               </p>
             </div>
-
             <button
               type="button"
               onClick={cancelEditing}
@@ -417,27 +391,20 @@ export function ProductAdmin() {
                 <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                   <div>
                     <dt className="text-xs text-muted-foreground">SKU do produto</dt>
-                    <dd className="mt-1 font-mono font-medium text-foreground">
-                      {form.assignedSku}
-                    </dd>
+                    <dd className="mt-1 font-mono font-medium text-foreground">{form.assignedSku}</dd>
                   </div>
                   <div>
                     <dt className="text-xs text-muted-foreground">Slug</dt>
-                    <dd className="mt-1 font-mono font-medium text-foreground">
-                      /{form.assignedSlug}
-                    </dd>
+                    <dd className="mt-1 font-mono font-medium text-foreground">/{form.assignedSlug}</dd>
                   </div>
                   <div>
                     <dt className="text-xs text-muted-foreground">SKU da variante</dt>
-                    <dd className="mt-1 font-mono font-medium text-foreground">
-                      {form.assignedVariantSku}
-                    </dd>
+                    <dd className="mt-1 font-mono font-medium text-foreground">{form.assignedVariantSku}</dd>
                   </div>
                 </dl>
               ) : (
                 <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                  O sistema mantém 20 reservas livres para produtos futuros e
-                  repõe automaticamente uma nova reserva sempre que uma é usada.
+                  O sistema mantém 20 reservas livres para produtos futuros e repõe automaticamente uma nova reserva sempre que uma é usada.
                 </p>
               )}
             </div>
@@ -471,9 +438,7 @@ export function ProductAdmin() {
                 <input
                   inputMode="decimal"
                   value={form.promotionalPrice}
-                  onChange={(event) =>
-                    updateField("promotionalPrice", event.target.value)
-                  }
+                  onChange={(event) => updateField("promotionalPrice", event.target.value)}
                   className={fieldClassName()}
                   placeholder="Opcional"
                 />
@@ -483,12 +448,7 @@ export function ProductAdmin() {
                 Status
                 <select
                   value={form.status}
-                  onChange={(event) =>
-                    updateField(
-                      "status",
-                      event.target.value as AdminProductStatus,
-                    )
-                  }
+                  onChange={(event) => updateField("status", event.target.value as AdminProductStatus)}
                   className={fieldClassName()}
                 >
                   <option value="draft">Rascunho</option>
@@ -502,16 +462,13 @@ export function ProductAdmin() {
                 Categoria principal
                 <select
                   value={form.primaryCategoryId}
-                  onChange={(event) =>
-                    updateField("primaryCategoryId", event.target.value)
-                  }
+                  onChange={(event) => updateField("primaryCategoryId", event.target.value)}
                   className={fieldClassName()}
                 >
                   <option value="">Sem categoria</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
-                      {category.name}
-                      {category.is_active ? "" : " (inativa)"}
+                      {category.name}{category.is_active ? "" : " (inativa)"}
                     </option>
                   ))}
                 </select>
@@ -521,10 +478,9 @@ export function ProductAdmin() {
                 Campeonato
                 <input
                   value={form.campeonato}
-                  onChange={(event) =>
-                    updateField("campeonato", event.target.value)
-                  }
+                  onChange={(event) => updateField("campeonato", event.target.value)}
                   className={fieldClassName()}
+                  placeholder="Ex.: Brasileirão"
                 />
               </label>
 
@@ -534,14 +490,78 @@ export function ProductAdmin() {
                   value={form.liga}
                   onChange={(event) => updateField("liga", event.target.value)}
                   className={fieldClassName()}
+                  placeholder="Ex.: Premier League"
                 />
               </label>
 
-              <label className="text-sm font-medium text-foreground md:col-span-2">
+              <label className="text-sm font-medium text-foreground">
                 Time / seleção
                 <input
                   value={form.time}
                   onChange={(event) => updateField("time", event.target.value)}
+                  className={fieldClassName()}
+                  placeholder="Ex.: Brasil"
+                />
+              </label>
+
+              <label className="text-sm font-medium text-foreground">
+                Nome da variante padrão
+                <input
+                  value={form.variantName}
+                  onChange={(event) => updateField("variantName", event.target.value)}
+                  className={fieldClassName()}
+                  placeholder="Ex.: Padrão"
+                />
+              </label>
+
+              <label className="text-sm font-medium text-foreground">
+                Estoque
+                <input
+                  required
+                  inputMode="numeric"
+                  value={form.stockQuantity}
+                  onChange={(event) => updateField("stockQuantity", event.target.value)}
+                  className={fieldClassName()}
+                />
+              </label>
+
+              <label className="text-sm font-medium text-foreground">
+                Peso (g)
+                <input
+                  inputMode="decimal"
+                  value={form.weightGrams}
+                  onChange={(event) => updateField("weightGrams", event.target.value)}
+                  className={fieldClassName()}
+                  placeholder="Opcional nesta etapa"
+                />
+              </label>
+
+              <label className="text-sm font-medium text-foreground">
+                Comprimento (cm)
+                <input
+                  inputMode="decimal"
+                  value={form.lengthCm}
+                  onChange={(event) => updateField("lengthCm", event.target.value)}
+                  className={fieldClassName()}
+                />
+              </label>
+
+              <label className="text-sm font-medium text-foreground">
+                Largura (cm)
+                <input
+                  inputMode="decimal"
+                  value={form.widthCm}
+                  onChange={(event) => updateField("widthCm", event.target.value)}
+                  className={fieldClassName()}
+                />
+              </label>
+
+              <label className="text-sm font-medium text-foreground">
+                Altura (cm)
+                <input
+                  inputMode="decimal"
+                  value={form.heightCm}
+                  onChange={(event) => updateField("heightCm", event.target.value)}
                   className={fieldClassName()}
                 />
               </label>
@@ -550,9 +570,7 @@ export function ProductAdmin() {
                 Descrição
                 <textarea
                   value={form.description}
-                  onChange={(event) =>
-                    updateField("description", event.target.value)
-                  }
+                  onChange={(event) => updateField("description", event.target.value)}
                   className={textareaClassName()}
                 />
               </label>
@@ -561,257 +579,150 @@ export function ProductAdmin() {
                 Especificações
                 <textarea
                   value={form.specifications}
-                  onChange={(event) =>
-                    updateField("specifications", event.target.value)
-                  }
+                  onChange={(event) => updateField("specifications", event.target.value)}
                   className={textareaClassName()}
-                  placeholder="Material, composição, origem e demais detalhes"
                 />
               </label>
             </div>
 
-            <div className="mt-7 border-t border-border pt-6">
-              <h4 className="font-semibold text-foreground">
-                Variante padrão e estoque
-              </h4>
-              <p className="mt-1 text-sm text-muted-foreground">
-                O SKU da variante também é automático. Nesta fase administramos
-                a variante padrão; combinações avançadas continuam compatíveis
-                com a modelagem existente.
-              </p>
-
-              <div className="mt-4 grid gap-5 md:grid-cols-2">
-                <label className="text-sm font-medium text-foreground">
-                  Nome da variante
-                  <input
-                    value={form.variantName}
-                    onChange={(event) =>
-                      updateField("variantName", event.target.value)
-                    }
-                    className={fieldClassName()}
-                    placeholder="Opcional"
-                  />
-                </label>
-
-                <label className="text-sm font-medium text-foreground">
-                  Estoque
-                  <input
-                    required
-                    inputMode="numeric"
-                    value={form.stockQuantity}
-                    onChange={(event) =>
-                      updateField("stockQuantity", event.target.value)
-                    }
-                    className={fieldClassName()}
-                  />
-                </label>
-              </div>
+            <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/20 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+              Imagens reais/R2 não são carregadas nesta etapa. A infraestrutura de imagens permanece preparada para a carga definitiva posterior.
             </div>
 
-            <div className="mt-7 border-t border-border pt-6">
-              <h4 className="font-semibold text-foreground">Peso e dimensões</h4>
-              <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                <label className="text-sm font-medium text-foreground">
-                  Peso (g)
-                  <input
-                    inputMode="numeric"
-                    value={form.weightGrams}
-                    onChange={(event) =>
-                      updateField("weightGrams", event.target.value)
-                    }
-                    className={fieldClassName()}
-                  />
-                </label>
-
-                <label className="text-sm font-medium text-foreground">
-                  Comprimento (cm)
-                  <input
-                    inputMode="decimal"
-                    value={form.lengthCm}
-                    onChange={(event) =>
-                      updateField("lengthCm", event.target.value)
-                    }
-                    className={fieldClassName()}
-                  />
-                </label>
-
-                <label className="text-sm font-medium text-foreground">
-                  Largura (cm)
-                  <input
-                    inputMode="decimal"
-                    value={form.widthCm}
-                    onChange={(event) =>
-                      updateField("widthCm", event.target.value)
-                    }
-                    className={fieldClassName()}
-                  />
-                </label>
-
-                <label className="text-sm font-medium text-foreground">
-                  Altura (cm)
-                  <input
-                    inputMode="decimal"
-                    value={form.heightCm}
-                    onChange={(event) =>
-                      updateField("heightCm", event.target.value)
-                    }
-                    className={fieldClassName()}
-                  />
-                </label>
+            {errorMessage ? (
+              <div
+                role="alert"
+                className="mt-5 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+              >
+                {errorMessage}
               </div>
-            </div>
+            ) : null}
 
-            <div className="mt-7 border-t border-border pt-6">
-              {errorMessage ? (
-                <div
-                  role="alert"
-                  className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-                >
-                  {errorMessage}
-                </div>
-              ) : null}
-
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {saving
-                    ? "Salvando..."
-                    : form.id
-                      ? "Salvar alterações"
-                      : "Criar produto"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={cancelEditing}
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-5 text-sm font-medium text-foreground hover:bg-accent"
-                >
-                  Cancelar
-                </button>
-
-                <p className="text-xs text-muted-foreground">
-                  Imagens reais/R2 não são carregadas nesta etapa.
-                </p>
-              </div>
+            <div className="mt-6 flex flex-wrap gap-3 border-t border-border pt-5">
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {saving ? "Salvando..." : form.id ? "Salvar alterações" : "Criar produto"}
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={cancelEditing}
+                className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+              >
+                Cancelar
+              </button>
             </div>
           </div>
         </form>
       ) : null}
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-7 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="font-semibold text-foreground">Catálogo administrativo</p>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="font-semibold text-foreground">Catálogo administrativo</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
               {products.length} produto{products.length === 1 ? "" : "s"} no banco
             </p>
           </div>
-
           <input
+            type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar nome, SKU, time ou liga..."
             className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/20 sm:max-w-sm"
-            placeholder="Buscar por nome, SKU, time ou liga"
           />
         </div>
 
         {loading ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">
-            Carregando produtos...
-          </div>
+          <div className="p-8 text-center text-sm text-muted-foreground">Carregando catálogo...</div>
         ) : filteredProducts.length === 0 ? (
-          <div className="p-8 text-center">
+          <div className="p-10 text-center">
             <p className="font-medium text-foreground">
-              {products.length === 0
-                ? "Nenhum produto cadastrado."
-                : "Nenhum produto encontrado."}
+              {products.length === 0 ? "Nenhum produto cadastrado" : "Nenhum resultado encontrado"}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {products.length === 0
-                ? "Use “Novo produto” quando estiver pronto para criar o primeiro registro real."
+                ? "O catálogo está limpo e pronto para os produtos reais quando chegar a fase de carga."
                 : "Tente outro termo de busca."}
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
-              <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Produto</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Preço</th>
-                  <th className="px-4 py-3 font-medium">Estoque</th>
-                  <th className="px-4 py-3 font-medium">Categoria</th>
-                  <th className="px-4 py-3 text-right font-medium">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredProducts.map((product) => (
-                  <tr key={product.id} className="align-top hover:bg-muted/20">
-                    <td className="px-4 py-4">
-                      <p className="font-medium text-foreground">{product.name}</p>
-                      <p className="mt-1 font-mono text-xs text-muted-foreground">
-                        {product.sku} · /{product.slug}
-                      </p>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span
-                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${statusClassName(
-                          product.status,
-                        )}`}
-                      >
+          <div className="divide-y divide-border">
+            {filteredProducts.map((product) => {
+              const currentPrice = product.promotional_price ?? product.price;
+              return (
+                <article
+                  key={product.id}
+                  className="grid gap-4 p-5 transition-colors hover:bg-muted/20 lg:grid-cols-[minmax(0,1.6fr)_minmax(180px,.7fr)_auto] lg:items-center"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="truncate font-semibold text-foreground">{product.name}</h4>
+                      <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusClassName(product.status)}`}>
                         {statusLabel(product.status)}
                       </span>
-                    </td>
-                    <td className="px-4 py-4 text-foreground">
-                      {product.promotional_price !== null ? (
-                        <>
-                          <p className="font-medium">
-                            {formatMoney(product.promotional_price)}
-                          </p>
-                          <p className="text-xs text-muted-foreground line-through">
-                            {formatMoney(product.price)}
-                          </p>
-                        </>
-                      ) : (
-                        formatMoney(product.price)
-                      )}
-                    </td>
-                    <td className="px-4 py-4 font-medium text-foreground">
-                      {product.stock}
-                    </td>
-                    <td className="px-4 py-4 text-muted-foreground">
-                      {product.category ?? "—"}
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => startEditing(product)}
-                          className="rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          disabled={product.status === "archived"}
-                          onClick={() => void handleArchive(product)}
-                          className="rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          Arquivar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <span className="font-mono">{product.sku}</span>
+                      <span className="font-mono">/{product.slug}</span>
+                      <span>{product.category ?? "Sem categoria"}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-sm">
+                    <p className="font-semibold text-foreground">{formatMoney(currentPrice)}</p>
+                    {product.promotional_price !== null ? (
+                      <p className="text-xs text-muted-foreground line-through">{formatMoney(product.price)}</p>
+                    ) : null}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Estoque: {product.defaultVariant?.stock_quantity ?? 0}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 lg:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => startEditing(product)}
+                      className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      disabled={product.status === "archived"}
+                      onClick={() => setArchiveTarget(product)}
+                      className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Arquivar
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={Boolean(archiveTarget)}
+        onOpenChange={(open) => {
+          if (!open) setArchiveTarget(null);
+        }}
+        title="Arquivar produto?"
+        description={
+          archiveTarget
+            ? `“${archiveTarget.name}” deixará de aparecer no catálogo público, mas continuará preservado no banco e no histórico administrativo.`
+            : "O produto deixará de aparecer no catálogo público."
+        }
+        confirmLabel="Arquivar produto"
+        cancelLabel="Manter produto"
+        tone="warning"
+        loading={archiving}
+        onConfirm={confirmArchive}
+      />
     </section>
   );
 }
