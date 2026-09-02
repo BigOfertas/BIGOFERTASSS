@@ -21,8 +21,8 @@ const BestSellers: React.FC = () => {
 
   const newestProducts = (data?.items ?? []).slice(0, SHOWCASE_SIZE);
 
-  // O projeto ainda não possui uma métrica real de vendas/pedidos consolidada.
-  // Mantemos a aba e sua composição visual prontas sem inventar um ranking.
+  // O projeto ainda não possui uma métrica consolidada de vendas suficiente
+  // para ordenar produtos por volume sem inventar um ranking.
   const bestSellingProducts = [] as typeof newestProducts;
 
   const visibleProducts =
@@ -42,14 +42,14 @@ const BestSellers: React.FC = () => {
   };
 
   return (
-    <section className="py-16 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <div className="flex justify-center items-center gap-6 md:gap-12 mb-12">
+    <section className="overflow-hidden bg-white py-16">
+      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+        <div className="mb-12 flex items-center justify-center gap-6 md:gap-12">
           <button
             type="button"
             onClick={() => handleTabChange("best")}
             aria-pressed={activeTab === "best"}
-            className={`text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none transition-colors duration-200 relative ${
+            className={`relative text-xl font-black uppercase italic leading-none tracking-tighter transition-colors duration-200 motion-reduce:transition-none md:text-2xl ${
               activeTab === "best"
                 ? "text-gray-900"
                 : "text-gray-500 hover:text-gray-700"
@@ -60,7 +60,7 @@ const BestSellers: React.FC = () => {
               VENDIDOS
             </span>
             {activeTab === "best" ? (
-              <span className="absolute -bottom-2 left-0 w-full h-1 bg-red-600 rounded-full" />
+              <span className="absolute -bottom-2 left-0 h-1 w-full rounded-full bg-red-600" />
             ) : null}
           </button>
 
@@ -68,7 +68,7 @@ const BestSellers: React.FC = () => {
             type="button"
             onClick={() => handleTabChange("new")}
             aria-pressed={activeTab === "new"}
-            className={`text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none transition-colors duration-200 relative ${
+            className={`relative text-xl font-black uppercase italic leading-none tracking-tighter transition-colors duration-200 motion-reduce:transition-none md:text-2xl ${
               activeTab === "new"
                 ? "text-gray-900"
                 : "text-gray-500 hover:text-gray-700"
@@ -76,14 +76,14 @@ const BestSellers: React.FC = () => {
           >
             LANÇAMENTOS
             {activeTab === "new" ? (
-              <span className="absolute -bottom-2 left-0 w-full h-1 bg-red-600 rounded-full" />
+              <span className="absolute -bottom-2 left-0 h-1 w-full rounded-full bg-red-600" />
             ) : null}
           </button>
         </div>
 
         <div
-          className={`relative transition-all duration-150 ease-in-out ${
-            isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"
+          className={`relative transition-all duration-150 ease-in-out motion-reduce:transform-none motion-reduce:transition-none ${
+            isTransitioning ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"
           }`}
         >
           <ProductCarousel key={displayTab} itemCount={SHOWCASE_SIZE}>
@@ -106,13 +106,6 @@ const BestSellers: React.FC = () => {
             ))}
           </ProductCarousel>
         </div>
-
-        {displayTab === "best" ? (
-          <span className="sr-only">
-            A classificação real de mais vendidos será preenchida quando houver
-            histórico de pedidos suficiente; nenhum ranking fictício é exibido.
-          </span>
-        ) : null}
 
         {error ? (
           <span className="sr-only">Não foi possível carregar os lançamentos.</span>
