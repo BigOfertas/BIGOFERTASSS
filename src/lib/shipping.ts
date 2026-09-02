@@ -41,6 +41,10 @@ export function formatPostalCode(value: string) {
   return digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
 }
 
+function businessDaysLabel(days: number) {
+  return days === 1 ? "1 dia útil" : `${days} dias úteis`;
+}
+
 export function formatTransitLabel(quote: ShippingQuote) {
   if (
     quote.transitRange &&
@@ -48,13 +52,13 @@ export function formatTransitLabel(quote: ShippingQuote) {
     quote.transitRange.max > 0
   ) {
     if (quote.transitRange.min === quote.transitRange.max) {
-      return `${quote.transitRange.max} dia${quote.transitRange.max === 1 ? "" : "s"} útil${quote.transitRange.max === 1 ? "" : "eis"}`;
+      return businessDaysLabel(quote.transitRange.max);
     }
 
     return `${quote.transitRange.min}–${quote.transitRange.max} dias úteis`;
   }
 
-  return `${quote.transitBusinessDays} dia${quote.transitBusinessDays === 1 ? "" : "s"} útil${quote.transitBusinessDays === 1 ? "" : "eis"}`;
+  return businessDaysLabel(quote.transitBusinessDays);
 }
 
 export async function requestShippingQuotes(
