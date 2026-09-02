@@ -112,14 +112,14 @@ export function OrderDetailContent({
                 return (
                   <article
                     key={item.id}
-                    className="group flex gap-4 p-5 transition-colors hover:bg-gray-50/70 sm:p-6"
+                    className="group flex gap-4 p-5 transition-colors hover:bg-gray-50/70 motion-reduce:transition-none sm:p-6"
                   >
                     <div className="flex h-20 w-20 flex-none items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-gray-50 sm:h-24 sm:w-24">
                       {imageUrl ? (
                         <img
                           src={imageUrl}
                           alt={item.image_alt_text ?? item.product_name}
-                          className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-[1.03]"
+                          className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none motion-reduce:transition-none"
                         />
                       ) : (
                         <Package
@@ -140,9 +140,11 @@ export function OrderDetailContent({
                               {item.variant_name}
                             </p>
                           ) : null}
-                          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-gray-400">
-                            SKU {item.variant_sku}
-                          </p>
+                          {ownerView ? (
+                            <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-gray-400">
+                              SKU {item.variant_sku}
+                            </p>
+                          ) : null}
                         </div>
                         <p className="whitespace-nowrap font-black text-gray-950">
                           {currencyFormatter.format(item.line_total)}
@@ -250,14 +252,15 @@ export function OrderDetailContent({
             {order.shipping_provider ? (
               <div className="mt-4 space-y-1.5 text-sm text-gray-600">
                 <p className="font-bold text-gray-900">
-                  {[order.shipping_provider, order.shipping_service]
-                    .filter(Boolean)
-                    .join(" — ")}
+                  {ownerView
+                    ? [order.shipping_provider, order.shipping_service]
+                        .filter(Boolean)
+                        .join(" — ")
+                    : order.shipping_service ?? "Entrega"}
                 </p>
                 {order.shipping_transit_business_days !== null ? (
                   <p>
-                    Transporte: {order.shipping_transit_business_days} dias
-                    úteis após a produção.
+                    Prazo: {order.shipping_transit_business_days} dias úteis após a produção.
                   </p>
                 ) : null}
                 {order.shipping_tracking_code ? (
@@ -268,7 +271,7 @@ export function OrderDetailContent({
               </div>
             ) : (
               <p className="mt-3 text-sm leading-6 text-gray-500">
-                Nenhuma cotação de transportadora foi registrada neste pedido.
+                A entrega ainda não foi definida para este pedido.
               </p>
             )}
           </section>
@@ -331,10 +334,11 @@ export function OrderDetailContent({
                   {refundRequest.message}
                 </p>
               ) : null}
-              <p className="mt-3 text-xs text-orange-800/70">
-                O contato e a resolução acontecem diretamente entre o
-                proprietário e o cliente.
-              </p>
+              {!ownerView ? (
+                <p className="mt-3 text-xs text-orange-800/70">
+                  A BIGofertas entrará em contato para dar continuidade.
+                </p>
+              ) : null}
             </section>
           ) : null}
         </aside>
