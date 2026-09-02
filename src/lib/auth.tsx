@@ -13,8 +13,22 @@ import type { Database } from "@/integrations/supabase/types";
 
 export type AppRole = Database["public"]["Enums"]["app_role"];
 
+type AuthActionError = AuthError | Error;
+
 type AuthActionResult = {
-  error: AuthError | null;
+  error: AuthActionError | null;
+};
+
+type SignInResult = AuthActionResult & {
+  requiresTwoFactor: boolean;
+  challengeId?: string;
+  maskedEmail?: string;
+  expiresAt?: string;
+};
+
+type PasswordSessionPayload = {
+  accessToken: string;
+  refreshToken: string;
 };
 
 type AuthContextValue = {
@@ -23,7 +37,13 @@ type AuthContextValue = {
   role: AppRole | null;
   loading: boolean;
 
-  signIn: (email: string, password: string) => Promise<AuthActionResult>;
+  signIn: (email: string, password: string) => Promise<SignInResult>;
+  verifySignInTwoFactor: (
+    email: string,
+    password: string,
+    challengeId: string,
+    code: string,
+  ) => Promise<AuthActionResult>;
 
   signUp: (
     email: string,
@@ -47,6 +67,47 @@ function getEmailConfirmationRedirectUrl() {
   }
 
   return new URL("/conta", window.location.origin).toString();
+}
+
+function authRequestError(message: string) {
+  return new Error(message || "Não foi possível entrar agora.");
+}
+
+async function readAuthResponse(response: Response) {
+  try {
+    const payload = await response.json();
+    return payload && typeof payload === "object" && !Array.isArray(payload)
+      ? (payload as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function readPasswordSession(payload: Record<string, unknown> | null) {
+  const session = payload?.["session"];
+  if (!session || typeof session !== "object" || Array.isArray(session)) return null;
+
+  const record = session as Record<string, unknown>;
+  if (
+    typeof record["accessToken"] !== "string" ||
+    typeof record["refreshToken"] !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    accessToken: record["accessToken"],
+    refreshToken: record["refreshToken"],
+  } satisfies PasswordSessionPayload;
+}
+
+async function applyPasswordSession(payload: PasswordSessionPayload): Promise<AuthActionResult> {
+  const { error } = await supabase.auth.setSession({
+    access_token: payload.accessToken,
+    refresh_token: payload.refreshToken,
+  });
+  return { error };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -160,16 +221,114 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [userId]);
 
-  async function signIn(
+  async function signIn(email: string, password: string): Promise<SignInResult> {
+    let response: Response;
+    try {
+      response = await fetch("/api/auth/password-login", {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+    } catch {
+      return {
+        error: authRequestError("Não foi possível entrar agora. Verifique sua conexão."),
+        requiresTwoFactor: false,
+      };
+    }
+
+    const payload = await readAuthResponse(response);
+    if (!response.ok) {
+      return {
+        error: authRequestError(
+          payload && typeof payload["error"] === "string"
+            ? payload["error"]
+            : "Não foi possível entrar agora.",
+        ),
+        requiresTwoFactor: false,
+      };
+    }
+
+    if (payload?.["requiresTwoFactor"] === true) {
+      const challengeId = payload["challengeId"];
+      const maskedEmail = payload["maskedEmail"];
+      const expiresAt = payload["expiresAt"];
+      if (
+        typeof challengeId !== "string" ||
+        typeof maskedEmail !== "string" ||
+        typeof expiresAt !== "string"
+      ) {
+        return {
+          error: authRequestError("A verificação em duas etapas retornou dados inválidos."),
+          requiresTwoFactor: false,
+        };
+      }
+
+      return {
+        error: null,
+        requiresTwoFactor: true,
+        challengeId,
+        maskedEmail,
+        expiresAt,
+      };
+    }
+
+    const nextSession = readPasswordSession(payload);
+    if (!nextSession) {
+      return {
+        error: authRequestError("A autenticação retornou dados inválidos."),
+        requiresTwoFactor: false,
+      };
+    }
+
+    const sessionResult = await applyPasswordSession(nextSession);
+    return { ...sessionResult, requiresTwoFactor: false };
+  }
+
+  async function verifySignInTwoFactor(
     email: string,
     password: string,
+    challengeId: string,
+    code: string,
   ): Promise<AuthActionResult> {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
+    let response: Response;
+    try {
+      response = await fetch("/api/auth/password-login/verify-2fa", {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          challengeId,
+          code: code.trim(),
+        }),
+      });
+    } catch {
+      return { error: authRequestError("Não foi possível confirmar o código agora.") };
+    }
 
-    return { error };
+    const payload = await readAuthResponse(response);
+    if (!response.ok) {
+      return {
+        error: authRequestError(
+          payload && typeof payload["error"] === "string"
+            ? payload["error"]
+            : "Não foi possível confirmar o código agora.",
+        ),
+      };
+    }
+
+    const nextSession = readPasswordSession(payload);
+    if (!nextSession) {
+      return { error: authRequestError("A autenticação retornou dados inválidos.") };
+    }
+
+    return await applyPasswordSession(nextSession);
   }
 
   async function signUp(
@@ -232,6 +391,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role,
         loading,
         signIn,
+        verifySignInTwoFactor,
         signUp,
         resendSignUpConfirmation,
         signOut,
