@@ -3,10 +3,12 @@ import { Link } from "@tanstack/react-router";
 import {
   BadgeCheck,
   ChevronDown,
+  CreditCard,
   LockKeyhole,
   Mail,
   MessageCircle,
   ShieldCheck,
+  WalletCards,
 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
@@ -30,6 +32,8 @@ const trustItems = [
     description: "Pagamento só será ativado após integração e validação.",
   },
 ] as const;
+
+const paymentMethods = ["PIX", "VISA", "MASTERCARD", "ELO", "AMEX"] as const;
 
 export default function Footer() {
   const { user, isOwner } = useAuth();
@@ -89,7 +93,7 @@ export default function Footer() {
             <div className="mt-6 space-y-3 text-sm text-gray-300">
               <a
                 href="mailto:contato@bigofertas.net"
-                className="flex items-center gap-3 transition-colors duration-200 hover:text-red-500"
+                className="flex items-center gap-3 transition-colors duration-200 hover:text-red-500 motion-reduce:transition-none"
               >
                 <Mail className="h-4 w-4 flex-shrink-0" />
                 <span>contato@bigofertas.net</span>
@@ -98,7 +102,7 @@ export default function Footer() {
                 href={WHATSAPP_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-3 transition-colors duration-200 hover:text-red-500"
+                className="flex items-center gap-3 transition-colors duration-200 hover:text-red-500 motion-reduce:transition-none"
               >
                 <MessageCircle className="h-4 w-4 flex-shrink-0" />
                 <span>+55 (84) 9 8134-7939</span>
@@ -117,21 +121,21 @@ export default function Footer() {
                 Acesso rápido
               </h3>
               <ChevronDown
-                className={`h-5 w-5 text-gray-400 transition-transform duration-300 lg:hidden ${
+                className={`h-5 w-5 text-gray-400 transition-transform duration-300 motion-reduce:transition-none lg:hidden ${
                   expandedAccordions.acessoRapido ? "rotate-180" : ""
                 }`}
               />
             </button>
 
             <ul
-              className={`space-y-3 overflow-hidden text-sm text-gray-400 transition-all duration-300 lg:!max-h-none lg:!opacity-100 ${
+              className={`space-y-3 overflow-hidden text-sm text-gray-400 transition-all duration-300 motion-reduce:transition-none lg:!max-h-none lg:!opacity-100 ${
                 expandedAccordions.acessoRapido
                   ? "max-h-72 opacity-100"
                   : "max-h-0 opacity-0"
               }`}
             >
               <li>
-                <Link to="/" className="transition-colors hover:text-white">
+                <Link to="/" className="transition-colors hover:text-white motion-reduce:transition-none">
                   Início
                 </Link>
               </li>
@@ -139,13 +143,13 @@ export default function Footer() {
                 <Link
                   to="/products"
                   search={{}}
-                  className="transition-colors hover:text-white"
+                  className="transition-colors hover:text-white motion-reduce:transition-none"
                 >
                   Produtos
                 </Link>
               </li>
               <li>
-                <Link to="/cart" className="transition-colors hover:text-white">
+                <Link to="/cart" className="transition-colors hover:text-white motion-reduce:transition-none">
                   Carrinho
                 </Link>
               </li>
@@ -163,14 +167,14 @@ export default function Footer() {
                 Minha conta
               </h3>
               <ChevronDown
-                className={`h-5 w-5 text-gray-400 transition-transform duration-300 lg:hidden ${
+                className={`h-5 w-5 text-gray-400 transition-transform duration-300 motion-reduce:transition-none lg:hidden ${
                   expandedAccordions.minhaConta ? "rotate-180" : ""
                 }`}
               />
             </button>
 
             <ul
-              className={`space-y-3 overflow-hidden text-sm text-gray-400 transition-all duration-300 lg:!max-h-none lg:!opacity-100 ${
+              className={`space-y-3 overflow-hidden text-sm text-gray-400 transition-all duration-300 motion-reduce:transition-none lg:!max-h-none lg:!opacity-100 ${
                 expandedAccordions.minhaConta
                   ? "max-h-72 opacity-100"
                   : "max-h-0 opacity-0"
@@ -178,14 +182,14 @@ export default function Footer() {
             >
               {isOwner ? (
                 <li>
-                  <Link to="/admin" className="transition-colors hover:text-white">
+                  <Link to="/admin" className="transition-colors hover:text-white motion-reduce:transition-none">
                     Painel administrativo
                   </Link>
                 </li>
               ) : user ? (
                 <>
                   <li>
-                    <Link to="/conta" className="transition-colors hover:text-white">
+                    <Link to="/conta" className="transition-colors hover:text-white motion-reduce:transition-none">
                       Minha conta
                     </Link>
                   </li>
@@ -193,7 +197,7 @@ export default function Footer() {
                     <Link
                       to="/conta"
                       search={{ secao: "enderecos" }}
-                      className="transition-colors hover:text-white"
+                      className="transition-colors hover:text-white motion-reduce:transition-none"
                     >
                       Endereços
                     </Link>
@@ -202,14 +206,14 @@ export default function Footer() {
               ) : (
                 <>
                   <li>
-                    <Link to="/login" className="transition-colors hover:text-white">
+                    <Link to="/login" className="transition-colors hover:text-white motion-reduce:transition-none">
                       Entrar
                     </Link>
                   </li>
                   <li>
                     <Link
                       to="/cadastro"
-                      className="transition-colors hover:text-white"
+                      className="transition-colors hover:text-white motion-reduce:transition-none"
                     >
                       Criar conta
                     </Link>
@@ -217,7 +221,7 @@ export default function Footer() {
                 </>
               )}
               <li>
-                <Link to="/cart" className="transition-colors hover:text-white">
+                <Link to="/cart" className="transition-colors hover:text-white motion-reduce:transition-none">
                   Meu carrinho
                 </Link>
               </li>
@@ -252,6 +256,57 @@ export default function Footer() {
               </li>
             </ul>
           </div>
+        </div>
+
+        <div className="mt-10 grid gap-4 rounded-2xl border border-white/10 bg-[#0f1013] p-5 sm:p-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8">
+          <section aria-labelledby="footer-payment-title">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-red-500" aria-hidden="true" />
+              <h3 id="footer-payment-title" className="text-xs font-black uppercase tracking-[0.14em] text-white">
+                Formas de pagamento
+              </h3>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-gray-400">
+              Meios aceitos pela integração InfinitePay planejada para o checkout.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2" aria-label="Meios de pagamento aceitos pela InfinitePay">
+              {paymentMethods.map((method) => (
+                <span
+                  key={method}
+                  className="inline-flex min-h-9 items-center rounded-lg border border-white/15 bg-white px-3 py-1.5 text-[11px] font-black tracking-wide text-gray-900 shadow-sm"
+                >
+                  {method}
+                </span>
+              ))}
+              <span className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-[11px] font-black tracking-wide text-emerald-300">
+                <WalletCards className="h-4 w-4" aria-hidden="true" />
+                INFINITEPAY
+              </span>
+            </div>
+          </section>
+
+          <section aria-labelledby="footer-security-title" className="lg:border-l lg:border-white/10 lg:pl-8">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-emerald-400" aria-hidden="true" />
+              <h3 id="footer-security-title" className="text-xs font-black uppercase tracking-[0.14em] text-white">
+                Site seguro
+              </h3>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs font-bold text-emerald-200">
+                <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+                HTTPS ativo
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-gray-200">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+                Acesso protegido
+              </span>
+            </div>
+            <p className="mt-3 max-w-xl text-xs leading-relaxed text-gray-400">
+              No checkout, os dados de pagamento serão processados pela InfinitePay;
+              a BIGofertas não armazenará dados completos do cartão.
+            </p>
+          </section>
         </div>
 
         <hr className="my-8 border-white/10" />
