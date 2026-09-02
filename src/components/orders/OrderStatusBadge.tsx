@@ -35,7 +35,7 @@ const STATUS_CONFIG: Record<
   },
   in_production: {
     label: "Em produção",
-    description: "A camisa está sendo produzida sob encomenda.",
+    description: "Seu pedido está em produção.",
     className: "border-sky-200 bg-sky-50 text-sky-800",
     icon: Factory,
   },
@@ -47,7 +47,7 @@ const STATUS_CONFIG: Record<
   },
   delivered: {
     label: "Entregue",
-    description: "Entrega registrada como concluída.",
+    description: "Entrega concluída.",
     className: "border-emerald-200 bg-emerald-50 text-emerald-800",
     icon: PackageCheck,
   },
@@ -59,19 +59,19 @@ const STATUS_CONFIG: Record<
   },
   refund_requested: {
     label: "Reembolso solicitado",
-    description: "O proprietário entrará em contato diretamente.",
+    description: "A BIGofertas entrará em contato.",
     className: "border-orange-200 bg-orange-50 text-orange-800",
     icon: RotateCcw,
   },
   refunded: {
     label: "Reembolsado",
-    description: "O resultado do reembolso foi registrado pelo proprietário.",
+    description: "O reembolso foi concluído.",
     className: "border-violet-200 bg-violet-50 text-violet-800",
     icon: HandCoins,
   },
   refund_canceled: {
     label: "Reembolso cancelado",
-    description: "A solicitação foi encerrada após contato com o cliente.",
+    description: "A solicitação de reembolso foi encerrada.",
     className: "border-rose-200 bg-rose-50 text-rose-800",
     icon: XCircle,
   },
