@@ -14,6 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { CheckoutPanel } from "@/components/cart/CheckoutPanel";
 import { ShippingCalculator } from "@/components/cart/ShippingCalculator";
 import Header from "@/components/layout/Header";
 import { ProductionNotice } from "@/components/orders/ProductionNotice";
@@ -75,6 +76,7 @@ function CartPage() {
   const [selectedShipping, setSelectedShipping] = useState<ShippingQuote | null>(
     null,
   );
+  const [quotedPostalCode, setQuotedPostalCode] = useState<string | null>(null);
 
   useEffect(() => {
     void validateCart();
@@ -369,6 +371,7 @@ function CartPage() {
                   cart={cart}
                   selectedQuote={selectedShipping}
                   onSelectionChange={setSelectedShipping}
+                  onPostalCodeQuoted={setQuotedPostalCode}
                   freeShipping={discount.freeShipping}
                 />
 
@@ -426,13 +429,13 @@ function CartPage() {
                   ) : null}
                 </div>
 
-                <div className="space-y-2 pt-2">
-                  <Button type="button" disabled className="w-full py-6 text-lg font-bold">
-                    Finalizar compra
-                  </Button>
-                  <p className="text-center text-[11px] text-gray-400">
-                    A finalização estará disponível em breve.
-                  </p>
+                <div className="space-y-3 pt-2">
+                  <CheckoutPanel
+                    cart={cart}
+                    selectedShipping={selectedShipping}
+                    quotedPostalCode={quotedPostalCode}
+                    hasBlockingIssues={hasBlockingIssues}
+                  />
 
                   <Button
                     variant="outline"
