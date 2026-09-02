@@ -4,12 +4,19 @@ import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { handleShippingQuoteRequest } from "./lib/shipping-server";
 
-type ServerEntry = {
-  fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
-};
-
 type WorkerEnvironment = {
   SUPERFRETE_TOKEN?: string;
+};
+
+type ServerEntry = {
+  fetch: (
+    request: Request,
+    options?: {
+      context?: {
+        workerEnv?: WorkerEnvironment;
+      };
+    },
+  ) => Promise<Response> | Response;
 };
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
@@ -50,19 +57,19 @@ function isH3SwallowedErrorBody(body: string): boolean {
 }
 
 export default {
-  async fetch(request: Request, env: unknown, ctx: unknown) {
+  async fetch(request: Request, env: unknown, _ctx: unknown) {
     try {
+      const workerEnv = env as WorkerEnvironment;
       const url = new URL(request.url);
 
       if (url.pathname === "/api/shipping/quote") {
-        return await handleShippingQuoteRequest(
-          request,
-          env as WorkerEnvironment,
-        );
+        return await handleShippingQuoteRequest(request, workerEnv);
       }
 
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
+      const response = await handler.fetch(request, {
+        context: { workerEnv },
+      });
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
       console.error(error);
