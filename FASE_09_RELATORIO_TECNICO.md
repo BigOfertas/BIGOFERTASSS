@@ -4,11 +4,13 @@ Data técnica: 2026-09-02
 
 ## Status
 
-**Implementação de código concluída; validação de deploy/runtime pendente.**
+**Implementação de código e migrations concluídas; validação de deploy/runtime pendente.**
 
 A Fase 09 integra a BIGofertas à API real de cotação da SuperFrete sem implementar checkout provisório, pagamento ou dados fictícios.
 
 O token de produção foi gerado pelo proprietário e cadastrado no Cloudflare Worker como secret `SUPERFRETE_TOKEN`. O valor do token não é armazenado no repositório nem enviado ao frontend.
+
+As migrations `20260902153000_progressive_discount_and_free_shipping.sql` e `20260902154500_progressive_discount_revision.sql` foram executadas no projeto Supabase real e o usuário confirmou `success` para ambas.
 
 ## Regras comerciais definitivas
 
@@ -249,11 +251,9 @@ Os validadores verificam estaticamente:
 
 ## Pendências para encerramento oficial
 
-1. aplicar `20260902153000_progressive_discount_and_free_shipping.sql` no Supabase real se ainda não tiver sido aplicada;
-2. aplicar `20260902154500_progressive_discount_revision.sql` no Supabase real;
-3. confirmar build/deploy da `main` no Cloudflare;
-4. confirmar que `/api/shipping/quote` está ativo no Worker;
-5. quando houver produto real ativo no carrinho, executar uma cotação real e confirmar retorno das modalidades habilitadas no token;
-6. se Loggi não for retornada, verificar somente a configuração Loggi/ponto de postagem do token, sem criar fallback fictício.
+1. confirmar build/deploy da `main` no Cloudflare;
+2. confirmar que `/api/shipping/quote` está ativo no Worker;
+3. quando houver produto real ativo no carrinho, executar uma cotação real e confirmar retorno das modalidades habilitadas no token;
+4. se Loggi não for retornada, verificar somente a configuração Loggi/ponto de postagem do token, sem criar fallback fictício.
 
-Não declarar a Fase 09 oficialmente encerrada até o deploy/runtime e as migrations incrementais aplicáveis estarem validados.
+Não declarar a Fase 09 oficialmente encerrada até o deploy/runtime estar validado.
