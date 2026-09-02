@@ -8,19 +8,22 @@ const pricing = read("src/lib/progressive-discount.ts");
 const cart = read("src/routes/cart.tsx");
 const shipping = read("src/components/cart/ShippingCalculator.tsx");
 const footer = read("src/components/layout/Footer.tsx");
-const migration = read(
+const baseMigration = read(
   "supabase/migrations/20260902153000_progressive_discount_and_free_shipping.sql",
+);
+const revisionMigration = read(
+  "supabase/migrations/20260902154500_progressive_discount_revision.sql",
 );
 
 const checks = [
   [
-    "tiers progressivos exatos no frontend",
+    "tiers progressivos vigentes no frontend",
     [
-      "minimumUnits: 5, percent: 5",
-      "minimumUnits: 10, percent: 10",
-      "minimumUnits: 15, percent: 15",
-      "minimumUnits: 30, percent: 20",
-      "minimumUnits: 45, percent: 35, freeShipping: true",
+      "minimumUnits: 5, percent: 5, freeShipping: false",
+      "minimumUnits: 8, percent: 10, freeShipping: true",
+      "minimumUnits: 15, percent: 15, freeShipping: true",
+      "minimumUnits: 25, percent: 20, freeShipping: true",
+      "minimumUnits: 35, percent: 30, freeShipping: true",
     ].every((token) => pricing.includes(token)),
   ],
   [
@@ -28,7 +31,8 @@ const checks = [
     cart.includes("getProgressiveDiscount(totalItems, totalPrice)") &&
       cart.includes("discount.subtotalAfterDiscount") &&
       cart.includes("discount.freeShipping") &&
-      cart.includes("Cotação absorvida pela BIGofertas"),
+      cart.includes("Cotação absorvida pela BIGofertas") &&
+      cart.includes("A partir de 8 peças o frete é grátis"),
   ],
   [
     "cotacao real continua visivel na faixa de frete gratis",
@@ -37,32 +41,39 @@ const checks = [
       shipping.includes("quote.totalPrice"),
   ],
   [
-    "backend ignora desconto informado pelo caller",
-    migration.includes("PERFORM p_discount_amount") &&
-      migration.includes("bigofertas_progressive_discount_percent(total_units_value)"),
+    "backend base ignora desconto informado pelo caller",
+    baseMigration.includes("PERFORM p_discount_amount") &&
+      baseMigration.includes("bigofertas_progressive_discount_percent(total_units_value)"),
   ],
   [
-    "backend implementa exatamente os cinco degraus",
+    "backend vigente implementa exatamente os cinco degraus revisados",
     [
-      "WHEN p_units >= 45 THEN 35",
-      "WHEN p_units >= 30 THEN 20",
+      "WHEN p_units >= 35 THEN 30",
+      "WHEN p_units >= 25 THEN 20",
       "WHEN p_units >= 15 THEN 15",
-      "WHEN p_units >= 10 THEN 10",
+      "WHEN p_units >= 8 THEN 10",
       "WHEN p_units >= 5 THEN 5",
-    ].every((token) => migration.includes(token)),
+    ].every((token) => revisionMigration.includes(token)) &&
+      revisionMigration.includes("CHECK (discount_percent IN (0, 5, 10, 15, 20, 30))"),
+  ],
+  [
+    "frete gratis vale para todas as faixas a partir de 8 pecas",
+    revisionMigration.includes("IF NEW.discount_percent >= 10 THEN") &&
+      revisionMigration.includes("shipping_discount_amount := NEW.shipping_base_amount + NEW.shipping_additional_amount") &&
+      revisionMigration.includes("NEW.shipping_amount := 0"),
   ],
   [
     "frete gratis preserva custo operacional em snapshot separado do valor cobrado",
-    migration.includes("shipping_discount_amount") &&
-      migration.includes("shipping_discount_value := shipping_base_value + shipping_additional_value") &&
-      migration.includes("shipping_total_value := 0"),
+    baseMigration.includes("shipping_discount_amount") &&
+      revisionMigration.includes("NEW.shipping_base_amount + NEW.shipping_additional_amount") &&
+      revisionMigration.includes("NEW.total_amount := NEW.subtotal_amount - NEW.discount_amount + NEW.shipping_amount"),
   ],
   [
     "create_order_core continua restrita ao service role",
-    migration.includes(
+    baseMigration.includes(
       "GRANT EXECUTE ON FUNCTION public.create_order_core(uuid, uuid, jsonb, jsonb, jsonb, numeric, text) TO service_role",
     ) &&
-      !migration.includes(
+      !baseMigration.includes(
         "GRANT EXECUTE ON FUNCTION public.create_order_core(uuid, uuid, jsonb, jsonb, jsonb, numeric, text) TO authenticated",
       ),
   ],
