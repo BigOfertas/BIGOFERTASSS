@@ -5,6 +5,7 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  MailCheck,
 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
@@ -15,7 +16,14 @@ export const Route = createFileRoute("/cadastro")({
 });
 
 function RegisterPage() {
-  const { user, loading, isOwner, signUp, signOut } = useAuth();
+  const {
+    user,
+    loading,
+    isOwner,
+    signUp,
+    resendSignUpConfirmation,
+    signOut,
+  } = useAuth();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -25,6 +33,7 @@ function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
+  const [resendingConfirmation, setResendingConfirmation] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -55,7 +64,12 @@ function RegisterPage() {
 
     setSubmitting(true);
 
-    const { error } = await signUp(email.trim(), password, fullName.trim());
+    const normalizedEmail = email.trim();
+    const { error } = await signUp(
+      normalizedEmail,
+      password,
+      fullName.trim(),
+    );
 
     if (error) {
       setErrorMessage(error.message);
@@ -64,11 +78,46 @@ function RegisterPage() {
     }
 
     setSuccessMessage(
-      "Conta criada com sucesso. Se a confirmação de e-mail estiver ativada, verifique sua caixa de entrada.",
+      "Conta criada. Enviamos um e-mail de confirmação; ao confirmar, você voltará para a BIGofertas.",
     );
     setPassword("");
     setConfirmPassword("");
     setSubmitting(false);
+  }
+
+  async function handleResendConfirmation() {
+    if (resendingConfirmation) {
+      return;
+    }
+
+    const normalizedEmail = email.trim();
+
+    if (!normalizedEmail) {
+      setSuccessMessage("");
+      setErrorMessage("Digite o e-mail da conta acima para reenviar a confirmação.");
+      return;
+    }
+
+    setResendingConfirmation(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const { error } = await resendSignUpConfirmation(normalizedEmail);
+
+    if (error) {
+      setErrorMessage(
+        error.message.toLowerCase().includes("rate limit")
+          ? "Aguarde um pouco antes de pedir outro e-mail de confirmação."
+          : error.message,
+      );
+      setResendingConfirmation(false);
+      return;
+    }
+
+    setSuccessMessage(
+      "Novo e-mail de confirmação enviado. Use o link mais recente recebido.",
+    );
+    setResendingConfirmation(false);
   }
 
   async function handleSignOut() {
@@ -402,6 +451,27 @@ function RegisterPage() {
               "Criar conta"
             )}
           </button>
+
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center">
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Já criou a conta, mas precisa de outro link de confirmação?
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleResendConfirmation()}
+              disabled={resendingConfirmation}
+              className="mt-2 inline-flex items-center justify-center text-sm font-semibold text-red-600 transition hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {resendingConfirmation ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <MailCheck className="mr-2 h-4 w-4" />
+              )}
+              {resendingConfirmation
+                ? "Reenviando..."
+                : "Reenviar e-mail de confirmação"}
+            </button>
+          </div>
 
           <p className="text-center text-sm text-muted-foreground">
             Já possui uma conta?{" "}
