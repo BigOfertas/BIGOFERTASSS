@@ -1,4 +1,4 @@
-export const BRAZILIAN_DDDS = new Set([
+export const BRAZILIAN_DDDS: ReadonlySet<string> = new Set([
   "11", "12", "13", "14", "15", "16", "17", "18", "19",
   "21", "22", "24", "27", "28",
   "31", "32", "33", "34", "35", "37", "38",
@@ -8,7 +8,7 @@ export const BRAZILIAN_DDDS = new Set([
   "71", "73", "74", "75", "77", "79",
   "81", "82", "83", "84", "85", "86", "87", "88", "89",
   "91", "92", "93", "94", "95", "96", "97", "98", "99",
-] as const);
+]);
 
 export function onlyDigits(value: string, maxLength?: number) {
   const digits = value.replace(/\D/g, "");
@@ -29,7 +29,7 @@ export function formatBrazilianPhone(value: string) {
 
 export function hasValidBrazilianDdd(value: string) {
   const digits = onlyDigits(value);
-  return digits.length >= 2 && BRAZILIAN_DDDS.has(digits.slice(0, 2) as never);
+  return digits.length >= 2 && BRAZILIAN_DDDS.has(digits.slice(0, 2));
 }
 
 export function isValidBrazilianPhone(value: string) {
