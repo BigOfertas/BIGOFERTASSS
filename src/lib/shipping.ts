@@ -34,9 +34,6 @@ export type ShippingQuoteResult = {
 
 type ShippingErrorPayload = Partial<ShippingQuoteResult> & {
   error?: unknown;
-  code?: unknown;
-  stage?: unknown;
-  diagnosticId?: unknown;
 };
 
 export function onlyPostalCodeDigits(value: string) {
@@ -97,8 +94,6 @@ export async function requestShippingQuotes(
     }),
   });
 
-  const reachedShippingHandler =
-    response.headers.get("x-bigofertas-shipping-handler") === "quote-v2";
   const rawBody = await response.text();
   let payload: ShippingErrorPayload | null = null;
 
@@ -111,27 +106,17 @@ export async function requestShippingQuotes(
   }
 
   if (!response.ok) {
-    const diagnosticCode = payload && typeof payload.code === "string" ? payload.code : null;
-    const diagnosticId =
-      payload && typeof payload.diagnosticId === "string" ? payload.diagnosticId : null;
-    const diagnosticSuffix = diagnosticCode
-      ? ` (diagnóstico: ${diagnosticCode}${diagnosticId ? ` · ${diagnosticId}` : ""})`
-      : "";
-
+    const canShowServerMessage = response.status === 400 || response.status === 422;
     const message =
-      payload && typeof payload.error === "string"
-        ? `${payload.error}${diagnosticSuffix}`
-        : !reachedShippingHandler
-          ? `O endpoint de frete não foi alcançado pelo Worker (diagnóstico: SHIPPING_ROUTE_NOT_REACHED · HTTP ${response.status}).`
-          : `O adaptador de frete retornou uma resposta inválida (diagnóstico: SHIPPING_ADAPTER_RESPONSE_INVALID · HTTP ${response.status}).`;
+      canShowServerMessage && payload && typeof payload.error === "string"
+        ? payload.error
+        : "Não foi possível calcular o frete agora. Tente novamente em instantes.";
     throw new Error(message);
   }
 
   if (!payload || !Array.isArray(payload.quotes)) {
     throw new Error(
-      reachedShippingHandler
-        ? "A cotação retornou dados inválidos (diagnóstico: SHIPPING_ADAPTER_RESPONSE_INVALID)."
-        : "O endpoint de frete não foi alcançado pelo Worker (diagnóstico: SHIPPING_ROUTE_NOT_REACHED).",
+      "Não foi possível carregar as opções de entrega agora. Tente novamente.",
     );
   }
 
