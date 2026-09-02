@@ -4,7 +4,7 @@ Data técnica: 2026-09-02
 
 ## Status
 
-**Implementação de código e migrations concluídas; validação de deploy/runtime pendente.**
+**Implementação, migrations e reprodução local do runtime Cloudflare concluídas; novo deploy de staging pendente.**
 
 A Fase 09 integra a BIGofertas à API real de cotação da SuperFrete sem implementar checkout provisório, pagamento ou dados fictícios.
 
@@ -126,7 +126,7 @@ Integração no entrypoint:
 
 Proteções implementadas:
 
-- token lido somente de `env.SUPERFRETE_TOKEN`;
+- token lido no servidor a partir de `request.runtime.cloudflare.env` no adaptador Nitro, com fallback para o argumento direto do Worker e `process.env` somente em runtimes Node;
 - nenhuma variável `VITE_` para o token;
 - somente POST;
 - rejeição de origem cruzada quando o header `Origin` estiver presente;
@@ -140,6 +140,16 @@ Proteções implementadas:
 - serviços retornados são filtrados para PAC, SEDEX e Loggi;
 - falha de uma transportadora não derruba obrigatoriamente as demais modalidades disponíveis;
 - nenhum preço ou prazo fallback fictício.
+
+### Correção do HTTP 500 no adaptador Cloudflare/Nitro
+
+O artefato gerado pelo preset `cloudflare-module` confirmou que o Worker externo recebe `(request, env, context)`, mas o serviço SSR configurado por `src/server.ts` é chamado internamente apenas com `request`. Antes da correção, `src/server.ts` convertia o segundo argumento ausente em `env` e o handler tentava acessar `env.SUPERFRETE_TOKEN`, causando um `TypeError` antes do tratamento JSON.
+
+O Nitro preserva os bindings reais em `request.runtime.cloudflare.env`. O handler agora lê primeiro esse local, mantendo compatibilidade com chamadas diretas do Worker e desenvolvimento Node. O `src/server.ts` continua interceptando `/api/shipping/quote` no bundle final, e a Server Route `src/routes/api.shipping.quote.ts` permanece registrada também no `src/routeTree.gen.ts` como segunda via oficial do TanStack Start.
+
+Todas as respostas do endpoint possuem marcadores `x-bigofertas-shipping-*`, código e protocolo de diagnóstico. Os logs registram somente presença/origem de configuração, etapa, código e status de upstream; token, chave e conteúdo sensível nunca são registrados. Há códigos distintos para rota não alcançada no cliente, binding ausente, configuração/HTTP/parse do Supabase, HTTP/rede/parse da SuperFrete, ausência de modalidades e falha do adaptador.
+
+O validador `scripts/validate-shipping-runtime.mjs` executa o Worker compilado com respostas simuladas de infraestrutura. Ele não chama a API real e não produz cotação fictícia; verifica apenas o encaminhamento de bindings e a forma segura das falhas.
 
 ## Frontend
 

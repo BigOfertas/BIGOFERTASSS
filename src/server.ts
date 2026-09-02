@@ -2,11 +2,13 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { handleShippingQuoteRequest } from "./lib/shipping-server";
+import {
+  createShippingAdapterErrorResponse,
+  handleShippingQuoteRequest,
+} from "./lib/shipping-server";
+import type { ShippingEnvironment } from "./lib/shipping-server";
 
-type WorkerEnvironment = {
-  SUPERFRETE_TOKEN?: string;
-};
+type WorkerEnvironment = ShippingEnvironment;
 
 type ServerEntry = {
   fetch: (
@@ -56,14 +58,32 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+function asWorkerEnvironment(value: unknown): WorkerEnvironment {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as WorkerEnvironment;
+}
+
 export default {
   async fetch(request: Request, env: unknown, _ctx: unknown) {
-    try {
-      const workerEnv = env as WorkerEnvironment;
-      const url = new URL(request.url);
+    let isShippingRequest = false;
 
-      if (url.pathname === "/api/shipping/quote") {
-        return await handleShippingQuoteRequest(request, workerEnv);
+    try {
+      // Nitro's Cloudflare adapter calls this SSR service with `request` only.
+      // It preserves Worker bindings on `request.runtime.cloudflare.env`; the
+      // shipping handler reads that location first and uses this argument only
+      // for runtimes that call the entrypoint directly with `(request, env)`.
+      const workerEnv = asWorkerEnvironment(env);
+      const url = new URL(request.url);
+      isShippingRequest = url.pathname === "/api/shipping/quote";
+
+      if (isShippingRequest) {
+        try {
+          return await handleShippingQuoteRequest(request, workerEnv, {
+            source: "cloudflare-entry",
+          });
+        } catch (error) {
+          return createShippingAdapterErrorResponse(error);
+        }
       }
 
       const handler = await getServerEntry();
@@ -72,6 +92,10 @@ export default {
       });
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
+      if (isShippingRequest) {
+        return createShippingAdapterErrorResponse(error);
+      }
+
       console.error(error);
       return new Response(renderErrorPage(), {
         status: 500,

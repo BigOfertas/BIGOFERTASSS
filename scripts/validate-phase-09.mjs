@@ -6,6 +6,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
 const server = read("src/server.ts");
 const serverRoute = read("src/routes/api.shipping.quote.ts");
+const routeTree = read("src/routeTree.gen.ts");
 const shippingServer = read("src/lib/shipping-server.ts");
 const shippingClient = read("src/lib/shipping.ts");
 const shippingUi = read("src/components/cart/ShippingCalculator.tsx");
@@ -17,8 +18,9 @@ const check = (name, condition) => checks.push([name, Boolean(condition)]);
 check(
   "token SuperFrete fica exclusivamente no servidor",
   /SUPERFRETE_TOKEN/.test(shippingServer) &&
-    /env\.SUPERFRETE_TOKEN/.test(shippingServer) &&
-    /process\.env\.SUPERFRETE_TOKEN/.test(serverRoute) &&
+    /runtime\?\.cloudflare\?\.env/.test(shippingServer) &&
+    /processEnvironment\.SUPERFRETE_TOKEN/.test(shippingServer) &&
+    /process\.env\?\.\["SUPERFRETE_TOKEN"\]/.test(serverRoute) &&
     !/SUPERFRETE_TOKEN/.test(shippingClient) &&
     !/SUPERFRETE_TOKEN/.test(shippingUi) &&
     !/SUPERFRETE_TOKEN/.test(cart),
@@ -29,6 +31,7 @@ check(
   /createFileRoute\("\/api\/shipping\/quote"\)/.test(serverRoute) &&
     /POST:\s*async/.test(serverRoute) &&
     /handleShippingQuoteRequest/.test(serverRoute) &&
+    /ApiShippingQuoteRouteImport/.test(routeTree) &&
     /\/api\/shipping\/quote/.test(server) &&
     /handleShippingQuoteRequest/.test(server) &&
     /cache-control.*no-store/i.test(shippingServer),
@@ -70,9 +73,7 @@ check(
     /packagingWeightGrams:\s*200/.test(shippingServer) &&
     /defaultShirtWeightGrams:\s*300/.test(shippingServer) &&
     /maxShirtsPerPackage:\s*3/.test(shippingServer) &&
-    /Math\.ceil\(totalUnits \/ SHIPPING_CONFIG\.maxShirtsPerPackage\)/.test(
-      shippingServer,
-    ),
+    /Math\.ceil\(totalUnits \/ SHIPPING_CONFIG\.maxShirtsPerPackage\)/.test(shippingServer),
 );
 
 check(
@@ -109,8 +110,20 @@ check(
 
 check(
   "cliente recebe erro HTTP diagnostico quando endpoint nao retorna JSON",
-  /HTTP \$\{response\.status\}/.test(shippingClient) &&
-    /response\.status === 404/.test(shippingClient),
+  /SHIPPING_ROUTE_NOT_REACHED/.test(shippingClient) &&
+    /SHIPPING_ADAPTER_RESPONSE_INVALID/.test(shippingClient) &&
+    /x-bigofertas-shipping-handler/.test(shippingClient),
+);
+
+check(
+  "falhas do backend retornam diagnostico JSON seguro",
+  /SHIPPING_ENV_MISSING/.test(shippingServer) &&
+    /SHIPPING_SUPABASE_CONFIG_MISSING/.test(shippingServer) &&
+    /SHIPPING_SUPABASE_HTTP_ERROR/.test(shippingServer) &&
+    /SHIPPING_SUPERFRETE_HTTP_ERROR/.test(shippingServer) &&
+    /SHIPPING_SUPERFRETE_PARSE_ERROR/.test(shippingServer) &&
+    /SHIPPING_ADAPTER_ERROR/.test(shippingServer) &&
+    /x-bigofertas-shipping-handler/.test(shippingServer),
 );
 
 check(

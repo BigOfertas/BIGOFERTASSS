@@ -32,6 +32,13 @@ export type ShippingQuoteResult = {
   quotedAt: string;
 };
 
+type ShippingErrorPayload = Partial<ShippingQuoteResult> & {
+  error?: unknown;
+  code?: unknown;
+  stage?: unknown;
+  diagnosticId?: unknown;
+};
+
 export function onlyPostalCodeDigits(value: string) {
   return value.replace(/\D/g, "").slice(0, 8);
 }
@@ -90,31 +97,42 @@ export async function requestShippingQuotes(
     }),
   });
 
+  const reachedShippingHandler =
+    response.headers.get("x-bigofertas-shipping-handler") === "quote-v2";
   const rawBody = await response.text();
-  let payload: (Partial<ShippingQuoteResult> & { error?: unknown }) | null = null;
+  let payload: ShippingErrorPayload | null = null;
 
   if (rawBody) {
     try {
-      payload = JSON.parse(rawBody) as Partial<ShippingQuoteResult> & {
-        error?: unknown;
-      };
+      payload = JSON.parse(rawBody) as ShippingErrorPayload;
     } catch {
       payload = null;
     }
   }
 
   if (!response.ok) {
+    const diagnosticCode = payload && typeof payload.code === "string" ? payload.code : null;
+    const diagnosticId =
+      payload && typeof payload.diagnosticId === "string" ? payload.diagnosticId : null;
+    const diagnosticSuffix = diagnosticCode
+      ? ` (diagnóstico: ${diagnosticCode}${diagnosticId ? ` · ${diagnosticId}` : ""})`
+      : "";
+
     const message =
       payload && typeof payload.error === "string"
-        ? payload.error
-        : response.status === 404
-          ? "O serviço de frete ainda não está ativo nesta versão publicada. Atualize a página após o próximo deploy."
-          : `Não foi possível calcular o frete agora (HTTP ${response.status}).`;
+        ? `${payload.error}${diagnosticSuffix}`
+        : !reachedShippingHandler
+          ? `O endpoint de frete não foi alcançado pelo Worker (diagnóstico: SHIPPING_ROUTE_NOT_REACHED · HTTP ${response.status}).`
+          : `O adaptador de frete retornou uma resposta inválida (diagnóstico: SHIPPING_ADAPTER_RESPONSE_INVALID · HTTP ${response.status}).`;
     throw new Error(message);
   }
 
   if (!payload || !Array.isArray(payload.quotes)) {
-    throw new Error("A cotação retornou dados inválidos. Tente novamente.");
+    throw new Error(
+      reachedShippingHandler
+        ? "A cotação retornou dados inválidos (diagnóstico: SHIPPING_ADAPTER_RESPONSE_INVALID)."
+        : "O endpoint de frete não foi alcançado pelo Worker (diagnóstico: SHIPPING_ROUTE_NOT_REACHED).",
+    );
   }
 
   return payload as ShippingQuoteResult;

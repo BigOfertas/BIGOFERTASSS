@@ -17,6 +17,7 @@ import { Route as ContaRouteImport } from './routes/conta'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as ProductIdRouteImport } from './routes/product/$id'
+import { Route as ApiShippingQuoteRouteImport } from './routes/api.shipping.quote'
 import { Route as ContaPedidosOrderNumberRouteImport } from './routes/conta/pedidos/$orderNumber'
 
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +60,11 @@ const ProductIdRoute = ProductIdRouteImport.update({
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiShippingQuoteRoute = ApiShippingQuoteRouteImport.update({
+  id: '/api/shipping/quote',
+  path: '/api/shipping/quote',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContaPedidosOrderNumberRoute = ContaPedidosOrderNumberRouteImport.update({
   id: '/pedidos/$orderNumber',
   path: '/pedidos/$orderNumber',
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/products': typeof ProductsRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/shipping/quote': typeof ApiShippingQuoteRoute
   '/conta/pedidos/$orderNumber': typeof ContaPedidosOrderNumberRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/products': typeof ProductsRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/shipping/quote': typeof ApiShippingQuoteRoute
   '/conta/pedidos/$orderNumber': typeof ContaPedidosOrderNumberRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/products': typeof ProductsRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/shipping/quote': typeof ApiShippingQuoteRoute
   '/conta/pedidos/$orderNumber': typeof ContaPedidosOrderNumberRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/products'
     | '/product/$id'
+    | '/api/shipping/quote'
     | '/conta/pedidos/$orderNumber'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/products'
     | '/product/$id'
+    | '/api/shipping/quote'
     | '/conta/pedidos/$orderNumber'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/products'
     | '/product/$id'
+    | '/api/shipping/quote'
     | '/conta/pedidos/$orderNumber'
   fileRoutesById: FileRoutesById
 }
@@ -144,6 +156,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ProductsRoute: typeof ProductsRoute
   ProductIdRoute: typeof ProductIdRoute
+  ApiShippingQuoteRoute: typeof ApiShippingQuoteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/shipping/quote': {
+      id: '/api/shipping/quote'
+      path: '/api/shipping/quote'
+      fullPath: '/api/shipping/quote'
+      preLoaderRoute: typeof ApiShippingQuoteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/conta/pedidos/$orderNumber': {
       id: '/conta/pedidos/$orderNumber'
       path: '/pedidos/$orderNumber'
@@ -233,6 +253,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ProductsRoute: ProductsRoute,
   ProductIdRoute: ProductIdRoute,
+  ApiShippingQuoteRoute: ApiShippingQuoteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

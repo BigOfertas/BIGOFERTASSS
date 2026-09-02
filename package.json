@@ -18,6 +18,7 @@
     "validate:phase7": "node scripts/validate-phase-07.mjs",
     "validate:phase8": "node scripts/validate-phase-08.mjs",
     "validate:phase9": "node scripts/validate-phase-09.mjs && node scripts/validate-progressive-discount.mjs",
+    "validate:shipping-runtime": "vite build && node scripts/validate-shipping-runtime.mjs",
     "validate:phase10": "node scripts/validate-phase-10.mjs && node scripts/validate-phase-10-hardening.mjs && node scripts/validate-admin-dashboard.mjs && node scripts/validate-progressive-discount.mjs",
     "validate:pricing": "node scripts/validate-progressive-discount.mjs"
   },
