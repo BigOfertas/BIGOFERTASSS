@@ -28,6 +28,7 @@ type ShippingCalculatorProps = {
   cart: CartItem[];
   selectedQuote: ShippingQuote | null;
   onSelectionChange: (quote: ShippingQuote | null) => void;
+  onPostalCodeQuoted?: (postalCode: string | null) => void;
   freeShipping?: boolean;
 };
 
@@ -48,6 +49,7 @@ export function ShippingCalculator({
   cart,
   selectedQuote,
   onSelectionChange,
+  onPostalCodeQuoted,
   freeShipping = false,
 }: ShippingCalculatorProps) {
   const [postalCode, setPostalCode] = useState("");
@@ -68,19 +70,23 @@ export function ShippingCalculator({
     setResult(null);
     setErrorMessage("");
     onSelectionChange(null);
-  }, [cartSignature, onSelectionChange]);
+    onPostalCodeQuoted?.(null);
+  }, [cartSignature, onPostalCodeQuoted, onSelectionChange]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (onlyPostalCodeDigits(postalCode).length !== 8) {
+    const normalizedPostalCode = onlyPostalCodeDigits(postalCode);
+    if (normalizedPostalCode.length !== 8) {
       setErrorMessage("Informe um CEP válido com 8 dígitos.");
+      onPostalCodeQuoted?.(null);
       return;
     }
 
     setIsLoading(true);
     setErrorMessage("");
     onSelectionChange(null);
+    onPostalCodeQuoted?.(null);
 
     try {
       const nextResult = await requestShippingQuotes(postalCode, cart);
@@ -92,8 +98,10 @@ export function ShippingCalculator({
         null,
       );
       onSelectionChange(cheapest);
+      onPostalCodeQuoted?.(normalizedPostalCode);
     } catch (error) {
       setResult(null);
+      onPostalCodeQuoted?.(null);
       setErrorMessage(
         error instanceof Error
           ? error.message
