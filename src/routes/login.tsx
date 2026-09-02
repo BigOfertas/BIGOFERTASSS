@@ -21,9 +21,7 @@ function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (submitting) {
-      return;
-    }
+    if (submitting) return;
 
     setErrorMessage("");
     setSubmitting(true);
@@ -31,10 +29,14 @@ function LoginPage() {
     const { error } = await signIn(email.trim(), password);
 
     if (error) {
+      const normalizedMessage = error.message.toLowerCase();
       setErrorMessage(
-        error.message === "Invalid login credentials"
-          ? "E-mail ou senha incorretos."
-          : error.message,
+        normalizedMessage.includes("email not confirmed") ||
+          normalizedMessage.includes("email_not_confirmed")
+          ? "Confirme seu e-mail antes de entrar. Use o link enviado pela BIGofertas."
+          : error.message === "Invalid login credentials"
+            ? "E-mail ou senha incorretos."
+            : error.message,
       );
     }
 
@@ -42,19 +44,14 @@ function LoginPage() {
   }
 
   async function handleSignOut() {
-    if (signingOut) {
-      return;
-    }
+    if (signingOut) return;
 
     setErrorMessage("");
     setSigningOut(true);
 
     const { error } = await signOut();
 
-    if (error) {
-      setErrorMessage(error.message);
-    }
-
+    if (error) setErrorMessage(error.message);
     setSigningOut(false);
   }
 
@@ -74,10 +71,7 @@ function LoginPage() {
       <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
-            <Link
-              to="/"
-              className="text-2xl font-black italic tracking-tight text-foreground"
-            >
+            <Link to="/" className="text-2xl font-black italic tracking-tight text-foreground">
               <span className="text-red-600">BIG</span>ofertas
             </Link>
 
@@ -140,10 +134,7 @@ function LoginPage() {
             </button>
 
             {errorMessage ? (
-              <p
-                role="alert"
-                className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-              >
+              <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {errorMessage}
               </p>
             ) : null}
@@ -157,10 +148,7 @@ function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7] px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <Link
-            to="/"
-            className="text-2xl font-black italic tracking-tight text-foreground"
-          >
+          <Link to="/" className="text-2xl font-black italic tracking-tight text-foreground">
             <span className="text-red-600">BIG</span>ofertas
           </Link>
 
@@ -179,10 +167,7 @@ function LoginPage() {
           className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
         >
           <div className="space-y-2">
-            <label
-              htmlFor="email"
-              className="text-sm font-medium text-foreground"
-            >
+            <label htmlFor="email" className="text-sm font-medium text-foreground">
               E-mail
             </label>
 
@@ -203,10 +188,7 @@ function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium text-foreground"
-            >
+            <label htmlFor="password" className="text-sm font-medium text-foreground">
               Senha
             </label>
 
@@ -241,10 +223,7 @@ function LoginPage() {
           </div>
 
           {errorMessage ? (
-            <p
-              role="alert"
-              className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            >
+            <p role="alert" className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {errorMessage}
             </p>
           ) : null}
@@ -264,12 +243,13 @@ function LoginPage() {
             )}
           </button>
 
+          <p className="text-center text-xs leading-5 text-muted-foreground">
+            O acesso só é liberado depois da confirmação do e-mail.
+          </p>
+
           <p className="text-center text-sm text-muted-foreground">
             Ainda não tem uma conta?{" "}
-            <Link
-              to="/cadastro"
-              className="font-semibold text-red-600 underline-offset-4 hover:underline"
-            >
+            <Link to="/cadastro" className="font-semibold text-red-600 underline-offset-4 hover:underline">
               Criar conta
             </Link>
           </p>
