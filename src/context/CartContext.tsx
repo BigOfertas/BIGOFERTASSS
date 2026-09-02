@@ -183,7 +183,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     } catch {
       setValidationError(
-        "Não foi possível conferir preço e disponibilidade agora. Os valores exibidos continuam estimados.",
+        "Não foi possível atualizar o carrinho agora. Tente novamente em instantes.",
       );
     } finally {
       setIsValidating(false);
