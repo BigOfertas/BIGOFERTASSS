@@ -39,6 +39,14 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function getEmailConfirmationRedirectUrl() {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  return new URL("/conta", window.location.origin).toString();
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -170,23 +178,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fullName?: string,
   ): Promise<AuthActionResult> {
     const normalizedFullName = fullName?.trim();
+    const emailRedirectTo = getEmailConfirmationRedirectUrl();
 
-    const credentials = normalizedFullName
-      ? {
-          email: email.trim(),
-          password,
-          options: {
-            data: {
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        emailRedirectTo,
+        data: normalizedFullName
+          ? {
               full_name: normalizedFullName,
-            },
-          },
-        }
-      : {
-          email: email.trim(),
-          password,
-        };
-
-    const { error } = await supabase.auth.signUp(credentials);
+            }
+          : undefined,
+      },
+    });
 
     return { error };
   }
