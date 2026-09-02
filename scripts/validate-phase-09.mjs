@@ -5,6 +5,7 @@ const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
 const server = read("src/server.ts");
+const serverRoute = read("src/routes/api.shipping.quote.ts");
 const shippingServer = read("src/lib/shipping-server.ts");
 const shippingClient = read("src/lib/shipping.ts");
 const shippingUi = read("src/components/cart/ShippingCalculator.tsx");
@@ -14,17 +15,21 @@ const checks = [];
 const check = (name, condition) => checks.push([name, Boolean(condition)]);
 
 check(
-  "token SuperFrete fica exclusivamente no Worker",
+  "token SuperFrete fica exclusivamente no servidor",
   /SUPERFRETE_TOKEN/.test(shippingServer) &&
     /env\.SUPERFRETE_TOKEN/.test(shippingServer) &&
+    /process\.env\.SUPERFRETE_TOKEN/.test(serverRoute) &&
     !/SUPERFRETE_TOKEN/.test(shippingClient) &&
     !/SUPERFRETE_TOKEN/.test(shippingUi) &&
     !/SUPERFRETE_TOKEN/.test(cart),
 );
 
 check(
-  "endpoint de cotacao e server-side e no-store",
-  /\/api\/shipping\/quote/.test(server) &&
+  "endpoint de cotacao existe como server route e fallback do server entry",
+  /createFileRoute\("\/api\/shipping\/quote"\)/.test(serverRoute) &&
+    /POST:\s*async/.test(serverRoute) &&
+    /handleShippingQuoteRequest/.test(serverRoute) &&
+    /\/api\/shipping\/quote/.test(server) &&
     /handleShippingQuoteRequest/.test(server) &&
     /cache-control.*no-store/i.test(shippingServer),
 );
@@ -100,6 +105,12 @@ check(
     /requestShippingQuotes/.test(shippingUi) &&
     /PAC, SEDEX e Loggi com cotação real/.test(shippingUi) &&
     /Finalização de compra indisponível/.test(cart),
+);
+
+check(
+  "cliente recebe erro HTTP diagnostico quando endpoint nao retorna JSON",
+  /HTTP \$\{response\.status\}/.test(shippingClient) &&
+    /response\.status === 404/.test(shippingClient),
 );
 
 check(
