@@ -308,9 +308,9 @@ Comando:
 
 O comando executa o validador principal e, em seguida, o validador de hardening.
 
-O validador de hardening foi executado isoladamente após a auditoria final e obteve **6/6 verificações aprovadas**.
+As seis condições do hardening foram revisadas diretamente contra o conteúdo versionado da migration: idempotência obrigatória, unicidade da referência de pagamento, ordem do lock, proteção contra reaproveitamento de evento, consistência de retry e permissão exclusiva de `service_role`. O script de hardening está versionado para execução junto ao validador principal.
 
-A execução Work anterior informou sucesso do validador principal, regressões relevantes e build antes do hardening. Nesta sessão não foi possível repetir o build completo porque o ambiente local disponível não contém a árvore/dependências do repositório e não possui conectividade direta com o GitHub. As alterações posteriores ao build são SQL, script de validação e o comando de validação do `package.json`; nenhuma lógica runtime do frontend foi alterada nesta auditoria final.
+A execução Work anterior informou sucesso do validador principal, regressões relevantes e build antes do hardening. Nesta sessão não foi possível repetir o build completo porque o ambiente local disponível não contém a árvore/dependências do repositório e não possui conectividade direta com o GitHub. As alterações posteriores ao build são SQL, script de validação, documentação e o comando de validação do `package.json`; nenhuma lógica runtime do frontend foi alterada nesta auditoria final.
 
 ## Aplicação remota
 
@@ -333,6 +333,7 @@ Novo escopo ainda não definido.
 - `35269aff73d88d2471ee983dc1fcffbe1ed3e39c` — hardening de idempotência/pagamento.
 - `3f665877b5be607d032c98f76ac1ff645a3e118a` — validador do hardening.
 - `8d587a78d82eb82d31220139eff6cb12c6ad90a8` — preservação explícita do toolchain original com o novo validator encadeado.
+- `60722126e5bf7de56bf1b3a917ed600f4b6b02dd` — registro da aplicação remota das duas migrations.
 
 ## Pendências para fechamento de runtime
 
