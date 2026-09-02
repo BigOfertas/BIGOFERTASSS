@@ -10,7 +10,6 @@ import type { AuthError, Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { onlyDigits } from "@/lib/brasil";
 
 export type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -30,8 +29,6 @@ type AuthContextValue = {
     email: string,
     password: string,
     fullName: string,
-    phone: string,
-    cpf: string,
   ) => Promise<AuthActionResult>;
 
   resendSignUpConfirmation: (email: string) => Promise<AuthActionResult>;
@@ -67,9 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true;
 
     function applySession(nextSession: Session | null) {
-      if (!active) {
-        return;
-      }
+      if (!active) return;
 
       const nextUser = nextSession?.user ?? null;
       const nextUserId = nextUser?.id ?? null;
@@ -79,11 +74,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(nextSession);
       setUser(nextUser);
 
-      // TOKEN_REFRESHED, USER_UPDATED and duplicate INITIAL_SESSION events can
-      // arrive while the same account is active (notably after returning to a
-      // background browser tab). Keep the already-resolved role in that case.
-      // Invalidating roleLoading without changing userId would leave loading
-      // stuck because the role effect below would not run again.
       if (identityChanged) {
         setRole(null);
         setRoleLoading(Boolean(nextUser));
@@ -93,20 +83,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     void supabase.auth.getSession().then(({ data, error }) => {
-      if (!active) {
-        return;
-      }
+      if (!active) return;
 
       if (error) {
         console.error("Failed to restore auth session:", error);
-
         currentUserIdRef.current = null;
         setSession(null);
         setUser(null);
         setRole(null);
         setRoleLoading(false);
         setAuthReady(true);
-
         return;
       }
 
@@ -131,7 +117,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!userId) {
       setRole(null);
       setRoleLoading(false);
-
       return () => {
         active = false;
       };
@@ -146,9 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (!active) {
-        return;
-      }
+      if (!active) return;
 
       if (error) {
         console.error("Failed to load user role:", error);
@@ -181,8 +164,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     fullName: string,
-    phone: string,
-    cpf: string,
   ): Promise<AuthActionResult> {
     const emailRedirectTo = getEmailConfirmationRedirectUrl();
 
@@ -193,8 +174,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...(emailRedirectTo ? { emailRedirectTo } : {}),
         data: {
           full_name: fullName.trim(),
-          phone: onlyDigits(phone, 11),
-          cpf: onlyDigits(cpf, 11),
         },
       },
     });
