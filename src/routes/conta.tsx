@@ -6,6 +6,7 @@ import {
   AccountDashboard,
   type AccountSection,
 } from "@/components/account/AccountDashboard";
+import { EmailTwoFactorPrompt } from "@/components/account/EmailTwoFactorPrompt";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import { useAuth } from "@/lib/auth";
@@ -70,6 +71,7 @@ function AccountPage() {
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <Header />
+      <EmailTwoFactorPrompt />
       <main className="flex-1">
         <AccountDashboard
           email={user.email ?? "Conta BIGofertas"}
