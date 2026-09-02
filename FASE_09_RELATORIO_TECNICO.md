@@ -44,6 +44,22 @@ Loggi:
 
 O código mantém valor-base, adicional e total separados. O adicional é aplicado uma vez à cotação total do pedido.
 
+## Desconto progressivo e frete grátis
+
+Regra comercial automática aprovada pelo proprietário, baseada na quantidade total de peças do carrinho/pedido:
+
+- 5 a 9 peças: 5% de desconto;
+- 10 a 14 peças: 10% de desconto;
+- 15 a 29 peças: 15% de desconto;
+- 30 a 44 peças: 20% de desconto;
+- 45 ou mais peças: 35% de desconto + frete grátis.
+
+O carrinho exibe a faixa atual, a próxima meta, o desconto estimado e o benefício de frete grátis quando aplicável.
+
+A autoridade financeira não fica no navegador. A migration `20260902153000_progressive_discount_and_free_shipping.sql` substitui a lógica de criação do pedido para calcular o percentual automaticamente pela quantidade total de itens, ignorando qualquer desconto informado pelo caller.
+
+Na faixa de 45+ peças, a cotação real da transportadora e o adicional BIGofertas continuam preservados para a operação interna, enquanto `shipping_discount_amount` absorve integralmente esse custo e `shipping_amount` fica em zero para o cliente.
+
 ## Embalagem operacional
 
 Regra prática aprovada pelo proprietário:
@@ -126,6 +142,7 @@ Proteções implementadas:
 Arquivos:
 
 - `src/lib/shipping.ts`;
+- `src/lib/progressive-discount.ts`;
 - `src/components/cart/ShippingCalculator.tsx`;
 - `src/routes/cart.tsx`.
 
@@ -141,7 +158,10 @@ Experiência no carrinho:
 - seleção automática inicial da opção mais barata;
 - total estimado atualizado com o frete selecionado;
 - informação de múltiplos volumes quando aplicável;
-- microinterações suaves;
+- desconto progressivo automático por quantidade;
+- indicador visual da próxima faixa de desconto;
+- frete grátis visível em 45+ peças, mantendo a cotação operacional real;
+- microinterações suaves e suporte a `prefers-reduced-motion`;
 - checkout continua desabilitado nesta fase.
 
 ## Produção versus transporte
@@ -160,19 +180,17 @@ O frontend informa explicitamente que o prazo de transporte começa depois da pr
 
 ## Integração com a Fase 10
 
-Não foi necessária nova migration para pedidos.
+A Fase 10 já criou os snapshots principais de frete. A regra comercial de desconto progressivo exigiu uma migration incremental adicional:
 
-A Fase 10 já criou campos de snapshot para:
+- `20260902153000_progressive_discount_and_free_shipping.sql`.
 
-- provedor;
-- serviço;
-- referência de cotação;
-- valor-base;
-- adicional;
-- total do frete;
-- prazo de transporte;
-- data da cotação;
-- rastreio.
+Ela adiciona:
+
+- `orders.discount_percent`;
+- `orders.shipping_discount_amount`;
+- função determinística para as faixas de desconto;
+- cálculo autoritativo no `create_order_core`;
+- preservação do custo real do frete mesmo quando o cliente recebe frete grátis.
 
 O futuro checkout deverá recalcular o frete no backend imediatamente antes de criar o pedido/pagamento e gravar o snapshot definitivo. A cotação selecionada no navegador nunca será considerada autoridade financeira.
 
@@ -182,6 +200,8 @@ A Fase 09 não implementa pagamento.
 
 A decisão futura já definida é manter carrinho/endereço/frete/revisão na BIGofertas e usar checkout hospedado da InfinitePay para a etapa final de pagamento.
 
+O rodapé público já possui uma faixa visual de formas de pagamento e segurança sem selos externos fictícios. Ela referencia PIX, Visa, Mastercard, Elo e American Express como meios aceitos pela InfinitePay, além de HTTPS e proteção de acesso do próprio site.
+
 ## Estoque
 
 Nenhuma lógica de estoque foi criada.
@@ -190,15 +210,17 @@ A cotação considera somente produtos comercialmente ativos, quantidade do carr
 
 ## Validação
 
-Script:
+Scripts:
 
-- `scripts/validate-phase-09.mjs`
+- `scripts/validate-phase-09.mjs`;
+- `scripts/validate-progressive-discount.mjs`.
 
-Comando:
+Comandos:
 
-`npm run validate:phase9`
+- `npm run validate:phase9`;
+- `npm run validate:pricing`.
 
-O validador verifica estaticamente:
+Os validadores verificam estaticamente:
 
 - segredo somente no Worker;
 - API real de produção;
@@ -214,13 +236,18 @@ O validador verifica estaticamente:
 - separação das cotações por origem;
 - separação entre produção e transporte;
 - integração real no carrinho;
-- ausência de preços fictícios no frontend.
+- ausência de preços fictícios no frontend;
+- faixas exatas 5/10/15/30/45;
+- 35% + frete grátis em 45+ peças;
+- cálculo autoritativo no backend;
+- ausência de Reclame Aqui e de selo Google Site Seguro inventado no rodapé.
 
 ## Pendências para encerramento oficial
 
-1. confirmar build/deploy da `main` no Cloudflare;
-2. confirmar que `/api/shipping/quote` está ativo no Worker;
-3. quando houver produto real ativo no carrinho, executar uma cotação real e confirmar retorno das modalidades habilitadas no token;
-4. se Loggi não for retornada, verificar somente a configuração Loggi/ponto de postagem do token, sem criar fallback fictício.
+1. aplicar a migration `20260902153000_progressive_discount_and_free_shipping.sql` no Supabase real;
+2. confirmar build/deploy da `main` no Cloudflare;
+3. confirmar que `/api/shipping/quote` está ativo no Worker;
+4. quando houver produto real ativo no carrinho, executar uma cotação real e confirmar retorno das modalidades habilitadas no token;
+5. se Loggi não for retornada, verificar somente a configuração Loggi/ponto de postagem do token, sem criar fallback fictício.
 
-Não declarar a Fase 09 oficialmente encerrada até o deploy/runtime estar validado.
+Não declarar a Fase 09 oficialmente encerrada até o deploy/runtime e a migration incremental estarem validados.
