@@ -1,8 +1,8 @@
 export const PROGRESSIVE_DISCOUNT_TIERS = [
-  { minimumUnits: 45, percent: 35, freeShipping: true },
-  { minimumUnits: 30, percent: 20, freeShipping: false },
-  { minimumUnits: 15, percent: 15, freeShipping: false },
-  { minimumUnits: 10, percent: 10, freeShipping: false },
+  { minimumUnits: 35, percent: 30, freeShipping: true },
+  { minimumUnits: 25, percent: 20, freeShipping: true },
+  { minimumUnits: 15, percent: 15, freeShipping: true },
+  { minimumUnits: 8, percent: 10, freeShipping: true },
   { minimumUnits: 5, percent: 5, freeShipping: false },
 ] as const;
 
