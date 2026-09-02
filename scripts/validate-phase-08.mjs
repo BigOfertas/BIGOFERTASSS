@@ -16,6 +16,7 @@ const hardening = read(
 const accountRoute = read("src/routes/conta.tsx");
 const accountUi = read("src/components/account/AccountDashboard.tsx");
 const accountLib = read("src/lib/customer-account.ts");
+const auth = read("src/lib/auth.tsx");
 const header = read("src/components/layout/Header.tsx");
 const footer = read("src/components/layout/Footer.tsx");
 const login = read("src/routes/login.tsx");
@@ -176,6 +177,18 @@ const checks = [
     /Pelo menos 6 caracteres/.test(cadastro) &&
       /As senhas coincidem/.test(cadastro) &&
       /showConfirmPassword/.test(cadastro),
+  ],
+  [
+    "confirmacao de cadastro retorna para a origem ativa e nao depende de localhost",
+    /getEmailConfirmationRedirectUrl/.test(auth) &&
+      /new URL\("\/conta", window\.location\.origin\)/.test(auth) &&
+      /emailRedirectTo/.test(auth),
+  ],
+  [
+    "cliente pode reenviar confirmacao com o mesmo redirect corrigido",
+    /resendSignUpConfirmation/.test(auth) &&
+      /supabase\.auth\.resend/.test(auth) &&
+      /Reenviar e-mail de confirmação/.test(cadastro),
   ],
 ];
 
