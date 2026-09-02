@@ -1,6 +1,13 @@
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
+import {
+  handlePasswordLoginRequest,
+  handleStartEmailTwoFactorEnrollmentRequest,
+  handleVerifyEmailTwoFactorEnrollmentRequest,
+  handleVerifyPasswordLoginTwoFactorRequest,
+} from "./lib/email-2fa-server";
+import type { EmailTwoFactorEnvironment } from "./lib/email-2fa-server";
 import { renderErrorPage } from "./lib/error-page";
 import {
   handleInfinitePayWebhookRequest,
@@ -12,7 +19,7 @@ import {
   handleShippingQuoteRequest,
 } from "./lib/shipping-server";
 
-type WorkerEnvironment = InfinitePayEnvironment;
+type WorkerEnvironment = InfinitePayEnvironment & EmailTwoFactorEnvironment;
 
 type ServerEntry = {
   fetch: (
@@ -67,11 +74,26 @@ function asWorkerEnvironment(value: unknown): WorkerEnvironment {
   return value as WorkerEnvironment;
 }
 
+function authEntryErrorResponse(error: unknown) {
+  console.error(error);
+  return new Response(
+    JSON.stringify({
+      error: "Não foi possível concluir a verificação de segurança agora.",
+      code: "EMAIL_2FA_ENTRY_ERROR",
+    }),
+    {
+      status: 500,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    },
+  );
+}
+
 export default {
   async fetch(request: Request, env: unknown, _ctx: unknown) {
     let isShippingRequest = false;
     let isCheckoutRequest = false;
     let isInfinitePayWebhook = false;
+    let isAuthSecurityRequest = false;
 
     try {
       // Nitro's Cloudflare adapter calls this SSR service with `request` only.
@@ -83,6 +105,7 @@ export default {
       isCheckoutRequest = url.pathname === "/api/checkout/start";
       isInfinitePayWebhook =
         url.pathname === "/api/payments/infinitepay/webhook";
+      isAuthSecurityRequest = url.pathname.startsWith("/api/auth/");
 
       if (isShippingRequest) {
         try {
@@ -100,6 +123,22 @@ export default {
 
       if (isInfinitePayWebhook) {
         return await handleInfinitePayWebhookRequest(request, workerEnv);
+      }
+
+      if (url.pathname === "/api/auth/password-login") {
+        return await handlePasswordLoginRequest(request, workerEnv);
+      }
+
+      if (url.pathname === "/api/auth/password-login/verify-2fa") {
+        return await handleVerifyPasswordLoginTwoFactorRequest(request, workerEnv);
+      }
+
+      if (url.pathname === "/api/auth/email-2fa/enroll/start") {
+        return await handleStartEmailTwoFactorEnrollmentRequest(request, workerEnv);
+      }
+
+      if (url.pathname === "/api/auth/email-2fa/enroll/verify") {
+        return await handleVerifyEmailTwoFactorEnrollmentRequest(request, workerEnv);
       }
 
       const handler = await getServerEntry();
@@ -138,6 +177,10 @@ export default {
             headers: { "content-type": "application/json; charset=utf-8" },
           },
         );
+      }
+
+      if (isAuthSecurityRequest) {
+        return authEntryErrorResponse(error);
       }
 
       console.error(error);
