@@ -90,15 +90,26 @@ export async function requestShippingQuotes(
     }),
   });
 
-  const payload = (await response.json().catch(() => null)) as
-    | (Partial<ShippingQuoteResult> & { error?: unknown })
-    | null;
+  const rawBody = await response.text();
+  let payload: (Partial<ShippingQuoteResult> & { error?: unknown }) | null = null;
+
+  if (rawBody) {
+    try {
+      payload = JSON.parse(rawBody) as Partial<ShippingQuoteResult> & {
+        error?: unknown;
+      };
+    } catch {
+      payload = null;
+    }
+  }
 
   if (!response.ok) {
     const message =
       payload && typeof payload.error === "string"
         ? payload.error
-        : "Não foi possível calcular o frete agora.";
+        : response.status === 404
+          ? "O serviço de frete ainda não está ativo nesta versão publicada. Atualize a página após o próximo deploy."
+          : `Não foi possível calcular o frete agora (HTTP ${response.status}).`;
     throw new Error(message);
   }
 
