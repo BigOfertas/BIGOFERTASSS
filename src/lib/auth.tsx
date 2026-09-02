@@ -67,6 +67,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!active) return;
 
       const nextUser = nextSession?.user ?? null;
+
+      if (nextUser && !nextUser.email_confirmed_at) {
+        currentUserIdRef.current = null;
+        setSession(null);
+        setUser(null);
+        setRole(null);
+        setRoleLoading(false);
+        setAuthReady(true);
+        void supabase.auth.signOut();
+        return;
+      }
+
       const nextUserId = nextUser?.id ?? null;
       const identityChanged = currentUserIdRef.current !== nextUserId;
 
