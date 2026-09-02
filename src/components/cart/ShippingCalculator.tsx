@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   Check,
+  Gift,
   LoaderCircle,
   MapPin,
   PackageCheck,
@@ -28,6 +29,7 @@ type ShippingCalculatorProps = {
   cart: CartItem[];
   selectedQuote: ShippingQuote | null;
   onSelectionChange: (quote: ShippingQuote | null) => void;
+  freeShipping?: boolean;
 };
 
 function serviceSubtitle(quote: ShippingQuote) {
@@ -52,6 +54,7 @@ export function ShippingCalculator({
   cart,
   selectedQuote,
   onSelectionChange,
+  freeShipping = false,
 }: ShippingCalculatorProps) {
   const [postalCode, setPostalCode] = useState("");
   const [result, setResult] = useState<ShippingQuoteResult | null>(null);
@@ -123,6 +126,13 @@ export function ShippingCalculator({
             </p>
           </div>
         </div>
+
+        {freeShipping ? (
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
+            <Gift className="h-4 w-4 flex-none" />
+            Frete grátis liberado para este carrinho.
+          </div>
+        ) : null}
 
         <form onSubmit={handleSubmit} className="mt-3 flex gap-2">
           <label className="sr-only" htmlFor="shipping-postal-code">
@@ -212,10 +222,21 @@ export function ShippingCalculator({
                 </span>
 
                 <span className="flex-none text-right">
-                  <strong className="block text-sm text-gray-950">
-                    {currency.format(quote.totalPrice)}
-                  </strong>
-                  <span className="text-[10px] text-gray-500">valor final</span>
+                  {freeShipping ? (
+                    <>
+                      <strong className="block text-sm text-emerald-700">Grátis</strong>
+                      <span className="text-[10px] text-gray-400 line-through">
+                        {currency.format(quote.totalPrice)}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <strong className="block text-sm text-gray-950">
+                        {currency.format(quote.totalPrice)}
+                      </strong>
+                      <span className="text-[10px] text-gray-500">valor final</span>
+                    </>
+                  )}
                 </span>
               </button>
             );
