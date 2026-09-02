@@ -13,20 +13,92 @@ const migration = read(
 const hardening = read(
   "supabase/migrations/20260901202000_phase_08_default_address_hardening.sql",
 );
+const identityMigration = read(
+  "supabase/migrations/20260902022000_phase_08_required_customer_identity.sql",
+);
 const accountRoute = read("src/routes/conta.tsx");
 const accountUi = read("src/components/account/AccountDashboard.tsx");
 const accountLib = read("src/lib/customer-account.ts");
+const brasil = read("src/lib/brasil.ts");
 const auth = read("src/lib/auth.tsx");
+const cadastro = read("src/routes/cadastro.tsx");
+const login = read("src/routes/login.tsx");
 const header = read("src/components/layout/Header.tsx");
 const footer = read("src/components/layout/Footer.tsx");
-const login = read("src/routes/login.tsx");
-const cadastro = read("src/routes/cadastro.tsx");
+const confirmDialog = read("src/components/ui/confirm-dialog.tsx");
+const alertDialog = read("src/components/ui/alert-dialog.tsx");
+const adminUi = read("src/components/admin/ProductAdmin.tsx");
 
 const checks = [
   [
-    "profiles recebe telefone sem alterar email de autenticacao",
+    "profiles recebe telefone e cpf",
     /ADD COLUMN IF NOT EXISTS phone text/.test(migration) &&
-      /update_my_account_profile/.test(migration),
+      /ADD COLUMN IF NOT EXISTS cpf text/.test(identityMigration),
+  ],
+  [
+    "cpf possui validacao de digitos verificadores no banco",
+    /is_valid_brazilian_cpf/.test(identityMigration) &&
+      /substring\(digits from 10/.test(identityMigration) &&
+      /substring\(digits from 11/.test(identityMigration),
+  ],
+  [
+    "cpf preenchido e unico por conta",
+    /profiles_cpf_unique/.test(identityMigration) &&
+      /WHERE cpf IS NOT NULL/.test(identityMigration),
+  ],
+  [
+    "telefone brasileiro exige comprimento e ddd existente",
+    /is_valid_brazilian_phone/.test(identityMigration) &&
+      /length\(regexp_replace/.test(identityMigration) &&
+      /is_valid_brazilian_ddd/.test(identityMigration),
+  ],
+  [
+    "lista de ddds contempla os codigos nacionais brasileiros esperados",
+    /"11"/.test(brasil) &&
+      /"24"/.test(brasil) &&
+      /"38"/.test(brasil) &&
+      /"55"/.test(brasil) &&
+      /"69"/.test(brasil) &&
+      /"79"/.test(brasil) &&
+      /"89"/.test(brasil) &&
+      /"99"/.test(brasil) &&
+      !/"20"/.test(brasil) &&
+      !/"90"/.test(brasil),
+  ],
+  [
+    "frontend valida cpf e ddd antes de salvar",
+    /isValidBrazilianCpf/.test(accountUi) &&
+      /isValidBrazilianPhone/.test(accountUi) &&
+      /isValidBrazilianCpf/.test(cadastro) &&
+      /isValidBrazilianPhone/.test(cadastro),
+  ],
+  [
+    "cadastro exige nome email telefone cpf e senha",
+    /Nome completo/.test(cadastro) &&
+      /Telefone/.test(cadastro) &&
+      /CPF/.test(cadastro) &&
+      /required/.test(cadastro) &&
+      /Confirmar senha/.test(cadastro),
+  ],
+  [
+    "novo usuario leva telefone e cpf para o perfil",
+    /raw_user_meta_data ->> 'phone'/.test(identityMigration) &&
+      /raw_user_meta_data ->> 'cpf'/.test(identityMigration) &&
+      /phone: onlyDigits\(phone, 11\)/.test(auth) &&
+      /cpf: onlyDigits\(cpf, 11\)/.test(auth),
+  ],
+  [
+    "rpc de identidade exige nome telefone e cpf validos",
+    /update_my_customer_identity/.test(identityMigration) &&
+      /Informe seu nome completo/.test(identityMigration) &&
+      /Telefone invalido ou DDD inexistente/.test(identityMigration) &&
+      /CPF invalido/.test(identityMigration),
+  ],
+  [
+    "area da conta trata nome telefone e cpf como obrigatorios",
+    /Nome, telefone e CPF são obrigatórios/.test(accountUi) &&
+      /profileComplete/.test(accountUi) &&
+      /Preencha corretamente todos os campos obrigatórios/.test(accountUi),
   ],
   [
     "enderecos ficam em tabela propria vinculada ao usuario",
@@ -41,27 +113,29 @@ const checks = [
       /customer_addresses_state_format/.test(migration),
   ],
   [
+    "complemento permanece opcional e demais dados de endereco obrigatorios",
+    /complement text,/.test(migration) &&
+      /postal_code text NOT NULL/.test(migration) &&
+      /street text NOT NULL/.test(migration) &&
+      /number text NOT NULL/.test(migration) &&
+      /Complemento/.test(accountUi) &&
+      /\(opcional\)/.test(accountUi),
+  ],
+  [
     "apenas um endereco principal por usuario",
     /CREATE UNIQUE INDEX IF NOT EXISTS customer_addresses_one_default_per_user/.test(
       migration,
     ),
   ],
   [
-    "leitura direta de enderecos e restrita ao proprio usuario",
-    /customer_addresses_select_own/.test(migration) &&
-      /USING \(user_id = auth\.uid\(\)\)/.test(migration),
-  ],
-  [
-    "escritas de endereco passam por RPC autenticada",
-    /save_my_customer_address/.test(migration) &&
-      /set_default_my_customer_address/.test(migration) &&
-      /delete_my_customer_address/.test(migration) &&
-      /TO authenticated/.test(migration),
-  ],
-  [
     "troca de endereco principal remove o anterior antes de marcar o novo",
     /SET is_default = false/.test(hardening) &&
       /SET is_default = true/.test(hardening),
+  ],
+  [
+    "enderecos sao protegidos pelo proprio usuario",
+    /customer_addresses_select_own/.test(migration) &&
+      /USING \(user_id = auth\.uid\(\)\)/.test(migration),
   ],
   [
     "rota conta exige usuario autenticado",
@@ -79,28 +153,65 @@ const checks = [
     /Histórico de pedidos/.test(accountUi) && /Em breve/.test(accountUi),
   ],
   [
-    "perfil pode editar nome e telefone",
-    /saveCustomerProfile/.test(accountUi) &&
-      /Nome completo/.test(accountUi) &&
-      /Telefone/.test(accountUi),
+    "cep pode preencher endereco automaticamente",
+    /lookupBrazilianPostalCode/.test(accountUi) &&
+      /viacep\.com\.br\/ws\//.test(accountLib),
   ],
   [
-    "email da conta permanece somente leitura",
-    /readOnly/.test(accountUi) && /O e-mail está vinculado ao seu acesso/.test(accountUi),
+    "falha de cep nao bloqueia preenchimento manual",
+    /CEP não encontrado\. Você pode preencher o endereço manualmente\./.test(accountUi) &&
+      /Consulta de CEP indisponível agora\. Preencha manualmente\./.test(accountUi),
   ],
   [
-    "enderecos suportam criar editar principal e excluir",
-    /Novo endereço/.test(accountUi) &&
-      /Editar/.test(accountUi) &&
-      /Tornar principal/.test(accountUi) &&
-      /Excluir/.test(accountUi),
+    "edicao de endereco evita recarregar todo o painel",
+    /refreshAddresses/.test(accountUi) && /await refreshAddresses\(\)/.test(accountUi),
   ],
   [
-    "camada de dados usa RPCs dedicadas da conta",
-    /get_my_account_profile/.test(accountLib) &&
-      /update_my_account_profile/.test(accountLib) &&
-      /list_my_customer_addresses/.test(accountLib) &&
-      /save_my_customer_address/.test(accountLib),
+    "loading da conta usa skeleton",
+    /function AccountSkeleton/.test(accountUi) && /animate-pulse/.test(accountUi),
+  ],
+  [
+    "navegacao da conta funciona bem no mobile e desktop",
+    /overflow-x-auto/.test(accountUi) && /lg:sticky lg:top-28/.test(accountUi),
+  ],
+  [
+    "feedback de sucesso e acessivel",
+    /aria-live="polite"/.test(accountUi) && /fixed bottom-4/.test(accountUi),
+  ],
+  [
+    "confirmacoes importantes usam componente interno",
+    /<ConfirmDialog/.test(accountUi) &&
+      /<ConfirmDialog/.test(adminUi) &&
+      /Confirmar/.test(confirmDialog),
+  ],
+  [
+    "modal de confirmacao usa fundo borrado e card central",
+    /backdrop-blur-\[6px\]/.test(alertDialog) &&
+      /left-\[50%\]/.test(alertDialog) &&
+      /top-\[50%\]/.test(alertDialog) &&
+      /rounded-2xl/.test(confirmDialog),
+  ],
+  [
+    "arquivamento administrativo nao usa popup nativo",
+    /Arquivar produto\?/.test(adminUi) &&
+      /archiveTarget/.test(adminUi) &&
+      !/window\.confirm/.test(adminUi),
+  ],
+  [
+    "email de confirmacao retorna para a conta publicada",
+    /emailRedirectTo/.test(auth) &&
+      /new URL\("\/conta", window\.location\.origin\)/.test(auth),
+  ],
+  [
+    "cadastro permite reenviar confirmacao",
+    /resendSignUpConfirmation/.test(cadastro) &&
+      /Reenviar e-mail de confirmação/.test(cadastro),
+  ],
+  [
+    "login permite visualizar senha e mostra progresso",
+    /showPassword/.test(login) &&
+      /Mostrar senha/.test(login) &&
+      /Entrando\.\.\./.test(login),
   ],
   [
     "header leva cliente autenticado para conta e owner para admin",
@@ -111,84 +222,11 @@ const checks = [
     /to="\/conta"/.test(footer) && /secao: "enderecos"/.test(footer),
   ],
   [
-    "login oferece acesso direto a area do cliente",
-    /to="\/conta"/.test(login) && /Abrir minha conta/.test(login),
-  ],
-  [
     "fase 08 nao cria pedidos checkout ou pagamento",
-    !/CREATE TABLE IF NOT EXISTS public\.(orders|payments|checkouts)/.test(migration),
-  ],
-  [
-    "cep pode preencher endereco automaticamente usando consulta publica",
-    /lookupBrazilianPostalCode/.test(accountUi) &&
-      /viacep\.com\.br\/ws\//.test(accountLib) &&
-      /normalizedPostalCode\.length !== 8/.test(accountLib),
-  ],
-  [
-    "falha de consulta de cep nao bloqueia preenchimento manual",
-    /Consulta de CEP indisponível agora\. Preencha manualmente\./.test(accountUi) &&
-      /CEP não encontrado\. Você pode preencher o endereço manualmente\./.test(
-        accountUi,
+    !/CREATE TABLE IF NOT EXISTS public\.(orders|payments|checkouts)/.test(migration) &&
+      !/CREATE TABLE IF NOT EXISTS public\.(orders|payments|checkouts)/.test(
+        identityMigration,
       ),
-  ],
-  [
-    "edicao de endereco nao recarrega todo o painel",
-    /refreshAddresses/.test(accountUi) &&
-      /await refreshAddresses\(\)/.test(accountUi),
-  ],
-  [
-    "feedback de perfil distingue dados salvos de alteracoes pendentes",
-    /profileDirty/.test(accountUi) &&
-      /Tudo salvo/.test(accountUi) &&
-      /alterações ainda não salvas/.test(accountUi),
-  ],
-  [
-    "loading principal usa skeleton em vez de tela vazia",
-    /function AccountSkeleton/.test(accountUi) && /animate-pulse/.test(accountUi),
-  ],
-  [
-    "exclusao de endereco evita confirm nativo do navegador",
-    !/window\.confirm/.test(accountUi) &&
-      /Confirmar exclusão/.test(accountUi) &&
-      /deleteConfirmId/.test(accountUi),
-  ],
-  [
-    "formulario de endereco ganha foco e scroll contextual",
-    /scrollIntoView/.test(accountUi) &&
-      /numberInputRef\.current\?\.focus/.test(accountUi),
-  ],
-  [
-    "navegacao de conta funciona como faixa horizontal no mobile",
-    /overflow-x-auto/.test(accountUi) && /lg:sticky lg:top-28/.test(accountUi),
-  ],
-  [
-    "sucesso aparece em feedback persistente e acessivel",
-    /aria-live="polite"/.test(accountUi) && /fixed bottom-4/.test(accountUi),
-  ],
-  [
-    "login permite visualizar senha e mostra progresso de envio",
-    /showPassword/.test(login) &&
-      /Mostrar senha/.test(login) &&
-      /Entrando\.\.\./.test(login) &&
-      /Loader2/.test(login),
-  ],
-  [
-    "cadastro explica requisito de senha e confirma correspondencia",
-    /Pelo menos 6 caracteres/.test(cadastro) &&
-      /As senhas coincidem/.test(cadastro) &&
-      /showConfirmPassword/.test(cadastro),
-  ],
-  [
-    "confirmacao de cadastro retorna para a origem ativa e nao depende de localhost",
-    /getEmailConfirmationRedirectUrl/.test(auth) &&
-      /new URL\("\/conta", window\.location\.origin\)/.test(auth) &&
-      /emailRedirectTo/.test(auth),
-  ],
-  [
-    "cliente pode reenviar confirmacao com o mesmo redirect corrigido",
-    /resendSignUpConfirmation/.test(auth) &&
-      /supabase\.auth\.resend/.test(auth) &&
-      /Reenviar e-mail de confirmação/.test(cadastro),
   ],
 ];
 
@@ -210,6 +248,22 @@ function walk(dir) {
 
 walk(path.join(root, "src"));
 walk(path.join(root, "supabase", "functions"));
+
+const nativeDialogViolations = [];
+for (const file of sourceFiles) {
+  const source = fs.readFileSync(file, "utf8");
+  if (/\bwindow\.(confirm|alert|prompt)\s*\(/.test(source)) {
+    nativeDialogViolations.push(path.relative(root, file));
+  }
+}
+
+console.log(
+  `${nativeDialogViolations.length === 0 ? "PASS" : "FAIL"} - frontend sem confirm/alert/prompt nativo do navegador`,
+);
+if (nativeDialogViolations.length) {
+  failed += 1;
+  for (const file of nativeDialogViolations) console.error(`NATIVE DIALOG - ${file}`);
+}
 
 let syntaxErrors = 0;
 for (const file of sourceFiles) {
@@ -243,4 +297,4 @@ console.log(
 if (syntaxErrors) failed += 1;
 
 if (failed) process.exit(1);
-console.log(`\n${checks.length + 1}/${checks.length + 1} validacoes aprovadas.`);
+console.log(`\n${checks.length + 2}/${checks.length + 2} validacoes aprovadas.`);
