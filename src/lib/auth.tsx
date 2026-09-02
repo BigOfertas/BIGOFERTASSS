@@ -31,6 +31,8 @@ type AuthContextValue = {
     fullName?: string,
   ) => Promise<AuthActionResult>;
 
+  resendSignUpConfirmation: (email: string) => Promise<AuthActionResult>;
+
   signOut: () => Promise<AuthActionResult>;
 
   isCustomer: boolean;
@@ -196,6 +198,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   }
 
+  async function resendSignUpConfirmation(
+    email: string,
+  ): Promise<AuthActionResult> {
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: {
+        emailRedirectTo: getEmailConfirmationRedirectUrl(),
+      },
+    });
+
+    return { error };
+  }
+
   async function signOut(): Promise<AuthActionResult> {
     const { error } = await supabase.auth.signOut();
 
@@ -221,6 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signIn,
         signUp,
+        resendSignUpConfirmation,
         signOut,
         isCustomer: role === "customer",
         isOwner: role === "owner",
