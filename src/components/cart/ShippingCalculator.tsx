@@ -41,7 +41,7 @@ function ShippingSkeleton() {
       {[0, 1, 2].map((item) => (
         <div
           key={item}
-          className="h-[76px] animate-pulse rounded-xl border border-gray-100 bg-gray-50"
+          className="h-[76px] animate-pulse rounded-xl border border-gray-100 bg-gray-50 motion-reduce:animate-none"
         />
       ))}
     </div>
@@ -137,15 +137,15 @@ export function ShippingCalculator({
             onChange={(event) =>
               setPostalCode(formatPostalCode(event.target.value))
             }
-            className="h-11 min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none transition focus:border-red-400 focus:ring-4 focus:ring-red-50"
+            className="h-11 min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none transition focus:border-red-400 focus:ring-4 focus:ring-red-50 motion-reduce:transition-none"
           />
           <Button
             type="submit"
             disabled={isLoading}
-            className="h-11 flex-none bg-gray-950 px-4 text-white transition hover:-translate-y-0.5 hover:bg-gray-800 active:translate-y-0"
+            className="h-11 flex-none bg-gray-950 px-4 text-white transition hover:-translate-y-0.5 hover:bg-gray-800 active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none"
           >
             {isLoading ? (
-              <LoaderCircle className="h-4 w-4 animate-spin" />
+              <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" />
             ) : result ? (
               <RefreshCw className="h-4 w-4" />
             ) : (
@@ -178,14 +178,14 @@ export function ShippingCalculator({
                 type="button"
                 onClick={() => onSelectionChange(quote)}
                 aria-pressed={selected}
-                className={`group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition duration-200 hover:-translate-y-0.5 hover:shadow-sm ${
+                className={`group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition duration-200 hover:-translate-y-0.5 hover:shadow-sm motion-reduce:transform-none motion-reduce:transition-none ${
                   selected
                     ? "border-red-300 bg-red-50/60 shadow-sm"
                     : "border-gray-200 bg-white hover:border-gray-300"
                 }`}
               >
                 <span
-                  className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl transition ${
+                  className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl transition motion-reduce:transition-none ${
                     selected
                       ? "bg-red-600 text-white"
                       : "bg-gray-100 text-gray-600 group-hover:bg-gray-900 group-hover:text-white"
