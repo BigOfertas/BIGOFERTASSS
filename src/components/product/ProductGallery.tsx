@@ -58,7 +58,7 @@ export default function ProductGallery({
         {unavailable ? (
           <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
             <span className="rounded-full bg-black px-6 py-2 font-black uppercase tracking-tight text-white">
-              Fora de estoque
+              Combinação indisponível
             </span>
           </div>
         ) : null}

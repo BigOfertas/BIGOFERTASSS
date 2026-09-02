@@ -21,7 +21,7 @@ function normalizedBaseUrl(rawValue: string | undefined) {
 }
 
 export function getR2PublicBaseUrl() {
-  return normalizedBaseUrl(import.meta.env.VITE_R2_PUBLIC_BASE_URL);
+  return normalizedBaseUrl(import.meta.env["VITE_R2_PUBLIC_BASE_URL"]);
 }
 
 export function encodeR2ObjectKey(storageKey: string) {

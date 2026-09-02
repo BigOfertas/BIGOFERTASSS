@@ -239,8 +239,10 @@ export function ProductAdmin() {
       );
 
       const input: AdminProductInput = {
-        id: form.id || undefined,
-        defaultVariantId: form.defaultVariantId || undefined,
+        ...(form.id ? { id: form.id } : {}),
+        ...(form.defaultVariantId
+          ? { defaultVariantId: form.defaultVariantId }
+          : {}),
         name: form.name,
         description: form.description,
         price: parseRequiredNumber(form.price, "um preço"),
@@ -313,7 +315,7 @@ export function ProductAdmin() {
           </h2>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Cadastre e mantenha o catálogo. SKU, slug e SKU da variante são
-            atribuídos automaticamente; o estoque do produto é calculado pelas variantes.
+            atribuídos automaticamente. Produtos ativos são vendidos sob encomenda.
           </p>
         </div>
 
@@ -515,17 +517,6 @@ export function ProductAdmin() {
               </label>
 
               <label className="text-sm font-medium text-foreground">
-                Estoque
-                <input
-                  required
-                  inputMode="numeric"
-                  value={form.stockQuantity}
-                  onChange={(event) => updateField("stockQuantity", event.target.value)}
-                  className={fieldClassName()}
-                />
-              </label>
-
-              <label className="text-sm font-medium text-foreground">
                 Peso (g)
                 <input
                   inputMode="decimal"
@@ -677,8 +668,8 @@ export function ProductAdmin() {
                     {product.promotional_price !== null ? (
                       <p className="text-xs text-muted-foreground line-through">{formatMoney(product.price)}</p>
                     ) : null}
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Estoque: {product.defaultVariant?.stock_quantity ?? 0}
+                    <p className="mt-1 text-xs font-medium text-emerald-700">
+                      Produção sob encomenda
                     </p>
                   </div>
 

@@ -79,8 +79,10 @@ const CategoryNav: React.FC<CategoryNavProps> = ({
                   Boolean(category.search) &&
                   Object.entries(category.search ?? {}).every(([key, value]) =>
                     matchesFilter(
-                      currentSearch[key as keyof ProductSearchFilters],
-                      value,
+                      typeof currentSearch[key as keyof ProductSearchFilters] === "string"
+                        ? (currentSearch[key as keyof ProductSearchFilters] as string)
+                        : undefined,
+                      typeof value === "string" ? value : undefined,
                     ),
                   );
 

@@ -13,9 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as CartRouteImport } from './routes/cart'
+import { Route as ContaRouteImport } from './routes/conta'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as ProductIdRouteImport } from './routes/product/$id'
+import { Route as ContaPedidosOrderNumberRouteImport } from './routes/conta/pedidos/$orderNumber'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -37,6 +39,11 @@ const CartRoute = CartRouteImport.update({
   path: '/cart',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContaRoute = ContaRouteImport.update({
+  id: '/conta',
+  path: '/conta',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -52,24 +59,33 @@ const ProductIdRoute = ProductIdRouteImport.update({
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContaPedidosOrderNumberRoute = ContaPedidosOrderNumberRouteImport.update({
+  id: '/pedidos/$orderNumber',
+  path: '/pedidos/$orderNumber',
+  getParentRoute: () => ContaRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/cadastro': typeof CadastroRoute
   '/cart': typeof CartRoute
+  '/conta': typeof ContaRouteWithChildren
   '/login': typeof LoginRoute
   '/products': typeof ProductsRoute
   '/product/$id': typeof ProductIdRoute
+  '/conta/pedidos/$orderNumber': typeof ContaPedidosOrderNumberRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/cadastro': typeof CadastroRoute
   '/cart': typeof CartRoute
+  '/conta': typeof ContaRouteWithChildren
   '/login': typeof LoginRoute
   '/products': typeof ProductsRoute
   '/product/$id': typeof ProductIdRoute
+  '/conta/pedidos/$orderNumber': typeof ContaPedidosOrderNumberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,9 +93,11 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/cadastro': typeof CadastroRoute
   '/cart': typeof CartRoute
+  '/conta': typeof ContaRouteWithChildren
   '/login': typeof LoginRoute
   '/products': typeof ProductsRoute
   '/product/$id': typeof ProductIdRoute
+  '/conta/pedidos/$orderNumber': typeof ContaPedidosOrderNumberRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,27 +106,33 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cadastro'
     | '/cart'
+    | '/conta'
     | '/login'
     | '/products'
     | '/product/$id'
+    | '/conta/pedidos/$orderNumber'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
     | '/cadastro'
     | '/cart'
+    | '/conta'
     | '/login'
     | '/products'
     | '/product/$id'
+    | '/conta/pedidos/$orderNumber'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/cadastro'
     | '/cart'
+    | '/conta'
     | '/login'
     | '/products'
     | '/product/$id'
+    | '/conta/pedidos/$orderNumber'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -116,6 +140,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   CadastroRoute: typeof CadastroRoute
   CartRoute: typeof CartRoute
+  ContaRoute: typeof ContaRouteWithChildren
   LoginRoute: typeof LoginRoute
   ProductsRoute: typeof ProductsRoute
   ProductIdRoute: typeof ProductIdRoute
@@ -151,6 +176,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/conta': {
+      id: '/conta'
+      path: '/conta'
+      fullPath: '/conta'
+      preLoaderRoute: typeof ContaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -172,14 +204,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/conta/pedidos/$orderNumber': {
+      id: '/conta/pedidos/$orderNumber'
+      path: '/pedidos/$orderNumber'
+      fullPath: '/conta/pedidos/$orderNumber'
+      preLoaderRoute: typeof ContaPedidosOrderNumberRouteImport
+      parentRoute: typeof ContaRoute
+    }
   }
 }
+
+interface ContaRouteChildren {
+  ContaPedidosOrderNumberRoute: typeof ContaPedidosOrderNumberRoute
+}
+
+const ContaRouteChildren: ContaRouteChildren = {
+  ContaPedidosOrderNumberRoute: ContaPedidosOrderNumberRoute,
+}
+
+const ContaRouteWithChildren = ContaRoute._addFileChildren(ContaRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   CadastroRoute: CadastroRoute,
   CartRoute: CartRoute,
+  ContaRoute: ContaRouteWithChildren,
   LoginRoute: LoginRoute,
   ProductsRoute: ProductsRoute,
   ProductIdRoute: ProductIdRoute,

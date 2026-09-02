@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import { OrderAdmin } from "@/components/admin/OrderAdmin";
 import { ProductAdmin } from "@/components/admin/ProductAdmin";
 import { useAuth } from "@/lib/auth";
 
@@ -24,6 +25,7 @@ function AdminPage() {
 
   const [signingOut, setSigningOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [section, setSection] = useState<"orders" | "products">("orders");
 
   useEffect(() => {
     if (loading) {
@@ -129,7 +131,7 @@ function AdminPage() {
             </h1>
 
             <p className="mt-3 text-muted-foreground">
-              Área restrita para manutenção do catálogo e das operações internas.
+              Pedidos e catálogo organizados para a operação diária da loja.
             </p>
           </div>
 
@@ -155,7 +157,37 @@ function AdminPage() {
           </p>
         ) : null}
 
-        <ProductAdmin />
+        <nav
+          className="mt-7 flex w-fit rounded-xl border border-border bg-card p-1 shadow-sm"
+          aria-label="Seções administrativas"
+        >
+          <button
+            type="button"
+            onClick={() => setSection("orders")}
+            aria-current={section === "orders" ? "page" : undefined}
+            className={`rounded-lg px-4 py-2.5 text-sm font-bold transition ${
+              section === "orders"
+                ? "bg-gray-950 text-white shadow-sm"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            Pedidos
+          </button>
+          <button
+            type="button"
+            onClick={() => setSection("products")}
+            aria-current={section === "products" ? "page" : undefined}
+            className={`rounded-lg px-4 py-2.5 text-sm font-bold transition ${
+              section === "products"
+                ? "bg-gray-950 text-white shadow-sm"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            Produtos
+          </button>
+        </nav>
+
+        {section === "orders" ? <OrderAdmin /> : <ProductAdmin />}
       </div>
     </main>
   );

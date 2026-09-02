@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { CustomerOrders } from "@/components/account/CustomerOrders";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   deleteCustomerAddress,
@@ -348,7 +349,7 @@ export function AccountDashboard({
     setSuccessMessage("");
 
     const input: CustomerAddressInput = {
-      id: addressForm.id || undefined,
+      ...(addressForm.id ? { id: addressForm.id } : {}),
       label: addressForm.label,
       recipientName: addressForm.recipientName,
       postalCode: addressForm.postalCode,
@@ -452,13 +453,12 @@ export function AccountDashboard({
       key: "enderecos",
       label: "Endereços",
       icon: MapPin,
-      badge: addresses.length > 0 ? String(addresses.length) : undefined,
+      ...(addresses.length > 0 ? { badge: String(addresses.length) } : {}),
     },
     {
       key: "pedidos",
       label: "Histórico de pedidos",
       icon: Package,
-      badge: "Em breve",
     },
   ];
 
@@ -481,7 +481,7 @@ export function AccountDashboard({
               {firstName ? `Olá, ${firstName}` : "Minha conta"}
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-gray-500">
-              Seus dados e endereços ficam organizados aqui para deixar as próximas etapas mais rápidas.
+              Seus dados, endereços e pedidos ficam organizados em um só lugar.
             </p>
           </div>
 
@@ -1050,17 +1050,7 @@ export function AccountDashboard({
             ) : null}
 
             {!loading && section === "pedidos" ? (
-              <div className="rounded-xl border border-gray-200 bg-white px-5 py-12 text-center shadow-sm sm:px-8">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                  <Package className="h-7 w-7" />
-                </div>
-                <h2 className="mt-5 text-xl font-bold text-gray-950">
-                  Histórico de pedidos
-                </h2>
-                <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-gray-500">
-                  Esta área já está reservada na navegação da conta. O histórico será ativado quando a estrutura real de pedidos e checkout estiver concluída.
-                </p>
-              </div>
+              <CustomerOrders />
             ) : null}
           </section>
         </div>

@@ -20,14 +20,15 @@ const LEAGUES: League[] = [
 ];
 
 const SHOWCASE_SIZE = 15;
+const DEFAULT_LEAGUE = LEAGUES[0]!;
 
 const ShopByLeague: React.FC = () => {
-  const [activeLeagueId, setActiveLeagueId] = useState(LEAGUES[0].id);
-  const [displayLeagueId, setDisplayLeagueId] = useState(LEAGUES[0].id);
+  const [activeLeagueId, setActiveLeagueId] = useState(DEFAULT_LEAGUE.id);
+  const [displayLeagueId, setDisplayLeagueId] = useState(DEFAULT_LEAGUE.id);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const displayLeague =
-    LEAGUES.find((league) => league.id === displayLeagueId) ?? LEAGUES[0];
+    LEAGUES.find((league) => league.id === displayLeagueId) ?? DEFAULT_LEAGUE;
 
   const { data, isLoading, error } = useCatalogProducts({
     liga: displayLeague.slug,

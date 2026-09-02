@@ -58,11 +58,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const addToCart = useCallback(
     (input: AddCartItemInput, quantity = 1) => {
-      if (input.availableStock <= 0) {
-        toast.error("Esta variante está sem estoque.");
-        return;
-      }
-
       const incoming = createCartItem(input, quantity);
 
       setCart((previous) => {
@@ -81,9 +76,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         );
 
         if (nextQuantity < existing.quantity + incoming.quantity) {
-          toast.warning(
-            `A quantidade foi limitada ao estoque disponível (${incoming.availableStock}).`,
-          );
+          toast.warning("A quantidade máxima por item é 99.");
         } else {
           toast.success(`Quantidade de ${input.name} atualizada no carrinho!`);
         }
@@ -124,11 +117,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           );
 
           if (nextQuantity < quantity) {
-            toast.warning(
-              item.availableStock === null
-                ? "A quantidade máxima por item é 99."
-                : `Há somente ${item.availableStock} unidade(s) disponíveis desta variante.`,
-            );
+            toast.warning("A quantidade máxima por item é 99.");
           }
 
           return { ...item, quantity: nextQuantity };
@@ -190,13 +179,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       );
 
       if (adjustedQuantities) {
-        toast.warning(
-          "Algumas quantidades foram ajustadas ao estoque atualmente disponível.",
-        );
+        toast.warning("Algumas quantidades foram ajustadas ao limite por item.");
       }
     } catch {
       setValidationError(
-        "Não foi possível conferir preço e estoque agora. Os valores exibidos continuam estimados.",
+        "Não foi possível conferir preço e disponibilidade agora. Os valores exibidos continuam estimados.",
       );
     } finally {
       setIsValidating(false);

@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   Check,
   ChevronRight,
+  Factory,
   Minus,
   Plus,
   ShoppingCart,
@@ -121,18 +122,8 @@ function ProductDetail() {
     );
   }, [defaultVariant, detail, requiredOptionIds, selection]);
 
-  const stock = selectedVariant?.stock_quantity ?? 0;
   const selectionComplete = requiredOptionIds.every((optionId) => selection[optionId]);
-  const inStock = Boolean(selectedVariant && stock > 0);
-
-  useEffect(() => {
-    if (stock <= 0) {
-      setQuantity(1);
-      return;
-    }
-
-    setQuantity((current) => Math.min(Math.max(current, 1), stock));
-  }, [stock]);
+  const availableToOrder = Boolean(selectedVariant);
 
   const gallery = useMemo(
     () =>
@@ -266,11 +257,6 @@ function ProductDetail() {
       return;
     }
 
-    if (!inStock) {
-      toast.error("Esta combinação está sem estoque.");
-      return;
-    }
-
     addToCart(
       {
         productId: product.id,
@@ -281,7 +267,7 @@ function ProductDetail() {
         variantName: selectedVariant.name,
         unitPrice: effectivePrice,
         imageUrl: gallery[0]?.url ?? product.displayImageUrl,
-        availableStock: stock,
+        availableStock: null,
         selectedOptions,
       },
       quantity,
@@ -294,7 +280,7 @@ function ProductDetail() {
         product={product}
         selectedVariant={selectedVariant}
         price={effectivePrice}
-        inStock={inStock}
+        inStock={availableToOrder}
         images={gallery}
       />
       <Header />
@@ -333,7 +319,7 @@ function ProductDetail() {
           <ProductGallery
             images={gallery}
             productName={product.name}
-            unavailable={selectionComplete && !inStock}
+            unavailable={selectionComplete && !availableToOrder}
           />
 
           <section className="flex flex-col" aria-labelledby="product-title">
@@ -345,13 +331,13 @@ function ProductDetail() {
                   </span>
                 ) : null}
                 {selectedVariant && selectionComplete ? (
-                  inStock ? (
-                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-green-600">
-                      <Check className="h-3 w-3" /> Em estoque
+                  availableToOrder ? (
+                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-emerald-700">
+                      <Check className="h-3 w-3" /> Sob encomenda
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-red-600">
-                      <AlertTriangle className="h-3 w-3" /> Esgotado
+                      <AlertTriangle className="h-3 w-3" /> Combinação indisponível
                     </span>
                   )
                 ) : (
@@ -432,11 +418,6 @@ function ProductDetail() {
                                 const fallbackVariant =
                                   detail.variants.find(
                                     (variant) =>
-                                      variant.optionValueIds[option.id] === value.id &&
-                                      variant.stock_quantity > 0,
-                                  ) ??
-                                  detail.variants.find(
-                                    (variant) =>
                                       variant.optionValueIds[option.id] === value.id,
                                   );
 
@@ -465,7 +446,7 @@ function ProductDetail() {
             ) : null}
 
             <div className="mt-auto space-y-5 border-t border-gray-100 pt-6">
-              {selectedVariant && inStock ? (
+              {selectedVariant && selectionComplete ? (
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="flex items-center overflow-hidden rounded-md border border-gray-300">
                     <button
@@ -482,23 +463,24 @@ function ProductDetail() {
                     <button
                       type="button"
                       aria-label="Aumentar quantidade"
-                      onClick={() => setQuantity((value) => Math.min(stock, value + 1))}
+                      onClick={() => setQuantity((value) => Math.min(99, value + 1))}
                       className="flex h-11 w-11 items-center justify-center text-gray-600 transition-colors hover:bg-gray-50"
                     >
                       <Plus className="h-4 w-4" />
                     </button>
                   </div>
-                  <span className="text-xs font-medium text-gray-400">
-                    {stock.toLocaleString("pt-BR")} unidade(s) disponíveis nesta variante
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600">
+                    <Factory className="h-3.5 w-3.5 text-red-600" aria-hidden="true" />
+                    Produção em até 5 dias úteis antes do envio
                   </span>
                 </div>
               ) : null}
 
               <Button
                 onClick={handleAddToCart}
-                disabled={!selectedVariant || !selectionComplete || !inStock}
+                disabled={!selectedVariant || !selectionComplete}
                 className={`flex h-14 w-full items-center justify-center gap-3 rounded-sm text-lg font-black uppercase tracking-tight transition-all duration-300 sm:h-16 ${
-                  selectedVariant && selectionComplete && inStock
+                  selectedVariant && selectionComplete
                     ? "bg-red-600 text-white shadow-lg shadow-red-600/20 hover:bg-black hover:shadow-black/20"
                     : "cursor-not-allowed bg-gray-200 text-gray-400"
                 }`}
@@ -506,7 +488,7 @@ function ProductDetail() {
                 <ShoppingCart className="h-6 w-6" />
                 {!selectionComplete
                   ? "Selecione as opções"
-                  : inStock
+                  : availableToOrder
                     ? "Adicionar ao Carrinho"
                     : "Indisponível"}
               </Button>

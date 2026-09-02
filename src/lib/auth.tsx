@@ -190,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo,
+        ...(emailRedirectTo ? { emailRedirectTo } : {}),
         data: {
           full_name: fullName.trim(),
           phone: onlyDigits(phone, 11),
@@ -205,11 +205,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function resendSignUpConfirmation(
     email: string,
   ): Promise<AuthActionResult> {
+    const emailRedirectTo = getEmailConfirmationRedirectUrl();
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: email.trim(),
       options: {
-        emailRedirectTo: getEmailConfirmationRedirectUrl(),
+        ...(emailRedirectTo ? { emailRedirectTo } : {}),
       },
     });
 

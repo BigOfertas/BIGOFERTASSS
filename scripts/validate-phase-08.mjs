@@ -149,8 +149,9 @@ const checks = [
       /"pedidos"/.test(accountRoute),
   ],
   [
-    "historico de pedidos permanece explicitamente futuro",
-    /Histórico de pedidos/.test(accountUi) && /Em breve/.test(accountUi),
+    "historico de pedidos permanece integrado a navegacao da conta",
+    /Histórico de pedidos/.test(accountUi) &&
+      (/Em breve/.test(accountUi) || /<CustomerOrders\s*\/>/.test(accountUi)),
   ],
   [
     "cep pode preencher endereco automaticamente",

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import Header from "@/components/layout/Header";
+import { ProductionNotice } from "@/components/orders/ProductionNotice";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/context/CartContext";
@@ -37,11 +38,9 @@ function CartStatus({ item }: { item: CartItem }) {
   }
 
   const text =
-    item.status === "out_of_stock"
-      ? "Sem estoque"
-      : item.status === "needs_review"
-        ? "Revise a variante deste item"
-        : "Produto ou variante indisponível";
+    item.status === "needs_review"
+      ? "Revise a variante deste item"
+      : "Produto ou variante indisponível";
 
   return (
     <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700">
@@ -114,7 +113,7 @@ function CartPage() {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Meu Carrinho</h1>
                 <p className="mt-1 text-xs text-gray-500">
-                  Preços e estoque são conferidos novamente antes da compra.
+                  Preços e disponibilidade são conferidos novamente antes da compra.
                 </p>
               </div>
             </div>
@@ -316,8 +315,8 @@ function CartPage() {
                   </div>
 
                   <p className="text-xs leading-relaxed text-gray-500">
-                    O total não inclui frete. Preço, disponibilidade e estoque
-                    serão validados novamente no fluxo de checkout.
+                    O total não inclui frete. Preço e disponibilidade serão
+                    validados novamente no fluxo de checkout.
                   </p>
 
                   {hasBlockingIssues ? (
@@ -345,6 +344,10 @@ function CartPage() {
                     Continuar Comprando
                   </Button>
                 </div>
+              </div>
+
+              <div className="mt-5">
+                <ProductionNotice compact />
               </div>
             </div>
           </div>

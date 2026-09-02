@@ -16,7 +16,6 @@ function isKnownFictitiousCartItem(name: string, imageUrl: string | null) {
 
 export type CartItemStatus =
   | "available"
-  | "out_of_stock"
   | "unavailable"
   | "needs_review";
 
@@ -53,7 +52,7 @@ export interface AddCartItemInput {
   variantName: string | null;
   unitPrice: number;
   imageUrl: string | null;
-  availableStock: number;
+  availableStock: number | null;
   selectedOptions: CartOptionSnapshot[];
 }
 
@@ -111,10 +110,8 @@ export function createCartLineId(productId: string, variantId: string | null) {
   return `${productId}::${variantId ?? "legacy"}`;
 }
 
-export function getCartQuantityLimit(availableStock: number | null) {
-  if (availableStock === null) return MAX_CART_LINE_QUANTITY;
-  if (availableStock <= 0) return 1;
-  return Math.min(MAX_CART_LINE_QUANTITY, availableStock);
+export function getCartQuantityLimit(_availableStock: number | null) {
+  return MAX_CART_LINE_QUANTITY;
 }
 
 export function clampCartQuantity(
@@ -128,11 +125,11 @@ export function clampCartQuantity(
 function sanitizeOptionSnapshot(value: unknown): CartOptionSnapshot | null {
   if (!isRecord(value)) return null;
 
-  const optionId = nonEmptyString(value.optionId);
-  const optionName = nonEmptyString(value.optionName);
-  const valueId = nonEmptyString(value.valueId);
-  const valueLabel = nonEmptyString(value.valueLabel);
-  const optionKind = value.optionKind;
+  const optionId = nonEmptyString(value["optionId"]);
+  const optionName = nonEmptyString(value["optionName"]);
+  const valueId = nonEmptyString(value["valueId"]);
+  const valueLabel = nonEmptyString(value["valueLabel"]);
+  const optionKind = value["optionKind"];
 
   if (
     !optionId ||
@@ -156,39 +153,36 @@ function sanitizeOptionSnapshot(value: unknown): CartOptionSnapshot | null {
 function sanitizeCurrentCartItem(value: unknown): CartItem | null {
   if (!isRecord(value)) return null;
 
-  const productId = nonEmptyString(value.productId);
-  const name = nonEmptyString(value.name);
-  const unitPrice = nonNegativeNumber(value.unitPrice);
-  const rawQuantity = nonNegativeInteger(value.quantity);
+  const productId = nonEmptyString(value["productId"]);
+  const name = nonEmptyString(value["name"]);
+  const unitPrice = nonNegativeNumber(value["unitPrice"]);
+  const rawQuantity = nonNegativeInteger(value["quantity"]);
   const rawStock =
-    value.availableStock === null
+    value["availableStock"] === null
       ? null
-      : nonNegativeInteger(value.availableStock);
+      : nonNegativeInteger(value["availableStock"]);
 
   if (!productId || !name || unitPrice === null || rawQuantity === null) {
     return null;
   }
 
-  const variantId = nullableString(value.variantId);
-  const status = [
-    "available",
-    "out_of_stock",
-    "unavailable",
-    "needs_review",
-  ].includes(String(value.status))
-    ? (value.status as CartItemStatus)
+  const variantId = nullableString(value["variantId"]);
+  const status = ["available", "unavailable", "needs_review"].includes(
+    String(value["status"]),
+  )
+    ? (value["status"] as CartItemStatus)
     : variantId
       ? "available"
       : "needs_review";
 
-  const selectedOptions = Array.isArray(value.selectedOptions)
-    ? value.selectedOptions
+  const selectedOptions = Array.isArray(value["selectedOptions"])
+    ? value["selectedOptions"]
         .map(sanitizeOptionSnapshot)
         .filter((item): item is CartOptionSnapshot => item !== null)
     : [];
 
   const availableStock = rawStock;
-  const imageUrl = nullableString(value.imageUrl);
+  const imageUrl = nullableString(value["imageUrl"]);
 
   if (isKnownFictitiousCartItem(name, imageUrl)) {
     return null;
@@ -197,11 +191,11 @@ function sanitizeCurrentCartItem(value: unknown): CartItem | null {
   return {
     lineId: createCartLineId(productId, variantId),
     productId,
-    productSlug: nullableString(value.productSlug),
+    productSlug: nullableString(value["productSlug"]),
     variantId,
-    sku: nullableString(value.sku),
+    sku: nullableString(value["sku"]),
     name,
-    variantName: nullableString(value.variantName),
+    variantName: nullableString(value["variantName"]),
     unitPrice,
     imageUrl,
     quantity: clampCartQuantity(rawQuantity || 1, availableStock),
@@ -280,14 +274,14 @@ export function decodeStoredCart(raw: string | null): CartItem[] {
       );
     }
 
-    if (!isRecord(parsed) || parsed.version !== CART_STORAGE_VERSION) {
+    if (!isRecord(parsed) || parsed["version"] !== CART_STORAGE_VERSION) {
       return [];
     }
 
-    if (!Array.isArray(parsed.items)) return [];
+    if (!Array.isArray(parsed["items"])) return [];
 
     return normalizeCartItems(
-      parsed.items
+      parsed["items"]
         .map(sanitizeCurrentCartItem)
         .filter((item): item is CartItem => item !== null),
     );
@@ -309,9 +303,6 @@ export function createCartItem(
   input: AddCartItemInput,
   quantity: number,
 ): CartItem {
-  const availableStock = Number.isFinite(input.availableStock)
-    ? Math.max(0, Math.trunc(input.availableStock))
-    : 0;
   const unitPrice = Number.isFinite(input.unitPrice)
     ? Math.max(0, input.unitPrice)
     : 0;
@@ -326,10 +317,10 @@ export function createCartItem(
     variantName: input.variantName,
     unitPrice,
     imageUrl: input.imageUrl,
-    quantity: clampCartQuantity(quantity, availableStock),
-    availableStock,
+    quantity: clampCartQuantity(quantity, null),
+    availableStock: null,
     selectedOptions: input.selectedOptions,
-    status: availableStock > 0 ? "available" : "out_of_stock",
+    status: "available",
   };
 }
 
@@ -347,12 +338,12 @@ export function parseCartValidationRows(value: Json): CartValidationRow[] {
   return value.flatMap((entry) => {
     if (!isRecord(entry)) return [];
 
-    const lineId = nonEmptyString(entry.line_id);
-    const status = entry.status;
+    const lineId = nonEmptyString(entry["line_id"]);
+    const rawStatus = entry["status"];
     if (
       !lineId ||
       !["available", "out_of_stock", "unavailable", "needs_review"].includes(
-        String(status),
+        String(rawStatus),
       )
     ) {
       return [];
@@ -361,18 +352,18 @@ export function parseCartValidationRows(value: Json): CartValidationRow[] {
     return [
       {
         line_id: lineId,
-        product_id: nullableString(entry.product_id),
-        product_slug: nullableString(entry.product_slug),
-        product_name: nullableString(entry.product_name),
-        variant_id: nullableString(entry.variant_id),
-        variant_sku: nullableString(entry.variant_sku),
-        variant_name: nullableString(entry.variant_name),
-        unit_price: nonNegativeNumber(entry.unit_price),
-        available_stock:
-          entry.available_stock === null
-            ? null
-            : nonNegativeInteger(entry.available_stock),
-        status: status as CartItemStatus,
+        product_id: nullableString(entry["product_id"]),
+        product_slug: nullableString(entry["product_slug"]),
+        product_name: nullableString(entry["product_name"]),
+        variant_id: nullableString(entry["variant_id"]),
+        variant_sku: nullableString(entry["variant_sku"]),
+        variant_name: nullableString(entry["variant_name"]),
+        unit_price: nonNegativeNumber(entry["unit_price"]),
+        available_stock: null,
+        status:
+          rawStatus === "out_of_stock"
+            ? "available"
+            : (rawStatus as CartItemStatus),
       },
     ];
   });
