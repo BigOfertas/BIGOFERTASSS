@@ -46,19 +46,21 @@ O código mantém valor-base, adicional e total separados. O adicional é aplica
 
 ## Desconto progressivo e frete grátis
 
-Regra comercial automática aprovada pelo proprietário, baseada na quantidade total de peças do carrinho/pedido:
+Regra comercial vigente, revisada pelo cliente em 2026-09-02 e baseada na quantidade total de peças do carrinho/pedido:
 
-- 5 a 9 peças: 5% de desconto;
-- 10 a 14 peças: 10% de desconto;
-- 15 a 29 peças: 15% de desconto;
-- 30 a 44 peças: 20% de desconto;
-- 45 ou mais peças: 35% de desconto + frete grátis.
+- 5 a 7 peças: 5% de desconto;
+- 8 a 14 peças: 10% de desconto + frete grátis;
+- 15 a 24 peças: 15% de desconto + frete grátis;
+- 25 a 34 peças: 20% de desconto + frete grátis;
+- 35 ou mais peças: 30% de desconto + frete grátis.
+
+Portanto, **o frete é grátis para o cliente a partir de 8 peças**, independentemente da faixa de desconto superior atingida depois disso.
 
 O carrinho exibe a faixa atual, a próxima meta, o desconto estimado e o benefício de frete grátis quando aplicável.
 
-A autoridade financeira não fica no navegador. A migration `20260902153000_progressive_discount_and_free_shipping.sql` substitui a lógica de criação do pedido para calcular o percentual automaticamente pela quantidade total de itens, ignorando qualquer desconto informado pelo caller.
+A autoridade financeira não fica no navegador. A migration `20260902153000_progressive_discount_and_free_shipping.sql` introduz o cálculo autoritativo e os snapshots; a migration incremental `20260902154500_progressive_discount_revision.sql` substitui os degraus comerciais pela regra vigente acima sem reescrever migration anterior.
 
-Na faixa de 45+ peças, a cotação real da transportadora e o adicional BIGofertas continuam preservados para a operação interna, enquanto `shipping_discount_amount` absorve integralmente esse custo e `shipping_amount` fica em zero para o cliente.
+Quando há frete grátis, a cotação real da transportadora e o adicional BIGofertas continuam preservados para a operação interna, enquanto `shipping_discount_amount` absorve integralmente esse custo e `shipping_amount` fica em zero para o cliente.
 
 ## Embalagem operacional
 
@@ -104,7 +106,7 @@ IDs de serviço usados/aceitos:
 - SEDEX: `2`;
 - Loggi: `31`.
 
-A documentação atual da SuperFrete também informa que a disponibilidade da Loggi é controlada pela configuração do token e depende de ponto de postagem próximo ao CEP de origem. O código, portanto, trata ausência da Loggi como indisponibilidade real e não inventa alternativa.
+A disponibilidade da Loggi depende da configuração do token/ponto de postagem. O código trata ausência da Loggi como indisponibilidade real e não inventa alternativa.
 
 ## Backend seguro
 
@@ -160,7 +162,7 @@ Experiência no carrinho:
 - informação de múltiplos volumes quando aplicável;
 - desconto progressivo automático por quantidade;
 - indicador visual da próxima faixa de desconto;
-- frete grátis visível em 45+ peças, mantendo a cotação operacional real;
+- frete grátis visível a partir de 8 peças, mantendo a cotação operacional real;
 - microinterações suaves e suporte a `prefers-reduced-motion`;
 - checkout continua desabilitado nesta fase.
 
@@ -180,17 +182,19 @@ O frontend informa explicitamente que o prazo de transporte começa depois da pr
 
 ## Integração com a Fase 10
 
-A Fase 10 já criou os snapshots principais de frete. A regra comercial de desconto progressivo exigiu uma migration incremental adicional:
+A Fase 10 já criou os snapshots principais de frete. A regra comercial de desconto progressivo usa migrations incrementais adicionais:
 
-- `20260902153000_progressive_discount_and_free_shipping.sql`.
+- `20260902153000_progressive_discount_and_free_shipping.sql`;
+- `20260902154500_progressive_discount_revision.sql`.
 
-Ela adiciona:
+Elas mantêm:
 
 - `orders.discount_percent`;
 - `orders.shipping_discount_amount`;
 - função determinística para as faixas de desconto;
-- cálculo autoritativo no `create_order_core`;
-- preservação do custo real do frete mesmo quando o cliente recebe frete grátis.
+- cálculo autoritativo no núcleo do pedido;
+- preservação do custo real do frete mesmo quando o cliente recebe frete grátis;
+- regra vigente de frete grátis a partir de 8 peças.
 
 O futuro checkout deverá recalcular o frete no backend imediatamente antes de criar o pedido/pagamento e gravar o snapshot definitivo. A cotação selecionada no navegador nunca será considerada autoridade financeira.
 
@@ -200,7 +204,7 @@ A Fase 09 não implementa pagamento.
 
 A decisão futura já definida é manter carrinho/endereço/frete/revisão na BIGofertas e usar checkout hospedado da InfinitePay para a etapa final de pagamento.
 
-O rodapé público já possui uma faixa visual de formas de pagamento e segurança sem selos externos fictícios. Ela referencia PIX, Visa, Mastercard, Elo e American Express como meios aceitos pela InfinitePay, além de HTTPS e proteção de acesso do próprio site.
+O rodapé público possui uma faixa visual de formas de pagamento e segurança sem selos externos fictícios. Ela referencia PIX, Visa, Mastercard, Elo e American Express como meios planejados via InfinitePay, além de HTTPS e proteção de acesso do próprio site.
 
 ## Estoque
 
@@ -237,17 +241,19 @@ Os validadores verificam estaticamente:
 - separação entre produção e transporte;
 - integração real no carrinho;
 - ausência de preços fictícios no frontend;
-- faixas exatas 5/10/15/30/45;
-- 35% + frete grátis em 45+ peças;
+- faixas exatas 5/8/15/25/35;
+- percentuais exatos 5/10/15/20/30;
+- frete grátis em todas as faixas a partir de 8 peças;
 - cálculo autoritativo no backend;
 - ausência de Reclame Aqui e de selo Google Site Seguro inventado no rodapé.
 
 ## Pendências para encerramento oficial
 
-1. aplicar a migration `20260902153000_progressive_discount_and_free_shipping.sql` no Supabase real;
-2. confirmar build/deploy da `main` no Cloudflare;
-3. confirmar que `/api/shipping/quote` está ativo no Worker;
-4. quando houver produto real ativo no carrinho, executar uma cotação real e confirmar retorno das modalidades habilitadas no token;
-5. se Loggi não for retornada, verificar somente a configuração Loggi/ponto de postagem do token, sem criar fallback fictício.
+1. aplicar `20260902153000_progressive_discount_and_free_shipping.sql` no Supabase real se ainda não tiver sido aplicada;
+2. aplicar `20260902154500_progressive_discount_revision.sql` no Supabase real;
+3. confirmar build/deploy da `main` no Cloudflare;
+4. confirmar que `/api/shipping/quote` está ativo no Worker;
+5. quando houver produto real ativo no carrinho, executar uma cotação real e confirmar retorno das modalidades habilitadas no token;
+6. se Loggi não for retornada, verificar somente a configuração Loggi/ponto de postagem do token, sem criar fallback fictício.
 
-Não declarar a Fase 09 oficialmente encerrada até o deploy/runtime e a migration incremental estarem validados.
+Não declarar a Fase 09 oficialmente encerrada até o deploy/runtime e as migrations incrementais aplicáveis estarem validados.
