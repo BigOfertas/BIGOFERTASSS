@@ -3,11 +3,14 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   AlertTriangle,
   ArrowLeft,
+  BadgePercent,
   CheckCircle2,
+  Gift,
   Minus,
   Plus,
   RefreshCw,
   ShoppingBag,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 
@@ -18,6 +21,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/context/CartContext";
 import { getCartQuantityLimit, type CartItem } from "@/lib/cart";
+import {
+  PROGRESSIVE_DISCOUNT_TIERS,
+  getProgressiveDiscount,
+} from "@/lib/progressive-discount";
 import type { ShippingQuote } from "@/lib/shipping";
 
 export const Route = createFileRoute("/cart")({
@@ -61,6 +68,7 @@ function CartPage() {
     isValidating,
     validationError,
     hasBlockingIssues,
+    totalItems,
     totalPrice,
   } = useCart();
   const navigate = useNavigate();
@@ -72,7 +80,12 @@ function CartPage() {
     void validateCart();
   }, [validateCart]);
 
-  const estimatedTotal = totalPrice + (selectedShipping?.totalPrice ?? 0);
+  const discount = getProgressiveDiscount(totalItems, totalPrice);
+  const customerShippingAmount = discount.freeShipping
+    ? 0
+    : (selectedShipping?.totalPrice ?? 0);
+  const estimatedTotal = discount.subtotalAfterDiscount + customerShippingAmount;
+  const tiersAscending = [...PROGRESSIVE_DISCOUNT_TIERS].reverse();
 
   if (cart.length === 0) {
     return (
@@ -120,7 +133,7 @@ function CartPage() {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Meu Carrinho</h1>
                 <p className="mt-1 text-xs text-gray-500">
-                  Preços, disponibilidade e frete são conferidos com dados reais.
+                  Preços, desconto progressivo e frete são conferidos com dados reais.
                 </p>
               </div>
             </div>
@@ -132,7 +145,7 @@ function CartPage() {
               disabled={isValidating}
               className="gap-2 bg-white"
             >
-              <RefreshCw className={`h-4 w-4 ${isValidating ? "animate-spin" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${isValidating ? "animate-spin motion-reduce:animate-none" : ""}`} />
               {isValidating ? "Conferindo" : "Conferir carrinho"}
             </Button>
           </div>
@@ -175,7 +188,7 @@ function CartPage() {
                                 <Link
                                   to="/product/$id"
                                   params={{ id: item.productSlug ?? item.productId }}
-                                  className="line-clamp-2 text-lg font-semibold text-gray-900 transition-colors hover:text-red-600"
+                                  className="line-clamp-2 text-lg font-semibold text-gray-900 transition-colors hover:text-red-600 motion-reduce:transition-none"
                                 >
                                   {item.name}
                                 </Link>
@@ -222,7 +235,7 @@ function CartPage() {
                               <button
                                 type="button"
                                 onClick={() => removeFromCart(item.lineId)}
-                                className="p-2 text-gray-400 transition-colors hover:text-red-600"
+                                className="p-2 text-gray-400 transition-colors hover:text-red-600 motion-reduce:transition-none"
                                 aria-label={`Remover ${item.name}`}
                               >
                                 <Trash2 className="h-5 w-5" />
@@ -236,7 +249,7 @@ function CartPage() {
                                   onClick={() =>
                                     updateQuantity(item.lineId, item.quantity - 1)
                                   }
-                                  className="p-1 transition-colors hover:text-red-600 disabled:cursor-not-allowed disabled:text-gray-300"
+                                  className="p-1 transition-colors hover:text-red-600 disabled:cursor-not-allowed disabled:text-gray-300 motion-reduce:transition-none"
                                   disabled={!editable || item.quantity <= 1}
                                   aria-label="Diminuir quantidade"
                                 >
@@ -262,7 +275,7 @@ function CartPage() {
                                   onClick={() =>
                                     updateQuantity(item.lineId, item.quantity + 1)
                                   }
-                                  className="p-1 transition-colors hover:text-red-600 disabled:cursor-not-allowed disabled:text-gray-300"
+                                  className="p-1 transition-colors hover:text-red-600 disabled:cursor-not-allowed disabled:text-gray-300 motion-reduce:transition-none"
                                   disabled={
                                     !editable || item.quantity >= quantityLimit
                                   }
@@ -299,10 +312,76 @@ function CartPage() {
                   Resumo do pedido
                 </h2>
 
+                <section className="overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-emerald-600 text-white">
+                      <BadgePercent className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-black text-emerald-950">
+                            Desconto progressivo automático
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-emerald-800/80">
+                            {totalItems} {totalItems === 1 ? "peça" : "peças"} no carrinho
+                          </p>
+                        </div>
+                        {discount.percent > 0 ? (
+                          <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-black text-white">
+                            {discount.percent}% OFF
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {tiersAscending.map((tier) => {
+                          const unlocked = totalItems >= tier.minimumUnits;
+                          return (
+                            <span
+                              key={tier.minimumUnits}
+                              className={`rounded-full border px-2 py-1 text-[10px] font-bold ${
+                                unlocked
+                                  ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+                                  : "border-gray-200 bg-white text-gray-500"
+                              }`}
+                            >
+                              {tier.minimumUnits} peças · {tier.percent}%
+                              {tier.freeShipping ? " + frete grátis" : ""}
+                            </span>
+                          );
+                        })}
+                      </div>
+
+                      <div className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-emerald-900">
+                        {discount.freeShipping ? (
+                          <>
+                            <Gift className="mt-0.5 h-4 w-4 flex-none" />
+                            <p>
+                              Você liberou <strong>35% de desconto e frete grátis</strong>.
+                            </p>
+                          </>
+                        ) : discount.nextTier ? (
+                          <>
+                            <Sparkles className="mt-0.5 h-4 w-4 flex-none" />
+                            <p>
+                              Adicione mais <strong>{discount.nextTier.unitsRemaining}</strong>{" "}
+                              {discount.nextTier.unitsRemaining === 1 ? "peça" : "peças"} para liberar{" "}
+                              <strong>{discount.nextTier.percent}% de desconto</strong>
+                              {discount.nextTier.freeShipping ? " e frete grátis" : ""}.
+                            </p>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
                 <ShippingCalculator
                   cart={cart}
                   selectedQuote={selectedShipping}
                   onSelectionChange={setSelectedShipping}
+                  freeShipping={discount.freeShipping}
                 />
 
                 <Separator />
@@ -313,14 +392,30 @@ function CartPage() {
                     <span>{currency.format(totalPrice)}</span>
                   </div>
 
+                  {discount.discountAmount > 0 ? (
+                    <div className="flex justify-between gap-4 font-semibold text-emerald-700">
+                      <span>Desconto progressivo ({discount.percent}%)</span>
+                      <span>-{currency.format(discount.discountAmount)}</span>
+                    </div>
+                  ) : null}
+
                   <div className="flex justify-between text-gray-600">
                     <span>Frete</span>
-                    <span className="font-medium text-gray-900">
-                      {selectedShipping
-                        ? currency.format(selectedShipping.totalPrice)
-                        : "A calcular"}
+                    <span className={`font-medium ${discount.freeShipping ? "text-emerald-700" : "text-gray-900"}`}>
+                      {discount.freeShipping
+                        ? "GRÁTIS"
+                        : selectedShipping
+                          ? currency.format(selectedShipping.totalPrice)
+                          : "A calcular"}
                     </span>
                   </div>
+
+                  {discount.freeShipping && selectedShipping ? (
+                    <div className="flex justify-between text-[11px] text-gray-400">
+                      <span>Cotação absorvida pela BIGofertas</span>
+                      <span className="line-through">{currency.format(selectedShipping.totalPrice)}</span>
+                    </div>
+                  ) : null}
 
                   <Separator />
 
@@ -334,9 +429,11 @@ function CartPage() {
                   </div>
 
                   <p className="text-xs leading-relaxed text-gray-500">
-                    {selectedShipping
-                      ? `Frete ${selectedShipping.service} calculado em tempo real. O checkout definitivo revalidará a cotação antes do pagamento.`
-                      : "Calcule o frete para ver o total estimado. Preço e disponibilidade serão revalidados no checkout."}
+                    {discount.freeShipping
+                      ? "A faixa de 45+ peças aplica 35% de desconto e zera o frete cobrado do cliente. A cotação real continua sendo calculada para a operação da loja."
+                      : selectedShipping
+                        ? `Frete ${selectedShipping.service} calculado em tempo real. O checkout definitivo revalidará preço, desconto e frete antes do pagamento.`
+                        : "Calcule o frete para ver o total estimado. Preço, desconto e disponibilidade serão revalidados no checkout."}
                   </p>
 
                   {hasBlockingIssues ? (
@@ -358,7 +455,7 @@ function CartPage() {
 
                   <Button
                     variant="outline"
-                    className="w-full border-gray-200 transition-colors hover:bg-gray-50 hover:text-red-600"
+                    className="w-full border-gray-200 transition-colors hover:bg-gray-50 hover:text-red-600 motion-reduce:transition-none"
                     onClick={() => void navigate({ to: "/products" })}
                   >
                     Continuar Comprando
