@@ -10,86 +10,59 @@ interface FAQItem {
 const faqData: FAQItem[] = [
   {
     id: 1,
-    emoji: "✅",
-    question: "Quais formas de pagamento vocês aceitam?",
-    answer: "Aceitamos pagamentos via pix, cartão de crédito e débito, e boleto.",
+    emoji: "⏳",
+    question: "Qual é o prazo para envio e entrega?",
+    answer:
+      "A produção leva até 5 dias úteis antes do envio. O prazo de transporte depende do CEP e da modalidade escolhida e é mostrado no carrinho.",
   },
   {
     id: 2,
-    emoji: "⏳",
-    question: "Qual o prazo para envio e entrega?",
+    emoji: "🚚",
+    question: "Quais opções de entrega estão disponíveis?",
     answer:
-      "Após a confirmação do pagamento, o pedido entra em processo de separação.\nSeparação e entrega: 5 dias úteis para a separação após a confirmação do pagamento e 15 a 25 dias úteis para a entrega, podendo variar conforme a localização do cliente e as condições de envio.\n\nOs prazos informados têm como base a média de entrega dos pedidos anteriores e podem variar conforme fatores externos.",
+      "PAC, SEDEX e Loggi podem aparecer conforme a disponibilidade para o seu CEP. Informe o CEP no carrinho para conferir preço e prazo.",
   },
   {
     id: 3,
-    emoji: "📏",
-    question: "Como escolher o tamanho certo?",
+    emoji: "🏷️",
+    question: "Como funciona o desconto progressivo?",
     answer:
-      "Disponibilizamos uma tabela de medidas na página de cada produto para ajudar na escolha do tamanho ideal.\nEm caso de dúvidas, nossa equipe pode auxiliar antes da compra.",
+      "O desconto é aplicado automaticamente pela quantidade total de peças: 5 peças = 5%; 8 peças = 10% + frete grátis; 15 peças = 15%; 25 peças = 20%; 35 peças ou mais = 30%. O frete continua grátis a partir de 8 peças.",
   },
   {
     id: 4,
-    emoji: "🎨",
-    question: "Posso personalizar minha camisa?",
+    emoji: "📏",
+    question: "Como escolher o tamanho certo?",
     answer:
-      "Sim. Alguns produtos permitem personalização, como nome e número.\nRecomendamos revisar todas as informações antes de finalizar a compra, pois produtos personalizados seguem regras específicas de cancelamento, conforme nossos Termos e Condições.",
+      "Confira as opções disponíveis na página do produto. Se tiver dúvida antes de comprar, fale com a BIGofertas pelo WhatsApp.",
   },
   {
     id: 5,
-    emoji: "💰",
-    question: "Preciso pagar alguma taxa de importação?",
+    emoji: "📦",
+    question: "Como acompanho meu pedido?",
     answer:
-      'Caso o rastreamento apresente o status "Aguardando pagamento", nossa equipe realizará o pagamento da taxa necessária para que o pedido continue em trânsito, sem custo para o cliente.\nSe o pedido for retido na alfândega ou extraviado, o reenvio será realizado por nossa conta, sem cobrança adicional.',
+      "Acesse Minha Conta > Pedidos para acompanhar o status. Quando houver código de rastreio, ele também ficará disponível nos detalhes do pedido.",
   },
   {
     id: 6,
-    emoji: "❌",
-    question: "Posso cancelar meu pedido após o pagamento?",
+    emoji: "🔄",
+    question: "Como solicito um reembolso?",
     answer:
-      "Após a confirmação do pagamento, o pedido entra imediatamente em processamento.\nAs solicitações de cancelamento são analisadas conforme o estágio do pedido.\nEm casos de produtos personalizados, quando a produção já tiver sido iniciada, serão descontados os custos de produção e personalização já realizados.",
+      "Quando a opção estiver disponível para o pedido, você poderá solicitar o reembolso em Minha Conta > Pedidos. A BIGofertas entrará em contato para dar continuidade.",
   },
   {
     id: 7,
-    emoji: "📦",
-    question: "Como acompanhar meu pedido?",
+    emoji: "💲",
+    question: "Onde vejo os preços dos produtos?",
     answer:
-      "Após o envio, disponibilizamos um código de rastreamento para acompanhamento da entrega.\nÉ importante que o cliente acompanhe o rastreamento e esteja disponível para o recebimento.\n\nCaso o pedido seja devolvido ou não entregue por motivos atribuídos ao cliente, como destinatário ausente, endereço incorreto ou não retirada dentro do prazo informado pelos Correios, o reenvio poderá ser realizado mediante o pagamento dos custos de nova remessa e reposição, os quais corresponderão a até 50% do valor pago inicialmente, considerando frete e custos operacionais.",
+      "Os preços e promoções vigentes aparecem diretamente nas páginas dos produtos e no carrinho.",
   },
   {
     id: 8,
-    emoji: "🔄",
-    question: "Posso trocar ou devolver meu pedido?",
-    answer:
-      "Trocas ou devoluções são aceitas exclusivamente nos seguintes casos:\n✔️ Erro no envio do produto (modelo ou tamanho incorreto)\n✔️ Defeito de fabricação\nFora dessas situações, não realizamos trocas ou devoluções.",
-  },
-  {
-    id: 9,
-    emoji: "🛡️",
-    question: "Qual é a garantia dos produtos?",
-    answer:
-      "O prazo de garantia é de 30 dias após o recebimento do pedido.\nA garantia cobre apenas:\n* defeitos de fabricação;\n* problemas de qualidade;\n* envio de item diferente do solicitado.\nApós esse prazo, não serão aceitas solicitações de garantia ou devoluções.",
-  },
-  {
-    id: 10,
-    emoji: "🕘",
-    question: "Qual é o horário de atendimento?",
-    answer:
-      "Nosso atendimento funciona:\n* Segunda a sexta: 09h às 18h\n* Sábados: 09h às 13h\nMensagens enviadas fora desse horário serão respondidas no próximo dia útil.",
-  },
-  {
-    id: 11,
-    emoji: "💲",
-    question: "Onde posso consultar os preços dos produtos?",
-    answer:
-      "Os preços seguem tabela própria, disponível em nosso site.\n👉 https://pedidoatacado.com/wp-content/uploads/2026/03/WhatsApp-Image-2026-03-24-at-12.40.35.jpeg",
-  },
-  {
-    id: 12,
     emoji: "📞",
     question: "Como entrar em contato?",
     answer:
-      "Para dúvidas sobre produtos, prazos de entrega ou qualquer outra questão, fale com nossa equipe pelo WhatsApp:\n📲 +55 (84) 9 8134-7939 – Suporte e Pós Venda",
+      "WhatsApp: +55 (84) 9 8134-7939\nE-mail: contato@bigofertas.net",
   },
 ];
 
@@ -103,7 +76,7 @@ const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={`text-red-600 w-5 h-5 flex-shrink-0 transition-transform duration-300 ease-in-out transform ${
+    className={`h-5 w-5 flex-shrink-0 transform text-red-600 transition-transform duration-300 ease-in-out motion-reduce:transition-none ${
       isOpen ? "rotate-180" : "rotate-0"
     }`}
   >
@@ -119,29 +92,29 @@ export default function FAQ() {
   };
 
   return (
-    <section className="py-8 md:py-12 lg:py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <h2 className="text-center text-xl md:text-2xl lg:text-3xl font-bold italic uppercase mb-12 text-black">
+    <section className="bg-white py-8 md:py-12 lg:py-16">
+      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+        <h2 className="mb-12 text-center text-xl font-bold uppercase italic text-black md:text-2xl lg:text-3xl">
           PERGUNTAS FREQUENTES
         </h2>
 
-        <div className="max-w-2xl mx-auto space-y-3">
+        <div className="mx-auto max-w-2xl space-y-3">
           {faqData.map((item) => (
             <div
               key={item.id}
-              className="border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all duration-200 overflow-hidden"
+              className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 transition-all duration-200 hover:bg-gray-100 motion-reduce:transition-none"
             >
               <button
                 type="button"
                 onClick={() => toggle(item.id)}
                 aria-expanded={openId === item.id}
-                className="w-full px-4 py-3 md:px-5 md:py-4 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors duration-200 text-left"
+                className="flex w-full cursor-pointer items-center justify-between px-4 py-3 text-left transition-colors duration-200 hover:bg-gray-100 motion-reduce:transition-none md:px-5 md:py-4"
               >
                 <span className="flex items-center gap-3 text-left">
                   <span className="text-xl" aria-hidden="true">
                     {item.emoji}
                   </span>
-                  <span className="font-semibold text-gray-800 text-sm md:text-base">
+                  <span className="text-sm font-semibold text-gray-800 md:text-base">
                     {item.question}
                   </span>
                 </span>
@@ -149,13 +122,13 @@ export default function FAQ() {
               </button>
 
               <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                className={`overflow-hidden transition-all duration-300 ease-in-out motion-reduce:transition-none ${
                   openId === item.id
-                    ? "max-h-[36rem] opacity-100"
+                    ? "max-h-[24rem] opacity-100"
                     : "max-h-0 opacity-0"
                 }`}
               >
-                <div className="px-4 py-3 md:px-5 md:py-4 text-gray-600 text-xs md:text-sm leading-relaxed whitespace-pre-wrap border-t border-gray-100">
+                <div className="whitespace-pre-wrap border-t border-gray-100 px-4 py-3 text-xs leading-relaxed text-gray-600 md:px-5 md:py-4 md:text-sm">
                   {item.answer}
                 </div>
               </div>
