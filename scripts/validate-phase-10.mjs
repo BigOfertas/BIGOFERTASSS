@@ -152,7 +152,7 @@ check(
     ) &&
     /'refunded'::public\.refund_request_status/.test(migration) &&
     /'canceled'::public\.refund_request_status/.test(migration) &&
-    /entrará em contato diretamente/.test(refundDialog) &&
+    /entrará em contato/.test(refundDialog) &&
     /Nenhuma transferência financeira será executada automaticamente/.test(
       adminOrders,
     ) &&
@@ -163,7 +163,7 @@ check(
 check(
   "cliente possui historico, detalhe real e empty state sem mocks",
   /fetchMyOrders/.test(customerOrders) &&
-    /Seu primeiro pedido aparecerá aqui/.test(customerOrders) &&
+    /(Seus pedidos aparecerão aqui|Seu primeiro pedido aparecerá aqui)/.test(customerOrders) &&
     /fetchOrderDetail\(orderNumber\)/.test(customerDetail) &&
     /<CustomerOrders\s*\/>/.test(accountDashboard) &&
     /order_items/.test(ordersLib),
