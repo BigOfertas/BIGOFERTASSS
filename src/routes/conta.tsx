@@ -1,4 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  Outlet,
+  createFileRoute,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import { useEffect } from "react";
 import { z } from "zod";
 
@@ -23,9 +28,11 @@ export const Route = createFileRoute("/conta")({
 
 function AccountPage() {
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const search = Route.useSearch();
   const { user, loading, signOut } = useAuth();
   const section: AccountSection | null = search.secao ?? null;
+  const showingOrderDetail = pathname.startsWith("/conta/pedidos/");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -67,6 +74,10 @@ function AccountPage() {
         <p className="text-sm text-gray-500">Redirecionando...</p>
       </main>
     );
+  }
+
+  if (showingOrderDetail) {
+    return <Outlet />;
   }
 
   return (
