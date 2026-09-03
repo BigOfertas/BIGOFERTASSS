@@ -20,21 +20,61 @@ type SecurityRpcClient = {
 
 const securityRpc = supabase as unknown as SecurityRpcClient;
 
-async function authenticatedRequest(path: string, body?: unknown) {
+function authEdgeUrl() {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+  return supabaseUrl
+    ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/auth-email-2fa`
+    : null;
+}
+
+async function postSecurityRequest(
+  url: string,
+  accessToken: string,
+  body: Record<string, unknown>,
+) {
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      accept: "application/json",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+async function authenticatedRequest(input: {
+  action: "enroll-start" | "enroll-verify";
+  legacyPath: string;
+  body?: Record<string, unknown>;
+}) {
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session?.access_token) {
     throw new Error("Entre novamente na sua conta para continuar.");
   }
 
-  const response = await fetch(path, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${data.session.access_token}`,
-      accept: "application/json",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(body ?? {}),
-  });
+  const accessToken = data.session.access_token;
+  const body = input.body ?? {};
+  const edgeUrl = authEdgeUrl();
+  let response: Response;
+
+  if (edgeUrl) {
+    try {
+      const edgeResponse = await postSecurityRequest(edgeUrl, accessToken, {
+        action: input.action,
+        ...body,
+      });
+      if (edgeResponse.status < 500) {
+        response = edgeResponse;
+      } else {
+        response = await postSecurityRequest(input.legacyPath, accessToken, body);
+      }
+    } catch {
+      response = await postSecurityRequest(input.legacyPath, accessToken, body);
+    }
+  } else {
+    response = await postSecurityRequest(input.legacyPath, accessToken, body);
+  }
 
   let payload: Record<string, unknown> | null = null;
   try {
@@ -99,7 +139,10 @@ export async function disableEmailTwoFactor() {
 }
 
 export async function startEmailTwoFactorEnrollment() {
-  const payload = await authenticatedRequest("/api/auth/email-2fa/enroll/start");
+  const payload = await authenticatedRequest({
+    action: "enroll-start",
+    legacyPath: "/api/auth/email-2fa/enroll/start",
+  });
 
   if (payload["alreadyEnabled"] === true) {
     return { alreadyEnabled: true as const };
@@ -125,9 +168,10 @@ export async function verifyEmailTwoFactorEnrollment(
   challengeId: string,
   code: string,
 ) {
-  const payload = await authenticatedRequest("/api/auth/email-2fa/enroll/verify", {
-    challengeId,
-    code,
+  const payload = await authenticatedRequest({
+    action: "enroll-verify",
+    legacyPath: "/api/auth/email-2fa/enroll/verify",
+    body: { challengeId, code },
   });
 
   if (payload["enabled"] !== true) {
