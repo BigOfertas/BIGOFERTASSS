@@ -101,6 +101,29 @@ function throwIfError(error: RpcError | null, fallback: string) {
   if (error) throw new Error(getUserFacingError(error, fallback));
 }
 
+async function kickTransactionalEmails() {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+  if (!supabaseUrl) return;
+
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.access_token) return;
+
+  try {
+    await fetch(
+      `${supabaseUrl.replace(/\/$/, "")}/functions/v1/notifications-kick`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${data.session.access_token}`,
+          accept: "application/json",
+        },
+      },
+    );
+  } catch {
+    // O evento permanece na outbox e poderá ser processado em nova tentativa.
+  }
+}
+
 export function getOrderDisplayStatus(
   order: Pick<Order, "status">,
   refundRequest: Pick<RefundRequest, "status"> | null,
@@ -267,6 +290,7 @@ export async function requestOrderRefund(
 
   throwIfError(result.error, "Não foi possível solicitar o reembolso.");
   if (!result.data) throw new Error("Não foi possível confirmar a solicitação.");
+  await kickTransactionalEmails();
   return result.data;
 }
 
@@ -305,6 +329,7 @@ export async function transitionOrder(
 
   throwIfError(result.error, "Não foi possível atualizar o pedido.");
   if (!result.data) throw new Error("Não foi possível confirmar a atualização do pedido.");
+  await kickTransactionalEmails();
   return result.data;
 }
 
