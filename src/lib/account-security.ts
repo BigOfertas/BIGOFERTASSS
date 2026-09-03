@@ -15,6 +15,7 @@ type SecurityRpcResult<T> = Promise<{
 type SecurityRpcClient = {
   rpc(name: "get_my_security_status"): SecurityRpcResult<AccountSecurityStatus[]>;
   rpc(name: "dismiss_my_email_2fa_prompt"): SecurityRpcResult<null>;
+  rpc(name: "disable_my_email_2fa"): SecurityRpcResult<null>;
 };
 
 const securityRpc = supabase as unknown as SecurityRpcClient;
@@ -85,6 +86,18 @@ export async function dismissEmailTwoFactorPrompt() {
   }
 }
 
+export async function disableEmailTwoFactor() {
+  const result = await securityRpc.rpc("disable_my_email_2fa");
+  if (result.error) {
+    throw new Error(
+      getUserFacingError(
+        result.error,
+        "Não foi possível desativar a verificação em duas etapas agora.",
+      ),
+    );
+  }
+}
+
 export async function startEmailTwoFactorEnrollment() {
   const payload = await authenticatedRequest("/api/auth/email-2fa/enroll/start");
 
@@ -119,5 +132,42 @@ export async function verifyEmailTwoFactorEnrollment(
 
   if (payload["enabled"] !== true) {
     throw new Error("Não foi possível ativar a verificação em duas etapas. Tente novamente.");
+  }
+}
+
+export async function sendAccountPasswordReset(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) {
+    throw new Error("Não foi possível identificar o e-mail da sua conta.");
+  }
+
+  const redirectTo =
+    typeof window !== "undefined"
+      ? new URL("/redefinir-senha", window.location.origin).toString()
+      : undefined;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+    ...(redirectTo ? { redirectTo } : {}),
+  });
+
+  if (error) {
+    throw new Error(
+      getUserFacingError(
+        error,
+        "Não foi possível enviar o link para redefinir a senha agora.",
+      ),
+    );
+  }
+}
+
+export async function signOutOtherAccountSessions() {
+  const { error } = await supabase.auth.signOut({ scope: "others" });
+  if (error) {
+    throw new Error(
+      getUserFacingError(
+        error,
+        "Não foi possível encerrar as outras sessões agora.",
+      ),
+    );
   }
 }
