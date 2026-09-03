@@ -10,6 +10,8 @@ const files = Object.fromEntries(
       "src/lib/checkout.ts",
       "src/lib/auth.tsx",
       "src/lib/account-security.ts",
+      "src/lib/orders.ts",
+      "supabase/functions/notifications-kick/index.ts",
       "supabase/config.toml",
     ].map(async (path) => [path, await readFile(path, "utf8")]),
   ),
@@ -27,6 +29,8 @@ const shipping = files["src/lib/shipping.ts"];
 const checkout = files["src/lib/checkout.ts"];
 const auth = files["src/lib/auth.tsx"];
 const security = files["src/lib/account-security.ts"];
+const orders = files["src/lib/orders.ts"];
+const notificationKick = files["supabase/functions/notifications-kick/index.ts"];
 const supabaseConfig = files["supabase/config.toml"];
 
 check("build Hostinger usa plugin oficial do TanStack", hostinger.includes("@tanstack/react-start/plugin/vite"));
@@ -46,10 +50,16 @@ check("login condiciona fallback legado", auth.includes("legacyWorkerFallbackAva
 check("ativacao 2FA usa Supabase Edge Function", security.includes("/functions/v1/auth-email-2fa"));
 check("ativacao 2FA condiciona fallback legado", security.includes("legacyWorkerFallbackAvailable"));
 
+check("acoes de pedido acionam a fila transacional", orders.includes("/functions/v1/notifications-kick") && orders.includes("kickTransactionalEmails"));
+check("pedido em producao/envio e reembolso preservam kick de email", /requestOrderRefund[\s\S]*kickTransactionalEmails\(\)/.test(orders) && /transitionOrder[\s\S]*kickTransactionalEmails\(\)/.test(orders));
+check("acionador de emails exige usuario autenticado", notificationKick.includes("/auth/v1/user") && notificationKick.includes('authorization?.startsWith("Bearer ")'));
+check("acionador usa processador interno com service role", notificationKick.includes("/functions/v1/notifications-process") && notificationKick.includes("SUPABASE_SERVICE_ROLE_KEY"));
+
 check("shipping-quote continua publica", /\[functions\.shipping-quote\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig));
 check("checkout-start continua com auth interna", /\[functions\.checkout-start\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig));
 check("webhook InfinitePay continua publico", /\[functions\.infinitepay-webhook\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig));
 check("auth-email-2fa usa validacao interna", /\[functions\.auth-email-2fa\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig));
+check("notifications-kick usa validacao interna", /\[functions\.notifications-kick\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig));
 
 const forbiddenPublicSecrets = [
   "VITE_SUPABASE_SERVICE_ROLE_KEY",
@@ -58,7 +68,7 @@ const forbiddenPublicSecrets = [
   "VITE_EMAIL_2FA_SECRET",
   "VITE_R2_SECRET_ACCESS_KEY",
 ];
-const clientBundleSources = [shipping, checkout, auth, security, routing].join("\n");
+const clientBundleSources = [shipping, checkout, auth, security, routing, orders].join("\n");
 for (const variable of forbiddenPublicSecrets) {
   check(`segredo ${variable} nao existe no frontend`, !clientBundleSources.includes(variable));
 }
