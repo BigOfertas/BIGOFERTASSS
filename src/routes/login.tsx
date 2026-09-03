@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Eye,
@@ -8,7 +8,7 @@ import {
   MailCheck,
   ShieldCheck,
 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import { useAuth } from "@/lib/auth";
 
@@ -25,6 +25,7 @@ function Brand() {
 }
 
 function LoginPage() {
+  const navigate = useNavigate();
   const {
     user,
     loading,
@@ -45,6 +46,15 @@ function LoginPage() {
   const [maskedEmail, setMaskedEmail] = useState("");
   const [challengeExpiresAt, setChallengeExpiresAt] = useState("");
   const [securityCode, setSecurityCode] = useState("");
+
+  useEffect(() => {
+    if (loading || !user) return;
+
+    void navigate({
+      to: isOwner ? "/admin" : "/conta",
+      replace: true,
+    });
+  }, [isOwner, loading, navigate, user]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -122,7 +132,7 @@ function LoginPage() {
 
   if (user) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+      <main className="hidden min-h-screen items-center justify-center bg-background px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
             <Brand />
