@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Validate static Hostinger architecture
+        run: node scripts/validate-hostinger-static.mjs
+
       - name: Build Hostinger SPA
         run: bun run build:hostinger
 
