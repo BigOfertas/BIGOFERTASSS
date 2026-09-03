@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { legacyWorkerFallbackAvailable } from "@/lib/backend-routing";
 import { getUserFacingError } from "@/lib/user-facing-error";
 
 export type AccountSecurityStatus = {
@@ -64,16 +65,19 @@ async function authenticatedRequest(input: {
         action: input.action,
         ...body,
       });
-      if (edgeResponse.status < 500) {
+      if (edgeResponse.status < 500 || !legacyWorkerFallbackAvailable()) {
         response = edgeResponse;
       } else {
         response = await postSecurityRequest(input.legacyPath, accessToken, body);
       }
-    } catch {
+    } catch (requestError) {
+      if (!legacyWorkerFallbackAvailable()) throw requestError;
       response = await postSecurityRequest(input.legacyPath, accessToken, body);
     }
-  } else {
+  } else if (legacyWorkerFallbackAvailable()) {
     response = await postSecurityRequest(input.legacyPath, accessToken, body);
+  } else {
+    throw new Error("A verificação de segurança está temporariamente indisponível.");
   }
 
   let payload: Record<string, unknown> | null = null;
