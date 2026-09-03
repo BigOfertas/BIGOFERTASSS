@@ -1,0 +1,95 @@
+name: Smoke Supabase Edge Functions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/functions/**"
+      - "supabase/config.toml"
+      - ".github/workflows/smoke-supabase-edge.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-supabase-edge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      EDGE_BASE: https://hootwcacnrtidfmqsvrn.supabase.co/functions/v1
+      ALLOWED_ORIGIN: https://bigofertas.net
+
+    steps:
+      - name: shipping-quote accepts production CORS preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          status="$(curl -sS -D "$headers" -o /dev/null -w '%{http_code}' \
+            -X OPTIONS \
+            -H "Origin: $ALLOWED_ORIGIN" \
+            -H 'Access-Control-Request-Method: POST' \
+            "$EDGE_BASE/shipping-quote")"
+          test "$status" = "204"
+          tr -d '\r' < "$headers" | grep -i -F -q "access-control-allow-origin: $ALLOWED_ORIGIN"
+
+      - name: checkout-start rejects anonymous order creation
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl -sS -o "$body" -w '%{http_code}' \
+            -X POST \
+            -H "Origin: $ALLOWED_ORIGIN" \
+            -H 'Content-Type: application/json' \
+            --data '{}' \
+            "$EDGE_BASE/checkout-start")"
+          test "$status" = "401"
+
+      - name: auth-email-2fa rejects authenticated-only action without session
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl -sS -o "$body" -w '%{http_code}' \
+            -X POST \
+            -H "Origin: $ALLOWED_ORIGIN" \
+            -H 'Content-Type: application/json' \
+            --data '{"action":"enroll-start"}' \
+            "$EDGE_BASE/auth-email-2fa")"
+          test "$status" = "401"
+
+      - name: notifications-kick rejects anonymous processing trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl -sS -o "$body" -w '%{http_code}' \
+            -X POST \
+            -H "Origin: $ALLOWED_ORIGIN" \
+            "$EDGE_BASE/notifications-kick")"
+          test "$status" = "401"
+
+      - name: notifications-process remains private
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl -sS -o "$body" -w '%{http_code}' \
+            -X POST \
+            "$EDGE_BASE/notifications-process")"
+          test "$status" = "401"
+
+      - name: InfinitePay webhook refuses unsupported methods
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(mktemp)"
+          status="$(curl -sS -o "$body" -w '%{http_code}' \
+            "$EDGE_BASE/infinitepay-webhook")"
+          test "$status" = "405"
