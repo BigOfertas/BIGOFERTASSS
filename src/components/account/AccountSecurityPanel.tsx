@@ -41,7 +41,7 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (!open || status || loadingStatus) return;
+    if (!open || status) return;
 
     let active = true;
     setLoadingStatus(true);
@@ -67,7 +67,7 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
     return () => {
       active = false;
     };
-  }, [loadingStatus, open, status]);
+  }, [open, status]);
 
   const twoFactorEnabled = status?.email_2fa_enabled === true;
 
