@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bigofertas-staging",
+  "compatibility_date": "2026-09-03",
+  "keep_vars": true,
+  "vars": {
+    "INFINITEPAY_HANDLE": "yan-saulo"
+  }
+}
