@@ -1,4 +1,4 @@
-const RESEND_EMAILS_URL = "https://api.resend.com/emails";
+import { ResendTemplateError, sendResendTemplate } from "./resend-server";
 
 export type EmailTwoFactorEnvironment = {
   VITE_SUPABASE_URL?: string;
@@ -589,15 +589,6 @@ async function insertChallenge(
   return { challengeId, code, expiresAt };
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
 async function sendTwoFactorEmail(input: {
   to: string;
   name: string | null;
@@ -615,56 +606,40 @@ async function sendTwoFactorEmail(input: {
     );
   }
 
-  const firstName = input.name?.trim().split(/\s+/)[0] || "Olá";
-  const safeFirstName = escapeHtml(firstName);
+  const name = input.name?.trim().split(/\s+/)[0] || "cliente";
   const title =
     input.purpose === "enroll"
       ? "Confirme a ativação da verificação em duas etapas"
       : "Confirme seu acesso à BIGofertas";
-  const text = `${firstName}, seu código de segurança BIGofertas é ${input.code}. Ele expira em 10 minutos. Se você não solicitou este código, ignore este e-mail.`;
-  const html = `<!doctype html><html><body style="margin:0;background:#f6f7f9;font-family:Arial,sans-serif;color:#111827"><div style="max-width:560px;margin:0 auto;padding:32px 16px"><div style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:28px"><div style="font-size:24px;font-weight:900;font-style:italic"><span style="color:#dc2626">BIG</span>ofertas</div><h1 style="font-size:21px;margin:26px 0 8px">${title}</h1><p style="font-size:14px;line-height:1.6;color:#4b5563">${safeFirstName}, use o código abaixo para continuar:</p><div style="margin:24px 0;padding:18px;border-radius:14px;background:#111827;color:#fff;text-align:center;font-size:32px;font-weight:900;letter-spacing:8px">${input.code}</div><p style="font-size:13px;line-height:1.6;color:#6b7280">O código expira em 10 minutos e só pode ser usado uma vez. Se você não solicitou esta verificação, ignore este e-mail.</p></div></div></body></html>`;
 
-  let response: Response;
   try {
-    response = await fetch(RESEND_EMAILS_URL, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${environment.resendApiKey}`,
-        "content-type": "application/json",
-        accept: "application/json",
-        "user-agent": "BIGofertas/1.0",
-        "Idempotency-Key": `email-2fa/${input.purpose}/${input.challengeId}`,
+    await sendResendTemplate({
+      apiKey: environment.resendApiKey,
+      from: environment.resendFrom,
+      to: input.to,
+      templateId: "security-2fa-code",
+      variables: {
+        FIRST_NAMe: name,
+        CODE: input.code,
+        ACTION_TITLE: title,
       },
-      body: JSON.stringify({
-        from: environment.resendFrom,
-        to: [input.to],
-        subject: "Seu código de segurança BIGofertas",
-        html,
-        text,
-        tags: [
-          { name: "category", value: `two_factor_${input.purpose}` },
-        ],
-      }),
-      signal: AbortSignal.timeout(10_000),
+      idempotencyKey: `email-2fa/${input.purpose}/${input.challengeId}`,
+      eventName: `two_factor_${input.purpose}`,
     });
   } catch (cause) {
-    throw new EmailTwoFactorError(
-      "Não foi possível enviar o código agora.",
-      502,
-      "EMAIL_2FA_RESEND_NETWORK_ERROR",
-      cause,
-    );
-  }
-
-  if (!response.ok) {
-    const payload = await response.clone().text().catch(() => "");
-    console.error(
-      `[email-2fa] ${JSON.stringify({ event: "resend_failed", status: response.status, body: payload.slice(0, 300) })}`,
-    );
+    if (cause instanceof ResendTemplateError) {
+      throw new EmailTwoFactorError(
+        "Não foi possível enviar o código agora.",
+        cause.status,
+        cause.code,
+        cause,
+      );
+    }
     throw new EmailTwoFactorError(
       "Não foi possível enviar o código agora.",
       502,
       "EMAIL_2FA_RESEND_FAILED",
+      cause,
     );
   }
 }
