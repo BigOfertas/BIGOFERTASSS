@@ -1,4 +1,5 @@
 import type { CartItem } from "@/lib/cart";
+import { legacyWorkerFallbackAvailable } from "@/lib/backend-routing";
 
 export type ShippingQuote = {
   provider: "superfrete";
@@ -87,13 +88,19 @@ async function shippingResponse(body: string) {
   if (edgeUrl) {
     try {
       const edgeResponse = await postShippingQuote(edgeUrl, body);
-      if (edgeResponse.status < 500) return edgeResponse;
-    } catch {
-      // Durante a migração, o Worker antigo continua disponível como fallback.
+      if (edgeResponse.status < 500 || !legacyWorkerFallbackAvailable()) {
+        return edgeResponse;
+      }
+    } catch (error) {
+      if (!legacyWorkerFallbackAvailable()) throw error;
     }
   }
 
-  return postShippingQuote("/api/shipping/quote", body);
+  if (legacyWorkerFallbackAvailable()) {
+    return postShippingQuote("/api/shipping/quote", body);
+  }
+
+  throw new Error("Não foi possível calcular o frete agora. Tente novamente em instantes.");
 }
 
 export async function requestShippingQuotes(
