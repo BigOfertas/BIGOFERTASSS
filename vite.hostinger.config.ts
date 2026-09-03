@@ -1,16 +1,29 @@
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import tailwindcss from "@tailwindcss/vite";
+import viteReact from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
-// Build paralelo para hospedagem estática na Hostinger.
-// A build padrão continua intacta enquanto o Cloudflare Worker é usado no staging.
+// Build paralelo e independente para hospedagem estática na Hostinger.
+// Não usa o preset Nitro/Cloudflare da configuração principal do staging.
 export default defineConfig({
-  tanstackStart: {
-    spa: {
-      enabled: true,
-      prerender: {
-        outputPath: "/index.html",
-        crawlLinks: false,
-        retryCount: 0,
-      },
-    },
+  resolve: {
+    tsconfigPaths: true,
   },
+  plugins: [
+    tailwindcss(),
+    tanstackStart({
+      spa: {
+        enabled: true,
+        prerender: {
+          outputPath: "/index.html",
+          crawlLinks: false,
+          retryCount: 0,
+        },
+      },
+      prerender: {
+        failOnError: true,
+      },
+    }),
+    viteReact(),
+  ],
 });
