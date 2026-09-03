@@ -17,3 +17,7 @@ verify_jwt = false
 # Webhook publico chamado diretamente pela InfinitePay.
 [functions.infinitepay-webhook]
 verify_jwt = false
+
+# Processador interno. O proprio codigo exige o service role exato.
+[functions.notifications-process]
+verify_jwt = false
