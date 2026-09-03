@@ -32,6 +32,8 @@ type ServerEntry = {
   ) => Promise<Response> | Response;
 };
 
+const DEFAULT_RESEND_FROM = "BIGofertas <contato@bigofertas.net>";
+
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
 async function getServerEntry(): Promise<ServerEntry> {
@@ -74,6 +76,21 @@ function asWorkerEnvironment(value: unknown): WorkerEnvironment {
   return value as WorkerEnvironment;
 }
 
+function resolveWorkerEnvironment(value: unknown): WorkerEnvironment {
+  const processEnvironment =
+    typeof process !== "undefined" ? asWorkerEnvironment(process.env) : {};
+  const explicitEnvironment = asWorkerEnvironment(value);
+
+  return {
+    ...processEnvironment,
+    ...explicitEnvironment,
+    RESEND_FROM:
+      explicitEnvironment.RESEND_FROM ??
+      processEnvironment.RESEND_FROM ??
+      DEFAULT_RESEND_FROM,
+  };
+}
+
 function authEntryErrorResponse(error: unknown) {
   console.error(error);
   return new Response(
@@ -96,10 +113,10 @@ export default {
     let isAuthSecurityRequest = false;
 
     try {
-      // Nitro's Cloudflare adapter calls this SSR service with `request` only.
-      // Runtime bindings can also be preserved on `request.runtime.cloudflare.env`;
-      // each server handler resolves both locations defensively.
-      const workerEnv = asWorkerEnvironment(env);
+      // Cloudflare can expose runtime bindings through the Worker env argument
+      // and, with Node compatibility, through process.env. Resolve both paths so
+      // a framework adapter cannot make secrets disappear between deployments.
+      const workerEnv = resolveWorkerEnvironment(env);
       const url = new URL(request.url);
       isShippingRequest = url.pathname === "/api/shipping/quote";
       isCheckoutRequest = url.pathname === "/api/checkout/start";
