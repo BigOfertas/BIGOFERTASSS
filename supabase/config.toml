@@ -5,3 +5,7 @@ verify_jwt = true
 
 [functions.r2-image-complete]
 verify_jwt = true
+
+# Cotacao publica de frete. O token da SuperFrete fica somente nos secrets do Supabase.
+[functions.shipping-quote]
+verify_jwt = false
