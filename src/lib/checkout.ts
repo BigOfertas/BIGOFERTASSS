@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { legacyWorkerFallbackAvailable } from "@/lib/backend-routing";
 import type { CartItem } from "@/lib/cart";
 
 export type CheckoutStartResult = {
@@ -43,17 +44,24 @@ async function checkoutResponse(accessToken: string, body: string) {
     try {
       const edgeResponse = await postCheckout(edgeUrl, accessToken, body);
 
-      // O Worker antigo existe apenas como rede de segurança durante a migração.
-      // Não repetimos uma compra quando o novo backend respondeu com um erro normal.
-      if (edgeResponse.status !== 404 && edgeResponse.status !== 503) {
+      // No domínio final não existe servidor /api na Hostinger.
+      // O endpoint antigo só fica disponível no staging/localhost durante a migração.
+      if (
+        !legacyWorkerFallbackAvailable() ||
+        (edgeResponse.status !== 404 && edgeResponse.status !== 503)
+      ) {
         return edgeResponse;
       }
-    } catch {
-      // Falha de rede na Edge Function: usa temporariamente o endpoint antigo.
+    } catch (error) {
+      if (!legacyWorkerFallbackAvailable()) throw error;
     }
   }
 
-  return postCheckout("/api/checkout/start", accessToken, body);
+  if (legacyWorkerFallbackAvailable()) {
+    return postCheckout("/api/checkout/start", accessToken, body);
+  }
+
+  throw new Error("Não foi possível iniciar o pagamento agora.");
 }
 
 export async function startInfinitePayCheckout(input: {
