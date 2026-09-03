@@ -22,6 +22,10 @@ verify_jwt = false
 [functions.notifications-process]
 verify_jwt = false
 
+# Acionador autenticado da fila; valida o bearer dentro da propria funcao.
+[functions.notifications-kick]
+verify_jwt = false
+
 # Login e 2FA: a funcao aceita login publico e valida bearer internamente nas acoes autenticadas.
 [functions.auth-email-2fa]
 verify_jwt = false
