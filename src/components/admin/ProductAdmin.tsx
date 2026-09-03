@@ -16,22 +16,32 @@ import {
   type AdminProductInput,
   type AdminProductStatus,
 } from "@/lib/admin-products";
+import {
+  PRODUCT_CONTEXT_OPTIONS,
+  PRODUCT_SEASON_OPTIONS,
+  extractSeasonFromSpecifications,
+  getCompetitionOption,
+  getCompetitionOptionsForContext,
+  inferProductContext,
+  mergeSeasonIntoSpecifications,
+  type CompetitionStorageField,
+  type ProductContextType,
+} from "@/lib/product-taxonomy";
 
 type ProductFormState = {
   id: string;
   defaultVariantId: string;
-  assignedSku: string;
-  assignedSlug: string;
-  assignedVariantSku: string;
   name: string;
   description: string;
   price: string;
   promotionalPrice: string;
   status: AdminProductStatus;
   primaryCategoryId: string;
-  campeonato: string;
-  liga: string;
+  contextType: ProductContextType | "";
+  competition: string;
+  competitionField: CompetitionStorageField | "";
   time: string;
+  season: string;
   specifications: string;
   weightGrams: string;
   lengthCm: string;
@@ -44,34 +54,34 @@ type ProductFormState = {
 const EMPTY_FORM: ProductFormState = {
   id: "",
   defaultVariantId: "",
-  assignedSku: "",
-  assignedSlug: "",
-  assignedVariantSku: "",
   name: "",
   description: "",
   price: "",
   promotionalPrice: "",
   status: "draft",
   primaryCategoryId: "",
-  campeonato: "",
-  liga: "",
+  contextType: "",
+  competition: "",
+  competitionField: "",
   time: "",
+  season: "",
   specifications: "",
   weightGrams: "",
   lengthCm: "",
   widthCm: "",
   heightCm: "",
-  variantName: "",
+  variantName: "Padrão",
   stockQuantity: "0",
 };
 
 function productToForm(product: AdminProduct): ProductFormState {
+  const storedCompetition = product.liga?.trim() || product.campeonato?.trim() || "";
+  const knownCompetition = getCompetitionOption(storedCompetition);
+  const parsedSpecifications = extractSeasonFromSpecifications(product.specifications);
+
   return {
     id: product.id,
     defaultVariantId: product.defaultVariant?.id ?? "",
-    assignedSku: product.sku,
-    assignedSlug: product.slug,
-    assignedVariantSku: product.defaultVariant?.sku ?? `${product.sku}-STD`,
     name: product.name,
     description: product.description ?? "",
     price: String(product.price),
@@ -79,15 +89,19 @@ function productToForm(product: AdminProduct): ProductFormState {
       product.promotional_price === null ? "" : String(product.promotional_price),
     status: product.status,
     primaryCategoryId: product.primary_category_id ?? "",
-    campeonato: product.campeonato ?? "",
-    liga: product.liga ?? "",
+    contextType: inferProductContext(product.campeonato, product.liga),
+    competition: storedCompetition,
+    competitionField:
+      knownCompetition?.storageField ??
+      (product.liga?.trim() ? "liga" : product.campeonato?.trim() ? "campeonato" : ""),
     time: product.time ?? "",
-    specifications: product.specifications ?? "",
+    season: parsedSpecifications.season,
+    specifications: parsedSpecifications.specifications,
     weightGrams: product.weight_grams === null ? "" : String(product.weight_grams),
     lengthCm: product.length_cm === null ? "" : String(product.length_cm),
     widthCm: product.width_cm === null ? "" : String(product.width_cm),
     heightCm: product.height_cm === null ? "" : String(product.height_cm),
-    variantName: product.defaultVariant?.name ?? "",
+    variantName: product.defaultVariant?.name ?? "Padrão",
     stockQuantity: String(product.defaultVariant?.stock_quantity ?? 0),
   };
 }
@@ -139,11 +153,20 @@ function statusClassName(status: AdminProductStatus) {
 }
 
 function fieldClassName() {
-  return "mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20";
+  return "mt-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/10";
 }
 
 function textareaClassName() {
-  return "mt-1 min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20";
+  return "mt-1 min-h-24 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/10";
+}
+
+function SectionTitle({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="md:col-span-2">
+      <h4 className="font-bold text-gray-950">{title}</h4>
+      <p className="mt-1 text-sm text-gray-500">{description}</p>
+    </div>
+  );
 }
 
 export function ProductAdmin() {
@@ -171,7 +194,7 @@ export function ProductAdmin() {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Não foi possível carregar a administração de produtos.",
+          : "Não foi possível carregar os produtos.",
       );
     } finally {
       setLoading(false);
@@ -190,13 +213,33 @@ export function ProductAdmin() {
       [
         product.name,
         product.sku,
-        product.slug,
         product.category ?? "",
         product.time ?? "",
         product.liga ?? "",
+        product.campeonato ?? "",
       ].some((value) => value.toLocaleLowerCase("pt-BR").includes(query)),
     );
   }, [products, search]);
+
+  const availableCompetitions = useMemo(
+    () =>
+      form.contextType
+        ? getCompetitionOptionsForContext(form.contextType)
+        : [],
+    [form.contextType],
+  );
+
+  const selectedCompetition = getCompetitionOption(form.competition);
+  const availableTeams = selectedCompetition?.teams ?? [];
+  const legacyCompetition = Boolean(
+    form.competition && !getCompetitionOption(form.competition),
+  );
+  const legacyTeam = Boolean(
+    form.time && !availableTeams.some((team) => team === form.time),
+  );
+  const legacySeason = Boolean(
+    form.season && !PRODUCT_SEASON_OPTIONS.some((season) => season === form.season),
+  );
 
   function updateField<K extends keyof ProductFormState>(
     key: K,
@@ -225,6 +268,26 @@ export function ProductAdmin() {
     setErrorMessage("");
   }
 
+  function handleContextChange(value: ProductContextType | "") {
+    setForm((current) => ({
+      ...current,
+      contextType: value,
+      competition: "",
+      competitionField: "",
+      time: "",
+    }));
+  }
+
+  function handleCompetitionChange(value: string) {
+    const option = getCompetitionOption(value);
+    setForm((current) => ({
+      ...current,
+      competition: value,
+      competitionField: option?.storageField ?? current.competitionField,
+      time: "",
+    }));
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving) return;
@@ -234,6 +297,34 @@ export function ProductAdmin() {
     setSuccessMessage("");
 
     try {
+      if (!form.contextType) {
+        throw new Error("Selecione se o produto é de clube, seleção ou sem vínculo esportivo.");
+      }
+
+      let campeonato = "";
+      let liga = "";
+      let time = "";
+
+      if (form.contextType !== "other") {
+        if (!form.competition) {
+          throw new Error("Selecione a competição do produto.");
+        }
+        if (!form.time) {
+          throw new Error("Selecione o time ou a seleção do produto.");
+        }
+
+        const competition = getCompetitionOption(form.competition);
+        const storageField = competition?.storageField || form.competitionField;
+
+        if (!storageField) {
+          throw new Error("Selecione novamente a competição do produto.");
+        }
+
+        if (storageField === "liga") liga = form.competition;
+        else campeonato = form.competition;
+        time = form.time;
+      }
+
       const selectedCategory = categories.find(
         (category) => category.id === form.primaryCategoryId,
       );
@@ -250,10 +341,13 @@ export function ProductAdmin() {
         status: form.status,
         primaryCategoryId: form.primaryCategoryId || null,
         categoryName: selectedCategory?.name ?? null,
-        campeonato: form.campeonato,
-        liga: form.liga,
-        time: form.time,
-        specifications: form.specifications,
+        campeonato,
+        liga,
+        time,
+        specifications: mergeSeasonIntoSpecifications(
+          form.specifications,
+          form.season,
+        ),
         weightGrams: parseOptionalNumber(form.weightGrams),
         lengthCm: parseOptionalNumber(form.lengthCm),
         widthCm: parseOptionalNumber(form.widthCm),
@@ -266,9 +360,7 @@ export function ProductAdmin() {
       await loadCatalog();
 
       setSuccessMessage(
-        form.id
-          ? "Produto atualizado com sucesso."
-          : "Produto criado com identificadores automáticos.",
+        form.id ? "Produto atualizado com sucesso." : "Produto criado com sucesso.",
       );
       setForm(EMPTY_FORM);
       setShowForm(false);
@@ -309,39 +401,29 @@ export function ProductAdmin() {
     <section className="mt-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">Fase 07</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
-            Produtos
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-            Cadastre e mantenha o catálogo. SKU, slug e SKU da variante são
-            atribuídos automaticamente. Produtos ativos são vendidos sob encomenda.
+          <h2 className="text-2xl font-black tracking-tight text-gray-950">Produtos</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
+            Cadastre os produtos da loja e classifique cada item pelas opções disponíveis.
           </p>
         </div>
 
         <button
           type="button"
           onClick={startNewProduct}
-          className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+          className="inline-flex h-10 items-center justify-center rounded-lg bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700"
         >
           Novo produto
         </button>
       </div>
 
       {errorMessage && !showForm ? (
-        <div
-          role="alert"
-          className="mt-5 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-        >
+        <div role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {errorMessage}
         </div>
       ) : null}
 
       {successMessage ? (
-        <div
-          role="status"
-          className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
-        >
+        <div role="status" className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           {successMessage}
         </div>
       ) : null}
@@ -349,118 +431,55 @@ export function ProductAdmin() {
       {showForm ? (
         <form
           onSubmit={(event) => void handleSubmit(event)}
-          className="mt-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+          className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
         >
-          <div className="flex items-start justify-between gap-4 border-b border-border bg-muted/20 p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-5 sm:px-6">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">
+              <h3 className="text-lg font-bold text-gray-950">
                 {form.id ? "Editar produto" : "Novo produto"}
               </h3>
-              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                {form.id
-                  ? "Os identificadores internos permanecem fixos para preservar integrações e URLs."
-                  : "Ao salvar, o banco consome automaticamente uma reserva livre de SKU e slug e cria a variante padrão."}
+              <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                Preencha as informações comerciais e escolha a classificação correta.
               </p>
             </div>
             <button
               type="button"
               onClick={cancelEditing}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
+              className="text-sm font-semibold text-gray-500 hover:text-gray-900"
             >
               Fechar
             </button>
           </div>
 
           <div className="p-5 sm:p-6">
-            <div className="rounded-lg border border-border bg-muted/20 p-4">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                    Identificadores automáticos
-                  </p>
-                  <p className="mt-1 text-sm text-foreground">
-                    Você não precisa preencher SKU ou slug.
-                  </p>
-                </div>
-                {!form.id ? (
-                  <span className="mt-2 inline-flex w-fit rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground sm:mt-0">
-                    Reserva atribuída ao criar
-                  </span>
-                ) : null}
-              </div>
+            <div className="grid gap-5 md:grid-cols-2">
+              <SectionTitle
+                title="Informações do produto"
+                description="Nome, descrição e categoria que o cliente verá na loja."
+              />
 
-              {form.id ? (
-                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-                  <div>
-                    <dt className="text-xs text-muted-foreground">SKU do produto</dt>
-                    <dd className="mt-1 font-mono font-medium text-foreground">{form.assignedSku}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">Slug</dt>
-                    <dd className="mt-1 font-mono font-medium text-foreground">/{form.assignedSlug}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">SKU da variante</dt>
-                    <dd className="mt-1 font-mono font-medium text-foreground">{form.assignedVariantSku}</dd>
-                  </div>
-                </dl>
-              ) : (
-                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                  O sistema mantém 20 reservas livres para produtos futuros e repõe automaticamente uma nova reserva sempre que uma é usada.
-                </p>
-              )}
-            </div>
-
-            <div className="mt-6 grid gap-5 md:grid-cols-2">
-              <label className="text-sm font-medium text-foreground md:col-span-2">
+              <label className="text-sm font-semibold text-gray-800 md:col-span-2">
                 Nome
                 <input
                   required
                   value={form.name}
                   onChange={(event) => updateField("name", event.target.value)}
                   className={fieldClassName()}
-                  placeholder="Ex.: Camisa Brasil Torcedor 2026"
+                  placeholder="Ex.: Camisa Real Madrid I 2026/27"
                 />
               </label>
 
-              <label className="text-sm font-medium text-foreground">
-                Preço
-                <input
-                  required
-                  inputMode="decimal"
-                  value={form.price}
-                  onChange={(event) => updateField("price", event.target.value)}
-                  className={fieldClassName()}
-                  placeholder="199,90"
+              <label className="text-sm font-semibold text-gray-800 md:col-span-2">
+                Descrição
+                <textarea
+                  value={form.description}
+                  onChange={(event) => updateField("description", event.target.value)}
+                  className={textareaClassName()}
+                  placeholder="Descreva o produto de forma objetiva."
                 />
               </label>
 
-              <label className="text-sm font-medium text-foreground">
-                Preço promocional
-                <input
-                  inputMode="decimal"
-                  value={form.promotionalPrice}
-                  onChange={(event) => updateField("promotionalPrice", event.target.value)}
-                  className={fieldClassName()}
-                  placeholder="Opcional"
-                />
-              </label>
-
-              <label className="text-sm font-medium text-foreground">
-                Status
-                <select
-                  value={form.status}
-                  onChange={(event) => updateField("status", event.target.value as AdminProductStatus)}
-                  className={fieldClassName()}
-                >
-                  <option value="draft">Rascunho</option>
-                  <option value="active">Ativo</option>
-                  <option value="inactive">Inativo</option>
-                  <option value="archived">Arquivado</option>
-                </select>
-              </label>
-
-              <label className="text-sm font-medium text-foreground">
+              <label className="text-sm font-semibold text-gray-800 md:col-span-2">
                 Categoria principal
                 <select
                   value={form.primaryCategoryId}
@@ -476,38 +495,151 @@ export function ProductAdmin() {
                 </select>
               </label>
 
-              <label className="text-sm font-medium text-foreground">
-                Campeonato
-                <input
-                  value={form.campeonato}
-                  onChange={(event) => updateField("campeonato", event.target.value)}
+              <div className="md:col-span-2 my-1 border-t border-gray-100" />
+              <SectionTitle
+                title="Classificação esportiva"
+                description="Use apenas as opções prontas. Isso evita produtos duplicados em filtros por erro de digitação."
+              />
+
+              <label className="text-sm font-semibold text-gray-800">
+                Tipo
+                <select
+                  required
+                  value={form.contextType}
+                  onChange={(event) =>
+                    handleContextChange(event.target.value as ProductContextType | "")
+                  }
                   className={fieldClassName()}
-                  placeholder="Ex.: Brasileirão"
-                />
+                >
+                  <option value="">Selecione</option>
+                  {PRODUCT_CONTEXT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </label>
 
-              <label className="text-sm font-medium text-foreground">
-                Liga
-                <input
-                  value={form.liga}
-                  onChange={(event) => updateField("liga", event.target.value)}
-                  className={fieldClassName()}
-                  placeholder="Ex.: Premier League"
-                />
+              <label className="text-sm font-semibold text-gray-800">
+                Competição
+                <select
+                  required={Boolean(form.contextType && form.contextType !== "other")}
+                  disabled={!form.contextType || form.contextType === "other"}
+                  value={form.contextType === "other" ? "" : form.competition}
+                  onChange={(event) => handleCompetitionChange(event.target.value)}
+                  className={`${fieldClassName()} disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400`}
+                >
+                  <option value="">
+                    {form.contextType === "other" ? "Não se aplica" : "Selecione"}
+                  </option>
+                  {legacyCompetition ? (
+                    <option value={form.competition}>{form.competition} (cadastro antigo)</option>
+                  ) : null}
+                  {availableCompetitions.map((option) => (
+                    <option key={option.label} value={option.label}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </label>
 
-              <label className="text-sm font-medium text-foreground">
+              <label className="text-sm font-semibold text-gray-800">
                 Time / seleção
-                <input
-                  value={form.time}
+                <select
+                  required={Boolean(form.contextType && form.contextType !== "other")}
+                  disabled={
+                    !form.contextType ||
+                    form.contextType === "other" ||
+                    !form.competition
+                  }
+                  value={form.contextType === "other" ? "" : form.time}
                   onChange={(event) => updateField("time", event.target.value)}
+                  className={`${fieldClassName()} disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400`}
+                >
+                  <option value="">
+                    {form.contextType === "other" ? "Não se aplica" : "Selecione"}
+                  </option>
+                  {legacyTeam ? (
+                    <option value={form.time}>{form.time} (cadastro antigo)</option>
+                  ) : null}
+                  {availableTeams.map((team) => (
+                    <option key={team} value={team}>
+                      {team}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="text-sm font-semibold text-gray-800">
+                Temporada
+                <select
+                  value={form.season}
+                  onChange={(event) => updateField("season", event.target.value)}
                   className={fieldClassName()}
-                  placeholder="Ex.: Brasil"
+                >
+                  <option value="">Sem temporada</option>
+                  {legacySeason ? (
+                    <option value={form.season}>{form.season} (cadastro antigo)</option>
+                  ) : null}
+                  {PRODUCT_SEASON_OPTIONS.map((season) => (
+                    <option key={season} value={season}>
+                      {season}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="md:col-span-2 my-1 border-t border-gray-100" />
+              <SectionTitle
+                title="Preço e publicação"
+                description="Defina quanto custa e se o produto já pode aparecer na loja."
+              />
+
+              <label className="text-sm font-semibold text-gray-800">
+                Preço
+                <input
+                  required
+                  inputMode="decimal"
+                  value={form.price}
+                  onChange={(event) => updateField("price", event.target.value)}
+                  className={fieldClassName()}
+                  placeholder="199,90"
                 />
               </label>
 
-              <label className="text-sm font-medium text-foreground">
-                Nome da variante padrão
+              <label className="text-sm font-semibold text-gray-800">
+                Preço promocional
+                <input
+                  inputMode="decimal"
+                  value={form.promotionalPrice}
+                  onChange={(event) => updateField("promotionalPrice", event.target.value)}
+                  className={fieldClassName()}
+                  placeholder="Opcional"
+                />
+              </label>
+
+              <label className="text-sm font-semibold text-gray-800 md:col-span-2">
+                Situação
+                <select
+                  value={form.status}
+                  onChange={(event) => updateField("status", event.target.value as AdminProductStatus)}
+                  className={fieldClassName()}
+                >
+                  <option value="draft">Rascunho</option>
+                  <option value="active">Ativo na loja</option>
+                  <option value="inactive">Inativo</option>
+                  <option value="archived">Arquivado</option>
+                </select>
+              </label>
+
+              <div className="md:col-span-2 my-1 border-t border-gray-100" />
+              <SectionTitle
+                title="Variação e envio"
+                description="Informações usadas na preparação e no cálculo do frete."
+              />
+
+              <label className="text-sm font-semibold text-gray-800">
+                Variação
                 <input
                   value={form.variantName}
                   onChange={(event) => updateField("variantName", event.target.value)}
@@ -516,18 +648,31 @@ export function ProductAdmin() {
                 />
               </label>
 
-              <label className="text-sm font-medium text-foreground">
+              <label className="text-sm font-semibold text-gray-800">
+                Quantidade disponível
+                <input
+                  required
+                  inputMode="numeric"
+                  value={form.stockQuantity}
+                  onChange={(event) => updateField("stockQuantity", event.target.value)}
+                  className={fieldClassName()}
+                />
+              </label>
+
+              <label className="text-sm font-semibold text-gray-800">
                 Peso (g)
                 <input
                   inputMode="decimal"
                   value={form.weightGrams}
                   onChange={(event) => updateField("weightGrams", event.target.value)}
                   className={fieldClassName()}
-                  placeholder="Opcional nesta etapa"
+                  placeholder="Ex.: 300"
                 />
               </label>
 
-              <label className="text-sm font-medium text-foreground">
+              <div className="hidden md:block" />
+
+              <label className="text-sm font-semibold text-gray-800">
                 Comprimento (cm)
                 <input
                   inputMode="decimal"
@@ -537,7 +682,7 @@ export function ProductAdmin() {
                 />
               </label>
 
-              <label className="text-sm font-medium text-foreground">
+              <label className="text-sm font-semibold text-gray-800">
                 Largura (cm)
                 <input
                   inputMode="decimal"
@@ -547,7 +692,7 @@ export function ProductAdmin() {
                 />
               </label>
 
-              <label className="text-sm font-medium text-foreground">
+              <label className="text-sm font-semibold text-gray-800">
                 Altura (cm)
                 <input
                   inputMode="decimal"
@@ -557,43 +702,34 @@ export function ProductAdmin() {
                 />
               </label>
 
-              <label className="text-sm font-medium text-foreground md:col-span-2">
-                Descrição
-                <textarea
-                  value={form.description}
-                  onChange={(event) => updateField("description", event.target.value)}
-                  className={textareaClassName()}
-                />
-              </label>
+              <div className="hidden md:block" />
 
-              <label className="text-sm font-medium text-foreground md:col-span-2">
+              <label className="text-sm font-semibold text-gray-800 md:col-span-2">
                 Especificações
                 <textarea
                   value={form.specifications}
                   onChange={(event) => updateField("specifications", event.target.value)}
                   className={textareaClassName()}
+                  placeholder="Ex.: tecido, modelagem, detalhes da peça..."
                 />
               </label>
             </div>
 
-            <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/20 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-              Imagens reais/R2 não são carregadas nesta etapa. A infraestrutura de imagens permanece preparada para a carga definitiva posterior.
+            <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+              As fotos do produto serão adicionadas na etapa de imagens do catálogo.
             </div>
 
             {errorMessage ? (
-              <div
-                role="alert"
-                className="mt-5 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-              >
+              <div role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {errorMessage}
               </div>
             ) : null}
 
-            <div className="mt-6 flex flex-wrap gap-3 border-t border-border pt-5">
+            <div className="mt-6 flex flex-wrap gap-3 border-t border-gray-200 pt-5">
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving ? "Salvando..." : form.id ? "Salvar alterações" : "Criar produto"}
               </button>
@@ -601,7 +737,7 @@ export function ProductAdmin() {
                 type="button"
                 disabled={saving}
                 onClick={cancelEditing}
-                className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
               >
                 Cancelar
               </button>
@@ -610,63 +746,64 @@ export function ProductAdmin() {
         </form>
       ) : null}
 
-      <div className="mt-7 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-7 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-gray-200 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="font-semibold text-foreground">Catálogo administrativo</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {products.length} produto{products.length === 1 ? "" : "s"} no banco
+            <h3 className="font-bold text-gray-950">Catálogo</h3>
+            <p className="mt-1 text-xs text-gray-500">
+              {products.length} produto{products.length === 1 ? "" : "s"} cadastrado{products.length === 1 ? "" : "s"}
             </p>
           </div>
           <input
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar nome, SKU, time ou liga..."
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/20 sm:max-w-sm"
+            placeholder="Buscar por nome, categoria, time ou competição..."
+            className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/10 sm:max-w-sm"
           />
         </div>
 
         {loading ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">Carregando catálogo...</div>
+          <div className="p-8 text-center text-sm text-gray-500">Carregando catálogo...</div>
         ) : filteredProducts.length === 0 ? (
           <div className="p-10 text-center">
-            <p className="font-medium text-foreground">
+            <p className="font-semibold text-gray-950">
               {products.length === 0 ? "Nenhum produto cadastrado" : "Nenhum resultado encontrado"}
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-gray-500">
               {products.length === 0
-                ? "O catálogo está limpo e pronto para os produtos reais quando chegar a fase de carga."
+                ? "Cadastre o primeiro produto quando estiver pronto."
                 : "Tente outro termo de busca."}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-gray-100">
             {filteredProducts.map((product) => {
               const currentPrice = product.promotional_price ?? product.price;
+              const competition = product.liga ?? product.campeonato;
               return (
                 <article
                   key={product.id}
-                  className="grid gap-4 p-5 transition-colors hover:bg-muted/20 lg:grid-cols-[minmax(0,1.6fr)_minmax(180px,.7fr)_auto] lg:items-center"
+                  className="grid gap-4 p-5 transition-colors hover:bg-gray-50 lg:grid-cols-[minmax(0,1.6fr)_minmax(180px,.7fr)_auto] lg:items-center"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="truncate font-semibold text-foreground">{product.name}</h4>
+                      <h4 className="truncate font-bold text-gray-950">{product.name}</h4>
                       <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusClassName(product.status)}`}>
                         {statusLabel(product.status)}
                       </span>
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span className="font-mono">{product.sku}</span>
-                      <span className="font-mono">/{product.slug}</span>
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
                       <span>{product.category ?? "Sem categoria"}</span>
+                      {competition ? <span>{competition}</span> : null}
+                      {product.time ? <span>{product.time}</span> : null}
                     </div>
                   </div>
 
                   <div className="text-sm">
-                    <p className="font-semibold text-foreground">{formatMoney(currentPrice)}</p>
+                    <p className="font-bold text-gray-950">{formatMoney(currentPrice)}</p>
                     {product.promotional_price !== null ? (
-                      <p className="text-xs text-muted-foreground line-through">{formatMoney(product.price)}</p>
+                      <p className="text-xs text-gray-500 line-through">{formatMoney(product.price)}</p>
                     ) : null}
                     <p className="mt-1 text-xs font-medium text-emerald-700">
                       Produção sob encomenda
@@ -677,7 +814,7 @@ export function ProductAdmin() {
                     <button
                       type="button"
                       onClick={() => startEditing(product)}
-                      className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+                      className="inline-flex h-9 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-xs font-bold text-gray-700 transition hover:bg-gray-50"
                     >
                       Editar
                     </button>
@@ -685,7 +822,7 @@ export function ProductAdmin() {
                       type="button"
                       disabled={product.status === "archived"}
                       onClick={() => setArchiveTarget(product)}
-                      className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex h-9 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-xs font-bold text-gray-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       Arquivar
                     </button>
@@ -705,8 +842,8 @@ export function ProductAdmin() {
         title="Arquivar produto?"
         description={
           archiveTarget
-            ? `“${archiveTarget.name}” deixará de aparecer no catálogo público, mas continuará preservado no banco e no histórico administrativo.`
-            : "O produto deixará de aparecer no catálogo público."
+            ? `“${archiveTarget.name}” deixará de aparecer na loja, mas continuará disponível no histórico administrativo.`
+            : "O produto deixará de aparecer na loja."
         }
         confirmLabel="Arquivar produto"
         cancelLabel="Manter produto"

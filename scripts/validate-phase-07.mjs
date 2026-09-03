@@ -10,6 +10,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const adminRoute = read("src/routes/admin.tsx");
 const adminUi = read("src/components/admin/ProductAdmin.tsx");
 const adminLib = read("src/lib/admin-products.ts");
+const taxonomy = read("src/lib/product-taxonomy.ts");
 const auth = read("src/lib/auth.tsx");
 const phase02 = read(
   "supabase/migrations/20260831233500_phase_02_definitive_product_model.sql",
@@ -78,34 +79,55 @@ const checks = [
       /has_role\('owner'::public\.app_role\)/.test(phase07Identity),
   ],
   [
-    "sku slug e sku da variante sao alocados automaticamente",
+    "sku slug e sku da variante continuam automaticos",
     /allocateProductIdentity/.test(adminLib) &&
       /sku: identity\.product_sku/.test(adminLib) &&
       /slug: identity\.product_slug/.test(adminLib) &&
       /sku: identity\.default_variant_sku/.test(adminLib),
   ],
   [
-    "formulario nao exige digitacao de sku ou slug",
-    /Você não precisa preencher SKU ou slug/.test(adminUi) &&
-      /Reserva atribuída ao criar/.test(adminUi),
+    "formulario nao expoe identificadores tecnicos",
+    !/SKU do produto|SKU da variante|Reserva atribuída ao criar|Fase 07/.test(adminUi),
   ],
   [
-    "formulario inclui precificacao e status",
-    /Preço promocional/.test(adminUi) && /Status/.test(adminUi),
+    "formulario inclui precificacao e situacao",
+    /Preço promocional/.test(adminUi) && /Situação/.test(adminUi),
   ],
   [
-    "formulario inclui categoria e contexto esportivo",
-    /Categoria principal/.test(adminUi) &&
-      /Campeonato/.test(adminUi) &&
-      /Time \/ seleção/.test(adminUi),
+    "classificacao esportiva usa selecoes controladas",
+    /PRODUCT_CONTEXT_OPTIONS/.test(adminUi) &&
+      /getCompetitionOptionsForContext/.test(adminUi) &&
+      /Time \/ seleção/.test(adminUi) &&
+      /Temporada/.test(adminUi) &&
+      /<select/.test(adminUi),
+  ],
+  [
+    "taxonomia contem ligas campeonatos e selecoes canonicas",
+    /La Liga/.test(taxonomy) &&
+      /Premier League/.test(taxonomy) &&
+      /Champions League/.test(taxonomy) &&
+      /Copa do Mundo/.test(taxonomy) &&
+      /Real Madrid/.test(taxonomy) &&
+      /Brasil/.test(taxonomy),
+  ],
+  [
+    "competicao decide campo interno sem digitacao livre",
+    /storageField: "liga"/.test(taxonomy) &&
+      /storageField: "campeonato"/.test(taxonomy) &&
+      /if \(storageField === "liga"\) liga = form\.competition/.test(adminUi),
+  ],
+  [
+    "temporada e armazenada sem nova tabela",
+    /mergeSeasonIntoSpecifications/.test(adminUi) &&
+      /Temporada:/.test(taxonomy),
   ],
   [
     "formulario inclui peso e dimensoes",
     /Peso \(g\)/.test(adminUi) && /Comprimento \(cm\)/.test(adminUi),
   ],
   [
-    "carga definitiva de imagens continua fora da fase 07",
-    /Imagens reais\/R2 não são carregadas nesta etapa/.test(adminUi),
+    "carga definitiva de imagens continua separada",
+    /fotos do produto serão adicionadas na etapa de imagens do catálogo/i.test(adminUi),
   ],
 ];
 
