@@ -11,6 +11,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import type { AccountSection } from "@/components/account/AccountDashboard";
+import { AccountSecurityPanel } from "@/components/account/AccountSecurityPanel";
 import {
   fetchCustomerAccount,
   type CustomerAddress,
@@ -190,19 +191,7 @@ export function AccountOverview({
               ))}
             </div>
 
-            <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5 sm:p-6">
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-gray-100 text-gray-700">
-                  <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <div>
-                  <h2 className="font-bold text-gray-950">Segurança da conta</h2>
-                  <p className="mt-1 text-sm leading-6 text-gray-600">
-                    Senha, recuperação de acesso e verificação em duas etapas ficam vinculadas ao seu login.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <AccountSecurityPanel email={email} />
           </section>
 
           <aside className="h-fit rounded-xl border border-gray-200 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
