@@ -65,6 +65,37 @@ export function formatTransitLabel(quote: ShippingQuote) {
   return businessDaysLabel(quote.transitBusinessDays);
 }
 
+function edgeShippingUrl() {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+  return supabaseUrl ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/shipping-quote` : null;
+}
+
+async function postShippingQuote(url: string, body: string) {
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body,
+  });
+}
+
+async function shippingResponse(body: string) {
+  const edgeUrl = edgeShippingUrl();
+
+  if (edgeUrl) {
+    try {
+      const edgeResponse = await postShippingQuote(edgeUrl, body);
+      if (edgeResponse.status < 500) return edgeResponse;
+    } catch {
+      // Durante a migração, o Worker antigo continua disponível como fallback.
+    }
+  }
+
+  return postShippingQuote("/api/shipping/quote", body);
+}
+
 export async function requestShippingQuotes(
   postalCode: string,
   cart: CartItem[],
@@ -79,21 +110,15 @@ export async function requestShippingQuotes(
     throw new Error("Adicione um produto ao carrinho para calcular o frete.");
   }
 
-  const response = await fetch("/api/shipping/quote", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json",
-    },
-    body: JSON.stringify({
-      postalCode: normalizedPostalCode,
-      items: cart.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
-    }),
+  const requestBody = JSON.stringify({
+    postalCode: normalizedPostalCode,
+    items: cart.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+    })),
   });
 
+  const response = await shippingResponse(requestBody);
   const rawBody = await response.text();
   let payload: ShippingErrorPayload | null = null;
 
