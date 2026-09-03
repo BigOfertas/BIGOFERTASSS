@@ -91,6 +91,58 @@ async function readAuthResponse(response: Response) {
   }
 }
 
+function authEdgeUrl() {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+  return supabaseUrl
+    ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/auth-email-2fa`
+    : null;
+}
+
+async function postAuthRequest(
+  url: string,
+  body: Record<string, unknown>,
+  authorization?: string,
+) {
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      ...(authorization ? { authorization } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+async function authBackendRequest(input: {
+  action:
+    | "password-login"
+    | "password-login-verify-2fa"
+    | "enroll-start"
+    | "enroll-verify";
+  legacyPath: string;
+  body?: Record<string, unknown>;
+  authorization?: string;
+}) {
+  const body = input.body ?? {};
+  const edgeUrl = authEdgeUrl();
+
+  if (edgeUrl) {
+    try {
+      const edgeResponse = await postAuthRequest(
+        edgeUrl,
+        { action: input.action, ...body },
+        input.authorization,
+      );
+      if (edgeResponse.status < 500) return edgeResponse;
+    } catch {
+      // Durante a migração, o Worker antigo continua disponível como fallback.
+    }
+  }
+
+  return postAuthRequest(input.legacyPath, body, input.authorization);
+}
+
 function readPasswordSession(payload: Record<string, unknown> | null) {
   const session = payload?.["session"];
   if (!session || typeof session !== "object" || Array.isArray(session)) return null;
@@ -231,13 +283,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signIn(email: string, password: string): Promise<SignInResult> {
     let response: Response;
     try {
-      response = await fetch("/api/auth/password-login", {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({ email: email.trim(), password }),
+      response = await authBackendRequest({
+        action: "password-login",
+        legacyPath: "/api/auth/password-login",
+        body: { email: email.trim(), password },
       });
     } catch {
       return {
@@ -311,18 +360,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<AuthActionResult> {
     let response: Response;
     try {
-      response = await fetch("/api/auth/password-login/verify-2fa", {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
+      response = await authBackendRequest({
+        action: "password-login-verify-2fa",
+        legacyPath: "/api/auth/password-login/verify-2fa",
+        body: {
           email: email.trim(),
           password,
           challengeId,
           code: code.trim(),
-        }),
+        },
       });
     } catch {
       return { error: authRequestError("Não foi possível confirmar o código agora.") };
