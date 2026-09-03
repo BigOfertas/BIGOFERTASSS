@@ -1,5 +1,9 @@
 const INFINITEPAY_PAYMENT_CHECK_URL = "https://api.checkout.infinitepay.io/payment_check";
 
+declare const EdgeRuntime: {
+  waitUntil(promise: Promise<unknown>): void;
+};
+
 class PaymentError extends Error {
   constructor(
     message: string,
@@ -212,6 +216,27 @@ async function recordPayment(
   }
 }
 
+async function triggerEmailProcessor() {
+  const supabaseUrl = environment("SUPABASE_URL").replace(/\/$/, "");
+  const serviceRoleKey = environment("SUPABASE_SERVICE_ROLE_KEY");
+  const upstream = await fetch(`${supabaseUrl}/functions/v1/notifications-process`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${serviceRoleKey}`,
+      apikey: serviceRoleKey,
+      accept: "application/json",
+    },
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  const body = await upstream.text().catch(() => "");
+  if (!upstream.ok) {
+    console.error(
+      `[notification-email-trigger] ${JSON.stringify({ status: upstream.status, body: body.slice(0, 300) })}`,
+    );
+  }
+}
+
 Deno.serve(async (request) => {
   try {
     if (request.method !== "POST") {
@@ -251,6 +276,9 @@ Deno.serve(async (request) => {
       order.payment_provider?.toLowerCase() === "infinitepay" &&
       order.payment_reference === transactionNsu
     ) {
+      EdgeRuntime.waitUntil(triggerEmailProcessor().catch((error) => {
+        console.error("[notification-email-trigger]", error);
+      }));
       return response({ success: true, message: null });
     }
 
@@ -271,6 +299,10 @@ Deno.serve(async (request) => {
       verification.method,
       verification.amountInCents / 100,
     );
+
+    EdgeRuntime.waitUntil(triggerEmailProcessor().catch((error) => {
+      console.error("[notification-email-trigger]", error);
+    }));
 
     console.info(
       `[infinitepay-webhook-edge] ${JSON.stringify({
