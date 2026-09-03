@@ -13,6 +13,49 @@ type CheckoutErrorPayload = {
   code?: unknown;
 };
 
+function edgeCheckoutUrl() {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+  return supabaseUrl
+    ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/checkout-start`
+    : null;
+}
+
+async function postCheckout(
+  url: string,
+  accessToken: string,
+  body: string,
+) {
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      accept: "application/json",
+      "content-type": "application/json",
+    },
+    body,
+  });
+}
+
+async function checkoutResponse(accessToken: string, body: string) {
+  const edgeUrl = edgeCheckoutUrl();
+
+  if (edgeUrl) {
+    try {
+      const edgeResponse = await postCheckout(edgeUrl, accessToken, body);
+
+      // O Worker antigo existe apenas como rede de segurança durante a migração.
+      // Não repetimos uma compra quando o novo backend respondeu com um erro normal.
+      if (edgeResponse.status !== 404 && edgeResponse.status !== 503) {
+        return edgeResponse;
+      }
+    } catch {
+      // Falha de rede na Edge Function: usa temporariamente o endpoint antigo.
+    }
+  }
+
+  return postCheckout("/api/checkout/start", accessToken, body);
+}
+
 export async function startInfinitePayCheckout(input: {
   addressId: string;
   shippingServiceId: number;
@@ -37,20 +80,17 @@ export async function startInfinitePayCheckout(input: {
     };
   });
 
-  const response = await fetch("/api/checkout/start", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${data.session.access_token}`,
-      accept: "application/json",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      addressId: input.addressId,
-      shippingServiceId: input.shippingServiceId,
-      idempotencyKey: input.idempotencyKey,
-      items,
-    }),
+  const requestBody = JSON.stringify({
+    addressId: input.addressId,
+    shippingServiceId: input.shippingServiceId,
+    idempotencyKey: input.idempotencyKey,
+    items,
   });
+
+  const response = await checkoutResponse(
+    data.session.access_token,
+    requestBody,
+  );
 
   let payload: (CheckoutStartResult & CheckoutErrorPayload) | null = null;
   try {
