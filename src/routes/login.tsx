@@ -1,5 +1,13 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, Eye, EyeOff, KeyRound, Loader2, MailCheck, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
+  MailCheck,
+  ShieldCheck,
+} from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { useAuth } from "@/lib/auth";
@@ -7,6 +15,14 @@ import { useAuth } from "@/lib/auth";
 export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
+
+function Brand() {
+  return (
+    <Link to="/" className="text-2xl font-black italic tracking-tight text-foreground">
+      <span className="text-red-600">BIG</span>ofertas
+    </Link>
+  );
+}
 
 function LoginPage() {
   const {
@@ -32,7 +48,6 @@ function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     if (submitting) return;
 
     setErrorMessage("");
@@ -64,6 +79,7 @@ function LoginPage() {
 
     setErrorMessage("");
     setVerifyingCode(true);
+
     const { error } = await verifySignInTwoFactor(
       email.trim(),
       password,
@@ -71,10 +87,7 @@ function LoginPage() {
       normalizedCode,
     );
 
-    if (error) {
-      setErrorMessage(error.message);
-    }
-
+    if (error) setErrorMessage(error.message);
     setVerifyingCode(false);
   }
 
@@ -91,9 +104,7 @@ function LoginPage() {
 
     setErrorMessage("");
     setSigningOut(true);
-
     const { error } = await signOut();
-
     if (error) setErrorMessage(error.message);
     setSigningOut(false);
   }
@@ -114,17 +125,11 @@ function LoginPage() {
       <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
-            <Link to="/" className="text-2xl font-black italic tracking-tight text-foreground">
-              <span className="text-red-600">BIG</span>ofertas
-            </Link>
-
+            <Brand />
             <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">
               Sua conta
             </h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Você já está conectado.
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">Você já está conectado.</p>
           </div>
 
           <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
@@ -137,21 +142,12 @@ function LoginPage() {
               </p>
             </div>
 
-            {isOwner ? (
-              <Link
-                to="/admin"
-                className="inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99]"
-              >
-                Abrir painel administrativo
-              </Link>
-            ) : (
-              <Link
-                to="/conta"
-                className="inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99]"
-              >
-                Abrir minha conta
-              </Link>
-            )}
+            <Link
+              to={isOwner ? "/admin" : "/conta"}
+              className="inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99]"
+            >
+              {isOwner ? "Abrir painel administrativo" : "Abrir minha conta"}
+            </Link>
 
             <Link
               to="/"
@@ -199,9 +195,7 @@ function LoginPage() {
       <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7] px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
-            <Link to="/" className="text-2xl font-black italic tracking-tight text-foreground">
-              <span className="text-red-600">BIG</span>ofertas
-            </Link>
+            <Brand />
           </div>
 
           <form
@@ -216,7 +210,8 @@ function LoginPage() {
                 Verificação em duas etapas
               </h1>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Sua senha foi confirmada. Enviamos um código de segurança para <strong className="text-foreground">{maskedEmail}</strong>.
+                Sua senha foi confirmada. Enviamos um código de segurança para{" "}
+                <strong className="text-foreground">{maskedEmail}</strong>.
               </p>
             </div>
 
@@ -291,17 +286,9 @@ function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7] px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <Link to="/" className="text-2xl font-black italic tracking-tight text-foreground">
-            <span className="text-red-600">BIG</span>ofertas
-          </Link>
-
-          <h1 className="mt-6 text-2xl font-bold tracking-tight text-foreground">
-            Entrar
-          </h1>
-
-          <p className="mt-2 text-sm text-muted-foreground">
-            Acesse sua conta para continuar.
-          </p>
+          <Brand />
+          <h1 className="mt-6 text-2xl font-bold tracking-tight text-foreground">Entrar</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Acesse sua conta para continuar.</p>
         </div>
 
         <form
@@ -313,7 +300,6 @@ function LoginPage() {
             <label htmlFor="email" className="text-sm font-medium text-foreground">
               E-mail
             </label>
-
             <input
               id="email"
               type="email"
@@ -331,9 +317,17 @@ function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium text-foreground">
-              Senha
-            </label>
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="password" className="text-sm font-medium text-foreground">
+                Senha
+              </label>
+              <Link
+                to="/esqueci-senha"
+                className="text-xs font-semibold text-red-600 underline-offset-4 transition hover:text-red-700 hover:underline"
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
 
             <div className="relative">
               <input
