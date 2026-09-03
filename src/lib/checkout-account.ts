@@ -5,6 +5,7 @@ import {
   isValidBrazilianPhone,
   onlyDigits,
 } from "@/lib/brasil";
+import { getUserFacingError } from "@/lib/user-facing-error";
 
 export type CheckoutPersonType = "individual" | "business";
 
@@ -75,10 +76,12 @@ export function isCheckoutIdentityComplete(identity: CheckoutIdentity | null) {
 
 export async function fetchCheckoutIdentity() {
   const { data, error } = await checkoutIdentityRpc.rpc("get_my_checkout_identity");
-  if (error) throw new Error(error.message || "Não foi possível carregar seus dados.");
+  if (error) {
+    throw new Error(getUserFacingError(error, "Não foi possível carregar seus dados."));
+  }
 
   const identity = data?.[0];
-  if (!identity) throw new Error("Dados da conta não encontrados.");
+  if (!identity) throw new Error("Não foi possível localizar os dados da sua conta.");
   return identity;
 }
 
@@ -128,8 +131,10 @@ export async function saveCheckoutIdentity(input: CheckoutIdentityInput) {
     },
   );
 
-  if (error) throw new Error(error.message || "Não foi possível salvar seus dados.");
+  if (error) {
+    throw new Error(getUserFacingError(error, "Não foi possível salvar seus dados."));
+  }
   const identity = data?.[0];
-  if (!identity) throw new Error("Os dados salvos não foram confirmados.");
+  if (!identity) throw new Error("Não foi possível confirmar os dados salvos.");
   return identity;
 }

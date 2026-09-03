@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getUserFacingError } from "@/lib/user-facing-error";
 
 export type AccountSecurityStatus = {
   email_2fa_enabled: boolean;
@@ -45,10 +46,13 @@ async function authenticatedRequest(path: string, body?: unknown) {
   }
 
   if (!response.ok) {
+    const message =
+      payload && typeof payload["error"] === "string" ? payload["error"] : undefined;
     throw new Error(
-      payload && typeof payload["error"] === "string"
-        ? payload["error"]
-        : "Não foi possível concluir a verificação de segurança agora.",
+      getUserFacingError(
+        message,
+        "Não foi possível concluir a verificação de segurança agora.",
+      ),
     );
   }
 
@@ -58,12 +62,17 @@ async function authenticatedRequest(path: string, body?: unknown) {
 export async function fetchAccountSecurityStatus() {
   const result = await securityRpc.rpc("get_my_security_status");
   if (result.error) {
-    throw new Error(result.error.message || "Não foi possível carregar a segurança da conta.");
+    throw new Error(
+      getUserFacingError(
+        result.error,
+        "Não foi possível carregar as opções de segurança da conta.",
+      ),
+    );
   }
 
   const status = result.data?.[0];
   if (!status) {
-    throw new Error("Configurações de segurança não encontradas.");
+    throw new Error("Não foi possível carregar as opções de segurança da conta.");
   }
 
   return status;
@@ -72,7 +81,7 @@ export async function fetchAccountSecurityStatus() {
 export async function dismissEmailTwoFactorPrompt() {
   const result = await securityRpc.rpc("dismiss_my_email_2fa_prompt");
   if (result.error) {
-    throw new Error(result.error.message || "Não foi possível salvar sua escolha.");
+    throw new Error(getUserFacingError(result.error, "Não foi possível salvar sua escolha."));
   }
 }
 
@@ -88,7 +97,7 @@ export async function startEmailTwoFactorEnrollment() {
     typeof payload["maskedEmail"] !== "string" ||
     typeof payload["expiresAt"] !== "string"
   ) {
-    throw new Error("A resposta da verificação de segurança foi inválida.");
+    throw new Error("Não foi possível iniciar a verificação em duas etapas. Tente novamente.");
   }
 
   return {
@@ -109,6 +118,6 @@ export async function verifyEmailTwoFactorEnrollment(
   });
 
   if (payload["enabled"] !== true) {
-    throw new Error("Não foi possível confirmar a ativação da verificação em duas etapas.");
+    throw new Error("Não foi possível ativar a verificação em duas etapas. Tente novamente.");
   }
 }

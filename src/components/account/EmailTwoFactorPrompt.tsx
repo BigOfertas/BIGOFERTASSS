@@ -7,6 +7,7 @@ import {
   startEmailTwoFactorEnrollment,
   verifyEmailTwoFactorEnrollment,
 } from "@/lib/account-security";
+import { getUserFacingError } from "@/lib/user-facing-error";
 
 type PromptMode = "prompt" | "code" | "success";
 
@@ -32,7 +33,7 @@ export function EmailTwoFactorPrompt() {
         );
       })
       .catch((error) => {
-        console.error("Failed to load account security prompt:", error);
+        console.error("Falha ao carregar a sugestão de segurança da conta:", error);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -51,9 +52,7 @@ export function EmailTwoFactorPrompt() {
       await dismissEmailTwoFactorPrompt();
       setVisible(false);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Não foi possível salvar sua escolha.",
-      );
+      setErrorMessage(getUserFacingError(error, "Não foi possível salvar sua escolha."));
     } finally {
       setBusy(false);
     }
@@ -76,11 +75,7 @@ export function EmailTwoFactorPrompt() {
       setCode("");
       setMode("code");
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível enviar o código agora.",
-      );
+      setErrorMessage(getUserFacingError(error, "Não foi possível enviar o código agora."));
     } finally {
       setBusy(false);
     }
@@ -96,11 +91,7 @@ export function EmailTwoFactorPrompt() {
       await verifyEmailTwoFactorEnrollment(challengeId, normalizedCode);
       setMode("success");
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível confirmar o código agora.",
-      );
+      setErrorMessage(getUserFacingError(error, "Não foi possível confirmar o código agora."));
     } finally {
       setBusy(false);
     }
@@ -179,7 +170,7 @@ export function EmailTwoFactorPrompt() {
                   className="inline-flex h-12 items-center justify-center rounded-xl bg-red-600 px-5 text-sm font-black text-white transition hover:bg-red-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
-                  Ativar 2FA
+                  Ativar verificação em duas etapas
                 </button>
                 <button
                   type="button"

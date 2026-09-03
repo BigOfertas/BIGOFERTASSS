@@ -1,6 +1,7 @@
 import type { Json, Tables } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { buildR2PublicImageUrl } from "@/lib/product-images";
+import { getUserFacingError } from "@/lib/user-facing-error";
 
 export type Order = Tables<"orders">;
 export type OrderItem = Tables<"order_items">;
@@ -97,7 +98,7 @@ export const REFUND_REASON_LABELS: Record<RefundReason, string> = {
 };
 
 function throwIfError(error: RpcError | null, fallback: string) {
-  if (error) throw new Error(error.message || fallback);
+  if (error) throw new Error(getUserFacingError(error, fallback));
 }
 
 export function getOrderDisplayStatus(
@@ -161,8 +162,16 @@ async function fetchOrderRelations(orderIds: string[]) {
       .order("created_at", { ascending: false }),
   ]);
 
-  if (itemsResult.error) throw itemsResult.error;
-  if (refundsResult.error) throw refundsResult.error;
+  if (itemsResult.error) {
+    throw new Error(
+      getUserFacingError(itemsResult.error, "Não foi possível carregar os itens do pedido."),
+    );
+  }
+  if (refundsResult.error) {
+    throw new Error(
+      getUserFacingError(refundsResult.error, "Não foi possível carregar as informações do pedido."),
+    );
+  }
 
   return {
     items: itemsResult.data ?? [],
@@ -177,7 +186,9 @@ export async function fetchMyOrders(): Promise<OrderSummary[]> {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  if (error) throw error;
+  if (error) {
+    throw new Error(getUserFacingError(error, "Não foi possível carregar seus pedidos."));
+  }
 
   const orders = data ?? [];
   const relations = await fetchOrderRelations(orders.map((order) => order.id));
@@ -215,7 +226,9 @@ export async function fetchOrderDetail(
     .eq("public_number", normalizedNumber)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    throw new Error(getUserFacingError(error, "Não foi possível carregar este pedido."));
+  }
   if (!order) return null;
 
   const [relations, timelineResult] = await Promise.all([
@@ -227,7 +240,11 @@ export async function fetchOrderDetail(
       .order("created_at", { ascending: true }),
   ]);
 
-  if (timelineResult.error) throw timelineResult.error;
+  if (timelineResult.error) {
+    throw new Error(
+      getUserFacingError(timelineResult.error, "Não foi possível carregar o andamento do pedido."),
+    );
+  }
 
   return {
     order,
@@ -249,7 +266,7 @@ export async function requestOrderRefund(
   });
 
   throwIfError(result.error, "Não foi possível solicitar o reembolso.");
-  if (!result.data) throw new Error("A solicitação não foi confirmada.");
+  if (!result.data) throw new Error("Não foi possível confirmar a solicitação.");
   return result.data;
 }
 
@@ -287,7 +304,7 @@ export async function transitionOrder(
   });
 
   throwIfError(result.error, "Não foi possível atualizar o pedido.");
-  if (!result.data) throw new Error("A atualização não foi confirmada.");
+  if (!result.data) throw new Error("Não foi possível confirmar a atualização do pedido.");
   return result.data;
 }
 
@@ -303,6 +320,6 @@ export async function resolveRefundRequest(
   });
 
   throwIfError(result.error, "Não foi possível resolver o reembolso.");
-  if (!result.data) throw new Error("A resolução não foi confirmada.");
+  if (!result.data) throw new Error("Não foi possível confirmar a resolução do reembolso.");
   return result.data;
 }

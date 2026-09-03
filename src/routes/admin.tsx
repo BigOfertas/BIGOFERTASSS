@@ -25,7 +25,7 @@ const NAV_ITEMS: Array<{
   label: string;
   icon: typeof LayoutDashboard;
 }> = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "dashboard", label: "Visão geral", icon: LayoutDashboard },
   { id: "orders", label: "Pedidos", icon: ShoppingBag },
   { id: "products", label: "Produtos", icon: Box },
 ];
@@ -103,7 +103,7 @@ function AdminPage() {
                   BIGofertas
                 </p>
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700">
-                  Admin
+                  Administração
                 </p>
               </div>
             </Link>
@@ -142,7 +142,7 @@ function AdminPage() {
                     {user.email}
                   </p>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                    owner
+                    Proprietário
                   </p>
                 </div>
               </div>

@@ -18,6 +18,7 @@ import {
   type ShippingQuote,
   type ShippingQuoteResult,
 } from "@/lib/shipping";
+import { getUserFacingError } from "@/lib/user-facing-error";
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -103,9 +104,7 @@ export function ShippingCalculator({
       setResult(null);
       onPostalCodeQuoted?.(null);
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível calcular o frete agora.",
+        getUserFacingError(error, "Não foi possível calcular o frete agora."),
       );
     } finally {
       setIsLoading(false);

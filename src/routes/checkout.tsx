@@ -50,6 +50,7 @@ import {
   requestShippingQuotes,
   type ShippingQuote,
 } from "@/lib/shipping";
+import { getUserFacingError } from "@/lib/user-facing-error";
 
 export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
@@ -244,7 +245,7 @@ function CheckoutPage() {
       .catch((error) => {
         if (!active) return;
         setErrorMessage(
-          error instanceof Error ? error.message : "Não foi possível preparar o checkout.",
+          getUserFacingError(error, "Não foi possível preparar a finalização da compra."),
         );
       })
       .finally(() => {
@@ -289,7 +290,7 @@ function CheckoutPage() {
       setIdentity(updated);
       setStep(2);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Não foi possível salvar seus dados.");
+      setErrorMessage(getUserFacingError(error, "Não foi possível salvar seus dados."));
     } finally {
       setSavingIdentity(false);
     }
@@ -356,7 +357,7 @@ function CheckoutPage() {
       setShowAddressForm(false);
       setStep(3);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Não foi possível salvar o endereço.");
+      setErrorMessage(getUserFacingError(error, "Não foi possível salvar o endereço."));
     } finally {
       setSavingAddress(false);
     }
@@ -378,7 +379,7 @@ function CheckoutPage() {
       const result = await requestShippingQuotes(selectedAddress.postal_code, cart);
       setQuotes(result.quotes);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Não foi possível calcular a entrega.");
+      setErrorMessage(getUserFacingError(error, "Não foi possível calcular a entrega."));
     } finally {
       setLoadingQuotes(false);
     }
@@ -405,7 +406,7 @@ function CheckoutPage() {
       });
       window.location.assign(result.checkoutUrl);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Não foi possível abrir o pagamento.");
+      setErrorMessage(getUserFacingError(error, "Não foi possível abrir o pagamento."));
     } finally {
       setCheckoutLoading(false);
     }
@@ -416,7 +417,7 @@ function CheckoutPage() {
       <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7]">
         <div className="text-center text-gray-500">
           <LoaderCircle className="mx-auto h-7 w-7 animate-spin text-red-600 motion-reduce:animate-none" />
-          <p className="mt-3 text-sm">Preparando seu checkout...</p>
+          <p className="mt-3 text-sm">Preparando sua compra...</p>
         </div>
       </main>
     );
@@ -431,7 +432,7 @@ function CheckoutPage() {
           <ShieldCheck className="mx-auto h-10 w-10 text-amber-600" />
           <h1 className="mt-4 text-xl font-black text-gray-950">Confirme seu e-mail primeiro</h1>
           <p className="mt-2 text-sm leading-6 text-gray-600">
-            A BIGofertas só libera a conta e o checkout depois da confirmação do endereço de e-mail.
+            A BIGofertas só libera a conta e a finalização da compra depois da confirmação do endereço de e-mail.
           </p>
         </div>
       </main>
@@ -478,7 +479,7 @@ function CheckoutPage() {
           </Link>
           <div className="flex items-center gap-2 text-xs font-semibold text-gray-500">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            Checkout seguro
+            Compra segura
           </div>
         </div>
       </header>

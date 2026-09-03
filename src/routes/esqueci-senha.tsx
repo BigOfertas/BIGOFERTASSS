@@ -3,6 +3,7 @@ import { ArrowLeft, CheckCircle2, Loader2, Mail } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { getUserFacingError } from "@/lib/user-facing-error";
 
 export const Route = createFileRoute("/esqueci-senha")({
   component: ForgotPasswordPage,
@@ -35,7 +36,7 @@ function ForgotPasswordPage() {
 
     if (error) {
       setErrorMessage(
-        error.message || "Não foi possível enviar o e-mail de recuperação agora.",
+        getUserFacingError(error, "Não foi possível enviar o e-mail de recuperação agora."),
       );
     } else {
       setSent(true);
@@ -76,7 +77,7 @@ function ForgotPasswordPage() {
                 to="/login"
                 className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99]"
               >
-                Voltar para o login
+                Voltar para entrar
               </Link>
             </div>
           ) : (
@@ -91,7 +92,7 @@ function ForgotPasswordPage() {
                 </h1>
 
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Informe o e-mail da sua conta. Enviaremos um link seguro para você criar uma nova senha.
+                  Informe o e-mail da sua conta. Enviaremos um link para você criar uma nova senha.
                 </p>
               </div>
 
@@ -141,7 +142,7 @@ function ForgotPasswordPage() {
                 className="mt-3 inline-flex h-10 w-full items-center justify-center text-sm font-semibold text-muted-foreground transition hover:text-foreground"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Voltar para o login
+                Voltar para entrar
               </Link>
             </form>
           )}

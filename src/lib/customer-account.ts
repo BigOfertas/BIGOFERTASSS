@@ -4,6 +4,7 @@ import {
   isValidBrazilianPhone,
   onlyDigits,
 } from "@/lib/brasil";
+import { getUserFacingError } from "@/lib/user-facing-error";
 
 export type CustomerProfile = {
   id: string;
@@ -108,7 +109,7 @@ const accountRpc = supabase as unknown as CustomerAccountRpcClient;
 
 function throwRpcError(error: RpcError | null, fallback: string) {
   if (error) {
-    throw new Error(error.message || fallback);
+    throw new Error(getUserFacingError(error, fallback));
   }
 }
 
@@ -165,7 +166,7 @@ export async function fetchCustomerAccount() {
   const profile = profileResult.data?.[0];
 
   if (!profile) {
-    throw new Error("Perfil da conta não encontrado.");
+    throw new Error("Não foi possível localizar os dados da sua conta.");
   }
 
   return {
@@ -204,7 +205,7 @@ export async function saveCustomerProfile(
   const profile = result.data?.[0];
 
   if (!profile) {
-    throw new Error("O perfil atualizado não foi retornado.");
+    throw new Error("Não foi possível confirmar a atualização dos seus dados.");
   }
 
   return profile;
@@ -228,7 +229,7 @@ export async function saveCustomerAddress(input: CustomerAddressInput) {
   throwRpcError(result.error, "Não foi possível salvar o endereço.");
 
   if (!result.data) {
-    throw new Error("O endereço salvo não foi confirmado.");
+    throw new Error("Não foi possível confirmar o endereço salvo.");
   }
 
   return result.data;

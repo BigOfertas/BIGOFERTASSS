@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Enums, Tables } from "@/integrations/supabase/types";
+import { getUserFacingError } from "@/lib/user-facing-error";
 
 type ProductRow = Tables<"products">;
 type VariantRow = Tables<"product_variants">;
@@ -90,6 +91,10 @@ function optionalText(value: string): string | null {
   return normalized ? normalized : null;
 }
 
+function friendlyError(error: unknown, fallback: string) {
+  return new Error(getUserFacingError(error, fallback));
+}
+
 function validateInput(input: AdminProductInput) {
   if (!input.name.trim()) {
     throw new Error("Informe o nome do produto.");
@@ -136,7 +141,7 @@ async function allocateProductIdentity(): Promise<ProductIdentityReservation> {
   );
 
   if (error) {
-    throw error;
+    throw friendlyError(error, "Não foi possível preparar o cadastro do produto.");
   }
 
   const row = Array.isArray(data) ? data[0] : data;
@@ -148,7 +153,7 @@ async function allocateProductIdentity(): Promise<ProductIdentityReservation> {
     typeof row.product_slug !== "string" ||
     typeof row.default_variant_sku !== "string"
   ) {
-    throw new Error("O banco não retornou uma reserva de identificadores válida.");
+    throw new Error("Não foi possível preparar o cadastro do produto.");
   }
 
   return row as ProductIdentityReservation;
@@ -160,7 +165,7 @@ async function releaseProductIdentity(reservationId: number): Promise<void> {
   });
 
   if (error) {
-    console.error("Failed to release product identity reservation:", error);
+    console.error("Falha ao liberar a identificação reservada do produto:", error);
   }
 }
 
@@ -181,11 +186,11 @@ export async function fetchAdminCatalog(): Promise<AdminCatalogSnapshot> {
   ]);
 
   if (productsResult.error) {
-    throw productsResult.error;
+    throw friendlyError(productsResult.error, "Não foi possível carregar os produtos.");
   }
 
   if (categoriesResult.error) {
-    throw categoriesResult.error;
+    throw friendlyError(categoriesResult.error, "Não foi possível carregar as categorias.");
   }
 
   const products = productsResult.data ?? [];
@@ -201,7 +206,7 @@ export async function fetchAdminCatalog(): Promise<AdminCatalogSnapshot> {
       .order("sort_order", { ascending: true });
 
     if (variantsResult.error) {
-      throw variantsResult.error;
+      throw friendlyError(variantsResult.error, "Não foi possível carregar as variações dos produtos.");
     }
 
     variants = variantsResult.data ?? [];
@@ -264,7 +269,7 @@ export async function saveAdminProduct(
         .eq("product_id", input.id);
 
       if (variantResult.error) {
-        throw variantResult.error;
+        throw friendlyError(variantResult.error, "Não foi possível atualizar a variação do produto.");
       }
     } else {
       const productIdentityResult = await supabase
@@ -274,7 +279,7 @@ export async function saveAdminProduct(
         .single();
 
       if (productIdentityResult.error) {
-        throw productIdentityResult.error;
+        throw friendlyError(productIdentityResult.error, "Não foi possível carregar o produto.");
       }
 
       const variantResult = await supabase.from("product_variants").insert({
@@ -284,7 +289,7 @@ export async function saveAdminProduct(
       });
 
       if (variantResult.error) {
-        throw variantResult.error;
+        throw friendlyError(variantResult.error, "Não foi possível criar a variação do produto.");
       }
     }
 
@@ -297,7 +302,7 @@ export async function saveAdminProduct(
       .eq("id", input.id);
 
     if (productResult.error) {
-      throw productResult.error;
+      throw friendlyError(productResult.error, "Não foi possível atualizar o produto.");
     }
 
     return input.id;
@@ -318,7 +323,7 @@ export async function saveAdminProduct(
 
   if (createResult.error) {
     await releaseProductIdentity(identity.reservation_id);
-    throw createResult.error;
+    throw friendlyError(createResult.error, "Não foi possível cadastrar o produto.");
   }
 
   const productId = createResult.data.id;
@@ -332,7 +337,7 @@ export async function saveAdminProduct(
   if (variantResult.error) {
     await supabase.from("products").delete().eq("id", productId);
     await releaseProductIdentity(identity.reservation_id);
-    throw variantResult.error;
+    throw friendlyError(variantResult.error, "Não foi possível criar a variação do produto.");
   }
 
   if (input.status !== "draft") {
@@ -342,7 +347,7 @@ export async function saveAdminProduct(
       .eq("id", productId);
 
     if (activateResult.error) {
-      throw activateResult.error;
+      throw friendlyError(activateResult.error, "Não foi possível atualizar o produto.");
     }
   }
 
@@ -356,6 +361,6 @@ export async function archiveAdminProduct(productId: string): Promise<void> {
     .eq("id", productId);
 
   if (error) {
-    throw error;
+    throw friendlyError(error, "Não foi possível arquivar o produto.");
   }
 }

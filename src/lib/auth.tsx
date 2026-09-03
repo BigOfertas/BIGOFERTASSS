@@ -10,6 +10,7 @@ import type { AuthError, Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { getUserFacingError } from "@/lib/user-facing-error";
 
 export type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -69,8 +70,14 @@ function getEmailConfirmationRedirectUrl() {
   return new URL("/conta", window.location.origin).toString();
 }
 
-function authRequestError(message: string) {
-  return new Error(message || "Não foi possível entrar agora.");
+function authRequestError(message: string, fallback = "Não foi possível entrar agora.") {
+  return new Error(getUserFacingError(message, fallback));
+}
+
+function friendlyAuthResult(error: AuthActionError | null, fallback: string): AuthActionResult {
+  return {
+    error: error ? new Error(getUserFacingError(error, fallback)) : null,
+  };
 }
 
 async function readAuthResponse(response: Response) {
@@ -107,7 +114,7 @@ async function applyPasswordSession(payload: PasswordSessionPayload): Promise<Au
     access_token: payload.accessToken,
     refresh_token: payload.refreshToken,
   });
-  return { error };
+  return friendlyAuthResult(error, "Não foi possível concluir a entrada na sua conta.");
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -234,7 +241,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch {
       return {
-        error: authRequestError("Não foi possível entrar agora. Verifique sua conexão."),
+        error: authRequestError(
+          "Não foi possível entrar agora. Verifique sua conexão.",
+          "Não foi possível entrar agora. Verifique sua conexão.",
+        ),
         requiresTwoFactor: false,
       };
     }
@@ -261,7 +271,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         typeof expiresAt !== "string"
       ) {
         return {
-          error: authRequestError("A verificação em duas etapas retornou dados inválidos."),
+          error: authRequestError(
+            "Não foi possível iniciar a verificação em duas etapas.",
+            "Não foi possível iniciar a verificação em duas etapas.",
+          ),
           requiresTwoFactor: false,
         };
       }
@@ -278,7 +291,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nextSession = readPasswordSession(payload);
     if (!nextSession) {
       return {
-        error: authRequestError("A autenticação retornou dados inválidos."),
+        error: authRequestError(
+          "Não foi possível concluir a entrada na sua conta.",
+          "Não foi possível concluir a entrada na sua conta.",
+        ),
         requiresTwoFactor: false,
       };
     }
@@ -319,13 +335,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           payload && typeof payload["error"] === "string"
             ? payload["error"]
             : "Não foi possível confirmar o código agora.",
+          "Não foi possível confirmar o código agora.",
         ),
       };
     }
 
     const nextSession = readPasswordSession(payload);
     if (!nextSession) {
-      return { error: authRequestError("A autenticação retornou dados inválidos.") };
+      return {
+        error: authRequestError(
+          "Não foi possível concluir a entrada na sua conta.",
+          "Não foi possível concluir a entrada na sua conta.",
+        ),
+      };
     }
 
     return await applyPasswordSession(nextSession);
@@ -349,7 +371,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
 
-    return { error };
+    return friendlyAuthResult(error, "Não foi possível criar sua conta agora.");
   }
 
   async function resendSignUpConfirmation(
@@ -364,7 +386,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
 
-    return { error };
+    return friendlyAuthResult(
+      error,
+      "Não foi possível reenviar o e-mail de confirmação agora.",
+    );
   }
 
   async function signOut(): Promise<AuthActionResult> {
@@ -378,7 +403,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRoleLoading(false);
     }
 
-    return { error };
+    return friendlyAuthResult(error, "Não foi possível sair da conta agora.");
   }
 
   const loading = !authReady || (Boolean(user) && roleLoading);

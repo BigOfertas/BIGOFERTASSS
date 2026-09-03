@@ -3,6 +3,7 @@ import { CheckCircle2, Eye, EyeOff, KeyRound, Loader2, ShieldAlert } from "lucid
 import { useEffect, useState, type FormEvent } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { getUserFacingError } from "@/lib/user-facing-error";
 
 export const Route = createFileRoute("/redefinir-senha")({
   component: ResetPasswordPage,
@@ -80,7 +81,7 @@ function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      setErrorMessage(error.message || "Não foi possível alterar sua senha agora.");
+      setErrorMessage(getUserFacingError(error, "Não foi possível alterar sua senha agora."));
       setSubmitting(false);
       return;
     }
@@ -107,7 +108,7 @@ function ResetPasswordPage() {
           {checking ? (
             <div className="py-8 text-center text-muted-foreground">
               <Loader2 className="mx-auto h-6 w-6 animate-spin" aria-hidden="true" />
-              <p className="mt-3 text-sm">Validando seu link...</p>
+              <p className="mt-3 text-sm">Verificando seu link...</p>
             </div>
           ) : success ? (
             <div className="text-center">
@@ -120,7 +121,7 @@ function ResetPasswordPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Sua nova senha foi salva. Por segurança, encerramos a sessão de recuperação.
+                Sua nova senha foi salva. Agora você já pode entrar novamente.
               </p>
 
               <Link
@@ -141,7 +142,7 @@ function ResetPasswordPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Solicite um novo e-mail de recuperação para criar outra senha com segurança.
+                Solicite um novo e-mail de recuperação para criar outra senha.
               </p>
 
               <Link
@@ -163,7 +164,7 @@ function ResetPasswordPage() {
                 </h1>
 
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Escolha uma senha nova e diferente da anterior para proteger sua conta.
+                  Escolha uma senha nova e diferente da anterior.
                 </p>
               </div>
 
