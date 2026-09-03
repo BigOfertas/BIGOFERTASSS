@@ -9,3 +9,11 @@ verify_jwt = true
 # Cotacao publica de frete. O token da SuperFrete fica somente nos secrets do Supabase.
 [functions.shipping-quote]
 verify_jwt = false
+
+# Checkout valida a sessao do cliente dentro da propria funcao.
+[functions.checkout-start]
+verify_jwt = false
+
+# Webhook publico chamado diretamente pela InfinitePay.
+[functions.infinitepay-webhook]
+verify_jwt = false
