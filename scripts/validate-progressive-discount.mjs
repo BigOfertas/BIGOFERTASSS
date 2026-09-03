@@ -30,15 +30,16 @@ const checks = [
     "carrinho aplica desconto e frete gratis sem alterar preco unitario",
     cart.includes("getProgressiveDiscount(totalItems, totalPrice)") &&
       cart.includes("discount.subtotalAfterDiscount") &&
-      cart.includes("discount.freeShipping") &&
-      cart.includes("Cotação absorvida pela BIGofertas") &&
-      cart.includes("A partir de 8 peças o frete é grátis"),
+      cart.includes("const shippingAmount = discount.freeShipping") &&
+      cart.includes("freeShipping={discount.freeShipping}") &&
+      cart.includes("currency.format(item.unitPrice)"),
   ],
   [
     "cotacao real continua visivel na faixa de frete gratis",
     shipping.includes("freeShipping") &&
       shipping.includes("line-through") &&
-      shipping.includes("quote.totalPrice"),
+      shipping.includes("quote.totalPrice") &&
+      shipping.includes("Cotação absorvida pela BIGofertas"),
   ],
   [
     "backend base ignora desconto informado pelo caller",
