@@ -15,11 +15,17 @@ import {
 } from "./lib/infinitepay-server";
 import type { InfinitePayEnvironment } from "./lib/infinitepay-server";
 import {
+  handleProcessNotificationEmailsRequest,
+  type NotificationEmailEnvironment,
+} from "./lib/notification-email-server";
+import {
   createShippingAdapterErrorResponse,
   handleShippingQuoteRequest,
 } from "./lib/shipping-server";
 
-type WorkerEnvironment = InfinitePayEnvironment & EmailTwoFactorEnvironment;
+type WorkerEnvironment = InfinitePayEnvironment &
+  EmailTwoFactorEnvironment &
+  NotificationEmailEnvironment;
 
 type ServerEntry = {
   fetch: (
@@ -105,17 +111,31 @@ function authEntryErrorResponse(error: unknown) {
   );
 }
 
+function notificationEntryErrorResponse(error: unknown) {
+  console.error(error);
+  return new Response(
+    JSON.stringify({
+      success: false,
+      code: "EMAIL_PROCESSOR_ENTRY_ERROR",
+    }),
+    {
+      status: 500,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    },
+  );
+}
+
 export default {
   async fetch(request: Request, env: unknown, _ctx: unknown) {
     let isShippingRequest = false;
     let isCheckoutRequest = false;
     let isInfinitePayWebhook = false;
     let isAuthSecurityRequest = false;
+    let isNotificationProcessorRequest = false;
 
     try {
-      // Cloudflare can expose runtime bindings through the Worker env argument
-      // and, with Node compatibility, through process.env. Resolve both paths so
-      // a framework adapter cannot make secrets disappear between deployments.
+      // Cloudflare pode expor bindings pelo argumento env. Em produção na
+      // Hostinger/Node as mesmas chaves entram por process.env.
       const workerEnv = resolveWorkerEnvironment(env);
       const url = new URL(request.url);
       isShippingRequest = url.pathname === "/api/shipping/quote";
@@ -123,6 +143,8 @@ export default {
       isInfinitePayWebhook =
         url.pathname === "/api/payments/infinitepay/webhook";
       isAuthSecurityRequest = url.pathname.startsWith("/api/auth/");
+      isNotificationProcessorRequest =
+        url.pathname === "/api/internal/notifications/process";
 
       if (isShippingRequest) {
         try {
@@ -140,6 +162,10 @@ export default {
 
       if (isInfinitePayWebhook) {
         return await handleInfinitePayWebhookRequest(request, workerEnv);
+      }
+
+      if (isNotificationProcessorRequest) {
+        return await handleProcessNotificationEmailsRequest(request, workerEnv);
       }
 
       if (url.pathname === "/api/auth/password-login") {
@@ -194,6 +220,10 @@ export default {
             headers: { "content-type": "application/json; charset=utf-8" },
           },
         );
+      }
+
+      if (isNotificationProcessorRequest) {
+        return notificationEntryErrorResponse(error);
       }
 
       if (isAuthSecurityRequest) {
