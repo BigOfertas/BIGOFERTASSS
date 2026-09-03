@@ -212,7 +212,12 @@ export function ShippingCalculator({
 
                 <span className="flex-none text-right">
                   {freeShipping ? (
-                    <strong className="block text-sm text-emerald-700">Grátis</strong>
+                    <>
+                      <span className="block text-[11px] text-gray-500 line-through">
+                        {currency.format(quote.totalPrice)}
+                      </span>
+                      <strong className="block text-sm text-emerald-700">Grátis</strong>
+                    </>
                   ) : (
                     <strong className="block text-sm text-gray-950">
                       {currency.format(quote.totalPrice)}
@@ -222,6 +227,12 @@ export function ShippingCalculator({
               </button>
             );
           })}
+
+          {freeShipping ? (
+            <p className="px-1 pt-1 text-[11px] leading-relaxed text-emerald-700">
+              Cotação absorvida pela BIGofertas: você não paga o valor da entrega.
+            </p>
+          ) : null}
 
           <p className="px-1 pt-1 text-[11px] leading-relaxed text-gray-500">
             Produção em até {result.productionBusinessDays} dias úteis antes do envio.
