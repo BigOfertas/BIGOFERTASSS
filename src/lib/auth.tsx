@@ -10,6 +10,7 @@ import type { AuthError, Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { legacyWorkerFallbackAvailable } from "@/lib/backend-routing";
 import { getUserFacingError } from "@/lib/user-facing-error";
 
 export type AppRole = Database["public"]["Enums"]["app_role"];
@@ -134,13 +135,19 @@ async function authBackendRequest(input: {
         { action: input.action, ...body },
         input.authorization,
       );
-      if (edgeResponse.status < 500) return edgeResponse;
-    } catch {
-      // Durante a migração, o Worker antigo continua disponível como fallback.
+      if (edgeResponse.status < 500 || !legacyWorkerFallbackAvailable()) {
+        return edgeResponse;
+      }
+    } catch (error) {
+      if (!legacyWorkerFallbackAvailable()) throw error;
     }
   }
 
-  return postAuthRequest(input.legacyPath, body, input.authorization);
+  if (legacyWorkerFallbackAvailable()) {
+    return postAuthRequest(input.legacyPath, body, input.authorization);
+  }
+
+  throw new Error("O acesso à conta está temporariamente indisponível.");
 }
 
 function readPasswordSession(payload: Record<string, unknown> | null) {
