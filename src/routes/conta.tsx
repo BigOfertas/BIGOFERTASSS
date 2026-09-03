@@ -6,6 +6,7 @@ import {
   AccountDashboard,
   type AccountSection,
 } from "@/components/account/AccountDashboard";
+import { AccountOverview } from "@/components/account/AccountOverview";
 import { EmailTwoFactorPrompt } from "@/components/account/EmailTwoFactorPrompt";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
@@ -24,7 +25,7 @@ function AccountPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
   const { user, loading, signOut } = useAuth();
-  const section: AccountSection = search.secao ?? "dados";
+  const section: AccountSection | null = search.secao ?? null;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -35,7 +36,7 @@ function AccountPage() {
   function handleSectionChange(nextSection: AccountSection) {
     void navigate({
       to: "/conta",
-      search: nextSection === "dados" ? {} : { secao: nextSection },
+      search: { secao: nextSection },
     });
   }
 
@@ -73,12 +74,20 @@ function AccountPage() {
       <Header />
       <EmailTwoFactorPrompt />
       <main className="flex-1">
-        <AccountDashboard
-          email={user.email ?? "Conta BIGofertas"}
-          section={section}
-          onSectionChange={handleSectionChange}
-          onSignOut={handleSignOut}
-        />
+        {section ? (
+          <AccountDashboard
+            email={user.email ?? "Conta BIGofertas"}
+            section={section}
+            onSectionChange={handleSectionChange}
+            onSignOut={handleSignOut}
+          />
+        ) : (
+          <AccountOverview
+            email={user.email ?? "Conta BIGofertas"}
+            onNavigate={handleSectionChange}
+            onSignOut={handleSignOut}
+          />
+        )}
       </main>
       <Footer />
     </div>

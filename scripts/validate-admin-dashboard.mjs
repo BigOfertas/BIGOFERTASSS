@@ -15,7 +15,7 @@ const checks = [];
 const check = (name, condition) => checks.push([name, Boolean(condition)]);
 
 check(
-  "admin possui dashboard, pedidos e produtos",
+  "admin possui visão geral, pedidos e produtos",
   /"dashboard" \| "orders" \| "products"/.test(adminRoute) &&
     /<AdminDashboard/.test(adminRoute) &&
     /<OrderAdmin\s*\/>/.test(adminRoute) &&
@@ -23,11 +23,12 @@ check(
 );
 
 check(
-  "dashboard usa identidade verde e shell inspirado na referencia",
-  /emerald-700/.test(adminRoute) &&
-    /rounded-\[30px\]/.test(adminRoute) &&
-    /Pulso operacional/.test(dashboard) &&
-    /bg-gradient-to-br from-emerald/.test(dashboard),
+  "admin usa shell operacional neutro e identidade BIGofertas",
+  /lg:grid-cols-\[248px_minmax\(0,1fr\)\]/.test(adminRoute) &&
+    /border-r border-gray-200 bg-white/.test(adminRoute) &&
+    /bg-red-50 text-red-700/.test(adminRoute) &&
+    /Visão geral/.test(dashboard) &&
+    !/bg-gradient-to-br/.test(dashboard),
 );
 
 check(
@@ -39,8 +40,8 @@ check(
 );
 
 check(
-  "dashboard mostra operacao real sem inventar integracoes",
-  /Aguardando pagamento/.test(dashboard) &&
+  "painel mostra operacao real sem inventar integracoes",
+  /aguardando pagamento/i.test(dashboard) &&
     /Em produção/.test(dashboard) &&
     /Reembolsos/.test(dashboard) &&
     /Produtos ativos/.test(dashboard) &&
@@ -49,15 +50,16 @@ check(
 );
 
 check(
-  "dashboard possui estados de loading erro e vazio",
+  "painel possui estados de carregamento erro e vazio",
   /DashboardSkeleton/.test(dashboard) &&
-    /Não foi possível carregar o dashboard/.test(dashboard) &&
-    /Ainda não há pedidos reais/.test(dashboard),
+    /Não foi possível carregar o painel/.test(dashboard) &&
+    /Ainda não há pedidos/.test(dashboard),
 );
 
 check(
   "animacoes respeitam reducao de movimento",
-  /motion-reduce:transition-none/.test(dashboard),
+  /motion-reduce:transition-none/.test(dashboard) &&
+    /motion-reduce:transition-none/.test(adminRoute),
 );
 
 let syntaxErrors = 0;
@@ -89,7 +91,7 @@ for (const file of [
   }
 }
 
-check("arquivos do dashboard sem erro sintatico", syntaxErrors === 0);
+check("arquivos do painel sem erro sintatico", syntaxErrors === 0);
 
 let failed = 0;
 for (const [name, ok] of checks) {
@@ -98,4 +100,4 @@ for (const [name, ok] of checks) {
 }
 
 if (failed) process.exit(1);
-console.log(`\n${checks.length}/${checks.length} validacoes do dashboard aprovadas.`);
+console.log(`\n${checks.length}/${checks.length} validacoes do painel aprovadas.`);
