@@ -1,13 +1,28 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import {
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Loader2,
+  MailCheck,
+  UserPlus,
+} from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
+import {
+  captureAffiliateReferralFromSearch,
+  clearPendingAffiliateReferralCode,
+  getPendingAffiliateReferralCode,
+  validateAffiliateReferralCode,
+} from "@/lib/affiliate-referral";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/cadastro")({
   component: RegisterPage,
 });
+
+type ReferralValidation = "idle" | "checking" | "valid" | "invalid" | "unavailable";
 
 function RegisterPage() {
   const { user, loading, isOwner, signUp, resendSignUpConfirmation, signOut } = useAuth();
@@ -22,6 +37,49 @@ function RegisterPage() {
   const [signingOut, setSigningOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [registrationSent, setRegistrationSent] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(() =>
+    getPendingAffiliateReferralCode(),
+  );
+  const [referralValidation, setReferralValidation] =
+    useState<ReferralValidation>("idle");
+
+  useEffect(() => {
+    const captured =
+      typeof window === "undefined"
+        ? null
+        : captureAffiliateReferralFromSearch(window.location.search);
+    const pending = captured ?? getPendingAffiliateReferralCode();
+
+    if (!pending) {
+      setReferralCode(null);
+      setReferralValidation("idle");
+      return;
+    }
+
+    setReferralCode(pending);
+    setReferralValidation("checking");
+    let active = true;
+
+    void validateAffiliateReferralCode(pending)
+      .then((valid) => {
+        if (!active) return;
+        if (valid) {
+          setReferralValidation("valid");
+          return;
+        }
+
+        clearPendingAffiliateReferralCode();
+        setReferralCode(null);
+        setReferralValidation("invalid");
+      })
+      .catch(() => {
+        if (active) setReferralValidation("unavailable");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const nameValid = fullName.trim().length >= 2;
   const passwordValid = password.length >= 8;
@@ -35,7 +93,12 @@ function RegisterPage() {
     setSubmitting(true);
     setErrorMessage("");
 
-    const { error } = await signUp(email.trim(), password, fullName.trim());
+    const { error } = await signUp(
+      email.trim(),
+      password,
+      fullName.trim(),
+      referralValidation === "invalid" ? null : referralCode,
+    );
 
     if (error) {
       setErrorMessage(error.message);
@@ -43,6 +106,7 @@ function RegisterPage() {
       return;
     }
 
+    clearPendingAffiliateReferralCode();
     setRegistrationSent(true);
     setPassword("");
     setConfirmPassword("");
@@ -157,6 +221,46 @@ function RegisterPage() {
             Comece com o básico. Os dados de compra serão preenchidos só quando você finalizar um pedido.
           </p>
         </div>
+
+        {referralValidation !== "idle" ? (
+          <div
+            className={`mb-4 rounded-xl border px-4 py-3 text-sm leading-5 ${
+              referralValidation === "valid"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : referralValidation === "invalid"
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "border-gray-200 bg-white text-gray-600"
+            }`}
+          >
+            <div className="flex items-start gap-2.5">
+              {referralValidation === "checking" ? (
+                <Loader2 className="mt-0.5 h-4 w-4 flex-none animate-spin motion-reduce:animate-none" />
+              ) : (
+                <UserPlus className="mt-0.5 h-4 w-4 flex-none" />
+              )}
+              <div>
+                <p className="font-bold">
+                  {referralValidation === "checking"
+                    ? "Verificando sua indicação"
+                    : referralValidation === "valid"
+                      ? "Cadastro por indicação"
+                      : referralValidation === "invalid"
+                        ? "Link de indicação não ativo"
+                        : "Indicação recebida"}
+                </p>
+                <p className="mt-1 text-xs leading-5">
+                  {referralValidation === "checking"
+                    ? "Estamos confirmando o código antes do cadastro."
+                    : referralValidation === "valid"
+                      ? "Ao criar uma conta nova, ela ficará vinculada ao afiliado que convidou você."
+                      : referralValidation === "invalid"
+                        ? "Você pode criar sua conta normalmente; nenhuma indicação será vinculada."
+                        : "Não foi possível validar o código agora. O cadastro continua normalmente e o servidor fará a verificação final."}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <label className="block text-sm font-semibold text-gray-800">
