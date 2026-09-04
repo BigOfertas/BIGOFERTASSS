@@ -10,6 +10,7 @@ import ShopByLeague from "@/components/home/ShopByLeague";
 import VisualCategories from "@/components/home/VisualCategories";
 import Header from "@/components/layout/Header";
 import PromoBanner from "@/components/layout/PromoBanner";
+import { BRAND } from "@/config/brand";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -27,7 +28,7 @@ function Index() {
           bannerSuperiorAsset.url,
           bannerSuperiorAsset.url,
         ]}
-        altText="Ofertas BIGofertas"
+        altText={`Ofertas ${BRAND.officialName}`}
       />
 
       <Header />
@@ -37,7 +38,7 @@ function Index() {
         style={{ aspectRatio: "1920/550" }}
         className="max-h-[550px] max-md:!aspect-[1920/1897] max-md:max-h-none"
         images={[bannerInferiorAsset.url]}
-        altText="Campanha BIGofertas"
+        altText={`Campanha ${BRAND.officialName}`}
       />
 
       <main className="flex-grow overflow-x-hidden">
@@ -50,7 +51,7 @@ function Index() {
           className="w-full max-h-[300px] max-md:!aspect-[1920/750] max-md:max-h-none bg-gray-100 overflow-hidden"
         >
           <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-            <span className="text-sm font-medium opacity-0">BIGofertas</span>
+            <span className="text-sm font-medium opacity-0">{BRAND.officialName}</span>
           </div>
         </div>
 
