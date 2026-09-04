@@ -12,8 +12,9 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import { AccountSecurityPanel } from "@/components/account/AccountSecurityPanel";
-import { BRAND } from "@/config/brand";
 import type { AccountSection } from "@/components/account/AccountDashboard";
+import { LiquidGlassCard } from "@/components/ui/liquid-glass-card";
+import { BRAND } from "@/config/brand";
 import {
   fetchCustomerAccount,
   type CustomerAddress,
@@ -181,26 +182,34 @@ export function AccountOverview({
 
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {actions.map(({ section, title, description, meta, icon: Icon }) => (
-                <button
+                <LiquidGlassCard
                   key={section}
+                  as="button"
                   type="button"
                   onClick={() => onNavigate(section)}
-                  className="glass-card group min-h-52 rounded-[1.35rem] p-5 text-left"
+                  interactive
+                  blurIntensity="lg"
+                  shadowIntensity="md"
+                  glowIntensity="sm"
+                  borderRadius="22px"
+                  className="group min-h-52 w-full p-5 text-left"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/70 bg-red-50/80 text-red-600 shadow-sm">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/80 bg-red-50/75 text-red-600 shadow-sm">
                       <Icon className="h-5 w-5" aria-hidden="true" />
                     </span>
                     <ChevronRight
-                      className="h-5 w-5 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-gray-500 motion-reduce:transition-none"
+                      className="h-5 w-5 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-gray-500 motion-reduce:transition-none"
                       aria-hidden="true"
                     />
                   </div>
 
-                  <h3 className="mt-5 text-base font-extrabold tracking-[-0.025em] text-gray-950">{title}</h3>
+                  <h3 className="mt-5 text-base font-extrabold tracking-[-0.025em] text-gray-950">
+                    {title}
+                  </h3>
                   <p className="mt-2 text-sm leading-6 text-gray-600">{description}</p>
                   <p className="mt-4 text-xs font-semibold text-gray-500">{meta}</p>
-                </button>
+                </LiquidGlassCard>
               ))}
             </div>
 
