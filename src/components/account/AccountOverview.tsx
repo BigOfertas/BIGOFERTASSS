@@ -130,22 +130,22 @@ export function AccountOverview({
   ];
 
   return (
-    <div className="bg-[#f5f5f5] py-8 sm:py-10">
+    <div className="bg-transparent py-8 sm:py-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <header className="mb-7 flex flex-col gap-3 border-b border-gray-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <header className="mb-7 flex flex-col gap-3 border-b border-white/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-red-600">Área do cliente</p>
-            <h1 className="mt-1 text-3xl font-black tracking-tight text-gray-950 sm:text-4xl">
+            <p className="display-kicker">Área do cliente</p>
+            <h1 className="display-title mt-2">
               {firstName ? `Olá, ${firstName}` : "Minha conta"}
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
+            <p className="section-copy mt-3 max-w-2xl">
               Encontre rapidamente o que precisa para acompanhar suas compras e manter seus dados em dia.
             </p>
           </div>
 
           {!loading ? (
             <div
-              className={`inline-flex w-fit items-center gap-2 text-sm font-semibold ${
+              className={`glass-card inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-xs font-bold ${
                 complete ? "text-emerald-700" : "text-amber-700"
               }`}
             >
@@ -162,7 +162,7 @@ export function AccountOverview({
         {errorMessage ? (
           <div
             role="alert"
-            className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            className="mb-5 rounded-xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-700 shadow-sm"
           >
             {errorMessage}
           </div>
@@ -171,7 +171,9 @@ export function AccountOverview({
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
           <section className="min-w-0">
             <div className="mb-4">
-              <h2 className="text-lg font-bold text-gray-950">O que você quer fazer?</h2>
+              <h2 className="text-lg font-extrabold tracking-[-0.03em] text-gray-950">
+                O que você quer fazer?
+              </h2>
               <p className="mt-1 text-sm text-gray-500">
                 As funções mais usadas da sua conta estão aqui.
               </p>
@@ -183,10 +185,10 @@ export function AccountOverview({
                   key={section}
                   type="button"
                   onClick={() => onNavigate(section)}
-                  className="group min-h-52 rounded-xl border border-gray-200 bg-white p-5 text-left shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition hover:border-gray-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] motion-reduce:transition-none"
+                  className="glass-card group min-h-52 rounded-[1.35rem] p-5 text-left"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/70 bg-red-50/80 text-red-600 shadow-sm">
                       <Icon className="h-5 w-5" aria-hidden="true" />
                     </span>
                     <ChevronRight
@@ -195,7 +197,7 @@ export function AccountOverview({
                     />
                   </div>
 
-                  <h3 className="mt-5 text-base font-bold text-gray-950">{title}</h3>
+                  <h3 className="mt-5 text-base font-extrabold tracking-[-0.025em] text-gray-950">{title}</h3>
                   <p className="mt-2 text-sm leading-6 text-gray-600">{description}</p>
                   <p className="mt-4 text-xs font-semibold text-gray-500">{meta}</p>
                 </button>
@@ -205,24 +207,24 @@ export function AccountOverview({
             <AccountSecurityPanel email={email} />
           </section>
 
-          <aside className="h-fit rounded-xl border border-gray-200 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+          <aside className="glass-panel h-fit rounded-[1.4rem] p-5">
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-gray-400">
               Conta conectada
             </p>
 
             <div className="mt-4 flex items-center gap-3">
-              <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-gray-100 text-gray-700">
+              <span className="glass-card flex h-11 w-11 flex-none items-center justify-center rounded-full text-gray-700">
                 <UserRound className="h-5 w-5" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-gray-950">
+                <p className="truncate text-sm font-extrabold tracking-[-0.02em] text-gray-950">
                   {profile?.full_name || `Cliente ${BRAND.officialName}`}
                 </p>
                 <p className="mt-0.5 truncate text-xs text-gray-500">{email}</p>
               </div>
             </div>
 
-            <div className="mt-5 border-t border-gray-100 pt-4">
+            <div className="mt-5 border-t border-white/70 pt-4">
               <div className="flex items-start gap-2.5 text-sm text-gray-600">
                 <Mail className="mt-0.5 h-4 w-4 flex-none text-gray-400" aria-hidden="true" />
                 <span className="break-all">{email}</span>
@@ -233,7 +235,7 @@ export function AccountOverview({
               type="button"
               disabled={signingOut}
               onClick={() => void handleSignOut()}
-              className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+              className="glass-card mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold text-gray-700 transition hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
             >
               <LogOut className="h-4 w-4" aria-hidden="true" />
               {signingOut ? "Saindo..." : "Sair da conta"}
