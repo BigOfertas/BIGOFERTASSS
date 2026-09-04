@@ -44,7 +44,7 @@ const TeamLogo: React.FC<{ team: Team }> = ({ team }) => (
     aria-label={`Ver produtos do ${team.name}`}
     className="group flex flex-shrink-0 flex-col items-center justify-center"
   >
-    <div className="glass-card flex h-[104px] w-[104px] items-center justify-center rounded-[1.4rem] p-2 lg:h-[82px] lg:w-[82px] xl:h-[104px] xl:w-[104px]">
+    <div className="glass-card flex h-[104px] w-[104px] items-center justify-center rounded-[1.4rem] p-2 lg:h-[78px] lg:w-[78px] xl:h-[94px] xl:w-[94px] 2xl:h-[104px] 2xl:w-[104px]">
       <div className="glass-media h-full w-full overflow-hidden rounded-[1rem]">
         <img
           src={team.logoUrl}
@@ -76,7 +76,7 @@ const BrazilianTeams: React.FC = () => {
 
   return (
     <section className="overflow-hidden bg-transparent py-10 sm:py-14">
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 lg:max-w-[1536px] lg:px-8">
         <div className="mb-7 text-center sm:mb-9">
           <p className="display-kicker">Futebol brasileiro</p>
           <h2 className="display-title-sm mt-2">Encontre seu time</h2>
@@ -87,7 +87,7 @@ const BrazilianTeams: React.FC = () => {
             <div
               ref={scrollRef}
               onScroll={handleScroll}
-              className="flex h-[112px] snap-x items-center gap-3 overflow-x-auto scroll-smooth no-scrollbar lg:grid lg:h-[132px] lg:w-full lg:grid-cols-11 lg:gap-5 lg:overflow-visible"
+              className="flex h-[112px] snap-x items-center gap-3 overflow-x-auto scroll-smooth no-scrollbar lg:h-[132px] lg:w-full lg:justify-between lg:gap-0 lg:overflow-visible"
               style={{ scrollSnapType: "x mandatory" }}
             >
               {teams.map((team) => (
