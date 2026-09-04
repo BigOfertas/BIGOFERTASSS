@@ -43,6 +43,8 @@ export function getR2Client() {
   return new S3Client({
     region: "auto",
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
     credentials: {
       accessKeyId,
       secretAccessKey,
@@ -102,7 +104,10 @@ export async function createImageUploadUrl(
     ContentType: contentType,
   });
 
-  const uploadUrl = await getSignedUrl(client, command, { expiresIn });
+  const uploadUrl = await getSignedUrl(client, command, {
+    expiresIn,
+    signableHeaders: new Set(["content-type"]),
+  });
 
   return { uploadUrl, expiresIn };
 }
