@@ -14,6 +14,7 @@ import { AuthProvider } from "../lib/auth";
 import Footer from "../components/layout/Footer";
 import { CartProvider } from "../context/CartContext";
 import { Toaster } from "@/components/ui/sonner";
+import { BRAND } from "@/config/brand";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -105,19 +106,19 @@ export const Route = createRootRouteWithContext<{
         name: "viewport",
         content: "width=device-width, initial-scale=1",
       },
-      { title: "BIGofertas | Loja Esportiva" },
+      { title: BRAND.storeTitle },
       {
         name: "description",
-        content: "BIGofertas: catálogo de artigos esportivos e produtos para torcedores.",
+        content: BRAND.storeDescription,
       },
-      { name: "author", content: "BIGofertas" },
+      { name: "author", content: BRAND.officialName },
       {
         property: "og:title",
-        content: "BIGofertas | Loja Esportiva",
+        content: BRAND.storeTitle,
       },
       {
         property: "og:description",
-        content: "BIGofertas: catálogo de artigos esportivos e produtos para torcedores.",
+        content: BRAND.storeDescription,
       },
       {
         property: "og:type",
