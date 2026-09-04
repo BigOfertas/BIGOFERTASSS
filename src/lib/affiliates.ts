@@ -136,3 +136,21 @@ export async function fetchMyAffiliateCommissions() {
 export async function fetchMyAffiliateWithdrawals() {
   return callSupabaseRpc<AffiliateWithdrawalRow[]>("list_my_affiliate_withdrawals", { p_limit: 100, p_offset: 0 });
 }
+
+
+export type PixKeyType = "cpf" | "cnpj" | "email" | "phone" | "random";
+
+export function requestMyAffiliateWithdrawal(
+  amount: number,
+  pixKeyType: PixKeyType,
+  pixKey: string,
+) {
+  return callSupabaseRpc<AffiliateWithdrawalRow>("request_my_affiliate_withdrawal", {
+    p_amount: amount,
+    p_destination_snapshot: {
+      method: "PIX",
+      pixKeyType,
+      pixKey: pixKey.trim(),
+    },
+  });
+}

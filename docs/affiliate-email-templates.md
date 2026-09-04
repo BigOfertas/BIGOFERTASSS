@@ -33,7 +33,7 @@ Valor da venda: `{{SALE_AMOUNT}}`
 Regra aplicada: `{{COMMISSION_RATE}}`  
 Comissão registrada: `{{COMMISSION_AMOUNT}}`
 
-A comissão pode permanecer pendente até cumprir o prazo definido pelo programa. Acompanhe o status em `{{AFFILIATE_DASHBOARD_URL}}`.
+Pela regra atual, a comissão fica disponível assim que o pagamento do pedido é confirmado e permanece no saldo até o saque. Acompanhe em `{{AFFILIATE_DASHBOARD_URL}}`.
 
 ## `affiliate-commission-available`
 
@@ -84,5 +84,5 @@ Consulte seu histórico em `{{AFFILIATE_DASHBOARD_URL}}`.
 - Não usar frases como “indique produtos”, “link do produto” ou “venda pelo seu link de produto”.
 - O link do afiliado sempre aponta para `/cadastro?ref=CODIGO`.
 - A conta indicada é a unidade de atribuição.
-- Não prometer percentual, prazo, saque mínimo ou forma de pagamento enquanto as cinco regras comerciais não estiverem configuradas.
+- A regra vigente usa valor fixo por peça, liberação imediata, saque mínimo de R$ 60 e pagamento por PIX. Não apresentar percentual como regra atual.
 - Não afirmar que um saque foi efetivamente recebido pelo banco do afiliado; o evento `paid` significa que o administrador marcou o pagamento como realizado.

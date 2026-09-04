@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import { AffiliateWithdrawalForm } from "@/components/account/AffiliateWithdrawalForm";
 import { BRAND } from "@/config/brand";
 import {
   fetchMyAffiliateCommissions,
@@ -338,6 +339,8 @@ export function AffiliateAccountPanel() {
         </section>
       ) : null}
 
+      <AffiliateWithdrawalForm dashboard={dashboard} />
+
       {!dashboard.rulesComplete ? (
         <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
           <h3 className="font-black text-amber-950">Regras comerciais em definição</h3>
@@ -418,6 +421,11 @@ export function AffiliateAccountPanel() {
                       <div>
                         <p className="text-sm font-bold text-gray-950">Pedido {row.order_public_number}</p>
                         <p className="mt-1 text-xs text-gray-500">Registrada em {dateFormatter.format(new Date(row.created_at))}</p>
+                        {row.commission_units && row.commission_unit_amount ? (
+                          <p className="mt-1 text-xs font-semibold text-gray-600">
+                            {row.commission_units} peças × {money(row.commission_unit_amount)} por peça
+                          </p>
+                        ) : null}
                       </div>
                       <span className={`w-fit rounded-full px-2.5 py-1 text-[11px] font-bold ${status.className}`}>
                         {status.label}
@@ -435,7 +443,7 @@ export function AffiliateAccountPanel() {
               <div>
                 <h3 className="font-black text-gray-950">Saques</h3>
                 <p className="mt-1 text-xs leading-5 text-gray-500">
-                  Histórico de solicitações e pagamentos do seu saldo de afiliado.
+                  Histórico de solicitações e pagamentos do seu saldo de afiliado. O saldo disponível permanece acumulado até você solicitar o saque.
                 </p>
               </div>
               <span className="w-fit rounded-lg bg-gray-100 px-3 py-2 text-xs font-bold text-gray-600">

@@ -176,6 +176,14 @@ if (!appliedNames.has("affiliate_fixed_commission_tiers")) {
   appliedNames.add("affiliate_fixed_commission_tiers");
 }
 
+if (!appliedNames.has("affiliate_pix_withdrawal_and_defaults")) {
+  await applyMigration(
+    "affiliate_pix_withdrawal_and_defaults",
+    "supabase/migrations/20260904052000_affiliate_pix_withdrawal_and_defaults.sql",
+  );
+  appliedNames.add("affiliate_pix_withdrawal_and_defaults");
+}
+
 const verification = await readOnly(`
 select
   pg_catalog.to_regclass('public.affiliate_program_settings') is not null as settings_table,
@@ -227,6 +235,13 @@ select
     where table_schema = 'public' and table_name = 'affiliate_commissions' and column_name = 'commission_unit_amount'
   ) as fixed_snapshot_columns,
   (select count(*) = 6 from public.affiliate_commission_tiers) as fixed_tier_count_safe,
+  exists (
+    select 1 from public.affiliate_program_settings s
+    where s.singleton = true
+      and s.hold_days = 0
+      and s.minimum_withdrawal = 60.00
+      and upper(btrim(s.withdrawal_method)) = 'PIX'
+  ) as confirmed_business_defaults,
   not exists (
     select 1
     from public.affiliate_program_settings s
@@ -250,6 +265,7 @@ const required = [
   "fixed_overrides_table",
   "fixed_snapshot_columns",
   "fixed_tier_count_safe",
+  "confirmed_business_defaults",
   "withdrawal_method_column",
   "customer_dashboard_rpc",
   "owner_overview_rpc",

@@ -160,9 +160,9 @@ export function AffiliateCommissionSettings() {
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-3">
-          <label className="text-sm font-bold text-gray-800">Liberação (dias)<input type="number" min="0" max="365" step="1" value={holdDays} onChange={(event) => setHoldDays(event.target.value)} placeholder="A definir" className="mt-1.5 h-11 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-red-500 focus:ring-4 focus:ring-red-50" /></label>
+          <label className="text-sm font-bold text-gray-800">Liberação da comissão<input value={holdDays === "0" ? "Imediata" : `${holdDays || 0} dias`} readOnly className="mt-1.5 h-11 w-full rounded-lg border border-gray-300 bg-gray-50 px-3 text-sm font-bold text-gray-700 outline-none" /></label>
           <label className="text-sm font-bold text-gray-800">Saque mínimo (R$)<input type="number" min="0.01" step="0.01" value={minimumWithdrawal} onChange={(event) => setMinimumWithdrawal(event.target.value)} placeholder="A definir" className="mt-1.5 h-11 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-red-500 focus:ring-4 focus:ring-red-50" /></label>
-          <label className="text-sm font-bold text-gray-800">Forma de pagamento<input value={withdrawalMethod} onChange={(event) => setWithdrawalMethod(event.target.value)} maxLength={60} placeholder="A definir" className="mt-1.5 h-11 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-red-500 focus:ring-4 focus:ring-red-50" /></label>
+          <label className="text-sm font-bold text-gray-800">Forma de pagamento<input value={withdrawalMethod || "PIX"} readOnly className="mt-1.5 h-11 w-full rounded-lg border border-gray-300 bg-gray-50 px-3 text-sm font-bold text-gray-700 outline-none" /></label>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">

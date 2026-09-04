@@ -23,7 +23,11 @@ const readinessHardening = read(
 const fixed = read(
   "supabase/migrations/20260904051500_affiliate_fixed_commission_tiers.sql",
 );
+const finalRules = read(
+  "supabase/migrations/20260904052000_affiliate_pix_withdrawal_and_defaults.sql",
+);
 const commissionEditor = read("src/components/admin/AffiliateCommissionSettings.tsx");
+const withdrawalForm = read("src/components/account/AffiliateWithdrawalForm.tsx");
 const processor = read("supabase/functions/notifications-process/index.ts");
 const auth = read("src/lib/auth.tsx");
 const referralClient = read("src/lib/affiliate-referral.ts");
@@ -192,11 +196,27 @@ check(
 );
 
 check(
-  "saque usa forma configuravel sem inventar PIX ou banco",
-  readiness.includes("withdrawal_method text") &&
-    readiness.includes("destination_method") &&
-    !readiness.includes("pix_key") &&
-    !readiness.includes("bank_account"),
+  "saque confirmado usa PIX com chave registrada no destino",
+  finalRules.includes("minimum_withdrawal = 60.00") &&
+    finalRules.includes("withdrawal_method = 'PIX'") &&
+    finalRules.includes("pixKeyType") &&
+    finalRules.includes("pixKey") &&
+    finalRules.includes("A forma de pagamento disponivel e PIX"),
+);
+
+check(
+  "comissao confirmada fica disponivel imediatamente e nao expira",
+  finalRules.includes("hold_days = 0") &&
+    finalRules.includes("initial_status := CASE WHEN settings_row.hold_days = 0 THEN 'available'") &&
+    !finalRules.includes("expires_at"),
+);
+
+check(
+  "afiliado consegue solicitar saque pelo proprio painel",
+  withdrawalForm.includes("Solicitar saque por PIX") &&
+    withdrawalForm.includes("Saque mínimo") &&
+    withdrawalForm.includes("requestMyAffiliateWithdrawal") &&
+    accountPanel.includes("<AffiliateWithdrawalForm dashboard={dashboard} />"),
 );
 
 check(
@@ -264,6 +284,12 @@ check(
     accountPanel.includes("fetchMyAffiliateReferrals") &&
     accountPanel.includes("fetchMyAffiliateCommissions") &&
     accountPanel.includes("fetchMyAffiliateWithdrawals"),
+);
+
+check(
+  "resumo administrativo usa as regras fixas, nao o percentual antigo",
+  finalRules.includes("tier_count = 6") &&
+    !/owner_get_affiliate_overview[\s\S]*commission_rate_bps IS NOT NULL/.test(finalRules),
 );
 
 check(

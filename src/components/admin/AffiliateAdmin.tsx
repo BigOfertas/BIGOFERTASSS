@@ -52,6 +52,46 @@ function money(value: number | null | undefined) {
   return currencyFormatter.format(Number.isFinite(Number(value)) ? Number(value) : 0);
 }
 
+function commissionStatusLabel(value: string | null | undefined) {
+  if (value === "available") return "Disponível";
+  if (value === "pending") return "Pendente";
+  if (value === "cancelled") return "Cancelada";
+  return value || "—";
+}
+
+function paymentStatusLabel(value: string | null | undefined) {
+  if (value === "paid") return "Pago";
+  if (value === "pending") return "Pendente";
+  if (value === "failed") return "Falhou";
+  if (value === "refunded") return "Reembolsado";
+  return value || "—";
+}
+
+function withdrawalStatusLabel(value: string | null | undefined) {
+  if (value === "requested") return "Solicitado";
+  if (value === "paid") return "Pago";
+  if (value === "rejected") return "Não aprovado";
+  return value || "—";
+}
+
+function pixDestinationLabel(snapshot: Record<string, unknown>) {
+  const method = typeof snapshot.method === "string" ? snapshot.method.trim() : "";
+  const key = typeof snapshot.pixKey === "string" ? snapshot.pixKey.trim() : "";
+  const keyType =
+    typeof snapshot.pixKeyType === "string" ? snapshot.pixKeyType.trim().toLowerCase() : "";
+  const labels: Record<string, string> = {
+    cpf: "CPF",
+    cnpj: "CNPJ",
+    email: "E-mail",
+    phone: "Telefone",
+    random: "Chave aleatória",
+  };
+  if (method.toUpperCase() === "PIX" && key) {
+    return `PIX • ${labels[keyType] ?? "Chave"}: ${key}`;
+  }
+  return method || "Destino não informado";
+}
+
 function formatPercent(bps: number | null | undefined) {
   if (bps === null || bps === undefined) return "A definir";
   return `${(bps / 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
@@ -433,9 +473,9 @@ export function AffiliateAdmin() {
                     <td className="px-5 py-3 font-bold text-gray-950">{row.public_number}</td>
                     <td className="px-5 py-3 text-gray-700">{row.referred_name || "Cliente"}</td>
                     <td className="px-5 py-3 text-gray-600">{dateFormatter.format(new Date(row.created_at))}</td>
-                    <td className="px-5 py-3 text-gray-600">{row.payment_status}</td>
+                    <td className="px-5 py-3 text-gray-600">{paymentStatusLabel(row.payment_status)}</td>
                     <td className="px-5 py-3 font-bold tabular-nums text-gray-950">{money(row.total_amount)}</td>
-                    <td className="px-5 py-3"><span className="font-bold text-gray-950">{row.commission_amount === null ? "—" : money(row.commission_amount)}</span>{row.commission_status ? <span className="ml-2 text-xs text-gray-500">{row.commission_status}</span> : null}</td>
+                    <td className="px-5 py-3"><span className="font-bold text-gray-950">{row.commission_amount === null ? "—" : money(row.commission_amount)}</span>{row.commission_status ? <span className="ml-2 text-xs text-gray-500">{commissionStatusLabel(row.commission_status)}</span> : null}</td>
                   </tr>
                 ))}
               </tbody>
@@ -447,7 +487,7 @@ export function AffiliateAdmin() {
       <section className="rounded-xl border border-gray-200 bg-white">
         <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
           <h2 className="font-black text-gray-950">Comissões</h2>
-          <p className="mt-1 text-xs text-gray-500">Snapshots financeiros dos pedidos elegíveis. Uma comissão por pedido.</p>
+          <p className="mt-1 text-xs text-gray-500">Histórico das comissões dos pedidos elegíveis. Uma comissão por pedido.</p>
         </div>
         {commissionsQuery.isLoading ? <LoadingBlock /> : commissionsQuery.error ? <EmptyRow message="Não foi possível carregar as comissões." /> : (commissionsQuery.data ?? []).length === 0 ? <EmptyRow message="Ainda não há comissões." /> : (
           <div className="overflow-x-auto">
@@ -461,7 +501,7 @@ export function AffiliateAdmin() {
                     <td className="px-5 py-3 tabular-nums text-gray-700">{row.commission_units ?? "—"}</td>
                     <td className="px-5 py-3 text-gray-700">{row.commission_unit_amount === null ? "Histórico anterior" : money(row.commission_unit_amount)}</td>
                     <td className="px-5 py-3 font-black tabular-nums text-gray-950">{money(row.commission_amount)}</td>
-                    <td className="px-5 py-3 text-gray-600">{row.status}</td>
+                    <td className="px-5 py-3 text-gray-600">{commissionStatusLabel(row.status)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -481,7 +521,8 @@ export function AffiliateAdmin() {
               <div key={row.withdrawal_id} className="grid gap-4 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(260px,0.7fr)] lg:items-center sm:px-6">
                 <div>
                   <p className="text-sm font-bold text-gray-950">{row.affiliate_name || row.affiliate_email || "Afiliado"} • {money(row.amount)}</p>
-                  <p className="mt-1 text-xs text-gray-500">Solicitado em {dateFormatter.format(new Date(row.requested_at))} • {row.status}</p>
+                  <p className="mt-1 text-xs text-gray-500">Solicitado em {dateFormatter.format(new Date(row.requested_at))} • {withdrawalStatusLabel(row.status)}</p>
+                  <p className="mt-1 break-all text-xs font-semibold text-gray-700">{pixDestinationLabel(row.destination_snapshot)}</p>
                 </div>
                 {row.status === "requested" ? (
                   <button
@@ -492,7 +533,7 @@ export function AffiliateAdmin() {
                   >
                     Marcar pago
                   </button>
-                ) : <span className="text-xs font-bold text-gray-500">{row.status}</span>}
+                ) : <span className="text-xs font-bold text-gray-500">{withdrawalStatusLabel(row.status)}</span>}
                 {row.status === "requested" ? (
                   <div className="flex gap-2">
                     <input
