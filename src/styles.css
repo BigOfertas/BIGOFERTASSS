@@ -7,15 +7,10 @@
 /*
  * Design system definition.
  *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * The storefront uses a light liquid-glass language inspired by modern mobile
+ * operating systems, but keeps blur restricted to larger screens so the UI
+ * stays inexpensive on phones. Brand colors remain centralized as semantic
+ * tokens so the future rebrand does not depend on component-by-component edits.
  */
 
 @theme inline {
@@ -62,26 +57,26 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
+  --radius: 0.875rem;
+  --background: oklch(0.985 0.004 255);
+  --foreground: oklch(0.155 0.025 260);
+  --card: oklch(1 0 0 / 88%);
+  --card-foreground: oklch(0.155 0.025 260);
+  --popover: oklch(1 0 0 / 96%);
+  --popover-foreground: oklch(0.155 0.025 260);
   --primary: oklch(0.208 0.042 265.755);
   --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
+  --secondary: oklch(0.965 0.008 250);
   --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
+  --muted: oklch(0.965 0.008 250);
+  --muted-foreground: oklch(0.515 0.03 257);
+  --accent: oklch(0.965 0.008 250);
   --accent-foreground: oklch(0.208 0.042 265.755);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --border: oklch(0.9 0.012 255 / 82%);
+  --input: oklch(0.9 0.012 255 / 82%);
+  --ring: oklch(0.62 0.16 28);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -95,14 +90,24 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+
+  --brand-accent: oklch(0.57 0.235 27.5);
+  --brand-accent-strong: oklch(0.49 0.22 27.5);
+  --brand-accent-soft: oklch(0.95 0.035 25);
+  --glass-border: rgba(255, 255, 255, 0.72);
+  --glass-edge: rgba(15, 23, 42, 0.09);
+  --glass-shadow: 0 22px 50px rgba(15, 23, 42, 0.09), 0 4px 14px rgba(15, 23, 42, 0.055);
+  --glass-shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.07), 0 2px 8px rgba(15, 23, 42, 0.045);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", Inter, Helvetica, Arial, sans-serif;
 }
 
 .dark {
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
+  --card: oklch(0.208 0.042 265.755 / 90%);
   --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
+  --popover: oklch(0.208 0.042 265.755 / 96%);
   --popover-foreground: oklch(0.984 0.003 247.858);
   --primary: oklch(0.929 0.013 255.508);
   --primary-foreground: oklch(0.208 0.042 265.755);
@@ -130,6 +135,10 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-edge: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 24px 60px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.18);
+  --glass-shadow-soft: 0 14px 32px rgba(0, 0, 0, 0.24), 0 2px 8px rgba(0, 0, 0, 0.16);
 }
 
 @layer base {
@@ -137,9 +146,222 @@
     border-color: var(--color-border);
   }
 
+  html {
+    background: var(--color-background);
+  }
+
   body {
+    min-height: 100vh;
     background-color: var(--color-background);
+    background-image:
+      radial-gradient(circle at 8% 2%, rgba(230, 0, 0, 0.075), transparent 23rem),
+      radial-gradient(circle at 92% 14%, rgba(59, 130, 246, 0.055), transparent 29rem),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(244, 246, 249, 0.98));
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    letter-spacing: -0.008em;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background: rgba(230, 0, 0, 0.16);
+  }
+}
+
+@layer components {
+  .app-shell {
+    min-height: 100vh;
+    background: transparent;
+  }
+
+  .glass-card,
+  .glass-panel {
+    position: relative;
+    border: 1px solid var(--glass-edge);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7) 48%, rgba(255, 255, 255, 0.87)),
+      radial-gradient(circle at 12% -8%, rgba(255, 255, 255, 0.92), transparent 38%);
+    box-shadow:
+      inset 0 1px 0 var(--glass-border),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.32),
+      var(--glass-shadow-soft);
+  }
+
+  .glass-panel {
+    box-shadow:
+      inset 0 1px 0 var(--glass-border),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.28),
+      var(--glass-shadow);
+  }
+
+  .glass-media {
+    border: 1px solid rgba(15, 23, 42, 0.055);
+    background:
+      radial-gradient(circle at 22% 8%, rgba(255, 255, 255, 0.98), transparent 32%),
+      linear-gradient(145deg, rgba(248, 250, 252, 0.95), rgba(238, 241, 245, 0.82));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1px 0 rgba(15, 23, 42, 0.035);
+  }
+
+  .glass-header {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.075);
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.055);
+  }
+
+  .glass-input {
+    border: 1px solid rgba(15, 23, 42, 0.11);
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 6px 20px rgba(15, 23, 42, 0.04);
+  }
+
+  .brand-lockup {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.07);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.78));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.96),
+      0 8px 22px rgba(15, 23, 42, 0.055);
+    color: oklch(0.18 0.025 260);
+    font-family: var(--font-display);
+    font-weight: 850;
+    letter-spacing: -0.055em;
+  }
+
+  .header-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.065);
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 7px 18px rgba(15, 23, 42, 0.045);
+  }
+
+  .premium-action {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: linear-gradient(135deg, var(--brand-accent), var(--brand-accent-strong));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.24),
+      0 10px 24px rgba(180, 20, 20, 0.22);
+    color: white;
+  }
+
+  .display-kicker {
+    color: var(--brand-accent);
+    font-family: var(--font-sans);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .display-title {
+    color: oklch(0.17 0.025 260);
+    font-family: var(--font-display);
+    font-size: clamp(1.65rem, 2.4vw, 2.5rem);
+    font-weight: 850;
+    letter-spacing: -0.055em;
+    line-height: 0.98;
+  }
+
+  .display-title-sm {
+    color: oklch(0.17 0.025 260);
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 2vw, 2rem);
+    font-weight: 830;
+    letter-spacing: -0.045em;
+    line-height: 1;
+  }
+
+  .section-copy {
+    color: oklch(0.48 0.025 258);
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  .ambient-band {
+    position: relative;
+    overflow: hidden;
+    border-block: 1px solid rgba(15, 23, 42, 0.055);
+    background:
+      radial-gradient(circle at 18% 30%, rgba(230, 0, 0, 0.12), transparent 28%),
+      radial-gradient(circle at 82% 46%, rgba(59, 130, 246, 0.09), transparent 30%),
+      linear-gradient(120deg, rgba(255, 255, 255, 0.82), rgba(239, 242, 247, 0.94));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88);
+  }
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  @media (min-width: 768px) {
+    .glass-card {
+      -webkit-backdrop-filter: blur(14px) saturate(1.08);
+      backdrop-filter: blur(14px) saturate(1.08);
+    }
+
+    .glass-panel,
+    .glass-header,
+    .glass-input {
+      -webkit-backdrop-filter: blur(18px) saturate(1.1);
+      backdrop-filter: blur(18px) saturate(1.1);
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    background-image:
+      radial-gradient(circle at 12% 0%, rgba(230, 0, 0, 0.055), transparent 16rem),
+      linear-gradient(180deg, #ffffff, #f5f7fa);
+  }
+
+  .glass-card,
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.965);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.96),
+      0 8px 22px rgba(15, 23, 42, 0.065);
+  }
+
+  .glass-header {
+    background: rgba(255, 255, 255, 0.985);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.055);
+  }
+
+  .glass-input {
+    background: #fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-card,
+  .glass-panel,
+  .glass-header,
+  .glass-input {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.98);
   }
 }
 
@@ -177,7 +399,6 @@
   animation-play-state: paused;
 }
 
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -204,7 +425,6 @@
     scrollbar-width: none;
   }
 
-  /* Custom subtle scrollbar for mobile product carousels */
   .custom-scrollbar::-webkit-scrollbar {
     height: 3px;
     display: block;
@@ -222,7 +442,6 @@
     background: #aaa;
   }
 
-  /* Specific mobile-only scrollbar indicator */
   @media (max-width: 768px) {
     .custom-scrollbar-mobile::-webkit-scrollbar {
       height: 2px;
