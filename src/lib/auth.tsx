@@ -10,6 +10,7 @@ import type { AuthError, Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { normalizeAffiliateReferralCode } from "@/lib/affiliate-referral";
 import { legacyWorkerFallbackAvailable } from "@/lib/backend-routing";
 import { getUserFacingError } from "@/lib/user-facing-error";
 
@@ -51,6 +52,7 @@ type AuthContextValue = {
     email: string,
     password: string,
     fullName: string,
+    referralCode?: string | null,
   ) => Promise<AuthActionResult>;
 
   resendSignUpConfirmation: (email: string) => Promise<AuthActionResult>;
@@ -410,8 +412,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     fullName: string,
+    referralCode?: string | null,
   ): Promise<AuthActionResult> {
     const emailRedirectTo = getEmailConfirmationRedirectUrl();
+    const normalizedReferralCode = normalizeAffiliateReferralCode(referralCode);
 
     const { error } = await supabase.auth.signUp({
       email: email.trim(),
@@ -420,6 +424,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...(emailRedirectTo ? { emailRedirectTo } : {}),
         data: {
           full_name: fullName.trim(),
+          ...(normalizedReferralCode
+            ? { affiliate_referral_code: normalizedReferralCode }
+            : {}),
         },
       },
     });
