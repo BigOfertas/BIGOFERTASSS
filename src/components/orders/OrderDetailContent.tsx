@@ -12,6 +12,7 @@ import {
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { ProductionNotice } from "@/components/orders/ProductionNotice";
+import { BRAND } from "@/config/brand";
 import { formatBrazilianPhone } from "@/lib/brasil";
 import {
   REFUND_REASON_LABELS,
@@ -336,7 +337,7 @@ export function OrderDetailContent({
               ) : null}
               {!ownerView ? (
                 <p className="mt-3 text-xs text-orange-800/70">
-                  A BIGofertas entrará em contato para dar continuidade.
+                  A {BRAND.officialName} entrará em contato para dar continuidade.
                 </p>
               ) : null}
             </section>
