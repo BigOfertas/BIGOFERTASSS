@@ -39,7 +39,8 @@ const checks = [
     shipping.includes("freeShipping") &&
       shipping.includes("line-through") &&
       shipping.includes("quote.totalPrice") &&
-      shipping.includes("Cotação absorvida pela BIGofertas"),
+      shipping.includes("Cotação absorvida pela") &&
+      shipping.includes("BRAND.officialName"),
   ],
   [
     "backend base ignora desconto informado pelo caller",
