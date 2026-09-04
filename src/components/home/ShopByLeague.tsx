@@ -52,57 +52,59 @@ const ShopByLeague: React.FC = () => {
   };
 
   return (
-    <section className="py-16 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <h2 className="mb-8 text-center text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none text-gray-900">
-          COMPRE POR <span className="text-red-600">LIGA</span>
-        </h2>
-
-        <div className="flex flex-wrap justify-center gap-x-4 md:gap-x-10 gap-y-3 mb-12">
-          {LEAGUES.map((league) => (
-            <button
-              type="button"
-              key={league.id}
-              onClick={() => handleLeagueChange(league.id)}
-              aria-pressed={activeLeagueId === league.id}
-              className={`whitespace-nowrap text-base font-bold tracking-tight uppercase transition-colors duration-200 relative px-4 py-2 min-h-[44px] ${
-                activeLeagueId === league.id
-                  ? "text-gray-900"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {league.name}
-              {activeLeagueId === league.id ? (
-                <span className="absolute bottom-0 left-0 w-full h-[3px] bg-red-600 rounded-full transition-all duration-200 ease-in-out" />
-              ) : null}
-            </button>
-          ))}
+    <section className="overflow-hidden bg-transparent py-12 sm:py-16 lg:py-20">
+      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+        <div className="mb-7 text-center sm:mb-9">
+          <p className="display-kicker">Futebol internacional</p>
+          <h2 className="display-title-sm mt-2">Compre por liga</h2>
         </div>
 
-        <div
-          className={`relative transition-all duration-150 ease-in-out ${
-            isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"
-          }`}
-        >
-          <ProductCarousel key={displayLeagueId} itemCount={SHOWCASE_SIZE}>
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                slug={product.slug}
-                name={product.name}
-                price={product.price}
-                promotionalPrice={product.promotional_price}
-                imageUrl={product.displayImageUrl}
-              />
+        <div className="mb-8 flex justify-center sm:mb-10">
+          <div className="glass-card no-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-2xl p-1.5">
+            {LEAGUES.map((league) => (
+              <button
+                type="button"
+                key={league.id}
+                onClick={() => handleLeagueChange(league.id)}
+                aria-pressed={activeLeagueId === league.id}
+                className={`min-h-10 whitespace-nowrap rounded-xl px-3.5 py-2 text-[11px] font-extrabold tracking-[0.015em] transition-colors duration-200 motion-reduce:transition-none sm:px-4 sm:text-xs ${
+                  activeLeagueId === league.id
+                    ? "bg-gray-950 text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-900"
+                }`}
+              >
+                {league.name}
+              </button>
             ))}
-            {Array.from({ length: placeholderCount }).map((_, index) => (
-              <ProductCardPlaceholder
-                key={`${displayLeagueId}-placeholder-${index}`}
-                loading={isLoading}
-              />
-            ))}
-          </ProductCarousel>
+          </div>
+        </div>
+
+        <div className="glass-panel rounded-[1.75rem] px-2 py-4 sm:px-4 sm:py-5 lg:px-5">
+          <div
+            className={`relative transition-all duration-150 ease-in-out motion-reduce:transform-none motion-reduce:transition-none ${
+              isTransitioning ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"
+            }`}
+          >
+            <ProductCarousel key={displayLeagueId} itemCount={SHOWCASE_SIZE}>
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  slug={product.slug}
+                  name={product.name}
+                  price={product.price}
+                  promotionalPrice={product.promotional_price}
+                  imageUrl={product.displayImageUrl}
+                />
+              ))}
+              {Array.from({ length: placeholderCount }).map((_, index) => (
+                <ProductCardPlaceholder
+                  key={`${displayLeagueId}-placeholder-${index}`}
+                  loading={isLoading}
+                />
+              ))}
+            </ProductCarousel>
+          </div>
         </div>
 
         {error ? (
