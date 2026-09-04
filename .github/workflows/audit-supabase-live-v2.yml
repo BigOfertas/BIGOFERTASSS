@@ -1,0 +1,175 @@
+name: Audit Supabase Live V2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/audit-supabase-live-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+      - name: Read-only live audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob, json, os, pathlib, re, subprocess, tomllib
+
+          token = os.environ['SUPABASE_ACCESS_TOKEN']
+          ref = os.environ['SUPABASE_PROJECT_ID']
+          base = 'https://api.supabase.com'
+
+          def call(method, path, body=None):
+              cmd = [
+                  'curl', '-fsS', '-X', method,
+                  '-H', f'Authorization: Bearer {token}',
+                  '-H', 'Accept: application/json',
+                  '-H', 'User-Agent: curl/8 BIGofertas-readonly-audit',
+                  base + path,
+              ]
+              raw_body = None
+              if body is not None:
+                  cmd += ['-H', 'Content-Type: application/json', '--data-binary', '@-']
+                  raw_body = json.dumps(body).encode()
+              proc = subprocess.run(cmd, input=raw_body, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+              if proc.returncode:
+                  raise RuntimeError(f'{method} {path}: {proc.stderr.decode(errors="replace")[:1000]}')
+              raw = proc.stdout.decode()
+              return json.loads(raw) if raw else None
+
+          def sql(query):
+              return call('POST', f'/v1/projects/{ref}/database/query', {'query': query, 'read_only': True})
+
+          def rows(payload):
+              if isinstance(payload, list): return payload
+              if isinstance(payload, dict):
+                  for key in ('result', 'data'):
+                      if isinstance(payload.get(key), list): return payload[key]
+              return []
+
+          def show(name, value):
+              print(f'\n===== {name} =====')
+              print(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True))
+
+          repo_versions = []
+          for f in sorted(glob.glob('supabase/migrations/*.sql')):
+              m = re.match(r'^(\d{14})_', pathlib.Path(f).name)
+              if m: repo_versions.append(m.group(1))
+          live_versions = [str(r['version']) for r in rows(sql('select version from supabase_migrations.schema_migrations order by version'))]
+          migration_compare = {
+              'repo_count': len(repo_versions), 'live_count': len(live_versions),
+              'missing_live': sorted(set(repo_versions)-set(live_versions)),
+              'extra_live': sorted(set(live_versions)-set(repo_versions)),
+          }
+          show('MIGRATIONS_COMPARE', migration_compare)
+
+          tables = rows(sql('''
+            select c.relname as table_name, c.relrowsecurity as rls_enabled,
+                   c.relforcerowsecurity as force_rls,
+                   (select count(*)::int from pg_policy p where p.polrelid=c.oid) as policy_count
+            from pg_class c join pg_namespace n on n.oid=c.relnamespace
+            where n.nspname='public' and c.relkind='r' order by c.relname
+          '''))
+          show('PUBLIC_TABLES_RLS', tables)
+
+          policies = rows(sql('''
+            select tablename, policyname, permissive, roles, cmd, qual, with_check
+            from pg_policies where schemaname='public' order by tablename, policyname
+          '''))
+          show('RLS_POLICIES', policies)
+
+          functions = rows(sql('''
+            select p.proname as function_name, pg_get_function_identity_arguments(p.oid) as arguments,
+                   p.prosecdef as security_definer, p.provolatile as volatility,
+                   pg_get_userbyid(p.proowner) as owner, md5(pg_get_functiondef(p.oid)) as definition_hash
+            from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+            where n.nspname='public' and p.prokind='f' order by p.proname, arguments
+          '''))
+          show('PUBLIC_FUNCTIONS_RPCS', functions)
+
+          triggers = rows(sql('''
+            select c.relname as table_name, t.tgname as trigger_name, pg_get_triggerdef(t.oid,true) as definition
+            from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+            where not t.tgisinternal and n.nspname='public' order by c.relname,t.tgname
+          '''))
+          show('TRIGGERS', triggers)
+
+          constraints = rows(sql('''
+            select c.relname as table_name, con.conname as constraint_name, con.contype as constraint_type,
+                   pg_get_constraintdef(con.oid,true) as definition
+            from pg_constraint con join pg_class c on c.oid=con.conrelid join pg_namespace n on n.oid=c.relnamespace
+            where n.nspname='public' order by c.relname,con.conname
+          '''))
+          show('CONSTRAINTS', constraints)
+
+          indexes = rows(sql("select tablename,indexname,indexdef from pg_indexes where schemaname='public' order by tablename,indexname"))
+          show('INDEXES', indexes)
+
+          grants = rows(sql('''
+            select grantee,table_name,string_agg(privilege_type,',' order by privilege_type) as privileges
+            from information_schema.role_table_grants where table_schema='public'
+              and grantee in ('anon','authenticated','service_role')
+            group by grantee,table_name order by table_name,grantee
+          '''))
+          show('TABLE_GRANTS', grants)
+
+          routine_grants = rows(sql('''
+            select grantee,routine_name,string_agg(privilege_type,',' order by privilege_type) as privileges
+            from information_schema.role_routine_grants where routine_schema='public'
+              and grantee in ('anon','authenticated','service_role')
+            group by grantee,routine_name order by routine_name,grantee
+          '''))
+          show('ROUTINE_GRANTS', routine_grants)
+
+          show('EXTENSIONS', rows(sql('select extname,extversion from pg_extension order by extname')))
+          try:
+              cron = rows(sql('select jobid,schedule,command,database,username,active from cron.job order by jobid'))
+              show('CRON_JOBS', cron)
+          except Exception as e:
+              show('CRON_JOBS', {'error': str(e)})
+
+          local_functions = sorted(p.name for p in pathlib.Path('supabase/functions').iterdir() if p.is_dir() and not p.name.startswith('_'))
+          with open('supabase/config.toml','rb') as fh: cfg=tomllib.load(fh)
+          local_verify = {slug: bool(settings.get('verify_jwt', True)) for slug,settings in (cfg.get('functions') or {}).items()}
+          live_payload = call('GET', f'/v1/projects/{ref}/functions')
+          live_functions = live_payload if isinstance(live_payload,list) else []
+          live_slugs = sorted(str(x.get('slug')) for x in live_functions if x.get('slug'))
+          live_verify = {str(x.get('slug')): bool(x.get('verify_jwt')) for x in live_functions if x.get('slug')}
+          verify_mismatch = {s:{'repo':local_verify[s],'live':live_verify[s]} for s in sorted(set(local_verify)&set(live_verify)) if local_verify[s]!=live_verify[s]}
+          edge_compare = {
+              'repo': local_functions, 'live': live_slugs,
+              'missing_live': sorted(set(local_functions)-set(live_slugs)),
+              'extra_live': sorted(set(live_slugs)-set(local_functions)),
+              'verify_jwt_repo': local_verify, 'verify_jwt_live': live_verify,
+              'verify_jwt_mismatches': verify_mismatch,
+          }
+          show('EDGE_FUNCTIONS_COMPARE', edge_compare)
+
+          try:
+              auth_cfg = call('GET', f'/v2/projects/{ref}/config')
+              show('AUTH_CONFIG_SHAPE', {'keys': sorted(auth_cfg.keys()) if isinstance(auth_cfg,dict) else [], 'auth_keys': sorted((auth_cfg.get('auth') or {}).keys()) if isinstance(auth_cfg,dict) and isinstance(auth_cfg.get('auth'),dict) else []})
+              if isinstance(auth_cfg,dict):
+                  auth = auth_cfg.get('auth') if isinstance(auth_cfg.get('auth'),dict) else auth_cfg
+                  show('AUTH_CONFIG_SELECTED', {k:auth.get(k) for k in ('site_url','uri_allow_list','disable_signup','external_email_enabled','mailer_autoconfirm') if k in auth})
+          except Exception as e:
+              show('AUTH_CONFIG_SELECTED', {'error':str(e)})
+
+          summary = {
+              'migration_parity': set(repo_versions)==set(live_versions),
+              'edge_function_parity': set(local_functions)==set(live_slugs),
+              'verify_jwt_parity': not bool(verify_mismatch),
+              'public_tables_without_rls': [r.get('table_name') for r in tables if r.get('rls_enabled') is False],
+              'public_tables_without_policies': [r.get('table_name') for r in tables if not r.get('policy_count')],
+          }
+          show('AUDIT_SUMMARY', summary)
+          PY
