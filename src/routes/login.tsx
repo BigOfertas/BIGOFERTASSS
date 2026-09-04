@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
+import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/login")({
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/login")({
 function Brand() {
   return (
     <Link to="/" className="text-2xl font-black italic tracking-tight text-foreground">
-      <span className="text-red-600">BIG</span>ofertas
+      <BrandWordmark />
     </Link>
   );
 }
