@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "@tanstack/react-router";
 
+import { BRAND } from "@/config/brand";
 import type { ProductSearchFilters } from "@/lib/products";
 
 interface CategoryCardProps {
@@ -27,7 +28,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ name, image, search }) => {
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gray-200 text-gray-400">
             <span className="text-[10px] font-bold uppercase italic tracking-tighter opacity-20 text-red-600 sm:text-xs">
-              BIG
+              {BRAND.shortMark}
             </span>
           </div>
         )}
