@@ -43,7 +43,7 @@ function Index() {
 
         <div
           aria-hidden="true"
-          className="ambient-band mx-auto my-2 flex min-h-40 w-full items-center justify-center overflow-hidden py-12 sm:min-h-44 sm:py-14 lg:min-h-52"
+          className="ambient-band mx-auto my-2 flex min-h-32 w-full items-center justify-center overflow-hidden py-10 max-md:min-h-40 max-md:py-12 md:min-h-44 md:py-14 lg:min-h-52"
         >
           <span className="select-none font-black tracking-[-0.08em] text-gray-900/[0.035] text-[clamp(3.5rem,12vw,10rem)]">
             {BRAND.shortMark}
