@@ -77,7 +77,7 @@ export function AffiliateAccountPage({
                 glowIntensity={active ? "sm" : "xs"}
                 borderRadius="18px"
                 className={`inline-flex min-h-12 items-center justify-center px-4 text-sm font-bold sm:min-w-36 ${
-                  active ? "text-red-700" : "text-gray-650 hover:text-gray-950"
+                  active ? "text-red-700" : "text-gray-600 hover:text-gray-950"
                 }`}
               >
                 <span
