@@ -28,6 +28,117 @@ div[class*="bg-[#f5f5f5]"][class*="py-"] {
   background: transparent;
 }
 
+/*
+ * Liquid-glass navigation surface.
+ *
+ * This intentionally reproduces the bend / face / edge feeling with layered
+ * gradients and inner highlights rather than SVG turbulence. SVG displacement
+ * is substantially more expensive to repaint while scrolling, especially on
+ * mobile Safari. Real backdrop blur is enabled only from tablet/desktop up.
+ */
+.liquid-glass-card {
+  --liquid-radius: 32px;
+  --liquid-blur: 20px;
+  --liquid-inner-shadow: inset 3px 3px 3px rgba(255, 255, 255, 0.44), inset -3px -3px 3px rgba(255, 255, 255, 0.3);
+  --liquid-glow: 0 10px 24px rgba(15, 23, 42, 0.075), 0 0 24px rgba(255, 255, 255, 0.12);
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: var(--liquid-radius);
+  background:
+    radial-gradient(circle at 15% -12%, rgba(255, 255, 255, 0.98), transparent 36%),
+    radial-gradient(circle at 88% 115%, rgba(203, 213, 225, 0.22), transparent 46%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(248, 250, 252, 0.66) 46%, rgba(255, 255, 255, 0.78));
+  box-shadow: var(--liquid-inner-shadow), var(--liquid-glow);
+  -webkit-tap-highlight-color: transparent;
+  transform: translateZ(0);
+}
+
+.liquid-glass-card::before,
+.liquid-glass-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.liquid-glass-card::before {
+  inset: 1px;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.48), transparent 31%, transparent 68%, rgba(255, 255, 255, 0.14)),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.68), transparent 30%);
+  opacity: 0.86;
+}
+
+.liquid-glass-card::after {
+  border: 1px solid rgba(15, 23, 42, 0.055);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.liquid-glass-card--interactive {
+  cursor: pointer;
+  transition:
+    transform 220ms cubic-bezier(0.22, 0.9, 0.24, 1),
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    background 220ms ease;
+}
+
+.liquid-glass-card--interactive:active {
+  transform: scale(0.982);
+}
+
+.liquid-glass-card--active {
+  border-color: rgba(230, 0, 0, 0.2);
+  background:
+    radial-gradient(circle at 10% -10%, rgba(255, 255, 255, 0.98), transparent 34%),
+    radial-gradient(circle at 90% 110%, rgba(230, 0, 0, 0.11), transparent 44%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(255, 244, 244, 0.78) 50%, rgba(255, 255, 255, 0.86));
+  box-shadow:
+    var(--liquid-inner-shadow),
+    0 13px 28px rgba(156, 20, 20, 0.11),
+    0 0 28px rgba(230, 0, 0, 0.055);
+}
+
+.liquid-glass-card:focus-visible {
+  outline: 2px solid rgba(230, 0, 0, 0.55);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .liquid-glass-card--interactive:hover {
+    transform: translateY(-2px) scale(1.01);
+    border-color: rgba(255, 255, 255, 0.92);
+    box-shadow:
+      var(--liquid-inner-shadow),
+      0 17px 34px rgba(15, 23, 42, 0.1),
+      0 0 34px rgba(255, 255, 255, 0.18);
+  }
+
+  .liquid-glass-card--interactive.liquid-glass-card--active:hover {
+    border-color: rgba(230, 0, 0, 0.28);
+    box-shadow:
+      var(--liquid-inner-shadow),
+      0 18px 36px rgba(156, 20, 20, 0.14),
+      0 0 34px rgba(230, 0, 0, 0.07);
+  }
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  @media (min-width: 768px) {
+    .liquid-glass-card {
+      -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(1.12);
+      backdrop-filter: blur(var(--liquid-blur)) saturate(1.12);
+    }
+  }
+}
+
 @media (max-width: 767px) {
   :where(section, article, aside, form, div).rounded-xl.border.border-gray-200.bg-white,
   :where(section, article, aside, form, div).rounded-2xl.border.border-gray-200.bg-white,
@@ -38,5 +149,49 @@ div[class*="bg-[#f5f5f5]"][class*="py-"] {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.98),
       0 8px 22px rgba(15, 23, 42, 0.06);
+  }
+
+  .liquid-glass-card {
+    border-color: rgba(15, 23, 42, 0.075);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(247, 249, 252, 0.97));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      inset 0 -1px 0 rgba(15, 23, 42, 0.025),
+      0 8px 19px rgba(15, 23, 42, 0.065);
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .liquid-glass-card::before {
+    opacity: 0.52;
+  }
+
+  .liquid-glass-card--interactive:active {
+    transform: scale(0.986);
+  }
+
+  .liquid-glass-card--active {
+    border-color: rgba(230, 0, 0, 0.17);
+    background: linear-gradient(145deg, #fff, rgba(255, 246, 246, 0.98));
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass-card {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.985);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-card--interactive {
+    transition: none !important;
+  }
+
+  .liquid-glass-card--interactive:hover,
+  .liquid-glass-card--interactive:active {
+    transform: none !important;
   }
 }
