@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import bannerInferiorAsset from "@/assets/promos/banner-promo-inferior.png.asset.json";
-import bannerSuperiorAsset from "@/assets/promos/banner-promo-superior.png.asset.json";
 import BestSellers from "@/components/home/BestSellers";
 import BrazilianProducts from "@/components/home/BrazilianProducts";
 import BrazilianTeams from "@/components/home/BrazilianTeams";
@@ -12,6 +11,9 @@ import Header from "@/components/layout/Header";
 import PromoBanner from "@/components/layout/PromoBanner";
 import { BRAND } from "@/config/brand";
 
+const TOP_BANNER_DESKTOP = "/assets/promos/top-banner-desktop.webp";
+const TOP_BANNER_MOBILE = "/assets/promos/top-banner-mobile.webp";
+
 export const Route = createFileRoute("/")({
   component: Index,
 });
@@ -19,13 +21,23 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <div className="app-shell flex min-h-screen flex-col">
-      <PromoBanner
-        id="superior"
-        style={{ aspectRatio: "1920/100" }}
-        className="max-h-[100px] max-md:!aspect-[1920/300] max-md:max-h-none"
-        images={[bannerSuperiorAsset.url, bannerSuperiorAsset.url, bannerSuperiorAsset.url]}
-        altText={`Ofertas ${BRAND.officialName}`}
-      />
+      <div className="hidden md:block">
+        <PromoBanner
+          id="superior"
+          style={{ aspectRatio: "1717/376" }}
+          images={[TOP_BANNER_DESKTOP, TOP_BANNER_DESKTOP, TOP_BANNER_DESKTOP]}
+          altText={`Ofertas ${BRAND.officialName}`}
+        />
+      </div>
+
+      <div className="md:hidden">
+        <PromoBanner
+          id="superior"
+          style={{ aspectRatio: "2048/245" }}
+          images={[TOP_BANNER_MOBILE, TOP_BANNER_MOBILE, TOP_BANNER_MOBILE]}
+          altText={`Ofertas ${BRAND.officialName}`}
+        />
+      </div>
 
       <Header />
 
