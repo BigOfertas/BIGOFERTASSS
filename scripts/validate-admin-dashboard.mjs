@@ -10,6 +10,8 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const adminRoute = read("src/routes/admin.tsx");
 const dashboard = read("src/components/admin/AdminDashboard.tsx");
 const dashboardLib = read("src/lib/admin-dashboard.ts");
+const liquidGlass = read("src/glass-legacy.css");
+const liquidGlassComponent = read("src/components/ui/liquid-glass-card.tsx");
 
 const checks = [];
 const check = (name, condition) => checks.push([name, Boolean(condition)]);
@@ -23,10 +25,11 @@ check(
 );
 
 check(
-  "admin usa shell operacional neutro e identidade BIGofertas",
-  /lg:grid-cols-\[248px_minmax\(0,1fr\)\]/.test(adminRoute) &&
-    /border-r border-gray-200 bg-white/.test(adminRoute) &&
-    /bg-red-50 text-red-700/.test(adminRoute) &&
+  "admin usa shell operacional e identidade visual compartilhada",
+  /lg:grid-cols-\[268px_minmax\(0,1fr\)\]/.test(adminRoute) &&
+    /glass-panel/.test(adminRoute) &&
+    /LiquidGlassCard/.test(adminRoute) &&
+    /active=\{active\}/.test(adminRoute) &&
     /Visão geral/.test(dashboard) &&
     !/bg-gradient-to-br/.test(dashboard),
 );
@@ -59,7 +62,10 @@ check(
 check(
   "animacoes respeitam reducao de movimento",
   /motion-reduce:transition-none/.test(dashboard) &&
-    /motion-reduce:transition-none/.test(adminRoute),
+    /prefers-reduced-motion:\s*reduce/.test(liquidGlass) &&
+    /transition:\s*none\s*!important/.test(liquidGlass) &&
+    /transform:\s*none\s*!important/.test(liquidGlass) &&
+    /liquid-glass-card--interactive/.test(liquidGlassComponent),
 );
 
 let syntaxErrors = 0;
@@ -67,6 +73,7 @@ for (const file of [
   "src/routes/admin.tsx",
   "src/components/admin/AdminDashboard.tsx",
   "src/lib/admin-dashboard.ts",
+  "src/components/ui/liquid-glass-card.tsx",
 ]) {
   const source = read(file);
   const result = ts.transpileModule(source, {
