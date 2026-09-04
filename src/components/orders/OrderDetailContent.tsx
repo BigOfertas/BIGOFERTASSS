@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   CreditCard,
   Mail,
   MapPin,
@@ -9,6 +10,7 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { OrderShippingControl } from "@/components/admin/OrderShippingControl";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { ProductionNotice } from "@/components/orders/ProductionNotice";
@@ -47,6 +49,14 @@ function paymentLabel(status: OrderDetail["order"]["payment_status"]) {
   }[status];
 }
 
+function refundStatusLabel(status: OrderDetail["refundRequest"] extends infer _T ? string : never) {
+  return {
+    requested: "Aguardando atendimento",
+    refunded: "Reembolso registrado",
+    canceled: "Solicitação cancelada",
+  }[status] ?? status;
+}
+
 export function OrderDetailContent({
   detail,
   ownerView = false,
@@ -59,9 +69,64 @@ export function OrderDetailContent({
   const { order, items, timeline, refundRequest } = detail;
   const displayStatus = getOrderDisplayStatus(order, refundRequest);
   const units = items.reduce((total, item) => total + item.quantity, 0);
+  const hasPendingRefund = refundRequest?.status === "requested";
+  const usesDedicatedShippingControl =
+    ownerView && order.status === "in_production" && !hasPendingRefund;
 
   return (
     <div className="space-y-5 sm:space-y-6">
+      {ownerView && refundRequest ? (
+        <section
+          className={`overflow-hidden rounded-2xl border-2 shadow-[0_16px_40px_rgba(194,65,12,0.14)] ${
+            hasPendingRefund
+              ? "border-orange-400 bg-gradient-to-br from-orange-50 via-white to-red-50"
+              : "border-orange-200 bg-orange-50/70"
+          }`}
+        >
+          <div className="p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 gap-3">
+                <span
+                  className={`flex h-12 w-12 flex-none items-center justify-center rounded-xl text-white shadow-sm ${
+                    hasPendingRefund ? "bg-orange-600" : "bg-orange-500"
+                  }`}
+                >
+                  <AlertTriangle className="h-5.5 w-5.5" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-orange-700">
+                    Reembolso — atenção do administrador
+                  </p>
+                  <h2 className="mt-1 text-xl font-black tracking-tight text-orange-950 sm:text-2xl">
+                    {refundStatusLabel(refundRequest.status)}
+                  </h2>
+                  <p className="mt-2 text-sm font-bold text-orange-900">
+                    Motivo: {REFUND_REASON_LABELS[refundRequest.reason as RefundReason] ?? refundRequest.reason}
+                  </p>
+                  {refundRequest.message ? (
+                    <p className="mt-2 max-w-3xl whitespace-pre-wrap text-sm leading-6 text-orange-950/80">
+                      {refundRequest.message}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              {hasPendingRefund ? (
+                <span className="inline-flex w-fit items-center rounded-full border border-orange-300 bg-orange-100 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-orange-800">
+                  Resolver antes de alterar o pedido
+                </span>
+              ) : null}
+            </div>
+
+            {hasPendingRefund && actions ? (
+              <div className="mt-5 border-t border-orange-200/80 pt-5">
+                {actions}
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
       <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-br from-gray-950 via-gray-900 to-red-950 px-5 py-6 text-white sm:px-7 sm:py-7">
           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-red-600/20 blur-3xl" />
@@ -81,7 +146,14 @@ export function OrderDetailContent({
           </div>
         </div>
 
-        {actions ? (
+        {usesDedicatedShippingControl ? (
+          <div className="border-b border-gray-100 bg-sky-50/30 px-4 py-4 sm:px-6">
+            <OrderShippingControl
+              orderId={order.id}
+              publicNumber={order.public_number}
+            />
+          </div>
+        ) : actions && !(ownerView && hasPendingRefund) ? (
           <div className="border-b border-gray-100 bg-gray-50/70 px-5 py-4 sm:px-7">
             {actions}
           </div>
@@ -251,7 +323,7 @@ export function OrderDetailContent({
               <h2 className="font-black text-gray-950">Entrega</h2>
             </div>
             {order.shipping_provider ? (
-              <div className="mt-4 space-y-1.5 text-sm text-gray-600">
+              <div className="mt-4 text-sm text-gray-600">
                 <p className="font-bold text-gray-900">
                   {ownerView
                     ? [order.shipping_provider, order.shipping_service]
@@ -260,14 +332,44 @@ export function OrderDetailContent({
                     : order.shipping_service ?? "Entrega"}
                 </p>
                 {order.shipping_transit_business_days !== null ? (
-                  <p>
+                  <p className="mt-1.5">
                     Prazo: {order.shipping_transit_business_days} dias úteis após a produção.
                   </p>
                 ) : null}
+
                 {order.shipping_tracking_code ? (
-                  <p>
-                    Rastreio: <strong>{order.shipping_tracking_code}</strong>
-                  </p>
+                  <div
+                    className={`mt-4 rounded-xl border p-4 ${
+                      ownerView
+                        ? "border-sky-200 bg-sky-50/70"
+                        : "border-emerald-200 bg-emerald-50/80"
+                    }`}
+                  >
+                    <p
+                      className={`text-[11px] font-black uppercase tracking-[0.13em] ${
+                        ownerView ? "text-sky-700" : "text-emerald-700"
+                      }`}
+                    >
+                      {ownerView ? "Rastreio salvo" : "Código de rastreio"}
+                    </p>
+                    <p className="mt-2 break-all font-mono text-base font-black tracking-wide text-gray-950">
+                      {order.shipping_tracking_code}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-gray-600">
+                      {ownerView
+                        ? "Este é exatamente o código exibido para o cliente na área de pedidos."
+                        : "Este código fica disponível aqui em Minha Conta → Pedidos para você acompanhar a entrega."}
+                    </p>
+                  </div>
+                ) : !ownerView && order.status === "shipped" ? (
+                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-xs font-black uppercase tracking-wide text-amber-800">
+                      Rastreio em atualização
+                    </p>
+                    <p className="mt-1.5 text-xs leading-5 text-amber-900/80">
+                      O pedido já foi enviado, mas o código de rastreio ainda não está disponível aqui.
+                    </p>
+                  </div>
                 ) : null}
               </div>
             ) : (
@@ -321,7 +423,7 @@ export function OrderDetailContent({
             </section>
           ) : null}
 
-          {refundRequest ? (
+          {!ownerView && refundRequest ? (
             <section className="rounded-2xl border border-orange-200 bg-orange-50/70 p-5 shadow-sm sm:p-6">
               <h2 className="font-black text-orange-950">
                 Solicitação de reembolso
@@ -335,11 +437,9 @@ export function OrderDetailContent({
                   {refundRequest.message}
                 </p>
               ) : null}
-              {!ownerView ? (
-                <p className="mt-3 text-xs text-orange-800/70">
-                  A {BRAND.officialName} entrará em contato para dar continuidade.
-                </p>
-              ) : null}
+              <p className="mt-3 text-xs text-orange-800/70">
+                A {BRAND.officialName} entrará em contato para dar continuidade.
+              </p>
             </section>
           ) : null}
         </aside>
