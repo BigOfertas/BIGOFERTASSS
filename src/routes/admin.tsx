@@ -13,6 +13,8 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { OrderAdmin } from "@/components/admin/OrderAdmin";
 import { ProductAdmin } from "@/components/admin/ProductAdmin";
+import { BrandWordmark } from "@/components/brand/BrandWordmark";
+import { BRAND } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
 import { getUserFacingError } from "@/lib/user-facing-error";
 
@@ -118,14 +120,14 @@ function AdminPage() {
             <Link
               to="/"
               className="inline-flex items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-              aria-label="Abrir loja BIGofertas"
+              aria-label={`Abrir loja ${BRAND.officialName}`}
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-600 text-white">
                 <Store className="h-4.5 w-4.5" aria-hidden="true" />
               </span>
               <div>
                 <p className="text-base font-black tracking-tight text-gray-950">
-                  <span className="text-red-600">BIG</span>ofertas
+                  <BrandWordmark />
                 </p>
                 <p className="text-[11px] font-semibold text-gray-400">
                   Administração
@@ -204,7 +206,7 @@ function AdminPage() {
                 <Link
                   to="/"
                   className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-red-600 text-white lg:hidden"
-                  aria-label="Abrir loja BIGofertas"
+                  aria-label={`Abrir loja ${BRAND.officialName}`}
                 >
                   <Store className="h-4.5 w-4.5" aria-hidden="true" />
                 </Link>
