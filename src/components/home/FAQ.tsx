@@ -94,29 +94,33 @@ export default function FAQ() {
   };
 
   return (
-    <section className="bg-white py-8 md:py-12 lg:py-16">
+    <section className="bg-transparent py-12 md:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <h2 className="mb-12 text-center text-xl font-bold uppercase italic text-black md:text-2xl lg:text-3xl">
-          PERGUNTAS FREQUENTES
-        </h2>
+        <div className="mb-8 text-center sm:mb-10">
+          <p className="display-kicker">Antes de comprar</p>
+          <h2 className="display-title-sm mt-2">Perguntas frequentes</h2>
+        </div>
 
-        <div className="mx-auto max-w-2xl space-y-3">
+        <div className="mx-auto max-w-3xl space-y-3">
           {faqData.map((item) => (
             <div
               key={item.id}
-              className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 transition-all duration-200 hover:bg-gray-100 motion-reduce:transition-none"
+              className="glass-card overflow-hidden rounded-[1.25rem]"
             >
               <button
                 type="button"
                 onClick={() => toggle(item.id)}
                 aria-expanded={openId === item.id}
-                className="flex w-full cursor-pointer items-center justify-between px-4 py-3 text-left transition-colors duration-200 hover:bg-gray-100 motion-reduce:transition-none md:px-5 md:py-4"
+                className="flex w-full cursor-pointer items-center justify-between px-4 py-4 text-left md:px-5 md:py-5"
               >
-                <span className="flex items-center gap-3 text-left">
-                  <span className="text-xl" aria-hidden="true">
+                <span className="flex items-center gap-3.5 text-left">
+                  <span
+                    className="flex h-9 w-9 flex-none items-center justify-center rounded-xl border border-white/70 bg-white/75 text-lg shadow-sm"
+                    aria-hidden="true"
+                  >
                     {item.emoji}
                   </span>
-                  <span className="text-sm font-semibold text-gray-800 md:text-base">
+                  <span className="text-sm font-bold tracking-[-0.02em] text-gray-900 md:text-base">
                     {item.question}
                   </span>
                 </span>
@@ -130,7 +134,7 @@ export default function FAQ() {
                     : "max-h-0 opacity-0"
                 }`}
               >
-                <div className="whitespace-pre-wrap border-t border-gray-100 px-4 py-3 text-xs leading-relaxed text-gray-600 md:px-5 md:py-4 md:text-sm">
+                <div className="whitespace-pre-wrap border-t border-white/70 bg-white/35 px-4 py-4 text-xs leading-relaxed text-gray-600 md:px-5 md:py-5 md:text-sm">
                   {item.answer}
                 </div>
               </div>
