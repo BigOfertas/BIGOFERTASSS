@@ -19,7 +19,7 @@ export const Route = createFileRoute("/login")({
 
 function Brand() {
   return (
-    <Link to="/" className="text-2xl font-black italic tracking-tight text-foreground">
+    <Link to="/" className="brand-lockup px-5 py-2 text-2xl">
       <BrandWordmark />
     </Link>
   );
@@ -122,8 +122,8 @@ function LoginPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="text-center text-muted-foreground">
+      <main className="app-shell flex min-h-screen items-center justify-center px-4">
+        <div className="glass-card rounded-2xl px-6 py-5 text-center text-muted-foreground">
           <Loader2 className="mx-auto h-6 w-6 animate-spin" aria-hidden="true" />
           <p className="mt-3 text-sm">Carregando sua conta...</p>
         </div>
@@ -133,18 +133,16 @@ function LoginPage() {
 
   if (user) {
     return (
-      <main className="hidden min-h-screen items-center justify-center bg-background px-4 py-12">
+      <main className="app-shell hidden min-h-screen items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
             <Brand />
-            <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">
-              Sua conta
-            </h1>
+            <h1 className="display-title-sm mt-6">Sua conta</h1>
             <p className="mt-2 text-sm text-muted-foreground">Você já está conectado.</p>
           </div>
 
-          <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
-            <div className="rounded-lg bg-muted px-4 py-3">
+          <div className="glass-panel space-y-4 rounded-[1.5rem] p-6">
+            <div className="glass-card rounded-xl px-4 py-3">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 E-mail conectado
               </p>
@@ -155,14 +153,14 @@ function LoginPage() {
 
             <Link
               to={isOwner ? "/admin" : "/conta"}
-              className="inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99]"
+              className="premium-action inline-flex h-11 w-full items-center justify-center rounded-xl px-4 text-sm font-bold transition hover:brightness-[0.96] active:scale-[0.99]"
             >
               {isOwner ? "Abrir painel administrativo" : "Abrir minha conta"}
             </Link>
 
             <Link
               to="/"
-              className="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+              className="glass-card inline-flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-semibold text-foreground"
             >
               Voltar à loja
             </Link>
@@ -171,7 +169,7 @@ function LoginPage() {
               type="button"
               onClick={() => void handleSignOut()}
               disabled={signingOut}
-              className="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+              className="glass-card inline-flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-semibold text-foreground disabled:cursor-not-allowed disabled:opacity-50"
             >
               {signingOut ? (
                 <>
@@ -184,7 +182,7 @@ function LoginPage() {
             </button>
 
             {errorMessage ? (
-              <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <p role="alert" className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {errorMessage}
               </p>
             ) : null}
@@ -203,7 +201,7 @@ function LoginPage() {
       : null;
 
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7] px-4 py-12">
+      <main className="app-shell flex min-h-screen items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
             <Brand />
@@ -211,15 +209,13 @@ function LoginPage() {
 
           <form
             onSubmit={(event) => void handleVerifySecurityCode(event)}
-            className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-sm"
+            className="glass-panel space-y-5 rounded-[1.5rem] p-6"
           >
             <div className="text-center">
-              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+              <span className="glass-card mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-emerald-700">
                 <ShieldCheck className="h-7 w-7" aria-hidden="true" />
               </span>
-              <h1 className="mt-4 text-2xl font-black tracking-tight text-foreground">
-                Verificação em duas etapas
-              </h1>
+              <h1 className="display-title-sm mt-4">Verificação em duas etapas</h1>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Sua senha foi confirmada. Enviamos um código de segurança para{" "}
                 <strong className="text-foreground">{maskedEmail}</strong>.
@@ -244,7 +240,7 @@ function LoginPage() {
                     setSecurityCode(event.target.value.replace(/\D/g, "").slice(0, 6));
                     if (errorMessage) setErrorMessage("");
                   }}
-                  className="h-12 w-full rounded-md border border-input bg-background pl-10 pr-3 text-center text-xl font-black tracking-[0.32em] text-foreground outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
+                  className="glass-input h-12 w-full rounded-xl pl-10 pr-3 text-center text-xl font-black tracking-[0.32em] text-foreground outline-none focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
                   placeholder="000000"
                 />
               </div>
@@ -256,7 +252,7 @@ function LoginPage() {
             </div>
 
             {errorMessage ? (
-              <p role="alert" className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <p role="alert" className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {errorMessage}
               </p>
             ) : null}
@@ -264,7 +260,7 @@ function LoginPage() {
             <button
               type="submit"
               disabled={verifyingCode || securityCode.length !== 6}
-              className="inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              className="premium-action inline-flex h-11 w-full items-center justify-center rounded-xl px-4 text-sm font-bold transition hover:brightness-[0.96] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {verifyingCode ? (
                 <>
@@ -294,21 +290,22 @@ function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7] px-4 py-12">
+    <main className="app-shell flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <Brand />
-          <h1 className="mt-6 text-2xl font-bold tracking-tight text-foreground">Entrar</h1>
+          <p className="display-kicker mt-6">Área do cliente</p>
+          <h1 className="display-title-sm mt-2">Entrar</h1>
           <p className="mt-2 text-sm text-muted-foreground">Acesse sua conta para continuar.</p>
         </div>
 
         <form
           onSubmit={(event) => void handleSubmit(event)}
           aria-busy={submitting}
-          className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
+          className="glass-panel space-y-4 rounded-[1.5rem] p-6"
         >
           <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium text-foreground">
+            <label htmlFor="email" className="text-sm font-semibold text-foreground">
               E-mail
             </label>
             <input
@@ -322,14 +319,14 @@ function LoginPage() {
                 setEmail(event.target.value);
                 if (errorMessage) setErrorMessage("");
               }}
-              className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
+              className="glass-input flex h-11 w-full rounded-xl px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
               placeholder="seuemail@exemplo.com"
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
-              <label htmlFor="password" className="text-sm font-medium text-foreground">
+              <label htmlFor="password" className="text-sm font-semibold text-foreground">
                 Senha
               </label>
               <Link
@@ -351,7 +348,7 @@ function LoginPage() {
                   setPassword(event.target.value);
                   if (errorMessage) setErrorMessage("");
                 }}
-                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 pr-11 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
+                className="glass-input flex h-11 w-full rounded-xl px-3 py-2 pr-11 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
                 placeholder="Sua senha"
               />
               <button
@@ -371,7 +368,7 @@ function LoginPage() {
           </div>
 
           {errorMessage ? (
-            <p role="alert" className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <p role="alert" className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {errorMessage}
             </p>
           ) : null}
@@ -379,7 +376,7 @@ function LoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            className="premium-action inline-flex h-11 w-full items-center justify-center rounded-xl px-4 text-sm font-bold transition hover:brightness-[0.96] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? (
               <>
