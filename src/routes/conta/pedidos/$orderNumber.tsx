@@ -8,6 +8,7 @@ import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import { OrderDetailContent } from "@/components/orders/OrderDetailContent";
 import { RefundRequestDialog } from "@/components/orders/RefundRequestDialog";
+import { BRAND } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
 import {
   canRequestRefund,
@@ -19,11 +20,11 @@ import {
 export const Route = createFileRoute("/conta/pedidos/$orderNumber")({
   head: () => ({
     meta: [
-      { title: "Detalhe do pedido | BIGofertas" },
+      { title: `Detalhe do pedido | ${BRAND.officialName}` },
       {
         name: "description",
         content:
-          "Acompanhe os detalhes e o histórico do seu pedido BIGofertas.",
+          `Acompanhe os detalhes e o histórico do seu pedido ${BRAND.officialName}.`,
       },
     ],
   }),
