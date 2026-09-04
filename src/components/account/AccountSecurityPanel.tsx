@@ -193,19 +193,19 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
   }
 
   return (
-    <section className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+    <section className="glass-panel mt-6 overflow-hidden rounded-[1.4rem]">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-4 p-5 text-left transition hover:bg-gray-50 sm:p-6"
+        className="flex w-full items-center justify-between gap-4 p-5 text-left sm:p-6"
         aria-expanded={open}
       >
         <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-gray-100 text-gray-700">
+          <span className="glass-card flex h-10 w-10 flex-none items-center justify-center rounded-xl text-gray-700">
             <ShieldCheck className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <h2 className="font-bold text-gray-950">Segurança da conta</h2>
+            <h2 className="font-extrabold tracking-[-0.025em] text-gray-950">Segurança da conta</h2>
             <p className="mt-1 text-sm leading-6 text-gray-600">
               Senha, verificação em duas etapas e sessões conectadas.
             </p>
@@ -218,17 +218,17 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
       </button>
 
       {open ? (
-        <div className="border-t border-gray-100 p-5 sm:p-6">
+        <div className="border-t border-white/70 bg-white/20 p-5 sm:p-6">
           {loadingStatus ? (
             <div className="flex items-center gap-2 py-3 text-sm text-gray-500">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               Carregando segurança da conta...
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-white/70">
               <div className="flex flex-col gap-4 pb-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-gray-100 text-gray-700">
+                  <span className="glass-card mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-xl text-gray-700">
                     <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div>
@@ -249,17 +249,17 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
                   aria-label={twoFactorEnabled ? "Desativar verificação em duas etapas" : "Ativar verificação em duas etapas"}
                   disabled={!status || changingTwoFactor}
                   onClick={() => void handleTwoFactorToggle()}
-                  className={`relative inline-flex h-8 w-14 flex-none items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 disabled:cursor-not-allowed disabled:opacity-50 ${twoFactorEnabled ? "bg-emerald-500" : "bg-red-500"}`}
+                  className={`relative inline-flex h-8 w-14 flex-none items-center rounded-full border border-white/60 shadow-inner transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 disabled:cursor-not-allowed disabled:opacity-50 ${twoFactorEnabled ? "bg-emerald-500" : "bg-red-500"}`}
                 >
                   <span
-                    className={`inline-block h-6 w-6 rounded-full bg-white shadow-sm transition-transform duration-300 ${twoFactorEnabled ? "translate-x-7" : "translate-x-1"}`}
+                    className={`inline-block h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${twoFactorEnabled ? "translate-x-7" : "translate-x-1"}`}
                   />
                 </button>
               </div>
 
               {enrollment ? (
                 <div className="pb-5">
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                  <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/80 p-4 shadow-sm">
                     <p className="text-sm font-bold text-emerald-900">Confirme a ativação</p>
                     <p className="mt-1 text-sm leading-6 text-emerald-800">
                       Digite o código de 6 dígitos enviado para {enrollment.maskedEmail}.
@@ -272,13 +272,13 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
                         autoComplete="one-time-code"
                         maxLength={6}
                         placeholder="000000"
-                        className="h-10 w-full rounded-lg border border-emerald-300 bg-white px-3 text-center text-base font-bold tracking-[0.3em] outline-none focus:border-emerald-600 sm:w-40"
+                        className="glass-input h-10 w-full rounded-xl px-3 text-center text-base font-bold tracking-[0.3em] outline-none focus:border-emerald-600 sm:w-40"
                       />
                       <button
                         type="button"
                         disabled={changingTwoFactor}
                         onClick={() => void handleConfirmEnrollment()}
-                        className="h-10 rounded-lg bg-gray-950 px-4 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                        className="h-10 rounded-xl bg-gray-950 px-4 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
                       >
                         Confirmar ativação
                       </button>
@@ -290,7 +290,7 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
                           setCode("");
                           setMessage("");
                         }}
-                        className="h-10 rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                        className="glass-card h-10 rounded-xl px-4 text-sm font-semibold text-gray-700"
                       >
                         Cancelar
                       </button>
@@ -301,7 +301,7 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
 
               <div className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-gray-100 text-gray-700">
+                  <span className="glass-card mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-xl text-gray-700">
                     <KeyRound className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div>
@@ -315,7 +315,7 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
                   type="button"
                   disabled={sendingReset}
                   onClick={() => void handlePasswordReset()}
-                  className="h-10 flex-none rounded-lg border border-gray-300 bg-white px-4 text-sm font-bold text-gray-800 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+                  className="glass-card h-10 flex-none rounded-xl px-4 text-sm font-bold text-gray-800 transition hover:text-red-700 disabled:opacity-50"
                 >
                   {sendingReset ? "Enviando..." : "Enviar link"}
                 </button>
@@ -323,7 +323,7 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
 
               <div className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-gray-100 text-gray-700">
+                  <span className="glass-card mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-xl text-gray-700">
                     <Laptop className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div>
@@ -337,14 +337,14 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
                   type="button"
                   disabled={endingSessions}
                   onClick={() => void handleEndOtherSessions()}
-                  className="h-10 flex-none rounded-lg border border-gray-300 bg-white px-4 text-sm font-bold text-gray-800 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+                  className="glass-card h-10 flex-none rounded-xl px-4 text-sm font-bold text-gray-800 transition hover:text-red-700 disabled:opacity-50"
                 >
                   {endingSessions ? "Encerrando..." : "Encerrar outras sessões"}
                 </button>
               </div>
 
               <div className="flex items-start gap-3 pt-5">
-                <span className="mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-gray-100 text-gray-700">
+                <span className="glass-card mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-xl text-gray-700">
                   <MailCheck className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
@@ -360,13 +360,13 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
           )}
 
           {message ? (
-            <p role="status" className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <p role="status" className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-800 shadow-sm">
               {message}
             </p>
           ) : null}
 
           {errorMessage ? (
-            <p role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-700 shadow-sm">
               {errorMessage}
             </p>
           ) : null}
