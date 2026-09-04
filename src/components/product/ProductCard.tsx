@@ -40,47 +40,55 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <article
-      className={`group bg-white rounded-md border border-gray-100 p-2 sm:p-3 flex flex-col h-full transition-all duration-300 hover:shadow-md ${className}`}
+      className={`glass-card group flex h-full flex-col rounded-[1.35rem] p-2.5 sm:p-3.5 ${className}`}
     >
-      <div className="relative aspect-[4/5] mb-3 bg-gray-50 rounded-sm overflow-hidden flex items-center justify-center group-hover:bg-white transition-colors duration-300">
+      <div className="glass-media relative mb-3 flex aspect-[4/5] items-center justify-center overflow-hidden rounded-[1rem] sm:mb-4">
+        {hasPromotion ? (
+          <span className="absolute left-2.5 top-2.5 z-10 rounded-full border border-white/70 bg-white/85 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-red-600 shadow-sm sm:text-[10px]">
+            Oferta
+          </span>
+        ) : null}
+
         {showImage ? (
           <img
             src={imageUrl ?? undefined}
             alt={name}
             loading="lazy"
             onError={() => setImageFailed(true)}
-            className="w-full h-full object-contain mix-blend-multiply p-2 transform group-hover:scale-105 transition-transform duration-500"
+            className="h-full w-full object-contain p-2 mix-blend-multiply transition-transform duration-500 group-hover:scale-[1.035] motion-reduce:transform-none motion-reduce:transition-none"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold italic text-lg uppercase">
-            <span className="text-red-500/20">{BRAND.shortMark}</span>
+          <div className="flex h-full w-full items-center justify-center font-bold italic uppercase text-gray-300">
+            <span className="text-lg font-black tracking-[-0.06em] text-red-500/20">
+              {BRAND.shortMark}
+            </span>
           </div>
         )}
       </div>
 
-      <div className="flex flex-col flex-1">
-        <h2 className="text-[11px] sm:text-[13px] font-medium text-gray-800 mb-1 sm:mb-2 line-clamp-2 h-[28px] sm:h-[32px] leading-tight group-hover:text-red-600 transition-colors">
+      <div className="flex flex-1 flex-col px-0.5 pb-0.5">
+        <h2 className="mb-2 line-clamp-2 h-[30px] text-[12px] font-semibold leading-[1.25] tracking-[-0.015em] text-gray-800 transition-colors group-hover:text-red-600 sm:h-[38px] sm:text-[14px]">
           {name}
         </h2>
 
-        <div className="mt-auto mb-2 sm:mb-3">
+        <div className="mt-auto mb-3 sm:mb-4">
           {formattedOriginalPrice ? (
-            <span className="mr-2 text-[10px] font-medium text-gray-400 line-through sm:text-xs">
+            <span className="mb-0.5 block text-[10px] font-semibold tracking-tight text-gray-400 line-through sm:text-xs">
               {formattedOriginalPrice}
             </span>
           ) : null}
-          <span className="text-sm sm:text-lg font-extrabold text-gray-900 tracking-tight">
+          <span className="text-base font-black tracking-[-0.04em] text-gray-950 sm:text-xl">
             {formattedPrice}
           </span>
         </div>
 
         <Button
           asChild
-          className="w-full bg-[#E60000] hover:bg-black text-white font-bold text-[10px] sm:text-[11px] uppercase tracking-wider h-8 sm:h-10 rounded-sm transition-colors duration-300 flex items-center justify-center gap-1 sm:gap-2"
+          className="premium-action h-9 w-full rounded-xl text-[10px] font-extrabold uppercase tracking-[0.1em] hover:brightness-[0.96] sm:h-10 sm:text-[11px]"
         >
           <Link to="/product/$id" params={{ id: slug || id }}>
-            <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-            VER DETALHES
+            <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            Ver detalhes
           </Link>
         </Button>
       </div>
