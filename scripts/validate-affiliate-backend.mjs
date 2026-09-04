@@ -14,7 +14,19 @@ const hardening = read(
 const admin = read(
   "supabase/migrations/20260904044000_affiliate_admin_queries.sql",
 );
+const readiness = read(
+  "supabase/migrations/20260904050000_affiliate_program_readiness.sql",
+);
+const readinessHardening = read(
+  "supabase/migrations/20260904050500_affiliate_program_readiness_hardening.sql",
+);
 const processor = read("supabase/functions/notifications-process/index.ts");
+const auth = read("src/lib/auth.tsx");
+const referralClient = read("src/lib/affiliate-referral.ts");
+const registerPage = read("src/routes/cadastro.tsx");
+const accountPanel = read("src/components/account/AffiliateAccountPanel.tsx");
+const adminPanel = read("src/components/admin/AffiliateAdmin.tsx");
+const adminRoute = read("src/routes/admin.tsx");
 
 let passed = 0;
 let failed = 0;
@@ -41,7 +53,9 @@ check(
   "vinculo do indicado e unico e imutavel por conta",
   /CREATE TABLE public\.affiliate_referrals[\s\S]*referred_user_id uuid PRIMARY KEY/.test(
     core,
-  ) && core.includes("ON CONFLICT (referred_user_id) DO NOTHING"),
+  ) &&
+    core.includes("ON CONFLICT (referred_user_id) DO NOTHING") &&
+    !core.includes("UPDATE public.affiliate_referrals SET affiliate_id"),
 );
 
 check(
@@ -58,13 +72,44 @@ check(
 );
 
 check(
-  "programa inicia desligado e exige regras comerciais explicitas",
-  core.includes("enabled boolean NOT NULL DEFAULT false") &&
-    core.includes("affiliate_program_enabled_requires_rules") &&
-    core.includes("commission_rate_bps IS NOT NULL") &&
-    core.includes("commission_base_mode IS NOT NULL") &&
-    core.includes("hold_days IS NOT NULL") &&
-    core.includes("minimum_withdrawal IS NOT NULL"),
+  "frontend envia codigo de indicacao no metadata do novo usuario",
+  auth.includes("affiliate_referral_code: normalizedReferralCode") &&
+    registerPage.includes("referralValidation === \"invalid\" ? null : referralCode"),
+);
+
+check(
+  "referencia dura somente a sessao do navegador e nao inventa janela de atribuicao",
+  referralClient.includes("window.sessionStorage") &&
+    !referralClient.includes("window.localStorage") &&
+    referralClient.includes('url.searchParams.set("ref", normalized)'),
+);
+
+check(
+  "cadastro valida indicacao sem bloquear conta por indisponibilidade temporaria",
+  registerPage.includes('ReferralValidation = "idle" | "checking" | "valid" | "invalid" | "unavailable"') &&
+    registerPage.includes('setReferralValidation("unavailable")') &&
+    registerPage.includes("o servidor fará a verificação final"),
+);
+
+check(
+  "programa nasce desligado",
+  core.includes("enabled boolean NOT NULL DEFAULT false"),
+);
+
+check(
+  "ativacao exige as cinco regras comerciais explicitas",
+  readiness.includes("affiliate_program_enabled_requires_rules") &&
+    readiness.includes("commission_rate_bps IS NOT NULL") &&
+    readiness.includes("commission_base_mode IS NOT NULL") &&
+    readiness.includes("hold_days IS NOT NULL") &&
+    readiness.includes("minimum_withdrawal IS NOT NULL") &&
+    readiness.includes("withdrawal_method IS NOT NULL"),
+);
+
+check(
+  "rascunho de regras nunca ativa o programa por acidente",
+  readiness.includes("owner_save_affiliate_program_draft") &&
+    /owner_save_affiliate_program_draft[\s\S]*enabled = false/.test(readiness),
 );
 
 check(
@@ -73,6 +118,13 @@ check(
     core.includes("commission_base_amount") &&
     core.includes("commission_rate_bps") &&
     core.includes("commission_amount"),
+);
+
+check(
+  "pedido sem cliente indicado nao gera comissao",
+  /FROM public\.affiliate_referrals[\s\S]*WHERE referred_user_id = order_row\.user_id[\s\S]*IF referral_row\.referred_user_id IS NULL THEN RETURN NULL/.test(
+    core,
+  ),
 );
 
 check(
@@ -90,9 +142,17 @@ check(
 );
 
 check(
-  "reembolso cancela automaticamente somente comissao ainda pendente",
-  core.includes("cancel_pending_affiliate_commission_after_refund") &&
-    core.includes("WHERE order_id = NEW.id AND status = 'pending'"),
+  "reembolso antes da liberacao cancela somente comissao pendente",
+  readiness.includes("cancel_pending_affiliate_commission_after_refund") &&
+    readiness.includes("WHERE order_id = NEW.id AND status = 'pending'"),
+);
+
+check(
+  "reembolso depois da liberacao vira revisao neutra sem desconto inventado",
+  readiness.includes("affiliate_refund_reviews") &&
+    readiness.includes("c.status = 'available'") &&
+    !readiness.includes("commission_amount = -") &&
+    !readiness.includes("available_balance = available_balance -"),
 );
 
 check(
@@ -109,21 +169,21 @@ check(
 );
 
 check(
-  "saldo para saque desconta saques solicitados e ja pagos",
-  core.includes("status IN ('requested','paid')") &&
-    core.includes("greatest(available_total - reserved_total, 0)"),
+  "saldo para saque desconta saques solicitados e pagos",
+  readiness.includes("status IN ('requested','paid')") &&
+    readiness.includes("greatest(available_total - reserved_total, 0)"),
 );
 
 check(
-  "saque respeita minimo configurado e nao inventa meio de pagamento",
-  core.includes("p_amount < settings_row.minimum_withdrawal") &&
-    core.includes("destination_snapshot jsonb") &&
-    !core.includes("pix_key") &&
-    !core.includes("bank_account"),
+  "saque usa forma configuravel sem inventar PIX ou banco",
+  readiness.includes("withdrawal_method text") &&
+    readiness.includes("destination_method") &&
+    !readiness.includes("pix_key") &&
+    !readiness.includes("bank_account"),
 );
 
 check(
-  "RLS protege tabelas do programa",
+  "RLS protege tabelas principais e fila de reembolso",
   [
     "affiliate_program_settings",
     "affiliates",
@@ -132,34 +192,77 @@ check(
     "affiliate_withdrawals",
   ].every((table) =>
     core.includes(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`),
-  ),
+  ) && readiness.includes("ALTER TABLE public.affiliate_refund_reviews ENABLE ROW LEVEL SECURITY"),
 );
 
 check(
-  "cliente usa RPCs proprios e escrita direta permanece revogada",
+  "cliente acessa somente RPCs da propria area e e-mail indicado fica mascarado",
   core.includes("get_my_affiliate_dashboard") &&
     core.includes("list_my_affiliate_referrals") &&
-    core.includes("request_my_affiliate_withdrawal") &&
-    core.includes("REVOKE ALL ON TABLE public.affiliate_commissions FROM PUBLIC, anon, authenticated"),
+    core.includes("masked_email") &&
+    (core.match(/a\.user_id = current_user_id/g) ?? []).length >= 3,
 );
 
 check(
-  "owner tem resumo operacional sem calculo financeiro no frontend",
+  "escrita financeira direta do cliente permanece revogada",
+  core.includes("REVOKE ALL ON TABLE public.affiliate_commissions FROM PUBLIC, anon, authenticated") &&
+    core.includes("REVOKE ALL ON TABLE public.affiliate_withdrawals FROM PUBLIC, anon, authenticated"),
+);
+
+check(
+  "owner tem resumo, afiliados, clientes indicados, pedidos, comissoes e saques",
   admin.includes("owner_get_affiliate_overview") &&
-    admin.includes("unreservedAvailableAmount") &&
-    admin.includes("requestedWithdrawalsCount"),
-);
-
-check(
-  "owner pode listar afiliados, comissoes e fila de saques",
-  admin.includes("owner_list_affiliates") &&
+    admin.includes("owner_list_affiliates") &&
     admin.includes("owner_list_affiliate_commissions") &&
-    admin.includes("owner_list_affiliate_withdrawals"),
+    admin.includes("owner_list_affiliate_withdrawals") &&
+    readiness.includes("owner_list_affiliate_referrals") &&
+    readiness.includes("owner_list_affiliate_referred_orders"),
 );
 
 check(
   "RPCs administrativas verificam papel owner",
-  (admin.match(/public\.has_role\('owner'::public\.app_role\)/g) ?? []).length >= 4,
+  (admin.match(/public\.has_role\('owner'::public\.app_role\)/g) ?? []).length >= 4 &&
+    (readiness.match(/public\.has_role\('owner'::public\.app_role\)/g) ?? []).length >= 6,
+);
+
+check(
+  "agregacao de indicados nao usa SUM DISTINCT de dinheiro",
+  readinessHardening.includes("order_totals AS") &&
+    readinessHardening.includes("commission_totals AS") &&
+    !readinessHardening.includes("sum(DISTINCT"),
+);
+
+check(
+  "painel do cliente descreve cadastro e pedidos do indicado, nao produtos",
+  accountPanel.includes("criar uma conta") &&
+    accountPanel.includes("pedidos") &&
+    accountPanel.includes("Clientes indicados") &&
+    !accountPanel.includes("Indique produtos") &&
+    !accountPanel.includes("indicar os produtos"),
+);
+
+check(
+  "painel do cliente usa dados reais de indicados, comissoes e saques",
+  accountPanel.includes("fetchMyAffiliateDashboard") &&
+    accountPanel.includes("fetchMyAffiliateReferrals") &&
+    accountPanel.includes("fetchMyAffiliateCommissions") &&
+    accountPanel.includes("fetchMyAffiliateWithdrawals"),
+);
+
+check(
+  "painel administrativo exibe as cinco regras e bloqueia ativacao incompleta",
+  adminPanel.includes("Comissão (%)") &&
+    adminPanel.includes("Base de cálculo") &&
+    adminPanel.includes("Liberação (dias)") &&
+    adminPanel.includes("Saque mínimo (R$)") &&
+    adminPanel.includes("Forma de pagamento") &&
+    adminPanel.includes("disabled={actionMutation.isPending || !editorRulesComplete}"),
+);
+
+check(
+  "administracao inclui afiliados na navegacao principal",
+  adminRoute.includes('id: "affiliates"') &&
+    adminRoute.includes("<AffiliateAdmin />"),
 );
 
 check(
@@ -176,7 +279,7 @@ check(
 );
 
 check(
-  "cron de emails tambem libera comissoes vencidas sem quebrar antes da migration",
+  "cron de emails tambem libera comissoes vencidas",
   processor.includes("releaseDueAffiliateCommissions") &&
     processor.includes('payload?.code === "PGRST202"') &&
     processor.indexOf("await releaseDueAffiliateCommissions()") <
