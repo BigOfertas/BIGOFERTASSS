@@ -1,5 +1,7 @@
 import React from "react";
 
+import { BRAND } from "@/config/brand";
+
 interface ProductCardPlaceholderProps {
   loading?: boolean;
 }
@@ -16,7 +18,7 @@ const ProductCardPlaceholder: React.FC<ProductCardPlaceholderProps> = ({
     <div className="relative mb-3 flex aspect-[4/5] items-center justify-center overflow-hidden rounded-sm bg-gray-50">
       <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-300">
         <span className="text-lg font-bold italic uppercase tracking-tighter text-red-500/20">
-          BIG
+          {BRAND.shortMark}
         </span>
       </div>
     </div>
