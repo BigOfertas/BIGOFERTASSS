@@ -4,7 +4,6 @@ import { ArrowLeft, FileQuestion, Loader2, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import { OrderDetailContent } from "@/components/orders/OrderDetailContent";
 import { RefundRequestDialog } from "@/components/orders/RefundRequestDialog";
@@ -23,8 +22,7 @@ export const Route = createFileRoute("/conta/pedidos/$orderNumber")({
       { title: `Detalhe do pedido | ${BRAND.officialName}` },
       {
         name: "description",
-        content:
-          `Acompanhe os detalhes e o histórico do seu pedido ${BRAND.officialName}.`,
+        content: `Acompanhe os detalhes e o histórico do seu pedido ${BRAND.officialName}.`,
       },
     ],
   }),
@@ -75,9 +73,7 @@ function CustomerOrderDetailPage() {
       await requestOrderRefund(detail.order.id, reason, message);
       await detailQuery.refetch();
       setRefundDialogOpen(false);
-      toast.success(
-        "Solicitação registrada. O proprietário entrará em contato.",
-      );
+      toast.success("Solicitação registrada. O proprietário entrará em contato.");
     } finally {
       setRequestingRefund(false);
     }
@@ -86,10 +82,7 @@ function CustomerOrderDetailPage() {
   if (authLoading || (!user && !detailQuery.error)) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <Loader2
-          className="h-6 w-6 animate-spin text-red-600"
-          aria-label="Carregando"
-        />
+        <Loader2 className="h-6 w-6 animate-spin text-red-600" aria-label="Carregando" />
       </main>
     );
   }
@@ -114,10 +107,7 @@ function CustomerOrderDetailPage() {
 
           {detailQuery.error ? (
             <div className="rounded-2xl border border-red-200 bg-white px-5 py-12 text-center shadow-sm">
-              <FileQuestion
-                className="mx-auto h-10 w-10 text-red-600"
-                aria-hidden="true"
-              />
+              <FileQuestion className="mx-auto h-10 w-10 text-red-600" aria-hidden="true" />
               <h1 className="mt-4 text-xl font-black text-gray-950">
                 Não foi possível abrir o pedido
               </h1>
@@ -138,13 +128,8 @@ function CustomerOrderDetailPage() {
 
           {!detailQuery.isLoading && !detailQuery.error && !detailQuery.data ? (
             <div className="rounded-2xl border border-gray-200 bg-white px-5 py-12 text-center shadow-sm">
-              <FileQuestion
-                className="mx-auto h-10 w-10 text-gray-400"
-                aria-hidden="true"
-              />
-              <h1 className="mt-4 text-xl font-black text-gray-950">
-                Pedido não encontrado
-              </h1>
+              <FileQuestion className="mx-auto h-10 w-10 text-gray-400" aria-hidden="true" />
+              <h1 className="mt-4 text-xl font-black text-gray-950">Pedido não encontrado</h1>
               <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-gray-500">
                 O pedido não existe ou não pertence à sua conta.
               </p>
@@ -158,8 +143,7 @@ function CustomerOrderDetailPage() {
                 canRequestRefund(detailQuery.data) ? (
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm leading-6 text-gray-600">
-                      Precisa resolver algo com este pedido? Envie uma
-                      solicitação simples.
+                      Precisa resolver algo com este pedido? Envie uma solicitação simples.
                     </p>
                     <button
                       type="button"
@@ -172,8 +156,8 @@ function CustomerOrderDetailPage() {
                   </div>
                 ) : detailQuery.data.refundRequest?.status === "requested" ? (
                   <p className="text-sm font-medium text-orange-800">
-                    Sua solicitação de reembolso está registrada. O proprietário
-                    entrará em contato diretamente.
+                    Sua solicitação de reembolso está registrada. O proprietário entrará em contato
+                    diretamente.
                   </p>
                 ) : null
               }
@@ -181,7 +165,6 @@ function CustomerOrderDetailPage() {
           ) : null}
         </div>
       </main>
-      <Footer />
 
       <RefundRequestDialog
         open={refundDialogOpen}

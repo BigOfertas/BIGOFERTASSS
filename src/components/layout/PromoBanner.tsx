@@ -21,27 +21,19 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
   style = {},
   href,
 }) => {
-  const bannerImages = (images?.length ? images : imageUrl ? [imageUrl] : []).filter(
-    Boolean,
-  );
+  const bannerImages = (images?.length ? images : imageUrl ? [imageUrl] : []).filter(Boolean);
 
   if (bannerImages.length === 0) {
     return null;
   }
 
   const isCarousel = bannerImages.length > 1;
-  const displayItems = isCarousel
-    ? [...bannerImages, ...bannerImages]
-    : bannerImages;
+  const displayItems = isCarousel ? [...bannerImages, ...bannerImages] : bannerImages;
 
   const parsedAspectRatio =
     style.aspectRatio || aspectRatio === "aspect-auto"
       ? style.aspectRatio
-      : aspectRatio
-          .replace("aspect-", "")
-          .replace("[", "")
-          .replace("]", "")
-          .replace("/", " / ");
+      : aspectRatio.replace("aspect-", "").replace("[", "").replace("]", "").replace("/", " / ");
 
   const content = (
     <div
@@ -51,7 +43,13 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
       data-banner-id={id}
       style={{ ...style, aspectRatio: parsedAspectRatio }}
     >
-      <div className={isCarousel ? "animate-marquee h-full" : "h-full w-full"}>
+      <div
+        className={
+          isCarousel
+            ? `animate-marquee h-full ${id === "superior" ? "animate-marquee--fast" : ""}`
+            : "h-full w-full"
+        }
+      >
         {displayItems.map((src, index) => (
           <div
             key={`${id}-${index}`}

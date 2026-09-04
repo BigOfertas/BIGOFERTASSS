@@ -23,11 +23,7 @@ function Index() {
         id="superior"
         style={{ aspectRatio: "1920/100" }}
         className="max-h-[100px] max-md:!aspect-[1920/300] max-md:max-h-none"
-        images={[
-          bannerSuperiorAsset.url,
-          bannerSuperiorAsset.url,
-          bannerSuperiorAsset.url,
-        ]}
+        images={[bannerSuperiorAsset.url, bannerSuperiorAsset.url, bannerSuperiorAsset.url]}
         altText={`Ofertas ${BRAND.officialName}`}
       />
 
@@ -47,7 +43,7 @@ function Index() {
 
         <div
           aria-hidden="true"
-          className="ambient-band mx-auto my-2 flex min-h-32 w-full items-center justify-center overflow-hidden py-10 sm:min-h-44 sm:py-14 lg:min-h-52"
+          className="ambient-band mx-auto my-2 flex min-h-40 w-full items-center justify-center overflow-hidden py-12 sm:min-h-44 sm:py-14 lg:min-h-52"
         >
           <span className="select-none font-black tracking-[-0.08em] text-gray-900/[0.035] text-[clamp(3.5rem,12vw,10rem)]">
             {BRAND.shortMark}

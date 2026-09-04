@@ -14,24 +14,34 @@ const categories = [
 const VisualCategories: React.FC = () => {
   return (
     <section className="overflow-hidden bg-transparent py-10 md:py-14 lg:py-18">
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+      <div className="mx-auto max-w-7xl">
         <div className="mb-7 text-center sm:mb-10">
           <p className="display-kicker">Explore por estilo</p>
           <h2 className="display-title-sm mt-2">Monte um pedido do seu jeito</h2>
         </div>
 
-        <div className="flex items-stretch gap-3 overflow-x-auto pb-5 no-scrollbar md:grid md:grid-cols-6 md:gap-5 md:overflow-x-visible md:pb-0">
-          {categories.map((category) => (
-            <div
-              key={category.name}
-              className="h-[248px] w-[164px] flex-shrink-0 md:h-auto md:w-auto"
-            >
-              <CategoryCard name={category.name} search={category.search} />
-            </div>
-          ))}
+        <div className="overflow-x-hidden overflow-y-hidden px-4 lg:px-8">
+          <div className="animate-marquee category-marquee-track items-stretch">
+            {[false, true].map((clone) => (
+              <div
+                key={clone ? "clone" : "original"}
+                data-marquee-clone={clone ? "true" : undefined}
+                className="flex shrink-0 items-stretch gap-3 pr-3 md:gap-5 md:pr-5"
+              >
+                {categories.map((category) => (
+                  <div
+                    key={`${clone ? "clone" : "original"}-${category.name}`}
+                    className="h-[248px] w-[164px] shrink-0 md:h-[285px] md:w-[190px]"
+                  >
+                    <CategoryCard name={category.name} search={category.search} clone={clone} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="mx-auto mt-7 h-px w-full bg-gradient-to-r from-transparent via-gray-300/80 to-transparent md:mt-10" />
+        <div className="mx-4 mt-7 h-px bg-gradient-to-r from-transparent via-gray-300/80 to-transparent md:mt-10 lg:mx-8" />
       </div>
     </section>
   );

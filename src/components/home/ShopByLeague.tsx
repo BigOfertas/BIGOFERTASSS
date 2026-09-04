@@ -27,8 +27,7 @@ const ShopByLeague: React.FC = () => {
   const [displayLeagueId, setDisplayLeagueId] = useState(DEFAULT_LEAGUE.id);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const displayLeague =
-    LEAGUES.find((league) => league.id === displayLeagueId) ?? DEFAULT_LEAGUE;
+  const displayLeague = LEAGUES.find((league) => league.id === displayLeagueId) ?? DEFAULT_LEAGUE;
 
   const { data, isLoading, error } = useCatalogProducts({
     liga: displayLeague.slug,
@@ -60,14 +59,16 @@ const ShopByLeague: React.FC = () => {
         </div>
 
         <div className="mb-8 flex justify-center sm:mb-10">
-          <div className="glass-card no-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-2xl p-1.5">
-            {LEAGUES.map((league) => (
+          <div className="glass-card grid w-full max-w-md grid-cols-6 gap-1 rounded-2xl p-1.5 sm:flex sm:w-auto sm:max-w-full">
+            {LEAGUES.map((league, index) => (
               <button
                 type="button"
                 key={league.id}
                 onClick={() => handleLeagueChange(league.id)}
                 aria-pressed={activeLeagueId === league.id}
-                className={`min-h-10 whitespace-nowrap rounded-xl px-3.5 py-2 text-[11px] font-extrabold tracking-[0.015em] transition-colors duration-200 motion-reduce:transition-none sm:px-4 sm:text-xs ${
+                className={`min-h-10 min-w-0 rounded-xl px-2 py-2 text-[11px] font-extrabold leading-tight tracking-[0.015em] transition-colors duration-200 motion-reduce:transition-none sm:whitespace-nowrap sm:px-4 sm:text-xs ${
+                  index < 3 ? "col-span-2" : "col-span-3"
+                } ${
                   activeLeagueId === league.id
                     ? "bg-gray-950 text-white shadow-sm"
                     : "text-gray-500 hover:text-gray-900"

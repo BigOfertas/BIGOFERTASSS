@@ -1,20 +1,11 @@
-import {
-  Outlet,
-  createFileRoute,
-  useNavigate,
-  useRouterState,
-} from "@tanstack/react-router";
+import { Outlet, createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { z } from "zod";
 
 import { AffiliateAccountPage } from "@/components/account/AffiliateAccountPage";
-import {
-  AccountDashboard,
-  type AccountSection,
-} from "@/components/account/AccountDashboard";
+import { AccountDashboard, type AccountSection } from "@/components/account/AccountDashboard";
 import { AccountOverview } from "@/components/account/AccountOverview";
 import { EmailTwoFactorPrompt } from "@/components/account/EmailTwoFactorPrompt";
-import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import { BRAND } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
@@ -108,7 +99,6 @@ function AccountPage() {
           />
         )}
       </main>
-      <Footer />
     </div>
   );
 }

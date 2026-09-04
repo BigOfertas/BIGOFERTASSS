@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { memo, useCallback, useState } from "react";
 
 import { BRAND } from "@/config/brand";
 
@@ -35,8 +35,7 @@ const faqData: FAQItem[] = [
     id: 4,
     emoji: "📏",
     question: "Como escolher o tamanho certo?",
-    answer:
-      `Confira as opções disponíveis na página do produto. Se tiver dúvida antes de comprar, fale com a ${BRAND.officialName} pelo WhatsApp.`,
+    answer: `Confira as opções disponíveis na página do produto. Se tiver dúvida antes de comprar, fale com a ${BRAND.officialName} pelo WhatsApp.`,
   },
   {
     id: 5,
@@ -49,8 +48,7 @@ const faqData: FAQItem[] = [
     id: 6,
     emoji: "🔄",
     question: "Como solicito um reembolso?",
-    answer:
-      `Quando a opção estiver disponível para o pedido, você poderá solicitar o reembolso em Minha Conta > Pedidos. A ${BRAND.officialName} entrará em contato para dar continuidade.`,
+    answer: `Quando a opção estiver disponível para o pedido, você poderá solicitar o reembolso em Minha Conta > Pedidos. A ${BRAND.officialName} entrará em contato para dar continuidade.`,
   },
   {
     id: 7,
@@ -63,8 +61,7 @@ const faqData: FAQItem[] = [
     id: 8,
     emoji: "📞",
     question: "Como entrar em contato?",
-    answer:
-      `WhatsApp: ${BRAND.whatsappDisplay}\nE-mail: ${BRAND.contactEmail}`,
+    answer: `WhatsApp: ${BRAND.whatsappDisplay}\nE-mail: ${BRAND.contactEmail}`,
   },
 ];
 
@@ -86,12 +83,61 @@ const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
   </svg>
 );
 
+interface FAQRowProps {
+  item: FAQItem;
+  isOpen: boolean;
+  onToggle: (id: number) => void;
+}
+
+const FAQRow = memo(function FAQRow({ item, isOpen, onToggle }: FAQRowProps) {
+  const answerId = `faq-answer-${item.id}`;
+
+  return (
+    <div className="glass-card overflow-hidden rounded-[1.25rem]">
+      <button
+        type="button"
+        onClick={() => onToggle(item.id)}
+        aria-expanded={isOpen}
+        aria-controls={answerId}
+        className="flex w-full cursor-pointer items-center justify-between px-4 py-4 text-left md:px-5 md:py-5"
+      >
+        <span className="flex items-center gap-3.5 text-left">
+          <span
+            className="flex h-9 w-9 flex-none items-center justify-center rounded-xl border border-white/70 bg-white/75 text-lg shadow-sm"
+            aria-hidden="true"
+          >
+            {item.emoji}
+          </span>
+          <span className="text-sm font-bold tracking-[-0.02em] text-gray-900 md:text-base">
+            {item.question}
+          </span>
+        </span>
+        <ChevronIcon isOpen={isOpen} />
+      </button>
+
+      <div
+        id={answerId}
+        aria-hidden={!isOpen}
+        className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${
+          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div className="whitespace-pre-wrap border-t border-white/70 bg-white/35 px-4 py-4 text-xs leading-relaxed text-gray-600 md:px-5 md:py-5 md:text-sm">
+            {item.answer}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export default function FAQ() {
   const [openId, setOpenId] = useState<number | null>(null);
 
-  const toggle = (id: number) => {
+  const toggle = useCallback((id: number) => {
     setOpenId((current) => (current === id ? null : id));
-  };
+  }, []);
 
   return (
     <section className="bg-transparent py-12 md:py-16 lg:py-20">
@@ -103,42 +149,7 @@ export default function FAQ() {
 
         <div className="mx-auto max-w-3xl space-y-3">
           {faqData.map((item) => (
-            <div
-              key={item.id}
-              className="glass-card overflow-hidden rounded-[1.25rem]"
-            >
-              <button
-                type="button"
-                onClick={() => toggle(item.id)}
-                aria-expanded={openId === item.id}
-                className="flex w-full cursor-pointer items-center justify-between px-4 py-4 text-left md:px-5 md:py-5"
-              >
-                <span className="flex items-center gap-3.5 text-left">
-                  <span
-                    className="flex h-9 w-9 flex-none items-center justify-center rounded-xl border border-white/70 bg-white/75 text-lg shadow-sm"
-                    aria-hidden="true"
-                  >
-                    {item.emoji}
-                  </span>
-                  <span className="text-sm font-bold tracking-[-0.02em] text-gray-900 md:text-base">
-                    {item.question}
-                  </span>
-                </span>
-                <ChevronIcon isOpen={openId === item.id} />
-              </button>
-
-              <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out motion-reduce:transition-none ${
-                  openId === item.id
-                    ? "max-h-[24rem] opacity-100"
-                    : "max-h-0 opacity-0"
-                }`}
-              >
-                <div className="whitespace-pre-wrap border-t border-white/70 bg-white/35 px-4 py-4 text-xs leading-relaxed text-gray-600 md:px-5 md:py-5 md:text-sm">
-                  {item.answer}
-                </div>
-              </div>
-            </div>
+            <FAQRow key={item.id} item={item} isOpen={openId === item.id} onToggle={toggle} />
           ))}
         </div>
       </div>

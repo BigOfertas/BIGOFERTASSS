@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -24,9 +25,7 @@ function NotFoundComponent() {
       <div className="glass-panel max-w-md rounded-[1.5rem] p-8 text-center">
         <h1 className="display-title text-foreground">404</h1>
 
-        <h2 className="mt-4 text-xl font-semibold text-foreground">
-          Página não encontrada
-        </h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
 
         <p className="mt-2 text-sm text-muted-foreground">
           A página que você procura não existe ou foi movida.
@@ -45,13 +44,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({
-  error,
-  reset,
-}: {
-  error: Error;
-  reset: () => void;
-}) {
+function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
 
   const router = useRouter();
@@ -70,8 +63,7 @@ function ErrorComponent({
         </h1>
 
         <p className="mt-2 text-sm text-muted-foreground">
-          Ocorreu um erro ao carregar esta página. Tente novamente ou volte ao
-          início.
+          Ocorreu um erro ao carregar esta página. Tente novamente ou volte ao início.
         </p>
 
         <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -171,13 +163,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const showStorefrontFooter =
+    pathname === "/" ||
+    pathname === "/products" ||
+    pathname === "/cart" ||
+    pathname.startsWith("/product/");
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
           <Outlet />
-          <Footer />
+          {showStorefrontFooter ? <Footer /> : null}
           <Toaster position="top-center" richColors />
         </CartProvider>
       </AuthProvider>

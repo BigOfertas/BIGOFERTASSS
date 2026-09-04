@@ -44,7 +44,7 @@ const TeamLogo: React.FC<{ team: Team }> = ({ team }) => (
     aria-label={`Ver produtos do ${team.name}`}
     className="group flex flex-shrink-0 flex-col items-center justify-center"
   >
-    <div className="glass-card flex h-[104px] w-[104px] items-center justify-center rounded-[1.4rem] p-2 md:h-[112px] md:w-[112px] lg:h-[126px] lg:w-[126px]">
+    <div className="glass-card flex h-[104px] w-[104px] items-center justify-center rounded-[1.4rem] p-2 lg:h-[82px] lg:w-[82px] xl:h-[104px] xl:w-[104px]">
       <div className="glass-media h-full w-full overflow-hidden rounded-[1rem]">
         <img
           src={team.logoUrl}
@@ -82,12 +82,12 @@ const BrazilianTeams: React.FC = () => {
           <h2 className="display-title-sm mt-2">Encontre seu time</h2>
         </div>
 
-        <div className="glass-panel rounded-[1.75rem] px-3 py-5 sm:px-5">
-          <div className="relative h-[132px] md:h-[148px] lg:h-[164px]">
+        <div className="glass-panel teams-panel rounded-[1.75rem] px-3 py-5 sm:px-5">
+          <div className="relative">
             <div
               ref={scrollRef}
               onScroll={handleScroll}
-              className="flex h-full snap-x items-center gap-3 overflow-x-auto scroll-smooth pb-5 no-scrollbar md:grid md:w-full md:grid-cols-11 md:gap-2 md:overflow-visible md:pb-0"
+              className="flex h-[112px] snap-x items-center gap-3 overflow-x-auto scroll-smooth no-scrollbar lg:grid lg:h-[132px] lg:w-full lg:grid-cols-11 lg:gap-5 lg:overflow-visible"
               style={{ scrollSnapType: "x mandatory" }}
             >
               {teams.map((team) => (
@@ -100,7 +100,7 @@ const BrazilianTeams: React.FC = () => {
               ))}
             </div>
 
-            <div className="mt-2 flex justify-center gap-2 md:hidden">
+            <div className="mt-3 flex justify-center gap-2 lg:hidden">
               {dots.map((dot) => (
                 <div
                   key={dot}
