@@ -61,6 +61,38 @@ async function readJson(upstream: Response) {
   try { return JSON.parse(text); } catch { return null; }
 }
 
+async function isAuthorizedProcessorCaller(request: Request) {
+  const authorization = request.headers.get("authorization")?.trim();
+  if (!authorization?.startsWith("Bearer ")) return false;
+
+  const token = authorization.slice("Bearer ".length).trim();
+  if (!token) return false;
+
+  const builtInServiceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
+  if (builtInServiceRole && token === builtInServiceRole) return true;
+
+  const apiKey = request.headers.get("apikey")?.trim() || token;
+
+  try {
+    const endpoint = new URL("/auth/v1/admin/users", requiredEnv("SUPABASE_URL"));
+    endpoint.searchParams.set("page", "1");
+    endpoint.searchParams.set("per_page", "1");
+
+    const upstream = await fetch(endpoint, {
+      headers: {
+        apikey: apiKey,
+        authorization: `Bearer ${token}`,
+        accept: "application/json",
+      },
+      signal: AbortSignal.timeout(8_000),
+    });
+
+    return upstream.ok;
+  } catch {
+    return false;
+  }
+}
+
 async function rpc(name: string, body: Record<string, unknown>) {
   const endpoint = `${requiredEnv("SUPABASE_URL").replace(/\/$/, "")}/rest/v1/rpc/${name}`;
   return fetch(endpoint, {
@@ -269,9 +301,7 @@ async function processOutbox() {
 Deno.serve(async (request) => {
   if (request.method !== "POST") return response({ success: false, code: "METHOD_NOT_ALLOWED" }, 405);
 
-  const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
-  const authorization = request.headers.get("authorization");
-  if (!serviceRole || authorization !== `Bearer ${serviceRole}`) {
+  if (!(await isAuthorizedProcessorCaller(request))) {
     return response({ success: false, code: "UNAUTHORIZED" }, 401);
   }
 
