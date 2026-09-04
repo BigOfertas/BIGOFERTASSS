@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 
+import { BRAND } from "@/config/brand";
 import type { ProductGalleryItem } from "@/lib/product-images";
 import type { Product, ProductVariant } from "@/lib/products";
 
@@ -57,11 +58,12 @@ export default function ProductSeo({
     const previousTitle = document.title;
     const description =
       product.description?.trim().slice(0, 160) ||
-      `${product.name} disponível no catálogo BIGofertas.`;
+      `${product.name} disponível no catálogo ${BRAND.officialName}.`;
     const canonicalUrl = `${window.location.origin}/product/${encodeURIComponent(product.slug)}`;
     const primaryImage = images[0]?.url ?? product.image_url ?? undefined;
+    const productTitle = `${product.name} | ${BRAND.officialName}`;
 
-    document.title = `${product.name} | BIGofertas`;
+    document.title = productTitle;
     cleanups.push(() => {
       document.title = previousTitle;
     });
@@ -73,7 +75,7 @@ export default function ProductSeo({
     );
     setManagedMeta(
       'meta[property="og:title"]',
-      { property: "og:title", content: `${product.name} | BIGofertas` },
+      { property: "og:title", content: productTitle },
       cleanups,
     );
     setManagedMeta(
@@ -139,12 +141,12 @@ export default function ProductSeo({
     };
 
     const previousJsonLd = document.head.querySelector<HTMLScriptElement>(
-      "#bigofertas-product-jsonld",
+      "#storefront-product-jsonld",
     );
     const script = previousJsonLd ?? document.createElement("script");
     const previousScriptText = previousJsonLd?.textContent ?? null;
 
-    script.id = "bigofertas-product-jsonld";
+    script.id = "storefront-product-jsonld";
     script.type = "application/ld+json";
     script.textContent = JSON.stringify(jsonLd);
     if (!previousJsonLd) document.head.appendChild(script);
