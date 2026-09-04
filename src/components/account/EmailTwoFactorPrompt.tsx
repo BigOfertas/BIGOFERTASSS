@@ -1,6 +1,7 @@
 import { CheckCircle2, KeyRound, Loader2, MailCheck, ShieldCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { BRAND } from "@/config/brand";
 import {
   dismissEmailTwoFactorPrompt,
   fetchAccountSecurityStatus,
@@ -142,7 +143,7 @@ export function EmailTwoFactorPrompt() {
                 Proteja ainda mais sua conta
               </h2>
               <p className="mt-3 text-sm leading-6 text-gray-600">
-                Ative a verificação em duas etapas. Quando você entrar, além da senha, a BIGofertas pedirá um código enviado para o seu e-mail.
+                Ative a verificação em duas etapas. Quando você entrar, além da senha, a {BRAND.officialName} pedirá um código enviado para o seu e-mail.
               </p>
 
               <div className="mt-5 space-y-3 rounded-2xl bg-gray-50 p-4 text-sm text-gray-700">
