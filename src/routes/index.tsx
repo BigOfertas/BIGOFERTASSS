@@ -24,7 +24,7 @@ function Index() {
       <div className="hidden md:block">
         <PromoBanner
           id="superior"
-          style={{ aspectRatio: "1717/376" }}
+          style={{ aspectRatio: "1920/100" }}
           images={[TOP_BANNER_DESKTOP, TOP_BANNER_DESKTOP, TOP_BANNER_DESKTOP]}
           altText={`Ofertas ${BRAND.officialName}`}
         />
