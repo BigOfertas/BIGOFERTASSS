@@ -18,12 +18,12 @@ jobs:
       SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
     steps:
       - uses: actions/checkout@v7
-      - name: Read-only ACL and auth audit
+      - name: Read-only auth and RPC privilege audit
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, os, subprocess
+          import glob, json, os, re, subprocess
 
           token = os.environ['SUPABASE_ACCESS_TOKEN']
           ref = os.environ['SUPABASE_PROJECT_ID']
@@ -61,54 +61,81 @@ jobs:
               print(f'\n===== {name} =====')
               print(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True))
 
-          table_acl = rows(sql('''
-            select c.relname as table_name,
-              has_table_privilege('anon', c.oid, 'SELECT') as anon_select,
-              has_table_privilege('anon', c.oid, 'INSERT') as anon_insert,
-              has_table_privilege('anon', c.oid, 'UPDATE') as anon_update,
-              has_table_privilege('anon', c.oid, 'DELETE') as anon_delete,
-              has_table_privilege('authenticated', c.oid, 'SELECT') as authenticated_select,
-              has_table_privilege('authenticated', c.oid, 'INSERT') as authenticated_insert,
-              has_table_privilege('authenticated', c.oid, 'UPDATE') as authenticated_update,
-              has_table_privilege('authenticated', c.oid, 'DELETE') as authenticated_delete,
-              has_table_privilege('service_role', c.oid, 'SELECT') as service_select,
-              has_table_privilege('service_role', c.oid, 'INSERT') as service_insert,
-              has_table_privilege('service_role', c.oid, 'UPDATE') as service_update,
-              has_table_privilege('service_role', c.oid, 'DELETE') as service_delete
-            from pg_class c
-            join pg_namespace n on n.oid=c.relnamespace
-            where n.nspname='public' and c.relkind='r'
-            order by c.relname
-          '''))
-          show('TABLE_ACL_EFFECTIVE', table_acl)
+          auth = call('GET', f'/v1/projects/{ref}/config/auth')
+          selected_auth = {}
+          if isinstance(auth, dict):
+              for key in ('site_url','uri_allow_list','disable_signup','external_email_enabled','mailer_autoconfirm'):
+                  if key in auth:
+                      selected_auth[key] = auth[key]
+          show('AUTH_CONFIG_SELECTED', selected_auth)
 
-          routine_acl = rows(sql('''
+          revoked_public = set()
+          grant_anon = set()
+          grant_authenticated = set()
+          grant_service = set()
+
+          revoke_re = re.compile(r'REVOKE\s+ALL\s+ON\s+FUNCTION\s+public\.([a-zA-Z0-9_]+)\s*\([^;]*?\)\s+FROM\s+([^;]+);', re.I | re.S)
+          grant_re = re.compile(r'GRANT\s+EXECUTE\s+ON\s+FUNCTION\s+public\.([a-zA-Z0-9_]+)\s*\([^;]*?\)\s+TO\s+([^;]+);', re.I | re.S)
+
+          for path in sorted(glob.glob('supabase/migrations/*.sql')):
+              text = open(path, encoding='utf-8').read()
+              for name, roles in revoke_re.findall(text):
+                  normalized = roles.lower()
+                  if 'public' in normalized:
+                      revoked_public.add(name.lower())
+                  if 'anon' in normalized:
+                      grant_anon.discard(name.lower())
+                  if 'authenticated' in normalized:
+                      grant_authenticated.discard(name.lower())
+                  if 'service_role' in normalized:
+                      grant_service.discard(name.lower())
+              for name, roles in grant_re.findall(text):
+                  key = name.lower()
+                  normalized = roles.lower()
+                  if 'anon' in normalized:
+                      grant_anon.add(key)
+                  if 'authenticated' in normalized:
+                      grant_authenticated.add(key)
+                  if 'service_role' in normalized:
+                      grant_service.add(key)
+
+          live_acl = rows(sql('''
             select p.proname as function_name,
-              pg_get_function_identity_arguments(p.oid) as arguments,
-              has_function_privilege('anon', p.oid, 'EXECUTE') as anon_execute,
-              has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated_execute,
-              has_function_privilege('service_role', p.oid, 'EXECUTE') as service_execute
+                   has_function_privilege('anon', p.oid, 'EXECUTE') as anon_execute,
+                   has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated_execute,
+                   has_function_privilege('service_role', p.oid, 'EXECUTE') as service_execute
             from pg_proc p
             join pg_namespace n on n.oid=p.pronamespace
             where n.nspname='public' and p.prokind='f'
-            order by p.proname, arguments
+            order by p.proname
           '''))
-          show('ROUTINE_ACL_EFFECTIVE', routine_acl)
 
-          try:
-              cfg = call('GET', f'/v2/projects/{ref}/config')
-              data = cfg.get('data') if isinstance(cfg, dict) and isinstance(cfg.get('data'), dict) else cfg
-              auth = data.get('auth') if isinstance(data, dict) and isinstance(data.get('auth'), dict) else data
-              selected = {}
-              if isinstance(auth, dict):
-                  for key in ('site_url','uri_allow_list','disable_signup','external_email_enabled','mailer_autoconfirm'):
-                      if key in auth:
-                          selected[key] = auth[key]
-              show('AUTH_CONFIG_SELECTED', selected)
-          except Exception as exc:
-              show('AUTH_CONFIG_SELECTED', {'error': str(exc)})
+          mismatches = []
+          for row in live_acl:
+              name = str(row.get('function_name') or '').lower()
+              if name not in revoked_public:
+                  continue
+              expected_anon = name in grant_anon
+              expected_auth = name in grant_authenticated
+              expected_service = name in grant_service
+              if row.get('anon_execute') != expected_anon or row.get('authenticated_execute') != expected_auth or row.get('service_execute') != expected_service:
+                  mismatches.append({
+                      'function_name': name,
+                      'repo_expected': {
+                          'anon_execute': expected_anon,
+                          'authenticated_execute': expected_auth,
+                          'service_execute': expected_service,
+                      },
+                      'live': {
+                          'anon_execute': row.get('anon_execute'),
+                          'authenticated_execute': row.get('authenticated_execute'),
+                          'service_execute': row.get('service_execute'),
+                      },
+                  })
 
-          sensitive_tables = ['email_2fa_challenges','notification_events','product_identity_slots']
-          sensitive = [row for row in table_acl if row.get('table_name') in sensitive_tables]
-          show('SENSITIVE_TABLE_ACL', sensitive)
+          show('RPC_PRIVILEGE_MISMATCHES', mismatches)
+          show('RPC_PRIVILEGE_SUMMARY', {
+              'repo_functions_with_public_revoke': len(revoked_public),
+              'mismatch_count': len(mismatches),
+          })
           PY
