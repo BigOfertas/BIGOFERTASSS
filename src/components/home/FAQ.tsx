@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+import { BRAND } from "@/config/brand";
+
 interface FAQItem {
   id: number;
   emoji: string;
@@ -34,7 +36,7 @@ const faqData: FAQItem[] = [
     emoji: "📏",
     question: "Como escolher o tamanho certo?",
     answer:
-      "Confira as opções disponíveis na página do produto. Se tiver dúvida antes de comprar, fale com a BIGofertas pelo WhatsApp.",
+      `Confira as opções disponíveis na página do produto. Se tiver dúvida antes de comprar, fale com a ${BRAND.officialName} pelo WhatsApp.`,
   },
   {
     id: 5,
@@ -48,7 +50,7 @@ const faqData: FAQItem[] = [
     emoji: "🔄",
     question: "Como solicito um reembolso?",
     answer:
-      "Quando a opção estiver disponível para o pedido, você poderá solicitar o reembolso em Minha Conta > Pedidos. A BIGofertas entrará em contato para dar continuidade.",
+      `Quando a opção estiver disponível para o pedido, você poderá solicitar o reembolso em Minha Conta > Pedidos. A ${BRAND.officialName} entrará em contato para dar continuidade.`,
   },
   {
     id: 7,
@@ -62,7 +64,7 @@ const faqData: FAQItem[] = [
     emoji: "📞",
     question: "Como entrar em contato?",
     answer:
-      "WhatsApp: +55 (84) 9 8134-7939\nE-mail: contato@bigofertas.net",
+      `WhatsApp: ${BRAND.whatsappDisplay}\nE-mail: ${BRAND.contactEmail}`,
   },
 ];
 
