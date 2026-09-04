@@ -10,6 +10,7 @@ import {
   XCircle,
 } from "lucide-react";
 
+import { BRAND } from "@/config/brand";
 import type { OrderDisplayStatus } from "@/lib/orders";
 
 const STATUS_CONFIG: Record<
@@ -59,7 +60,7 @@ const STATUS_CONFIG: Record<
   },
   refund_requested: {
     label: "Reembolso solicitado",
-    description: "A BIGofertas entrará em contato.",
+    description: `A ${BRAND.officialName} entrará em contato.`,
     className: "border-orange-200 bg-orange-50 text-orange-800",
     icon: RotateCcw,
   },
