@@ -42,15 +42,17 @@ const TeamLogo: React.FC<{ team: Team }> = ({ team }) => (
     to="/products"
     search={{ time: team.id }}
     aria-label={`Ver produtos do ${team.name}`}
-    className="group flex flex-shrink-0 flex-col items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95"
+    className="group flex flex-shrink-0 flex-col items-center justify-center"
   >
-    <div className="flex h-[110px] w-[110px] items-center justify-center overflow-hidden rounded-lg bg-gray-50 p-0 transition-opacity group-hover:opacity-90 md:h-[120px] md:w-[120px] lg:h-[140px] lg:w-[140px]">
-      <img
-        src={team.logoUrl}
-        alt={team.name}
-        loading="lazy"
-        className="h-full w-full object-cover"
-      />
+    <div className="glass-card flex h-[104px] w-[104px] items-center justify-center rounded-[1.4rem] p-2 md:h-[112px] md:w-[112px] lg:h-[126px] lg:w-[126px]">
+      <div className="glass-media h-full w-full overflow-hidden rounded-[1rem]">
+        <img
+          src={team.logoUrl}
+          alt={team.name}
+          loading="lazy"
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.035] motion-reduce:transform-none motion-reduce:transition-none"
+        />
+      </div>
     </div>
   </Link>
 );
@@ -73,43 +75,41 @@ const BrazilianTeams: React.FC = () => {
   const activeDotIndex = Math.round(scrollProgress * (dots.length - 1));
 
   return (
-    <section className="overflow-hidden bg-white py-8 sm:py-12">
+    <section className="overflow-hidden bg-transparent py-10 sm:py-14">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <div className="mb-6 text-center sm:mb-10">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 sm:text-xs">
-            FUTEBOL É A PAIXÃO DO BRASILEIRO ⚽
-          </p>
-          <h2 className="text-xl font-black uppercase tracking-tight text-gray-900 sm:text-3xl">
-            TIMES BRASILEIROS
-          </h2>
+        <div className="mb-7 text-center sm:mb-9">
+          <p className="display-kicker">Futebol brasileiro</p>
+          <h2 className="display-title-sm mt-2">Encontre seu time</h2>
         </div>
 
-        <div className="relative h-[140px] md:h-[160px] lg:h-[180px]">
-          <div
-            ref={scrollRef}
-            onScroll={handleScroll}
-            className="flex h-full snap-x items-center gap-3 overflow-x-auto scroll-smooth pb-6 no-scrollbar md:grid md:w-full md:grid-cols-11 md:gap-0 md:overflow-visible"
-            style={{ scrollSnapType: "x mandatory" }}
-          >
-            {teams.map((team) => (
-              <div
-                key={team.id}
-                className="flex flex-shrink-0 snap-center items-center justify-center"
-              >
-                <TeamLogo team={team} />
-              </div>
-            ))}
-          </div>
+        <div className="glass-panel rounded-[1.75rem] px-3 py-5 sm:px-5">
+          <div className="relative h-[132px] md:h-[148px] lg:h-[164px]">
+            <div
+              ref={scrollRef}
+              onScroll={handleScroll}
+              className="flex h-full snap-x items-center gap-3 overflow-x-auto scroll-smooth pb-5 no-scrollbar md:grid md:w-full md:grid-cols-11 md:gap-2 md:overflow-visible md:pb-0"
+              style={{ scrollSnapType: "x mandatory" }}
+            >
+              {teams.map((team) => (
+                <div
+                  key={team.id}
+                  className="flex flex-shrink-0 snap-center items-center justify-center"
+                >
+                  <TeamLogo team={team} />
+                </div>
+              ))}
+            </div>
 
-          <div className="mt-4 flex justify-center gap-2 md:hidden">
-            {dots.map((dot) => (
-              <div
-                key={dot}
-                className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 ${
-                  activeDotIndex === dot ? "bg-red-600" : "bg-gray-200"
-                }`}
-              />
-            ))}
+            <div className="mt-2 flex justify-center gap-2 md:hidden">
+              {dots.map((dot) => (
+                <div
+                  key={dot}
+                  className={`h-1.5 rounded-full transition-all duration-300 motion-reduce:transition-none ${
+                    activeDotIndex === dot ? "w-5 bg-red-600" : "w-1.5 bg-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
