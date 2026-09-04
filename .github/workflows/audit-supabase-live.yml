@@ -1,0 +1,276 @@
+name: Audit Supabase Live
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/audit-supabase-live.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Audit live database and Edge Functions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob
+          import json
+          import os
+          import pathlib
+          import re
+          import tomllib
+          import urllib.error
+          import urllib.request
+
+          token = os.environ["SUPABASE_ACCESS_TOKEN"]
+          ref = os.environ["SUPABASE_PROJECT_ID"]
+          base = "https://api.supabase.com"
+
+          def request_json(method, path, body=None):
+              headers = {
+                  "Authorization": f"Bearer {token}",
+                  "Accept": "application/json",
+              }
+              data = None
+              if body is not None:
+                  headers["Content-Type"] = "application/json"
+                  data = json.dumps(body).encode("utf-8")
+              req = urllib.request.Request(base + path, data=data, headers=headers, method=method)
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as response:
+                      raw = response.read().decode("utf-8")
+                      return response.status, json.loads(raw) if raw else None
+              except urllib.error.HTTPError as exc:
+                  raw = exc.read().decode("utf-8", errors="replace")
+                  raise RuntimeError(f"HTTP {exc.code} {path}: {raw[:1000]}") from exc
+
+          def sql(query):
+              _, payload = request_json(
+                  "POST",
+                  f"/v1/projects/{ref}/database/query",
+                  {"query": query, "read_only": True},
+              )
+              return payload
+
+          def rows(payload):
+              if isinstance(payload, list):
+                  return payload
+              if isinstance(payload, dict):
+                  if isinstance(payload.get("result"), list):
+                      return payload["result"]
+                  if isinstance(payload.get("data"), list):
+                      return payload["data"]
+              return []
+
+          def section(name, value):
+              print(f"\n===== {name} =====")
+              print(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True))
+
+          repo_migrations = []
+          for path in sorted(glob.glob("supabase/migrations/*.sql")):
+              name = pathlib.Path(path).name
+              match = re.match(r"^(\d{14})_", name)
+              if match:
+                  repo_migrations.append(match.group(1))
+
+          live_migrations = [str(r.get("version")) for r in rows(sql(
+              "select version from supabase_migrations.schema_migrations order by version"
+          ))]
+          section("MIGRATIONS_COMPARE", {
+              "repo_count": len(repo_migrations),
+              "live_count": len(live_migrations),
+              "missing_live": sorted(set(repo_migrations) - set(live_migrations)),
+              "extra_live": sorted(set(live_migrations) - set(repo_migrations)),
+              "repo_versions": repo_migrations,
+              "live_versions": live_migrations,
+          })
+
+          table_rows = rows(sql("""
+              select
+                n.nspname as schema_name,
+                c.relname as table_name,
+                c.relrowsecurity as rls_enabled,
+                c.relforcerowsecurity as force_rls,
+                (select count(*)::int from pg_policy p where p.polrelid = c.oid) as policy_count
+              from pg_class c
+              join pg_namespace n on n.oid = c.relnamespace
+              where c.relkind = 'r' and n.nspname = 'public'
+              order by c.relname
+          """))
+          section("PUBLIC_TABLES_RLS", table_rows)
+
+          policy_rows = rows(sql("""
+              select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+              from pg_policies
+              where schemaname = 'public'
+              order by tablename, policyname
+          """))
+          section("RLS_POLICIES", policy_rows)
+
+          function_rows = rows(sql("""
+              select
+                n.nspname as schema_name,
+                p.proname as function_name,
+                pg_get_function_identity_arguments(p.oid) as arguments,
+                p.prosecdef as security_definer,
+                p.provolatile as volatility,
+                pg_get_userbyid(p.proowner) as owner,
+                md5(pg_get_functiondef(p.oid)) as definition_hash
+              from pg_proc p
+              join pg_namespace n on n.oid = p.pronamespace
+              where n.nspname = 'public' and p.prokind = 'f'
+              order by p.proname, arguments
+          """))
+          section("PUBLIC_FUNCTIONS_RPCS", function_rows)
+
+          trigger_rows = rows(sql("""
+              select
+                c.relname as table_name,
+                t.tgname as trigger_name,
+                pg_get_triggerdef(t.oid, true) as definition
+              from pg_trigger t
+              join pg_class c on c.oid = t.tgrelid
+              join pg_namespace n on n.oid = c.relnamespace
+              where not t.tgisinternal and n.nspname = 'public'
+              order by c.relname, t.tgname
+          """))
+          section("TRIGGERS", trigger_rows)
+
+          constraint_rows = rows(sql("""
+              select
+                c.relname as table_name,
+                con.conname as constraint_name,
+                con.contype as constraint_type,
+                pg_get_constraintdef(con.oid, true) as definition
+              from pg_constraint con
+              join pg_class c on c.oid = con.conrelid
+              join pg_namespace n on n.oid = c.relnamespace
+              where n.nspname = 'public'
+              order by c.relname, con.conname
+          """))
+          section("CONSTRAINTS", constraint_rows)
+
+          index_rows = rows(sql("""
+              select tablename, indexname, indexdef
+              from pg_indexes
+              where schemaname = 'public'
+              order by tablename, indexname
+          """))
+          section("INDEXES", index_rows)
+
+          table_grants = rows(sql("""
+              select grantee, table_name,
+                     string_agg(privilege_type, ',' order by privilege_type) as privileges
+              from information_schema.role_table_grants
+              where table_schema = 'public'
+                and grantee in ('anon', 'authenticated', 'service_role')
+              group by grantee, table_name
+              order by table_name, grantee
+          """))
+          section("TABLE_GRANTS", table_grants)
+
+          routine_grants = rows(sql("""
+              select grantee, routine_name,
+                     string_agg(privilege_type, ',' order by privilege_type) as privileges
+              from information_schema.role_routine_grants
+              where routine_schema = 'public'
+                and grantee in ('anon', 'authenticated', 'service_role')
+              group by grantee, routine_name
+              order by routine_name, grantee
+          """))
+          section("ROUTINE_GRANTS", routine_grants)
+
+          extensions = rows(sql("select extname, extversion from pg_extension order by extname"))
+          section("EXTENSIONS", extensions)
+
+          try:
+              cron_rows = rows(sql("""
+                  select jobid, schedule, command, database, username, active
+                  from cron.job
+                  order by jobid
+              """))
+              section("CRON_JOBS", cron_rows)
+          except Exception as exc:
+              section("CRON_JOBS", {"error": str(exc)})
+
+          local_functions = sorted(
+              p.name for p in pathlib.Path("supabase/functions").iterdir()
+              if p.is_dir() and not p.name.startswith("_")
+          )
+          with open("supabase/config.toml", "rb") as fh:
+              config = tomllib.load(fh)
+          local_verify = {
+              slug: bool(settings.get("verify_jwt", True))
+              for slug, settings in (config.get("functions") or {}).items()
+          }
+
+          _, live_functions_payload = request_json("GET", f"/v1/projects/{ref}/functions")
+          live_functions = live_functions_payload if isinstance(live_functions_payload, list) else []
+          live_function_slugs = sorted(str(item.get("slug")) for item in live_functions if item.get("slug"))
+          live_verify = {
+              str(item.get("slug")): bool(item.get("verify_jwt"))
+              for item in live_functions if item.get("slug")
+          }
+          verify_mismatches = {
+              slug: {"repo": local_verify.get(slug), "live": live_verify.get(slug)}
+              for slug in sorted(set(local_verify) & set(live_verify))
+              if local_verify.get(slug) != live_verify.get(slug)
+          }
+          section("EDGE_FUNCTIONS_COMPARE", {
+              "repo": local_functions,
+              "live": live_function_slugs,
+              "missing_live": sorted(set(local_functions) - set(live_function_slugs)),
+              "extra_live": sorted(set(live_function_slugs) - set(local_functions)),
+              "verify_jwt_repo": local_verify,
+              "verify_jwt_live": live_verify,
+              "verify_jwt_mismatches": verify_mismatches,
+          })
+
+          try:
+              _, project_config = request_json("GET", f"/v2/projects/{ref}/config")
+              auth = project_config.get("auth", {}) if isinstance(project_config, dict) else {}
+              selected_auth = {
+                  key: auth.get(key)
+                  for key in (
+                      "site_url",
+                      "uri_allow_list",
+                      "disable_signup",
+                      "external_email_enabled",
+                      "mailer_autoconfirm",
+                  )
+                  if key in auth
+              }
+              section("AUTH_CONFIG_SELECTED", selected_auth)
+          except Exception as exc:
+              section("AUTH_CONFIG_SELECTED", {"error": str(exc)})
+
+          problems = []
+          if set(repo_migrations) != set(live_migrations):
+              problems.append("migration drift")
+          if set(local_functions) != set(live_function_slugs):
+              problems.append("edge function drift")
+          if verify_mismatches:
+              problems.append("verify_jwt drift")
+          rls_off = [r.get("table_name") for r in table_rows if r.get("rls_enabled") is False]
+          section("AUDIT_SUMMARY", {
+              "problems": problems,
+              "public_tables_without_rls": rls_off,
+              "migration_parity": set(repo_migrations) == set(live_migrations),
+              "edge_function_parity": set(local_functions) == set(live_function_slugs),
+              "verify_jwt_parity": not bool(verify_mismatches),
+          })
+          PY
