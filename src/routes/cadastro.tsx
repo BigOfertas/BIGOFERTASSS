@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
+import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/cadastro")({
@@ -149,7 +150,7 @@ function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="mb-7 text-center">
           <Link to="/" className="text-2xl font-black italic tracking-tight text-gray-950">
-            <span className="text-red-600">BIG</span>ofertas
+            <BrandWordmark />
           </Link>
           <h1 className="mt-5 text-2xl font-black tracking-tight text-gray-950">Criar conta</h1>
           <p className="mt-2 text-sm text-gray-500">
