@@ -1,0 +1,49 @@
+name: Fix Affiliate Fixed Commission Notification
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/fix-affiliate-notification-fixed-commission.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Replace remaining percentage notification
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('supabase/functions/notifications-process/index.ts')
+          text = path.read_text()
+          old = 'COMMISSION_RATE: rateText(payloadText(event, "commission_rate"))'
+          new = 'COMMISSION_RATE: fixedCommissionText(event)'
+          if old not in text:
+              raise SystemExit('remaining percentage notification not found')
+          text = text.replace(old, new)
+          path.write_text(text)
+          if 'rateText(' in text or 'payloadText(event, "commission_rate")' in text:
+              raise SystemExit('percentage notification reference remains')
+          PY
+
+      - name: Remove temporary workflow
+        run: rm .github/workflows/fix-affiliate-notification-fixed-commission.yml
+
+      - name: Commit fix
+        run: |
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add -A
+          git commit -m "fix: use fixed value in affiliate notification"
+          git push origin main
