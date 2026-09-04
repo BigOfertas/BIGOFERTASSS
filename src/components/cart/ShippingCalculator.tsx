@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { BRAND } from "@/config/brand";
 import type { CartItem } from "@/lib/cart";
 import {
   formatPostalCode,
@@ -230,7 +231,7 @@ export function ShippingCalculator({
 
           {freeShipping ? (
             <p className="px-1 pt-1 text-[11px] leading-relaxed text-emerald-700">
-              Cotação absorvida pela BIGofertas: você não paga o valor da entrega.
+              Cotação absorvida pela {BRAND.officialName}: você não paga o valor da entrega.
             </p>
           ) : null}
 
