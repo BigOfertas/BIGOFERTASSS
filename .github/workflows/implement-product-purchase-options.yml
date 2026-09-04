@@ -1,0 +1,50 @@
+name: Implement Product Purchase Options
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/implement-product-purchase-options.yml
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Apply implementation
+        run: python3 scripts/implement-product-purchase-options.py
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate product purchase options
+        run: node scripts/validate-product-purchase-options.mjs
+
+      - name: Validate production build
+        run: bun run build
+
+      - name: Validate definitive order core
+        run: bun run validate:phase10
+
+      - name: Commit implementation
+        run: |
+          rm -f scripts/implement-product-purchase-options.py .github/workflows/implement-product-purchase-options.yml
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add -A
+          git commit -m "feat: add product sizes personalization and patches"
+          git pull --ff-only origin main
+          git push origin HEAD:main
