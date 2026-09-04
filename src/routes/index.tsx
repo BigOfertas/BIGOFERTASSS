@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="app-shell flex min-h-screen flex-col">
       <PromoBanner
         id="superior"
         style={{ aspectRatio: "1920/100" }}
@@ -47,12 +47,11 @@ function Index() {
 
         <div
           aria-hidden="true"
-          style={{ aspectRatio: "1920/300" }}
-          className="w-full max-h-[300px] max-md:!aspect-[1920/750] max-md:max-h-none bg-gray-100 overflow-hidden"
+          className="ambient-band mx-auto my-2 flex min-h-32 w-full items-center justify-center overflow-hidden py-10 sm:min-h-44 sm:py-14 lg:min-h-52"
         >
-          <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-            <span className="text-sm font-medium opacity-0">{BRAND.officialName}</span>
-          </div>
+          <span className="select-none font-black tracking-[-0.08em] text-gray-900/[0.035] text-[clamp(3.5rem,12vw,10rem)]">
+            {BRAND.shortMark}
+          </span>
         </div>
 
         <BrazilianTeams />
