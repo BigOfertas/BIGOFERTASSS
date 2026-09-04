@@ -196,11 +196,11 @@ check(
 );
 
 check(
-  "cliente acessa somente RPCs da propria area e e-mail indicado fica mascarado",
-  core.includes("get_my_affiliate_dashboard") &&
-    core.includes("list_my_affiliate_referrals") &&
-    core.includes("masked_email") &&
-    (core.match(/a\.user_id = current_user_id/g) ?? []).length >= 3,
+  "cliente acessa somente dados do proprio afiliado e e-mail indicado fica mascarado",
+  core.includes("masked_email") &&
+    /list_my_affiliate_referrals[\s\S]*JOIN public\.affiliates AS a ON a\.id = r\.affiliate_id AND a\.user_id = auth\.uid\(\)/.test(core) &&
+    /list_my_affiliate_commissions[\s\S]*WHERE a\.user_id = auth\.uid\(\)/.test(core) &&
+    /list_my_affiliate_withdrawals[\s\S]*WHERE a\.user_id = auth\.uid\(\)/.test(core),
 );
 
 check(
