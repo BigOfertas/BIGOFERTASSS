@@ -1,0 +1,139 @@
+name: Apply RPC Privilege Hardening
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/apply-rpc-privilege-hardening.yml"
+      - "supabase/migrations/20260904173000_rpc_privilege_hardening.sql"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Apply migration and verify live ACLs
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
+          const ref = process.env.SUPABASE_PROJECT_ID?.trim();
+          const token = process.env.SUPABASE_ACCESS_TOKEN?.trim();
+          if (!ref || !token) throw new Error('Missing Supabase CI configuration');
+
+          const apiBase = `https://api.supabase.com/v1/projects/${encodeURIComponent(ref)}`;
+          const headers = {
+            authorization: `Bearer ${token}`,
+            accept: 'application/json',
+            'content-type': 'application/json',
+          };
+
+          async function request(path, options = {}) {
+            const response = await fetch(`${apiBase}${path}`, {
+              ...options,
+              headers: { ...headers, ...(options.headers || {}) },
+              signal: AbortSignal.timeout(120_000),
+            });
+            const text = await response.text();
+            if (!response.ok) {
+              throw new Error(`${options.method || 'GET'} ${path} HTTP ${response.status}: ${text.slice(0, 2000)}`);
+            }
+            return text ? JSON.parse(text) : null;
+          }
+
+          const migrationName = 'rpc_privilege_hardening_20260904';
+          const migrationPath = 'supabase/migrations/20260904173000_rpc_privilege_hardening.sql';
+          const migrationSql = fs.readFileSync(migrationPath, 'utf8')
+            .replace(/^\s*BEGIN;\s*/i, '')
+            .replace(/\s*COMMIT;\s*$/i, '')
+            .trim();
+
+          const history = await request('/database/migrations');
+          const alreadyApplied = Array.isArray(history) && history.some((item) => item?.name === migrationName);
+
+          if (!alreadyApplied) {
+            await request('/database/migrations', {
+              method: 'POST',
+              body: JSON.stringify({ name: migrationName, query: migrationSql }),
+            });
+            console.log('Migration applied.');
+          } else {
+            console.log('Migration already applied; continuing with verification.');
+          }
+
+          const verificationPayload = await request('/database/query/read-only', {
+            method: 'POST',
+            body: JSON.stringify({ query: `
+              select
+                p.proname as function_name,
+                has_function_privilege('anon', p.oid, 'EXECUTE') as anon_execute,
+                has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated_execute,
+                has_function_privilege('service_role', p.oid, 'EXECUTE') as service_execute
+              from pg_proc p
+              join pg_namespace n on n.oid = p.pronamespace
+              where n.nspname = 'public'
+                and p.proname in (
+                  'next_order_public_number',
+                  'create_order_core',
+                  'record_order_payment',
+                  'owner_transition_order',
+                  'request_my_order_refund',
+                  'owner_resolve_refund_request',
+                  'admin_list_orders',
+                  'claim_notification_events',
+                  'complete_notification_event',
+                  'fail_notification_event'
+                )
+              order by p.proname;
+            ` }),
+          });
+
+          const rows = Array.isArray(verificationPayload) ? verificationPayload : [];
+          console.log('LIVE_RPC_ACL_VERIFICATION');
+          console.log(JSON.stringify(rows, null, 2));
+
+          const expected = {
+            next_order_public_number: [false, false, true],
+            create_order_core: [false, false, true],
+            record_order_payment: [false, false, true],
+            owner_transition_order: [false, true, false],
+            request_my_order_refund: [false, true, false],
+            owner_resolve_refund_request: [false, true, false],
+            admin_list_orders: [false, true, false],
+            claim_notification_events: [false, false, true],
+            complete_notification_event: [false, false, true],
+            fail_notification_event: [false, false, true],
+          };
+
+          const byName = new Map(rows.map((row) => [row.function_name, row]));
+          const failures = [];
+          for (const [name, values] of Object.entries(expected)) {
+            const row = byName.get(name);
+            if (!row) {
+              failures.push(`${name}: missing`);
+              continue;
+            }
+            const actual = [row.anon_execute, row.authenticated_execute, row.service_execute];
+            if (actual.some((value, index) => value !== values[index])) {
+              failures.push(`${name}: expected ${JSON.stringify(values)}, got ${JSON.stringify(actual)}`);
+            }
+          }
+
+          if (failures.length) {
+            console.error('ACL verification failed:');
+            for (const failure of failures) console.error(`- ${failure}`);
+            process.exit(1);
+          }
+
+          console.log('RPC ACL hardening verified successfully.');
+          NODE
