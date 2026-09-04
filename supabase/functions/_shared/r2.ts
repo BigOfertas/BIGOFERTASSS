@@ -1,9 +1,8 @@
 import {
   HeadObjectCommand,
-  PutObjectCommand,
   S3Client,
 } from "npm:@aws-sdk/client-s3@3.1121.0";
-import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner@3.1121.0";
+import { AwsClient } from "npm:aws4fetch@1.0.20";
 
 export const ALLOWED_IMAGE_MIME_TYPES = [
   "image/webp",
@@ -31,14 +30,20 @@ function requiredEnv(name: string) {
   return value;
 }
 
+function getR2Credentials() {
+  return {
+    accountId: requiredEnv("R2_ACCOUNT_ID"),
+    accessKeyId: requiredEnv("R2_ACCESS_KEY_ID"),
+    secretAccessKey: requiredEnv("R2_SECRET_ACCESS_KEY"),
+  };
+}
+
 export function getR2BucketName() {
   return requiredEnv("R2_BUCKET_NAME");
 }
 
 export function getR2Client() {
-  const accountId = requiredEnv("R2_ACCOUNT_ID");
-  const accessKeyId = requiredEnv("R2_ACCESS_KEY_ID");
-  const secretAccessKey = requiredEnv("R2_SECRET_ACCESS_KEY");
+  const { accountId, accessKeyId, secretAccessKey } = getR2Credentials();
 
   return new S3Client({
     region: "auto",
@@ -91,25 +96,44 @@ export function getMaxImageBytes() {
   return Math.trunc(configured);
 }
 
+function encodeObjectKey(objectKey: string) {
+  return objectKey
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+}
+
 export async function createImageUploadUrl(
   objectKey: string,
   contentType: AllowedImageMimeType,
 ) {
-  const client = getR2Client();
+  const { accountId, accessKeyId, secretAccessKey } = getR2Credentials();
   const bucket = getR2BucketName();
   const expiresIn = getUploadTtlSeconds();
-  const command = new PutObjectCommand({
-    Bucket: bucket,
-    Key: objectKey,
-    ContentType: contentType,
+  const r2Url = `https://${accountId}.r2.cloudflarestorage.com`;
+  const client = new AwsClient({
+    service: "s3",
+    region: "auto",
+    accessKeyId,
+    secretAccessKey,
   });
 
-  const uploadUrl = await getSignedUrl(client, command, {
-    expiresIn,
-    signableHeaders: new Set(["content-type"]),
-  });
+  const signedRequest = await client.sign(
+    new Request(
+      `${r2Url}/${encodeURIComponent(bucket)}/${encodeObjectKey(objectKey)}?X-Amz-Expires=${expiresIn}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType,
+        },
+      },
+    ),
+    {
+      aws: { signQuery: true },
+    },
+  );
 
-  return { uploadUrl, expiresIn };
+  return { uploadUrl: signedRequest.url.toString(), expiresIn };
 }
 
 export async function headProductImage(objectKey: string) {
