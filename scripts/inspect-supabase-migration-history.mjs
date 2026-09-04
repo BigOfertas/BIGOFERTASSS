@@ -20,13 +20,16 @@ const local = fs
   }))
   .sort((a, b) => a.version.localeCompare(b.version));
 
+const managementHeaders = {
+  authorization: `Bearer ${accessToken}`,
+  accept: "application/json",
+  "content-type": "application/json",
+};
+
 const response = await fetch(
   `https://api.supabase.com/v1/projects/${encodeURIComponent(projectRef)}/database/migrations`,
   {
-    headers: {
-      authorization: `Bearer ${accessToken}`,
-      accept: "application/json",
-    },
+    headers: managementHeaders,
     signal: AbortSignal.timeout(20_000),
   },
 );
@@ -78,5 +81,89 @@ const affiliateVersions = new Set([
 const affiliatePending = pending.filter((item) => affiliateVersions.has(item.version));
 console.log(`\nAffiliate migrations pending remotely: ${affiliatePending.length}`);
 for (const item of affiliatePending) console.log(`${item.version} ${item.name}`);
+
+const readinessQuery = `
+select
+  pg_catalog.to_regclass('public.profiles') is not null as profiles_table,
+  pg_catalog.to_regclass('public.user_roles') is not null as user_roles_table,
+  pg_catalog.to_regclass('public.orders') is not null as orders_table,
+  pg_catalog.to_regclass('public.notification_events') is not null as notification_events_table,
+  (
+    select count(*) = 8
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'orders'
+      and column_name in (
+        'user_id', 'payment_status', 'status', 'subtotal_amount',
+        'discount_amount', 'total_amount', 'paid_at', 'public_number'
+      )
+  ) as orders_required_columns,
+  exists (
+    select 1
+    from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'has_role'
+  ) as has_role_function,
+  exists (
+    select 1
+    from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'is_valid_brazilian_phone'
+  ) as phone_validator_function,
+  exists (
+    select 1
+    from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'is_valid_brazilian_cpf'
+  ) as cpf_validator_function,
+  exists (
+    select 1
+    from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'claim_notification_events'
+  ) as notification_claim_function,
+  pg_catalog.to_regclass('public.affiliate_program_settings') is not null as affiliate_settings_live,
+  pg_catalog.to_regclass('public.affiliates') is not null as affiliates_live,
+  pg_catalog.to_regclass('public.affiliate_referrals') is not null as affiliate_referrals_live,
+  pg_catalog.to_regclass('public.affiliate_commissions') is not null as affiliate_commissions_live,
+  pg_catalog.to_regclass('public.affiliate_withdrawals') is not null as affiliate_withdrawals_live;
+`;
+
+const readinessResponse = await fetch(
+  `https://api.supabase.com/v1/projects/${encodeURIComponent(projectRef)}/database/query/read-only`,
+  {
+    method: "POST",
+    headers: managementHeaders,
+    body: JSON.stringify({ query: readinessQuery }),
+    signal: AbortSignal.timeout(20_000),
+  },
+);
+
+if (!readinessResponse.ok) {
+  console.error(`Supabase live schema readiness request failed with HTTP ${readinessResponse.status}.`);
+  process.exit(5);
+}
+
+const readinessPayload = await readinessResponse.json();
+const readiness = Array.isArray(readinessPayload)
+  ? readinessPayload[0]
+  : readinessPayload;
+
+console.log("\nAFFILIATE_LIVE_READINESS");
+console.log(JSON.stringify(readiness, null, 2));
+
+const dependencyKeys = [
+  "profiles_table",
+  "user_roles_table",
+  "orders_table",
+  "notification_events_table",
+  "orders_required_columns",
+  "has_role_function",
+  "phone_validator_function",
+  "cpf_validator_function",
+  "notification_claim_function",
+];
+const dependenciesReady = dependencyKeys.every((key) => readiness?.[key] === true);
+console.log(`Affiliate migration dependencies ready: ${dependenciesReady}`);
 
 // Inspection is intentionally read-only. Drift is reported instead of repaired.
