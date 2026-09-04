@@ -15,6 +15,7 @@ import { AccountOverview } from "@/components/account/AccountOverview";
 import { EmailTwoFactorPrompt } from "@/components/account/EmailTwoFactorPrompt";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
+import { BRAND } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
 
 const accountSearchSchema = z.object({
@@ -80,6 +81,8 @@ function AccountPage() {
     return <Outlet />;
   }
 
+  const fallbackAccountLabel = `Conta ${BRAND.officialName}`;
+
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <Header />
@@ -87,14 +90,14 @@ function AccountPage() {
       <main className="flex-1">
         {section ? (
           <AccountDashboard
-            email={user.email ?? "Conta BIGofertas"}
+            email={user.email ?? fallbackAccountLabel}
             section={section}
             onSectionChange={handleSectionChange}
             onSignOut={handleSignOut}
           />
         ) : (
           <AccountOverview
-            email={user.email ?? "Conta BIGofertas"}
+            email={user.email ?? fallbackAccountLabel}
             onNavigate={handleSectionChange}
             onSignOut={handleSignOut}
           />
