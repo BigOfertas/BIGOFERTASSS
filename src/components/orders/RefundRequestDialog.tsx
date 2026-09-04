@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { BRAND } from "@/config/brand";
 import { REFUND_REASON_LABELS, type RefundReason } from "@/lib/orders";
 
 const REASONS = Object.entries(REFUND_REASON_LABELS) as Array<
@@ -74,7 +75,7 @@ export function RefundRequestDialog({
                 Solicitar reembolso
               </DialogTitle>
               <DialogDescription className="leading-6 text-gray-600">
-                A BIGofertas receberá sua solicitação e entrará em contato.
+                A {BRAND.officialName} receberá sua solicitação e entrará em contato.
               </DialogDescription>
             </DialogHeader>
           </div>
