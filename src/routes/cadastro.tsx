@@ -131,25 +131,29 @@ function RegisterPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7] px-4">
-        <Loader2 className="h-6 w-6 animate-spin text-red-600 motion-reduce:animate-none" />
+      <main className="app-shell flex min-h-screen items-center justify-center px-4">
+        <div className="glass-card rounded-2xl p-5">
+          <Loader2 className="h-6 w-6 animate-spin text-red-600 motion-reduce:animate-none" />
+        </div>
       </main>
     );
   }
 
   if (user) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7] px-4 py-12">
-        <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm">
-          <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
-          <h1 className="mt-4 text-xl font-black text-gray-950">Você já está conectado</h1>
+      <main className="app-shell flex min-h-screen items-center justify-center px-4 py-12">
+        <div className="glass-panel w-full max-w-sm rounded-[1.5rem] p-6 text-center">
+          <span className="glass-card mx-auto flex h-12 w-12 items-center justify-center rounded-2xl text-emerald-600">
+            <CheckCircle2 className="h-6 w-6" />
+          </span>
+          <h1 className="display-title-sm mt-4">Você já está conectado</h1>
           <p className="mt-2 text-sm text-gray-500">
             Use sua conta atual ou saia para criar outra.
           </p>
           <div className="mt-6 space-y-2">
             <Link
               to={isOwner ? "/admin" : "/conta"}
-              className="flex h-11 items-center justify-center rounded-lg bg-red-600 px-4 text-sm font-bold text-white hover:bg-red-700"
+              className="premium-action flex h-11 items-center justify-center rounded-xl px-4 text-sm font-bold"
             >
               Abrir minha conta
             </Link>
@@ -157,7 +161,7 @@ function RegisterPage() {
               type="button"
               onClick={() => void handleSignOut()}
               disabled={signingOut}
-              className="h-11 w-full rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="glass-card h-11 w-full rounded-xl text-sm font-semibold text-gray-700 disabled:opacity-50"
             >
               {signingOut ? "Saindo..." : "Sair e criar outra conta"}
             </button>
@@ -169,26 +173,25 @@ function RegisterPage() {
 
   if (registrationSent) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7] px-4 py-12">
-        <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-7 text-center shadow-sm">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+      <main className="app-shell flex min-h-screen items-center justify-center px-4 py-12">
+        <div className="glass-panel w-full max-w-md rounded-[1.6rem] p-7 text-center">
+          <span className="glass-card mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-emerald-700">
             <MailCheck className="h-7 w-7" />
           </span>
-          <h1 className="mt-5 text-2xl font-black tracking-tight text-gray-950">
-            Confirme seu e-mail
-          </h1>
+          <p className="display-kicker mt-5">Cadastro criado</p>
+          <h1 className="display-title-sm mt-2">Confirme seu e-mail</h1>
           <p className="mt-3 text-sm leading-6 text-gray-600">
             Enviamos uma confirmação para <strong>{email.trim()}</strong>. Sua conta só poderá ser acessada depois que o e-mail for confirmado.
           </p>
           {errorMessage ? (
-            <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p className="mt-4 rounded-xl border border-red-200 bg-red-50/90 px-3 py-2 text-sm text-red-700">
               {errorMessage}
             </p>
           ) : null}
           <div className="mt-6 space-y-2">
             <Link
               to="/login"
-              className="flex h-11 items-center justify-center rounded-lg bg-red-600 px-4 text-sm font-bold text-white hover:bg-red-700"
+              className="premium-action flex h-11 items-center justify-center rounded-xl px-4 text-sm font-bold"
             >
               Ir para entrar
             </Link>
@@ -196,7 +199,7 @@ function RegisterPage() {
               type="button"
               onClick={() => void handleResend()}
               disabled={resending}
-              className="h-11 w-full rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="glass-card h-11 w-full rounded-xl text-sm font-semibold text-gray-700 disabled:opacity-50"
             >
               {resending ? "Reenviando..." : "Reenviar e-mail de confirmação"}
             </button>
@@ -207,29 +210,30 @@ function RegisterPage() {
   }
 
   const inputClass =
-    "h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-red-500 focus:ring-4 focus:ring-red-50";
+    "glass-input h-11 w-full rounded-xl px-3 text-sm text-gray-950 outline-none focus:border-red-500 focus:ring-4 focus:ring-red-50/70";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f7f7f7] px-4 py-12">
+    <main className="app-shell flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="mb-7 text-center">
-          <Link to="/" className="text-2xl font-black italic tracking-tight text-gray-950">
+          <Link to="/" className="brand-lockup px-5 py-2 text-2xl">
             <BrandWordmark />
           </Link>
-          <h1 className="mt-5 text-2xl font-black tracking-tight text-gray-950">Criar conta</h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="display-kicker mt-6">Área do cliente</p>
+          <h1 className="display-title-sm mt-2">Criar conta</h1>
+          <p className="mt-2 text-sm leading-6 text-gray-500">
             Comece com o básico. Os dados de compra serão preenchidos só quando você finalizar um pedido.
           </p>
         </div>
 
         {referralValidation !== "idle" ? (
           <div
-            className={`mb-4 rounded-xl border px-4 py-3 text-sm leading-5 ${
+            className={`mb-4 rounded-2xl border px-4 py-3 text-sm leading-5 shadow-sm ${
               referralValidation === "valid"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                ? "border-emerald-200 bg-emerald-50/90 text-emerald-800"
                 : referralValidation === "invalid"
-                  ? "border-amber-200 bg-amber-50 text-amber-800"
-                  : "border-gray-200 bg-white text-gray-600"
+                  ? "border-amber-200 bg-amber-50/90 text-amber-800"
+                  : "glass-card text-gray-600"
             }`}
           >
             <div className="flex items-start gap-2.5">
@@ -262,7 +266,7 @@ function RegisterPage() {
           </div>
         ) : null}
 
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <form onSubmit={handleSubmit} className="glass-panel space-y-4 rounded-[1.6rem] p-6">
           <label className="block text-sm font-semibold text-gray-800">
             Nome
             <input
@@ -346,7 +350,7 @@ function RegisterPage() {
           </label>
 
           {errorMessage ? (
-            <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p role="alert" className="rounded-xl border border-red-200 bg-red-50/90 px-3 py-2 text-sm text-red-700">
               {errorMessage}
             </p>
           ) : null}
@@ -354,7 +358,7 @@ function RegisterPage() {
           <button
             type="submit"
             disabled={!formReady || submitting}
-            className="flex h-12 w-full items-center justify-center rounded-lg bg-red-600 px-4 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+            className="premium-action flex h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-black disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? (
               <>
