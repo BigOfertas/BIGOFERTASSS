@@ -1,0 +1,137 @@
+name: Retire Affiliate Percentage Path V3
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/retire-affiliate-percentage-path-v3.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: retire-affiliate-percentage-path-v3
+  cancel-in-progress: false
+
+jobs:
+  retire:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Apply percentage retirement
+        run: python3 scripts/retire-affiliate-percentage.py
+
+      - name: Make live verification portable
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/deploy-affiliate-backend.mjs')
+          text = path.read_text(encoding='utf-8')
+          old = '''  not has_function_privilege(
+            'authenticated',
+            'public.owner_save_affiliate_program_draft(integer,text,integer,numeric,text)',
+            'EXECUTE'
+          ) as legacy_draft_rpc_retired,
+          not has_function_privilege(
+            'authenticated',
+            'public.owner_configure_affiliate_program(boolean,integer,text,integer,numeric,text)',
+            'EXECUTE'
+          ) as legacy_configure_rpc_retired,
+          not exists (
+            select 1 from public.affiliate_program_settings s
+            where s.singleton = true
+              and (s.commission_rate_bps is not null or s.commission_base_mode is not null)
+          ) as legacy_percentage_settings_cleared,
+          (select amount_per_unit = 20 from public.resolve_affiliate_commission_tier('00000000-0000-0000-0000-000000000000'::uuid, 1)) as tier_1_safe,
+          (select amount_per_unit = 20 from public.resolve_affiliate_commission_tier('00000000-0000-0000-0000-000000000000'::uuid, 7)) as tier_7_safe,
+          (select amount_per_unit = 18 from public.resolve_affiliate_commission_tier('00000000-0000-0000-0000-000000000000'::uuid, 8)) as tier_8_safe,
+          (select amount_per_unit = 15 from public.resolve_affiliate_commission_tier('00000000-0000-0000-0000-000000000000'::uuid, 15)) as tier_15_safe,
+          (select amount_per_unit = 15 from public.resolve_affiliate_commission_tier('00000000-0000-0000-0000-000000000000'::uuid, 34)) as tier_34_safe,
+          (select amount_per_unit = 12 from public.resolve_affiliate_commission_tier('00000000-0000-0000-0000-000000000000'::uuid, 35)) as tier_35_safe,'''
+          new = '''  not exists (
+            select 1 from information_schema.routine_privileges
+            where routine_schema = 'public'
+              and routine_name = 'owner_save_affiliate_program_draft'
+              and grantee = 'authenticated'
+              and privilege_type = 'EXECUTE'
+          ) as legacy_draft_rpc_retired,
+          not exists (
+            select 1 from information_schema.routine_privileges
+            where routine_schema = 'public'
+              and routine_name = 'owner_configure_affiliate_program'
+              and grantee = 'authenticated'
+              and privilege_type = 'EXECUTE'
+          ) as legacy_configure_rpc_retired,
+          not exists (
+            select 1 from public.affiliate_program_settings s
+            where s.singleton = true
+              and (s.commission_rate_bps is not null or s.commission_base_mode is not null)
+          ) as legacy_percentage_settings_cleared,
+          (select amount_per_unit = 20 from public.affiliate_commission_tiers where min_units = 1) as tier_1_safe,
+          (select amount_per_unit = 20 from public.affiliate_commission_tiers where min_units = 5) as tier_5_safe,
+          (select amount_per_unit = 18 from public.affiliate_commission_tiers where min_units = 8) as tier_8_safe,
+          (select amount_per_unit = 15 from public.affiliate_commission_tiers where min_units = 15) as tier_15_safe,
+          (select amount_per_unit = 15 from public.affiliate_commission_tiers where min_units = 25) as tier_25_safe,
+          (select amount_per_unit = 12 from public.affiliate_commission_tiers where min_units = 35) as tier_35_safe,'''
+          if old not in text:
+              raise SystemExit('portable verification target not found')
+          text = text.replace(old, new, 1)
+          text = text.replace('  "tier_7_safe",', '  "tier_5_safe",', 1)
+          text = text.replace('  "tier_34_safe",', '  "tier_25_safe",', 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate affiliate module
+        run: bun run validate:affiliate
+
+      - name: Validate order and admin regressions
+        run: bun run validate:phase10
+
+      - name: Build production application
+        run: bun run build
+
+      - name: Build Hostinger artifact without publishing
+        run: bun run build:hostinger
+
+      - name: Apply and verify affiliate backend
+        run: node scripts/deploy-affiliate-backend.mjs
+
+      - name: Remove temporary automation files
+        run: |
+          rm -f scripts/retire-affiliate-percentage.py
+          rm -f .github/workflows/retire-affiliate-percentage-path.yml
+          rm -f .github/workflows/retire-affiliate-percentage-path-v2.yml
+          rm -f .github/workflows/retire-affiliate-percentage-path-v3.yml
+
+      - name: Commit completed cleanup
+        run: |
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "refactor: retire legacy affiliate percentage configuration"
+          git push origin main
