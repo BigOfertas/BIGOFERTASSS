@@ -23,6 +23,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { BRAND } from "@/config/brand";
 import { useCart } from "@/context/CartContext";
 import {
   fetchProductDetail,
@@ -39,10 +40,10 @@ import { getProductGalleryItems } from "@/lib/product-images";
 export const Route = createFileRoute("/product/$id")({
   head: () => ({
     meta: [
-      { title: "Produto | BIGofertas" },
+      { title: `Produto | ${BRAND.officialName}` },
       {
         name: "description",
-        content: "Confira os detalhes do produto no catálogo BIGofertas.",
+        content: `Confira os detalhes do produto no catálogo ${BRAND.officialName}.`,
       },
     ],
   }),
