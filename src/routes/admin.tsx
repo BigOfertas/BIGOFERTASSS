@@ -1,5 +1,6 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
+  BadgePercent,
   Box,
   ExternalLink,
   LayoutDashboard,
@@ -11,6 +12,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { AffiliateAdmin } from "@/components/admin/AffiliateAdmin";
 import { OrderAdmin } from "@/components/admin/OrderAdmin";
 import { ProductAdmin } from "@/components/admin/ProductAdmin";
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
@@ -22,7 +24,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type AdminSection = "dashboard" | "orders" | "products";
+type AdminSection = "dashboard" | "orders" | "products" | "affiliates";
 
 const NAV_ITEMS: Array<{
   id: AdminSection;
@@ -47,6 +49,12 @@ const NAV_ITEMS: Array<{
     label: "Produtos",
     description: "Catálogo e disponibilidade",
     icon: Box,
+  },
+  {
+    id: "affiliates",
+    label: "Afiliados",
+    description: "Indicações, comissões e saques",
+    icon: BadgePercent,
   },
 ];
 
@@ -282,11 +290,13 @@ function AdminPage() {
             ) : null}
 
             {section === "dashboard" ? (
-              <AdminDashboard onNavigate={setSection} />
+              <AdminDashboard onNavigate={(next) => setSection(next)} />
             ) : section === "orders" ? (
               <OrderAdmin />
-            ) : (
+            ) : section === "products" ? (
               <ProductAdmin />
+            ) : (
+              <AffiliateAdmin />
             )}
           </div>
         </div>
