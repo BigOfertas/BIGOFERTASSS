@@ -9,6 +9,7 @@ import {
 
 import { AffiliateAccountPanel } from "@/components/account/AffiliateAccountPanel";
 import type { AccountSection } from "@/components/account/AccountDashboard";
+import { LiquidGlassCard } from "@/components/ui/liquid-glass-card";
 
 export function AffiliateAccountPage({
   onNavigate,
@@ -23,7 +24,7 @@ export function AffiliateAccountPage({
   ];
 
   return (
-    <div className="bg-[#f7f7f7] py-7 sm:py-10">
+    <div className="bg-transparent py-7 sm:py-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-5 flex flex-wrap items-center gap-2 text-sm text-gray-500">
           <Home className="h-4 w-4" aria-hidden="true" />
@@ -34,47 +35,60 @@ export function AffiliateAccountPage({
           <span className="font-medium text-gray-900">Afiliados</span>
         </div>
 
-        <div className="mb-6 flex flex-col gap-4 border-b border-gray-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-6 flex flex-col gap-4 border-b border-white/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-red-600">
-              Área do cliente
-            </p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-gray-950 sm:text-4xl">
-              Afiliados
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
+            <p className="display-kicker">Área do cliente</p>
+            <h1 className="display-title mt-2">Afiliados</h1>
+            <p className="section-copy mt-3 max-w-2xl">
               Acompanhe novos clientes cadastrados pela sua indicação, as comissões geradas pelos pedidos deles e seu histórico de saques.
             </p>
           </div>
 
-          <button
+          <LiquidGlassCard
+            as="button"
             type="button"
             onClick={() => onNavigate("dados")}
-            className="inline-flex h-10 w-fit items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-sm font-bold text-gray-700 transition hover:bg-gray-50 hover:text-red-600"
+            interactive
+            blurIntensity="md"
+            shadowIntensity="sm"
+            glowIntensity="xs"
+            borderRadius="16px"
+            className="inline-flex h-10 w-fit items-center justify-center px-4 text-sm font-bold text-gray-700 hover:text-red-600"
           >
             <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
             Voltar para Minha Conta
-          </button>
+          </LiquidGlassCard>
         </div>
 
-        <nav className="mb-5 flex gap-2 overflow-x-auto pb-1" aria-label="Navegação da conta">
+        <nav className="mb-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap" aria-label="Navegação da conta">
           {navigation.map(({ section, label, icon: Icon }) => {
             const active = section === "afiliados";
             return (
-              <button
+              <LiquidGlassCard
                 key={section}
+                as="button"
                 type="button"
                 onClick={() => onNavigate(section)}
                 aria-current={active ? "page" : undefined}
-                className={`inline-flex h-10 flex-none items-center rounded-lg border px-3 text-sm font-semibold transition ${
-                  active
-                    ? "border-red-200 bg-red-50 text-red-700"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-950"
+                active={active}
+                interactive
+                blurIntensity="md"
+                shadowIntensity={active ? "md" : "sm"}
+                glowIntensity={active ? "sm" : "xs"}
+                borderRadius="18px"
+                className={`inline-flex min-h-12 items-center justify-center px-4 text-sm font-bold sm:min-w-36 ${
+                  active ? "text-red-700" : "text-gray-650 hover:text-gray-950"
                 }`}
               >
-                <Icon className="mr-2 h-4 w-4" aria-hidden="true" />
+                <span
+                  className={`mr-2 flex h-7 w-7 items-center justify-center rounded-lg border border-white/75 shadow-sm ${
+                    active ? "bg-red-50/90 text-red-600" : "bg-white/65 text-gray-500"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
                 {label}
-              </button>
+              </LiquidGlassCard>
             );
           })}
         </nav>
