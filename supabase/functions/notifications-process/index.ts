@@ -289,7 +289,7 @@ async function prepareEmail(event: NotificationEvent): Promise<PreparedEmail> {
     };
   }
   if (event.event_name === "affiliate.commission.created") {
-    return { to, templateId: "affiliate-commission-created", variables: { ...base, ORDER_NUMBER: order?.public_number ?? payloadText(event, "order_number"), SALE_AMOUNT: order ? formatBrl(order.total_amount) : moneyText(payloadText(event, "sale_amount")), COMMISSION_AMOUNT: moneyText(payloadText(event, "commission_amount")), COMMISSION_RATE: rateText(payloadText(event, "commission_rate")) } };
+    return { to, templateId: "affiliate-commission-created", variables: { ...base, ORDER_NUMBER: order?.public_number ?? payloadText(event, "order_number"), SALE_AMOUNT: order ? formatBrl(order.total_amount) : moneyText(payloadText(event, "sale_amount")), COMMISSION_AMOUNT: moneyText(payloadText(event, "commission_amount")), COMMISSION_RATE: fixedCommissionText(event) } };
   }
   if (event.event_name === "affiliate.commission.available") {
     return { to, templateId: "affiliate-commission-available", variables: { ...base, AVAILABLE_AMOUNT: moneyText(payloadText(event, "available_amount")) } };
