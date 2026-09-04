@@ -10,9 +10,9 @@ import {
   WalletCards,
 } from "lucide-react";
 
+import { BrandWordmark } from "@/components/brand/BrandWordmark";
+import { BRAND } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
-
-const WHATSAPP_URL = "https://wa.me/5584981347939";
 
 const trustItems = [
   {
@@ -79,31 +79,31 @@ export default function Footer() {
             <Link
               to="/"
               className="inline-flex w-fit items-baseline text-3xl font-black italic tracking-tighter text-white"
-              aria-label="BIGofertas - Início"
+              aria-label={`${BRAND.officialName} - Início`}
             >
-              <span className="text-red-600">BIG</span>ofertas
+              <BrandWordmark />
             </Link>
 
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-gray-400">
-              Camisas esportivas com atendimento pelos canais oficiais da BIGofertas.
+              Camisas esportivas com atendimento pelos canais oficiais da {BRAND.officialName}.
             </p>
 
             <div className="mt-6 space-y-3 text-sm text-gray-300">
               <a
-                href="mailto:contato@bigofertas.net"
+                href={`mailto:${BRAND.contactEmail}`}
                 className="flex items-center gap-3 transition-colors duration-200 hover:text-red-500 motion-reduce:transition-none"
               >
                 <Mail className="h-4 w-4 flex-shrink-0" />
-                <span>contato@bigofertas.net</span>
+                <span>{BRAND.contactEmail}</span>
               </a>
               <a
-                href={WHATSAPP_URL}
+                href={BRAND.whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-3 transition-colors duration-200 hover:text-red-500 motion-reduce:transition-none"
               >
                 <MessageCircle className="h-4 w-4 flex-shrink-0" />
-                <span>+55 (84) 9 8134-7939</span>
+                <span>{BRAND.whatsappDisplay}</span>
               </a>
             </div>
           </div>
@@ -250,7 +250,7 @@ export default function Footer() {
               </li>
               <li className="flex gap-3">
                 <MessageCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" />
-                <span>Suporte pelos canais oficiais da BIGofertas.</span>
+                <span>Suporte pelos canais oficiais da {BRAND.officialName}.</span>
               </li>
             </ul>
           </div>
@@ -306,7 +306,7 @@ export default function Footer() {
         <hr className="my-8 border-white/10" />
 
         <div className="flex flex-col items-center justify-between gap-3 text-center text-xs text-gray-500 md:flex-row md:text-left">
-          <p>Copyright © BIGofertas 2026. Todos os direitos reservados.</p>
+          <p>Copyright © {BRAND.officialName} 2026. Todos os direitos reservados.</p>
           <p>Conexão segura por HTTPS.</p>
         </div>
       </div>
