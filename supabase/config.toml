@@ -1,10 +1,12 @@
 project_id = "hootwcacnrtidfmqsvrn"
 
+# As funcoes R2 validam o JWT do usuario e o papel owner dentro do proprio handler.
+# O verify_jwt da plataforma fica desligado para evitar 401 com as novas chaves publicaveis.
 [functions.r2-image-presign]
-verify_jwt = true
+verify_jwt = false
 
 [functions.r2-image-complete]
-verify_jwt = true
+verify_jwt = false
 
 # Cotacao publica de frete. O token da SuperFrete fica somente nos secrets do Supabase.
 [functions.shipping-quote]
