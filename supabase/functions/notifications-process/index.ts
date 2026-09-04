@@ -103,6 +103,29 @@ async function rpc(name: string, body: Record<string, unknown>) {
   });
 }
 
+async function releaseDueAffiliateCommissions() {
+  try {
+    const upstream = await rpc("release_due_affiliate_commissions", {
+      p_affiliate_id: null,
+    });
+    if (upstream.ok) return;
+
+    const payload = await readJson(upstream) as { code?: unknown } | null;
+    const functionNotInstalled =
+      upstream.status === 404 || payload?.code === "PGRST202";
+
+    if (!functionNotInstalled) {
+      console.warn(
+        `[affiliate-release-edge] ${JSON.stringify({ status: upstream.status, code: payload?.code ?? null })}`,
+      );
+    }
+  } catch (error) {
+    console.warn(
+      `[affiliate-release-edge] ${JSON.stringify({ error: error instanceof Error ? error.message : "unknown" })}`,
+    );
+  }
+}
+
 async function claimEvents(limit = 20): Promise<NotificationEvent[]> {
   const upstream = await rpc("claim_notification_events", { p_limit: Math.min(Math.max(limit, 1), 50) });
   const payload = await readJson(upstream);
@@ -154,10 +177,16 @@ function formatBrl(value: number | string) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(amount);
 }
 
-function payloadText(event: NotificationEvent, key: string) {
+function optionalPayloadText(event: NotificationEvent, key: string) {
   const value = event.payload[key];
   if (typeof value === "number" && Number.isFinite(value)) return String(value);
   if (typeof value === "string" && value.trim()) return value.trim();
+  return null;
+}
+
+function payloadText(event: NotificationEvent, key: string) {
+  const value = optionalPayloadText(event, key);
+  if (value) return value;
   throw new Error(`EMAIL_${key.toUpperCase()}_MISSING`);
 }
 
@@ -169,6 +198,20 @@ function moneyText(value: string) {
 
 function rateText(value: string) { return value.includes("%") ? value : `${value}%`; }
 function siteUrl() { return (Deno.env.get("PUBLIC_SITE_URL")?.trim() || "https://bigofertas.net").replace(/\/$/, ""); }
+
+function affiliateDashboardUrl() {
+  return `${siteUrl()}/conta?secao=afiliados`;
+}
+
+function affiliateRegistrationUrl(event: NotificationEvent) {
+  const legacyLink = optionalPayloadText(event, "affiliate_link");
+  if (legacyLink) return legacyLink;
+
+  const referralCode = payloadText(event, "referral_code");
+  const url = new URL("/cadastro", `${siteUrl()}/`);
+  url.searchParams.set("ref", referralCode);
+  return url.toString();
+}
 
 async function prepareEmail(event: NotificationEvent): Promise<PreparedEmail> {
   const order = event.order_id
@@ -221,10 +264,21 @@ async function prepareEmail(event: NotificationEvent): Promise<PreparedEmail> {
   const profile = await fetchOne("profiles", "id,email,full_name", "id", event.user_id) as ProfileRow | null;
   if (!profile) throw new Error("EMAIL_PROFILE_NOT_FOUND");
   const to = requiredEmail(profile.email);
-  const base = { FIRST_NAMe: firstName(profile.full_name), AFFILIATE_DASHBOARD_URL: `${siteUrl()}/conta` };
+  const base = {
+    FIRST_NAMe: firstName(profile.full_name),
+    AFFILIATE_DASHBOARD_URL: affiliateDashboardUrl(),
+  };
 
   if (event.event_name === "affiliate.created") {
-    return { to, templateId: "affiliate-approved", variables: { ...base, AFFILIATE_LINK: payloadText(event, "affiliate_link"), COMMISSION_RATE: rateText(payloadText(event, "commission_rate")) } };
+    return {
+      to,
+      templateId: "affiliate-approved",
+      variables: {
+        ...base,
+        AFFILIATE_LINK: affiliateRegistrationUrl(event),
+        COMMISSION_RATE: rateText(payloadText(event, "commission_rate")),
+      },
+    };
   }
   if (event.event_name === "affiliate.commission.created") {
     return { to, templateId: "affiliate-commission-created", variables: { ...base, ORDER_NUMBER: order?.public_number ?? payloadText(event, "order_number"), SALE_AMOUNT: order ? formatBrl(order.total_amount) : moneyText(payloadText(event, "sale_amount")), COMMISSION_AMOUNT: moneyText(payloadText(event, "commission_amount")), COMMISSION_RATE: rateText(payloadText(event, "commission_rate")) } };
@@ -278,6 +332,8 @@ async function sendEmail(event: NotificationEvent, prepared: PreparedEmail) {
 }
 
 async function processOutbox() {
+  await releaseDueAffiliateCommissions();
+
   const events = await claimEvents(20);
   let sent = 0;
   let failed = 0;
