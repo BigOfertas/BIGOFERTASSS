@@ -2,7 +2,9 @@ import React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Menu, Search, ShoppingCart, User, X } from "lucide-react";
 
+import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { Input } from "@/components/ui/input";
+import { BRAND } from "@/config/brand";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/lib/auth";
 import CategoryNav from "./CategoryNav";
@@ -38,10 +40,10 @@ const Header: React.FC = () => {
             <Link
               to="/"
               className="flex-shrink-0 w-56 flex items-center"
-              aria-label="BIGofertas - Início"
+              aria-label={`${BRAND.officialName} - Início`}
             >
               <div className="w-full h-14 bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center rounded-sm text-gray-400 font-black italic text-2xl tracking-tighter">
-                <span className="text-red-600">BIG</span>ofertas
+                <BrandWordmark />
               </div>
             </Link>
 
@@ -120,11 +122,11 @@ const Header: React.FC = () => {
           <Link
             to="/"
             className="flex-1 flex justify-center"
-            aria-label="BIGofertas - Início"
+            aria-label={`${BRAND.officialName} - Início`}
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-36 h-10 bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center rounded-sm text-gray-400 font-black italic text-lg tracking-tighter">
-              <span className="text-red-600">BIG</span>ofertas
+              <BrandWordmark />
             </div>
           </Link>
 
