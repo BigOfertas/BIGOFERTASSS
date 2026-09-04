@@ -7,6 +7,7 @@ import {
 import { useEffect } from "react";
 import { z } from "zod";
 
+import { AffiliateAccountPage } from "@/components/account/AffiliateAccountPage";
 import {
   AccountDashboard,
   type AccountSection,
@@ -19,8 +20,10 @@ import { BRAND } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
 
 const accountSearchSchema = z.object({
-  secao: z.enum(["dados", "enderecos", "pedidos"]).optional(),
+  secao: z.enum(["dados", "enderecos", "pedidos", "afiliados"]).optional(),
 });
+
+type AccountRouteSection = AccountSection | "afiliados";
 
 export const Route = createFileRoute("/conta")({
   validateSearch: (search) => accountSearchSchema.parse(search),
@@ -32,7 +35,7 @@ function AccountPage() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const search = Route.useSearch();
   const { user, loading, signOut } = useAuth();
-  const section: AccountSection | null = search.secao ?? null;
+  const section: AccountRouteSection | null = search.secao ?? null;
   const showingOrderDetail = pathname.startsWith("/conta/pedidos/");
 
   useEffect(() => {
@@ -41,7 +44,7 @@ function AccountPage() {
     }
   }, [loading, navigate, user]);
 
-  function handleSectionChange(nextSection: AccountSection) {
+  function handleSectionChange(nextSection: AccountRouteSection) {
     void navigate({
       to: "/conta",
       search: { secao: nextSection },
@@ -88,7 +91,9 @@ function AccountPage() {
       <Header />
       <EmailTwoFactorPrompt />
       <main className="flex-1">
-        {section ? (
+        {section === "afiliados" ? (
+          <AffiliateAccountPage onNavigate={handleSectionChange} />
+        ) : section ? (
           <AccountDashboard
             email={user.email ?? fallbackAccountLabel}
             section={section}
