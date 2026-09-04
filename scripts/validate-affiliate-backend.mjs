@@ -11,6 +11,9 @@ const core = read(
 const hardening = read(
   "supabase/migrations/20260904042500_affiliate_backend_hardening.sql",
 );
+const admin = read(
+  "supabase/migrations/20260904044000_affiliate_admin_queries.sql",
+);
 const processor = read("supabase/functions/notifications-process/index.ts");
 
 let passed = 0;
@@ -138,6 +141,25 @@ check(
     core.includes("list_my_affiliate_referrals") &&
     core.includes("request_my_affiliate_withdrawal") &&
     core.includes("REVOKE ALL ON TABLE public.affiliate_commissions FROM PUBLIC, anon, authenticated"),
+);
+
+check(
+  "owner tem resumo operacional sem calculo financeiro no frontend",
+  admin.includes("owner_get_affiliate_overview") &&
+    admin.includes("unreservedAvailableAmount") &&
+    admin.includes("requestedWithdrawalsCount"),
+);
+
+check(
+  "owner pode listar afiliados, comissoes e fila de saques",
+  admin.includes("owner_list_affiliates") &&
+    admin.includes("owner_list_affiliate_commissions") &&
+    admin.includes("owner_list_affiliate_withdrawals"),
+);
+
+check(
+  "RPCs administrativas verificam papel owner",
+  (admin.match(/public\.has_role\('owner'::public\.app_role\)/g) ?? []).length >= 4,
 );
 
 check(
