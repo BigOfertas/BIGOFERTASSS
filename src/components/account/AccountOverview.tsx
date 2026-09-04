@@ -1,4 +1,5 @@
 import {
+  BadgePercent,
   CheckCircle2,
   ChevronRight,
   LogOut,
@@ -10,18 +11,20 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import type { AccountSection } from "@/components/account/AccountDashboard";
 import { AccountSecurityPanel } from "@/components/account/AccountSecurityPanel";
 import { BRAND } from "@/config/brand";
+import type { AccountSection } from "@/components/account/AccountDashboard";
 import {
   fetchCustomerAccount,
   type CustomerAddress,
   type CustomerProfile,
 } from "@/lib/customer-account";
 
+type AccountOverviewSection = AccountSection | "afiliados";
+
 type AccountOverviewProps = {
   email: string;
-  onNavigate: (section: AccountSection) => void;
+  onNavigate: (section: AccountOverviewSection) => void;
   onSignOut: () => Promise<void>;
 };
 
@@ -86,7 +89,7 @@ export function AccountOverview({
   }
 
   const actions: Array<{
-    section: AccountSection;
+    section: AccountOverviewSection;
     title: string;
     description: string;
     meta: string;
@@ -116,6 +119,13 @@ export function AccountOverview({
       description: "Mantenha nome, telefone, CPF e e-mail atualizados.",
       meta: loading ? "Carregando" : complete ? "Cadastro completo" : "Revisar cadastro",
       icon: UserRound,
+    },
+    {
+      section: "afiliados",
+      title: "Afiliados",
+      description: "Conheça a área de indicações, comissões e saques da sua conta.",
+      meta: "Conhecer o programa",
+      icon: BadgePercent,
     },
   ];
 
@@ -167,7 +177,7 @@ export function AccountOverview({
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {actions.map(({ section, title, description, meta, icon: Icon }) => (
                 <button
                   key={section}
