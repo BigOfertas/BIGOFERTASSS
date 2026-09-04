@@ -39,7 +39,7 @@ A comissão pode permanecer pendente até cumprir o prazo definido pelo programa
 
 **Assunto sugerido:** Sua comissão está disponível
 
-Olá, `{{FIRST_NAME}}`.
+Olá, `{{FIRST_NAMe}}`.
 
 Uma comissão dos pedidos dos seus clientes indicados já cumpriu o prazo de liberação.
 
