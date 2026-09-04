@@ -1,0 +1,58 @@
+name: Implement Fixed Affiliate Commissions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/implement-affiliate-fixed-commissions.mjs"
+      - ".github/workflows/implement-affiliate-fixed-commissions.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: implement-fixed-affiliate-commissions
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Apply implementation
+        run: node scripts/implement-affiliate-fixed-commissions.mjs
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate affiliate backend
+        run: bun run validate:affiliate
+
+      - name: Validate production build
+        run: bun run build
+
+      - name: Remove temporary implementation files
+        run: rm scripts/implement-affiliate-fixed-commissions.mjs .github/workflows/implement-affiliate-fixed-commissions.yml
+
+      - name: Commit implementation
+        run: |
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "feat: use fixed affiliate commission tiers"
+          git push origin main
