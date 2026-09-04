@@ -43,7 +43,7 @@ export function AffiliateAccountPage({
               Afiliados
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
-              Sua área para acompanhar indicações, comissões e saques quando o programa estiver ativo.
+              Acompanhe novos clientes cadastrados pela sua indicação, as comissões geradas pelos pedidos deles e seu histórico de saques.
             </p>
           </div>
 
