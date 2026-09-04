@@ -1,5 +1,5 @@
 import { BRAND } from "@/config/brand";
-import { supabase } from "@/integrations/supabase/client";
+import { callSupabaseRpc } from "@/lib/supabase-rpc";
 
 const REFERRAL_STORAGE_KEY = "store:affiliate-referral-code";
 const REFERRAL_CODE_PATTERN = /^[A-Z0-9]{8,16}$/;
@@ -55,10 +55,7 @@ export async function validateAffiliateReferralCode(referralCode: string) {
   const normalized = normalizeAffiliateReferralCode(referralCode);
   if (!normalized) return false;
 
-  const { data, error } = await supabase.rpc("resolve_affiliate_referral_code", {
+  return callSupabaseRpc<boolean>("resolve_affiliate_referral_code", {
     p_code: normalized,
   });
-
-  if (error) throw error;
-  return data === true;
 }
