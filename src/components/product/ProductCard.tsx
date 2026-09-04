@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ShoppingCart } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { BRAND } from "@/config/brand";
 
 interface ProductCardProps {
   id: string;
@@ -52,7 +53,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold italic text-lg uppercase">
-            <span className="text-red-500/20">BIG</span>
+            <span className="text-red-500/20">{BRAND.shortMark}</span>
           </div>
         )}
       </div>
