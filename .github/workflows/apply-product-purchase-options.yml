@@ -1,0 +1,87 @@
+name: Apply Product Purchase Options Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/apply-product-purchase-options.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Apply migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const ref = process.env.SUPABASE_PROJECT_ID?.trim();
+          const token = process.env.SUPABASE_ACCESS_TOKEN?.trim();
+          if (!ref || !token) throw new Error('Missing Supabase CI configuration');
+          const apiBase = `https://api.supabase.com/v1/projects/${encodeURIComponent(ref)}`;
+          const headers = { authorization: `Bearer ${token}`, accept: 'application/json', 'content-type': 'application/json' };
+          async function request(path, options = {}) {
+            const response = await fetch(`${apiBase}${path}`, { ...options, headers: { ...headers, ...(options.headers || {}) }, signal: AbortSignal.timeout(120000) });
+            const text = await response.text();
+            if (!response.ok) throw new Error(`${options.method || 'GET'} ${path} HTTP ${response.status}: ${text.slice(0, 3000)}`);
+            return text ? JSON.parse(text) : null;
+          }
+          const migrationName = 'product_purchase_options_20260904';
+          const migrationPath = 'supabase/migrations/20260904190000_product_purchase_options.sql';
+          const migrationSql = fs.readFileSync(migrationPath, 'utf8').replace(/^\s*BEGIN;\s*/i, '').replace(/\s*COMMIT;\s*$/i, '').trim();
+          const history = await request('/database/migrations');
+          const alreadyApplied = Array.isArray(history) && history.some((item) => item?.name === migrationName);
+          if (!alreadyApplied) {
+            await request('/database/migrations', { method: 'POST', body: JSON.stringify({ name: migrationName, query: migrationSql }) });
+            console.log('Migration applied.');
+          } else {
+            console.log('Migration already applied.');
+          }
+          const verification = await request('/database/query/read-only', {
+            method: 'POST',
+            body: JSON.stringify({ query: `
+              select
+                (select personalization_price from public.store_purchase_settings where singleton = true) as personalization_price,
+                (select phrase_price from public.store_purchase_settings where singleton = true) as phrase_price,
+                (select patch_default_price from public.store_purchase_settings where singleton = true) as patch_price,
+                (select sizes from public.store_purchase_settings where singleton = true) as sizes,
+                to_regclass('public.product_purchase_settings') is not null as product_settings_exists,
+                to_regprocedure('public.resolve_product_purchase_customization(uuid,jsonb)') is not null as resolver_exists;
+            ` }),
+          });
+          console.log('LIVE_PRODUCT_PURCHASE_VERIFICATION');
+          console.log(JSON.stringify(verification, null, 2));
+          const row = Array.isArray(verification) ? verification[0] : null;
+          if (!row || Number(row.personalization_price) !== 25 || Number(row.phrase_price) !== 45 || Number(row.patch_price) !== 15 || !row.product_settings_exists || !row.resolver_exists) {
+            throw new Error('Live product purchase configuration verification failed');
+          }
+          NODE
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: latest
+
+      - name: Deploy checkout function
+        run: supabase functions deploy checkout-start --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Remove temporary workflow
+        run: |
+          rm -f .github/workflows/apply-product-purchase-options.yml
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add -A
+          git commit -m "chore: remove product purchase backend workflow"
+          git pull --ff-only origin main
+          git push origin HEAD:main
