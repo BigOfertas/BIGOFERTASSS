@@ -13,9 +13,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as CartRouteImport } from './routes/cart'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ContaRouteImport } from './routes/conta'
+import { Route as EsqueciSenhaRouteImport } from './routes/esqueci-senha'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProductsRouteImport } from './routes/products'
+import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as ProductIdRouteImport } from './routes/product/$id'
 import { Route as ApiShippingQuoteRouteImport } from './routes/api.shipping.quote'
 import { Route as ContaPedidosOrderNumberRouteImport } from './routes/conta/pedidos/$orderNumber'
@@ -40,9 +43,19 @@ const CartRoute = CartRouteImport.update({
   path: '/cart',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContaRoute = ContaRouteImport.update({
   id: '/conta',
   path: '/conta',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EsqueciSenhaRoute = EsqueciSenhaRouteImport.update({
+  id: '/esqueci-senha',
+  path: '/esqueci-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -53,6 +66,11 @@ const LoginRoute = LoginRouteImport.update({
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
   path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
+  id: '/redefinir-senha',
+  path: '/redefinir-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductIdRoute = ProductIdRouteImport.update({
@@ -76,9 +94,12 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/cadastro': typeof CadastroRoute
   '/cart': typeof CartRoute
+  '/checkout': typeof CheckoutRoute
   '/conta': typeof ContaRouteWithChildren
+  '/esqueci-senha': typeof EsqueciSenhaRoute
   '/login': typeof LoginRoute
   '/products': typeof ProductsRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/product/$id': typeof ProductIdRoute
   '/api/shipping/quote': typeof ApiShippingQuoteRoute
   '/conta/pedidos/$orderNumber': typeof ContaPedidosOrderNumberRoute
@@ -88,9 +109,12 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/cadastro': typeof CadastroRoute
   '/cart': typeof CartRoute
+  '/checkout': typeof CheckoutRoute
   '/conta': typeof ContaRouteWithChildren
+  '/esqueci-senha': typeof EsqueciSenhaRoute
   '/login': typeof LoginRoute
   '/products': typeof ProductsRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/product/$id': typeof ProductIdRoute
   '/api/shipping/quote': typeof ApiShippingQuoteRoute
   '/conta/pedidos/$orderNumber': typeof ContaPedidosOrderNumberRoute
@@ -101,9 +125,12 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/cadastro': typeof CadastroRoute
   '/cart': typeof CartRoute
+  '/checkout': typeof CheckoutRoute
   '/conta': typeof ContaRouteWithChildren
+  '/esqueci-senha': typeof EsqueciSenhaRoute
   '/login': typeof LoginRoute
   '/products': typeof ProductsRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/product/$id': typeof ProductIdRoute
   '/api/shipping/quote': typeof ApiShippingQuoteRoute
   '/conta/pedidos/$orderNumber': typeof ContaPedidosOrderNumberRoute
@@ -115,9 +142,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cadastro'
     | '/cart'
+    | '/checkout'
     | '/conta'
+    | '/esqueci-senha'
     | '/login'
     | '/products'
+    | '/redefinir-senha'
     | '/product/$id'
     | '/api/shipping/quote'
     | '/conta/pedidos/$orderNumber'
@@ -127,9 +157,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cadastro'
     | '/cart'
+    | '/checkout'
     | '/conta'
+    | '/esqueci-senha'
     | '/login'
     | '/products'
+    | '/redefinir-senha'
     | '/product/$id'
     | '/api/shipping/quote'
     | '/conta/pedidos/$orderNumber'
@@ -139,9 +172,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cadastro'
     | '/cart'
+    | '/checkout'
     | '/conta'
+    | '/esqueci-senha'
     | '/login'
     | '/products'
+    | '/redefinir-senha'
     | '/product/$id'
     | '/api/shipping/quote'
     | '/conta/pedidos/$orderNumber'
@@ -152,9 +188,12 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   CadastroRoute: typeof CadastroRoute
   CartRoute: typeof CartRoute
+  CheckoutRoute: typeof CheckoutRoute
   ContaRoute: typeof ContaRouteWithChildren
+  EsqueciSenhaRoute: typeof EsqueciSenhaRoute
   LoginRoute: typeof LoginRoute
   ProductsRoute: typeof ProductsRoute
+  RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   ProductIdRoute: typeof ProductIdRoute
   ApiShippingQuoteRoute: typeof ApiShippingQuoteRoute
 }
@@ -189,11 +228,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/conta': {
       id: '/conta'
       path: '/conta'
       fullPath: '/conta'
       preLoaderRoute: typeof ContaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/esqueci-senha': {
+      id: '/esqueci-senha'
+      path: '/esqueci-senha'
+      fullPath: '/esqueci-senha'
+      preLoaderRoute: typeof EsqueciSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -208,6 +261,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/products'
       preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redefinir-senha': {
+      id: '/redefinir-senha'
+      path: '/redefinir-senha'
+      fullPath: '/redefinir-senha'
+      preLoaderRoute: typeof RedefinirSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/product/$id': {
@@ -249,9 +309,12 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   CadastroRoute: CadastroRoute,
   CartRoute: CartRoute,
+  CheckoutRoute: CheckoutRoute,
   ContaRoute: ContaRouteWithChildren,
+  EsqueciSenhaRoute: EsqueciSenhaRoute,
   LoginRoute: LoginRoute,
   ProductsRoute: ProductsRoute,
+  RedefinirSenhaRoute: RedefinirSenhaRoute,
   ProductIdRoute: ProductIdRoute,
   ApiShippingQuoteRoute: ApiShippingQuoteRoute,
 }

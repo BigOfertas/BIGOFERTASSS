@@ -7,6 +7,7 @@ type CheckoutItemInput = {
   productId: string;
   variantId: string;
   quantity: number;
+  customization: Record<string, unknown>;
 };
 
 type StartCheckoutInput = {
@@ -249,6 +250,13 @@ function normalizeInput(value: unknown): StartCheckoutInput {
     const productId = (item as Record<string, unknown>).productId;
     const variantId = (item as Record<string, unknown>).variantId;
     const quantity = (item as Record<string, unknown>).quantity;
+    const customizationRaw = (item as Record<string, unknown>).customization;
+    const customization = customizationRaw && typeof customizationRaw === "object" && !Array.isArray(customizationRaw)
+      ? (customizationRaw as Record<string, unknown>)
+      : {};
+    if (JSON.stringify(customization).length > 3000) {
+      throw new CheckoutError("Personalização inválida.", 400, "CHECKOUT_CART_INVALID");
+    }
 
     if (
       typeof productId !== "string" ||
@@ -263,7 +271,7 @@ function normalizeInput(value: unknown): StartCheckoutInput {
       throw new CheckoutError("Carrinho inválido.", 400, "CHECKOUT_CART_INVALID");
     }
 
-    return { productId, variantId, quantity };
+    return { productId, variantId, quantity, customization };
   });
 
   const totalUnits = normalizedItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -319,6 +327,7 @@ async function authoritativeShipping(input: StartCheckoutInput, address: Custome
       items: input.items.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
+        customization: item.customization,
       })),
     }),
     signal: AbortSignal.timeout(15_000),

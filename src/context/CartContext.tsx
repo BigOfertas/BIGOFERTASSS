@@ -164,7 +164,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
           return {
             ...item,
-            lineId: createCartLineId(item.productId, resolvedVariantId),
+            lineId: createCartLineId(item.productId, resolvedVariantId, result.customization),
             productSlug: result.product_slug ?? item.productSlug,
             variantId: resolvedVariantId,
             sku: result.variant_sku ?? item.sku,
@@ -172,6 +172,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             variantName: result.variant_name ?? item.variantName,
             unitPrice: result.unit_price ?? item.unitPrice,
             availableStock,
+            customization: result.customization,
             quantity,
             status: result.status,
           };

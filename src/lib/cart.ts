@@ -1,4 +1,5 @@
 import type { Json } from "@/integrations/supabase/types";
+import { EMPTY_PURCHASE_CUSTOMIZATION, normalizePurchaseCustomization, type PurchaseCustomization } from "@/lib/product-purchase";
 
 export const CART_STORAGE_KEY = "bigofertas_cart";
 export const CART_STORAGE_VERSION = 2;
@@ -40,6 +41,7 @@ export interface CartItem {
   quantity: number;
   availableStock: number | null;
   selectedOptions: CartOptionSnapshot[];
+  customization: PurchaseCustomization;
   status: CartItemStatus;
 }
 
@@ -54,6 +56,7 @@ export interface AddCartItemInput {
   imageUrl: string | null;
   availableStock: number | null;
   selectedOptions: CartOptionSnapshot[];
+  customization: PurchaseCustomization;
 }
 
 interface CartStorageEnvelope {
@@ -79,6 +82,7 @@ export interface CartValidationRow {
   variant_name: string | null;
   unit_price: number | null;
   available_stock: number | null;
+  customization: PurchaseCustomization;
   status: CartItemStatus;
 }
 
@@ -106,8 +110,22 @@ function nonNegativeInteger(value: unknown): number | null {
     : null;
 }
 
-export function createCartLineId(productId: string, variantId: string | null) {
-  return `${productId}::${variantId ?? "legacy"}`;
+function customizationFingerprint(customization: PurchaseCustomization) {
+  const raw = JSON.stringify(normalizePurchaseCustomization(customization));
+  let hash = 2166136261;
+  for (let index = 0; index < raw.length; index += 1) {
+    hash ^= raw.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+export function createCartLineId(
+  productId: string,
+  variantId: string | null,
+  customization: PurchaseCustomization = EMPTY_PURCHASE_CUSTOMIZATION,
+) {
+  return `${productId}::${variantId ?? "legacy"}::${customizationFingerprint(customization)}`;
 }
 
 export function getCartQuantityLimit(_availableStock: number | null) {
@@ -183,13 +201,14 @@ function sanitizeCurrentCartItem(value: unknown): CartItem | null {
 
   const availableStock = rawStock;
   const imageUrl = nullableString(value["imageUrl"]);
+  const customization = normalizePurchaseCustomization(value["customization"]);
 
   if (isKnownFictitiousCartItem(name, imageUrl)) {
     return null;
   }
 
   return {
-    lineId: createCartLineId(productId, variantId),
+    lineId: createCartLineId(productId, variantId, customization),
     productId,
     productSlug: nullableString(value["productSlug"]),
     variantId,
@@ -201,6 +220,7 @@ function sanitizeCurrentCartItem(value: unknown): CartItem | null {
     quantity: clampCartQuantity(rawQuantity || 1, availableStock),
     availableStock,
     selectedOptions,
+    customization,
     status,
   };
 }
@@ -234,6 +254,7 @@ function migrateLegacyCartItem(value: LegacyCartItem): CartItem | null {
     quantity: clampCartQuantity(quantity || 1, null),
     availableStock: null,
     selectedOptions: [],
+    customization: EMPTY_PURCHASE_CUSTOMIZATION,
     status: "needs_review",
   };
 }
@@ -308,7 +329,7 @@ export function createCartItem(
     : 0;
 
   return {
-    lineId: createCartLineId(input.productId, input.variantId),
+    lineId: createCartLineId(input.productId, input.variantId, input.customization),
     productId: input.productId,
     productSlug: input.productSlug,
     variantId: input.variantId,
@@ -320,6 +341,7 @@ export function createCartItem(
     quantity: clampCartQuantity(quantity, null),
     availableStock: null,
     selectedOptions: input.selectedOptions,
+    customization: normalizePurchaseCustomization(input.customization),
     status: "available",
   };
 }
@@ -329,6 +351,7 @@ export function cartItemsToValidationPayload(items: CartItem[]): Json {
     line_id: item.lineId,
     product_id: item.productId,
     variant_id: item.variantId,
+    customization: item.customization,
   }));
 }
 
@@ -360,6 +383,7 @@ export function parseCartValidationRows(value: Json): CartValidationRow[] {
         variant_name: nullableString(entry["variant_name"]),
         unit_price: nonNegativeNumber(entry["unit_price"]),
         available_stock: null,
+        customization: normalizePurchaseCustomization(entry["customization"]),
         status:
           rawStatus === "out_of_stock"
             ? "available"

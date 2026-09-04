@@ -46,6 +46,7 @@ type CheckoutItemInput = {
   productId: string;
   variantId: string;
   quantity: number;
+  customization: Record<string, unknown>;
 };
 
 type StartCheckoutInput = {
@@ -343,6 +344,13 @@ function normalizeStartCheckoutInput(value: unknown): StartCheckoutInput {
     const productId = itemRecord["productId"];
     const variantId = itemRecord["variantId"];
     const quantity = itemRecord["quantity"];
+    const customizationRaw = itemRecord["customization"];
+    const customization = customizationRaw && typeof customizationRaw === "object" && !Array.isArray(customizationRaw)
+      ? (customizationRaw as Record<string, unknown>)
+      : {};
+    if (JSON.stringify(customization).length > 3000) {
+      throw new CheckoutError("Personalização inválida.", 400, "CHECKOUT_CART_INVALID");
+    }
 
     if (
       typeof productId !== "string" ||
@@ -357,7 +365,7 @@ function normalizeStartCheckoutInput(value: unknown): StartCheckoutInput {
       throw new CheckoutError("Carrinho inválido.", 400, "CHECKOUT_CART_INVALID");
     }
 
-    return { productId, variantId, quantity };
+    return { productId, variantId, quantity, customization };
   });
 
   const totalUnits = normalizedItems.reduce((total, item) => total + item.quantity, 0);
@@ -437,6 +445,7 @@ async function calculateAuthoritativeShipping(
       items: input.items.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
+        customization: item.customization,
       })),
     }),
   });

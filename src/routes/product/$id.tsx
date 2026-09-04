@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import Header from "@/components/layout/Header";
 import ProductCard from "@/components/product/ProductCard";
 import ProductGallery from "@/components/product/ProductGallery";
+import { ProductPurchaseOptions } from "@/components/product/ProductPurchaseOptions";
 import ProductSeo from "@/components/product/ProductSeo";
 import {
   Accordion,
@@ -36,6 +37,13 @@ import {
   isValueCompatibleWithSelection,
 } from "@/lib/product-detail";
 import { getProductGalleryItems } from "@/lib/product-images";
+import {
+  EMPTY_PURCHASE_CUSTOMIZATION,
+  calculatePurchaseSurcharge,
+  customizationToCartOptions,
+  fetchProductPurchaseConfig,
+  validatePurchaseCustomization,
+} from "@/lib/product-purchase";
 
 export const Route = createFileRoute("/product/$id")({
   head: () => ({
@@ -82,6 +90,7 @@ function ProductDetail() {
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selection, setSelection] = useState<Record<string, string>>({});
+  const [purchaseCustomization, setPurchaseCustomization] = useState(EMPTY_PURCHASE_CUSTOMIZATION);
 
   const {
     data: detail,
@@ -105,6 +114,7 @@ function ProductDetail() {
     const initialVariant = getDefaultProductVariant(detail.variants);
     setSelection(initialVariant?.optionValueIds ?? {});
     setQuantity(1);
+    setPurchaseCustomization(EMPTY_PURCHASE_CUSTOMIZATION);
   }, [detail]);
 
   const requiredOptionIds = useMemo(
@@ -137,6 +147,14 @@ function ProductDetail() {
         : [],
     [defaultVariant?.id, product, selectedVariant?.id],
   );
+
+  const purchaseConfigQuery = useQuery({
+    queryKey: ["product-purchase-config", product?.id],
+    queryFn: () => fetchProductPurchaseConfig(product!.id),
+    enabled: Boolean(product),
+    staleTime: 60_000,
+  });
+  const purchaseConfig = purchaseConfigQuery.data ?? null;
 
   const relatedQuery = useQuery({
     queryKey: [
@@ -209,7 +227,7 @@ function ProductDetail() {
   const formattedPrice = currency.format(effectivePrice);
   const formattedOriginalPrice = hasPromotion ? currency.format(basePrice) : null;
 
-  const selectedOptions = detail.options.flatMap((option) => {
+  const variantSelectedOptions = detail.options.flatMap((option) => {
     const valueId = selection[option.id];
     const value = option.values.find((candidate) => candidate.id === valueId);
 
@@ -225,6 +243,14 @@ function ProductDetail() {
       },
     ];
   });
+
+  const purchaseSurcharge = purchaseConfig
+    ? calculatePurchaseSurcharge(purchaseConfig, purchaseCustomization)
+    : 0;
+  const finalUnitPrice = effectivePrice + purchaseSurcharge;
+  const selectedOptions = purchaseConfig
+    ? [...variantSelectedOptions, ...customizationToCartOptions(purchaseConfig, purchaseCustomization)]
+    : variantSelectedOptions;
 
   const builtInSpecs = [
     { label: "SKU", value: selectedVariant?.sku ?? product.sku },
@@ -257,6 +283,15 @@ function ProductDetail() {
       toast.error("Selecione as opções do produto antes de continuar.");
       return;
     }
+    if (!purchaseConfig) {
+      toast.error("As opções de compra ainda estão carregando.");
+      return;
+    }
+    const purchaseError = validatePurchaseCustomization(purchaseConfig, purchaseCustomization);
+    if (purchaseError) {
+      toast.error(purchaseError);
+      return;
+    }
 
     addToCart(
       {
@@ -266,10 +301,11 @@ function ProductDetail() {
         sku: selectedVariant.sku,
         name: product.name,
         variantName: selectedVariant.name,
-        unitPrice: effectivePrice,
+        unitPrice: finalUnitPrice,
         imageUrl: gallery[0]?.url ?? product.displayImageUrl,
         availableStock: null,
         selectedOptions,
+        customization: purchaseCustomization,
       },
       quantity,
     );
@@ -444,6 +480,14 @@ function ProductDetail() {
                   </fieldset>
                 ))}
               </div>
+            ) : null}
+
+            {purchaseConfig ? (
+              <ProductPurchaseOptions
+                config={purchaseConfig}
+                value={purchaseCustomization}
+                onChange={setPurchaseCustomization}
+              />
             ) : null}
 
             <div className="mt-auto space-y-5 border-t border-gray-100 pt-6">

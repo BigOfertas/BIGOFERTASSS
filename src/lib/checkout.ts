@@ -85,6 +85,7 @@ export async function startInfinitePayCheckout(input: {
       productId: item.productId,
       variantId: item.variantId,
       quantity: item.quantity,
+      customization: item.customization,
     };
   });
 
