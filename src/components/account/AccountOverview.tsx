@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { AccountSection } from "@/components/account/AccountDashboard";
 import { AccountSecurityPanel } from "@/components/account/AccountSecurityPanel";
+import { BRAND } from "@/config/brand";
 import {
   fetchCustomerAccount,
   type CustomerAddress,
@@ -205,7 +206,7 @@ export function AccountOverview({
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold text-gray-950">
-                  {profile?.full_name || "Cliente BIGofertas"}
+                  {profile?.full_name || `Cliente ${BRAND.officialName}`}
                 </p>
                 <p className="mt-0.5 truncate text-xs text-gray-500">{email}</p>
               </div>
