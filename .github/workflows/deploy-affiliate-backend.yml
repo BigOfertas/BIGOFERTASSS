@@ -1,0 +1,30 @@
+name: Deploy Affiliate Backend Core
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy-affiliate-backend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-affiliate-backend-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Deploy disabled affiliate backend and verify
+        run: node scripts/deploy-affiliate-backend.mjs
