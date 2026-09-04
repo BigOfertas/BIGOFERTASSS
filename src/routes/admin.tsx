@@ -15,6 +15,7 @@ import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { AffiliateAdmin } from "@/components/admin/AffiliateAdmin";
 import { OrderAdmin } from "@/components/admin/OrderAdmin";
 import { ProductAdmin } from "@/components/admin/ProductAdmin";
+import { ProductImageAdmin } from "@/components/admin/ProductImageAdmin";
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass-card";
 import { BRAND } from "@/config/brand";
@@ -332,7 +333,10 @@ function AdminPage() {
             ) : section === "orders" ? (
               <OrderAdmin />
             ) : section === "products" ? (
-              <ProductAdmin />
+              <>
+                <ProductAdmin />
+                <ProductImageAdmin />
+              </>
             ) : (
               <AffiliateAdmin />
             )}
