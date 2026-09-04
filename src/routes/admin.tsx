@@ -16,6 +16,7 @@ import { AffiliateAdmin } from "@/components/admin/AffiliateAdmin";
 import { OrderAdmin } from "@/components/admin/OrderAdmin";
 import { ProductAdmin } from "@/components/admin/ProductAdmin";
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
+import { LiquidGlassCard } from "@/components/ui/liquid-glass-card";
 import { BRAND } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
 import { getUserFacingError } from "@/lib/user-facing-error";
@@ -104,37 +105,43 @@ function AdminPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f6f6f6]">
-        <div className="rounded-lg border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-500 shadow-sm">
+      <main className="flex min-h-screen items-center justify-center bg-transparent">
+        <LiquidGlassCard
+          blurIntensity="md"
+          shadowIntensity="sm"
+          glowIntensity="xs"
+          borderRadius="16px"
+          className="px-5 py-3 text-sm font-semibold text-gray-500"
+        >
           Carregando painel...
-        </div>
+        </LiquidGlassCard>
       </main>
     );
   }
 
   if (!user || !isOwner) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f6f6f6]">
+      <main className="flex min-h-screen items-center justify-center bg-transparent">
         <p className="text-sm font-medium text-gray-500">Redirecionando...</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f6f6] text-gray-950">
-      <div className="min-h-screen lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
-        <aside className="hidden border-r border-gray-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
-          <div className="border-b border-gray-100 px-5 py-5">
+    <main className="min-h-screen bg-transparent text-gray-950">
+      <div className="min-h-screen lg:grid lg:grid-cols-[268px_minmax(0,1fr)]">
+        <aside className="glass-panel hidden border-r border-white/70 bg-white/58 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
+          <div className="border-b border-white/70 px-5 py-5">
             <Link
               to="/"
-              className="inline-flex items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+              className="inline-flex items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-red-500/40"
               aria-label={`Abrir loja ${BRAND.officialName}`}
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-600 text-white">
+              <span className="premium-action flex h-10 w-10 items-center justify-center rounded-xl">
                 <Store className="h-4.5 w-4.5" aria-hidden="true" />
               </span>
               <div>
-                <p className="text-base font-black tracking-tight text-gray-950">
+                <p className="text-base font-black tracking-[-0.035em] text-gray-950">
                   <BrandWordmark />
                 </p>
                 <p className="text-[11px] font-semibold text-gray-400">
@@ -145,34 +152,42 @@ function AdminPage() {
           </div>
 
           <nav className="flex-1 px-3 py-5" aria-label="Seções administrativas">
-            <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">
+            <p className="mb-3 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-gray-400">
               Operação
             </p>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const active = section === item.id;
 
                 return (
-                  <button
+                  <LiquidGlassCard
                     key={item.id}
+                    as="button"
                     type="button"
                     onClick={() => setSection(item.id)}
                     aria-current={active ? "page" : undefined}
-                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition motion-reduce:transition-none ${
-                      active
-                        ? "bg-red-50 text-red-700"
-                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-950"
+                    active={active}
+                    interactive
+                    blurIntensity="lg"
+                    shadowIntensity={active ? "md" : "sm"}
+                    glowIntensity={active ? "sm" : "xs"}
+                    borderRadius="18px"
+                    className={`flex w-full items-center gap-3 px-3.5 py-3 text-left ${
+                      active ? "text-red-700" : "text-gray-700 hover:text-gray-950"
                     }`}
                   >
-                    <Icon
-                      className={`h-5 w-5 flex-none ${
-                        active ? "text-red-600" : "text-gray-400"
+                    <span
+                      className={`flex h-9 w-9 flex-none items-center justify-center rounded-xl border border-white/75 shadow-sm ${
+                        active ? "bg-red-50/90 text-red-600" : "bg-white/62 text-gray-500"
                       }`}
-                      aria-hidden="true"
-                    />
-                    <span className="min-w-0">
-                      <span className="block text-sm font-bold">{item.label}</span>
+                    >
+                      <Icon className="h-4.5 w-4.5" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-extrabold tracking-[-0.02em]">
+                        {item.label}
+                      </span>
                       <span
                         className={`mt-0.5 block truncate text-[11px] ${
                           active ? "text-red-600/75" : "text-gray-400"
@@ -181,45 +196,57 @@ function AdminPage() {
                         {item.description}
                       </span>
                     </span>
-                  </button>
+                  </LiquidGlassCard>
                 );
               })}
             </div>
           </nav>
 
-          <div className="border-t border-gray-100 p-3">
-            <Link
+          <div className="border-t border-white/70 p-3">
+            <LiquidGlassCard
+              as={Link}
               to="/"
-              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 hover:text-gray-950 motion-reduce:transition-none"
+              interactive
+              blurIntensity="md"
+              shadowIntensity="xs"
+              glowIntensity="none"
+              borderRadius="16px"
+              className="flex items-center gap-3 px-3 py-3 text-sm font-semibold text-gray-600 hover:text-gray-950"
             >
               <ExternalLink className="h-4.5 w-4.5 text-gray-400" aria-hidden="true" />
               Abrir loja
-            </Link>
-            <button
+            </LiquidGlassCard>
+            <LiquidGlassCard
+              as="button"
               type="button"
               disabled={signingOut}
               onClick={() => void handleSignOut()}
-              className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-gray-600 transition hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+              interactive
+              blurIntensity="md"
+              shadowIntensity="xs"
+              glowIntensity="none"
+              borderRadius="16px"
+              className="mt-2 flex w-full items-center gap-3 px-3 py-3 text-sm font-semibold text-gray-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <LogOut className="h-4.5 w-4.5" aria-hidden="true" />
               {signingOut ? "Saindo..." : "Sair"}
-            </button>
+            </LiquidGlassCard>
           </div>
         </aside>
 
         <div className="min-w-0">
-          <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
+          <header className="glass-header sticky top-0 z-30">
             <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
               <div className="flex min-w-0 items-center gap-3">
                 <Link
                   to="/"
-                  className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-red-600 text-white lg:hidden"
+                  className="premium-action flex h-9 w-9 flex-none items-center justify-center rounded-xl lg:hidden"
                   aria-label={`Abrir loja ${BRAND.officialName}`}
                 >
                   <Store className="h-4.5 w-4.5" aria-hidden="true" />
                 </Link>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-gray-950">
+                  <p className="truncate text-sm font-extrabold tracking-[-0.02em] text-gray-950">
                     {currentSection.label}
                   </p>
                   <p className="hidden text-xs text-gray-500 sm:block">
@@ -230,7 +257,7 @@ function AdminPage() {
 
               <div className="flex items-center gap-2">
                 <div className="hidden items-center gap-2.5 sm:flex">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600">
+                  <span className="glass-card flex h-8 w-8 items-center justify-center rounded-full text-gray-600">
                     <UserRound className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div className="hidden max-w-56 md:block">
@@ -239,20 +266,26 @@ function AdminPage() {
                   </div>
                 </div>
 
-                <button
+                <LiquidGlassCard
+                  as="button"
                   type="button"
                   disabled={signingOut}
                   onClick={() => void handleSignOut()}
-                  className="inline-flex h-9 items-center justify-center rounded-lg border border-gray-200 bg-white px-3 text-xs font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none lg:hidden"
+                  interactive
+                  blurIntensity="sm"
+                  shadowIntensity="xs"
+                  glowIntensity="none"
+                  borderRadius="14px"
+                  className="inline-flex h-9 items-center justify-center px-3 text-xs font-bold text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 lg:hidden"
                 >
                   <LogOut className="mr-1.5 h-4 w-4" aria-hidden="true" />
                   {signingOut ? "Saindo..." : "Sair"}
-                </button>
+                </LiquidGlassCard>
               </div>
             </div>
 
             <nav
-              className="flex gap-1 overflow-x-auto border-t border-gray-100 px-3 py-2 lg:hidden"
+              className="flex gap-2 overflow-x-auto border-t border-white/70 px-3 py-2.5 no-scrollbar lg:hidden"
               aria-label="Seções administrativas"
             >
               {NAV_ITEMS.map((item) => {
@@ -260,20 +293,25 @@ function AdminPage() {
                 const active = section === item.id;
 
                 return (
-                  <button
+                  <LiquidGlassCard
                     key={item.id}
+                    as="button"
                     type="button"
                     onClick={() => setSection(item.id)}
                     aria-current={active ? "page" : undefined}
-                    className={`inline-flex h-9 flex-none items-center rounded-lg px-3 text-sm font-semibold transition motion-reduce:transition-none ${
-                      active
-                        ? "bg-red-50 text-red-700"
-                        : "text-gray-600 hover:bg-gray-50"
+                    active={active}
+                    interactive
+                    blurIntensity="sm"
+                    shadowIntensity={active ? "sm" : "xs"}
+                    glowIntensity="none"
+                    borderRadius="15px"
+                    className={`inline-flex h-10 flex-none items-center px-3 text-sm font-bold ${
+                      active ? "text-red-700" : "text-gray-600"
                     }`}
                   >
                     <Icon className="mr-2 h-4 w-4" aria-hidden="true" />
                     {item.label}
-                  </button>
+                  </LiquidGlassCard>
                 );
               })}
             </nav>
