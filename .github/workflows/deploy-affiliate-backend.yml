@@ -6,6 +6,9 @@ on:
       - main
     paths:
       - ".github/workflows/deploy-affiliate-backend.yml"
+      - "scripts/deploy-affiliate-backend.mjs"
+      - "supabase/migrations/2026090404*.sql"
+      - "supabase/migrations/2026090405*.sql"
   workflow_dispatch:
 
 permissions:
@@ -26,5 +29,5 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Deploy disabled affiliate backend and verify
+      - name: Deploy affiliate backend migrations and verify
         run: node scripts/deploy-affiliate-backend.mjs
