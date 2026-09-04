@@ -37,6 +37,18 @@ async function readOnly(query) {
   return Array.isArray(payload) ? payload[0] : payload;
 }
 
+async function readHistory() {
+  const response = await fetch(`${apiBase}/database/migrations`, {
+    headers,
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!response.ok) {
+    throw new Error(`MIGRATION_HISTORY_HTTP_${response.status}`);
+  }
+  const payload = await response.json();
+  return Array.isArray(payload) ? payload : [];
+}
+
 async function applyMigration(name, file) {
   console.log(`Applying ${name}...`);
   const response = await fetch(`${apiBase}/database/migrations`, {
@@ -49,11 +61,18 @@ async function applyMigration(name, file) {
   const text = await response.text();
   if (!response.ok) {
     console.error(`Migration ${name} failed with HTTP ${response.status}.`);
-    if (text) console.error(text.slice(0, 2000));
+    if (text) console.error(text.slice(0, 3000));
     process.exit(10);
   }
   console.log(`Applied ${name}.`);
 }
+
+let history = await readHistory();
+const appliedNames = new Set(
+  history
+    .map((item) => (typeof item?.name === "string" ? item.name : ""))
+    .filter(Boolean),
+);
 
 const before = await readOnly(`
 select
@@ -63,27 +82,42 @@ select
     from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'owner_get_affiliate_overview'
-  ) as admin_queries_live;
+  ) as admin_queries_live,
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'affiliate_program_settings'
+      and column_name = 'withdrawal_method'
+  ) as readiness_live,
+  pg_catalog.to_regclass('public.affiliate_refund_reviews') is not null as refund_reviews_live;
 `);
 
 console.log(`Core already live: ${before?.core_live === true}`);
 console.log(`Admin queries already live: ${before?.admin_queries_live === true}`);
+console.log(`Readiness already live: ${before?.readiness_live === true}`);
+console.log(`Refund review queue already live: ${before?.refund_reviews_live === true}`);
 
 if (before?.core_live !== true) {
+  if (appliedNames.has("affiliate_referral_backend")) {
+    throw new Error("AFFILIATE_CORE_RECORDED_BUT_NOT_LIVE");
+  }
   await applyMigration(
     "affiliate_referral_backend",
     "supabase/migrations/20260904041000_affiliate_referral_backend.sql",
   );
+  appliedNames.add("affiliate_referral_backend");
 }
 
-// This migration is idempotent (REVOKE/GRANT/COMMENT only), so applying it
-// after the core is safe even if a previous deployment stopped midway.
-await applyMigration(
-  "affiliate_backend_hardening",
-  "supabase/migrations/20260904042500_affiliate_backend_hardening.sql",
-);
+if (!appliedNames.has("affiliate_backend_hardening")) {
+  await applyMigration(
+    "affiliate_backend_hardening",
+    "supabase/migrations/20260904042500_affiliate_backend_hardening.sql",
+  );
+  appliedNames.add("affiliate_backend_hardening");
+}
 
-const afterHardening = await readOnly(`
+const afterCore = await readOnly(`
 select exists (
   select 1
   from pg_catalog.pg_proc p
@@ -92,11 +126,46 @@ select exists (
 ) as admin_queries_live;
 `);
 
-if (afterHardening?.admin_queries_live !== true) {
+if (afterCore?.admin_queries_live !== true) {
+  if (appliedNames.has("affiliate_admin_queries")) {
+    throw new Error("AFFILIATE_ADMIN_RECORDED_BUT_NOT_LIVE");
+  }
   await applyMigration(
     "affiliate_admin_queries",
     "supabase/migrations/20260904044000_affiliate_admin_queries.sql",
   );
+  appliedNames.add("affiliate_admin_queries");
+}
+
+const readinessState = await readOnly(`
+select
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'affiliate_program_settings'
+      and column_name = 'withdrawal_method'
+  ) as withdrawal_method_live,
+  pg_catalog.to_regclass('public.affiliate_refund_reviews') is not null as refund_reviews_live;
+`);
+
+if (readinessState?.withdrawal_method_live !== true || readinessState?.refund_reviews_live !== true) {
+  if (appliedNames.has("affiliate_program_readiness")) {
+    throw new Error("AFFILIATE_READINESS_RECORDED_BUT_NOT_LIVE");
+  }
+  await applyMigration(
+    "affiliate_program_readiness",
+    "supabase/migrations/20260904050000_affiliate_program_readiness.sql",
+  );
+  appliedNames.add("affiliate_program_readiness");
+}
+
+if (!appliedNames.has("affiliate_program_readiness_hardening")) {
+  await applyMigration(
+    "affiliate_program_readiness_hardening",
+    "supabase/migrations/20260904050500_affiliate_program_readiness_hardening.sql",
+  );
+  appliedNames.add("affiliate_program_readiness_hardening");
 }
 
 const verification = await readOnly(`
@@ -106,6 +175,13 @@ select
   pg_catalog.to_regclass('public.affiliate_referrals') is not null as referrals_table,
   pg_catalog.to_regclass('public.affiliate_commissions') is not null as commissions_table,
   pg_catalog.to_regclass('public.affiliate_withdrawals') is not null as withdrawals_table,
+  pg_catalog.to_regclass('public.affiliate_refund_reviews') is not null as refund_reviews_table,
+  exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'affiliate_program_settings'
+      and column_name = 'withdrawal_method'
+  ) as withdrawal_method_column,
   exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
@@ -117,9 +193,38 @@ select
     where n.nspname = 'public' and p.proname = 'owner_get_affiliate_overview'
   ) as owner_overview_rpc,
   exists (
-    select 1 from public.affiliate_program_settings s
-    where s.singleton = true and s.enabled = false
-  ) as program_starts_disabled;
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'owner_list_affiliate_candidates'
+  ) as owner_candidates_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'owner_list_affiliate_referrals'
+  ) as owner_referrals_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'owner_list_affiliate_referred_orders'
+  ) as owner_referred_orders_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'owner_list_affiliate_refund_reviews'
+  ) as owner_refund_reviews_rpc,
+  not exists (
+    select 1
+    from public.affiliate_program_settings s
+    where s.singleton = true
+      and s.enabled
+      and (
+        s.commission_rate_bps is null
+        or s.commission_base_mode is null
+        or s.hold_days is null
+        or s.minimum_withdrawal is null
+        or s.withdrawal_method is null
+      )
+  ) as enabled_configuration_safe;
 `);
 
 console.log("AFFILIATE_BACKEND_LIVE_VERIFICATION");
@@ -131,9 +236,15 @@ const required = [
   "referrals_table",
   "commissions_table",
   "withdrawals_table",
+  "refund_reviews_table",
+  "withdrawal_method_column",
   "customer_dashboard_rpc",
   "owner_overview_rpc",
-  "program_starts_disabled",
+  "owner_candidates_rpc",
+  "owner_referrals_rpc",
+  "owner_referred_orders_rpc",
+  "owner_refund_reviews_rpc",
+  "enabled_configuration_safe",
 ];
 
 if (!required.every((key) => verification?.[key] === true)) {
@@ -141,19 +252,10 @@ if (!required.every((key) => verification?.[key] === true)) {
   process.exit(11);
 }
 
-const historyResponse = await fetch(`${apiBase}/database/migrations`, {
-  headers,
-  signal: AbortSignal.timeout(20_000),
-});
-if (!historyResponse.ok) {
-  throw new Error(`MIGRATION_HISTORY_HTTP_${historyResponse.status}`);
-}
-const history = await historyResponse.json();
-if (Array.isArray(history)) {
-  console.log("AFFILIATE_REMOTE_MIGRATION_RECORDS");
-  for (const item of history) {
-    if (typeof item?.name === "string" && item.name.startsWith("affiliate_")) {
-      console.log(`${item.version ?? "?"} ${item.name}`);
-    }
+history = await readHistory();
+console.log("AFFILIATE_REMOTE_MIGRATION_RECORDS");
+for (const item of history) {
+  if (typeof item?.name === "string" && item.name.startsWith("affiliate_")) {
+    console.log(`${item.version ?? "?"} ${item.name}`);
   }
 }
