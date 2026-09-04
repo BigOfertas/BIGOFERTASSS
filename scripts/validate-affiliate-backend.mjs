@@ -26,6 +26,10 @@ const fixed = read(
 const finalRules = read(
   "supabase/migrations/20260904052000_affiliate_pix_withdrawal_and_defaults.sql",
 );
+const percentageRetirement = read(
+  "supabase/migrations/20260904052500_affiliate_percentage_path_retirement.sql",
+);
+const adminAffiliates = read("src/lib/admin-affiliates.ts");
 const commissionEditor = read("src/components/admin/AffiliateCommissionSettings.tsx");
 const withdrawalForm = read("src/components/account/AffiliateWithdrawalForm.tsx");
 const processor = read("supabase/functions/notifications-process/index.ts");
@@ -290,6 +294,16 @@ check(
   "resumo administrativo usa as regras fixas, nao o percentual antigo",
   finalRules.includes("tier_count = 6") &&
     !/owner_get_affiliate_overview[\s\S]*commission_rate_bps IS NOT NULL/.test(finalRules),
+);
+
+check(
+  "caminho percentual antigo foi aposentado no frontend e no banco",
+  percentageRetirement.includes("REVOKE ALL ON FUNCTION public.owner_save_affiliate_program_draft") &&
+    percentageRetirement.includes("REVOKE ALL ON FUNCTION public.owner_configure_affiliate_program") &&
+    !adminPanel.includes("commissionPercent") &&
+    !adminPanel.includes("commissionBaseMode") &&
+    !adminAffiliates.includes("saveAffiliateProgramDraft") &&
+    !adminAffiliates.includes("configureAffiliateProgram"),
 );
 
 check(

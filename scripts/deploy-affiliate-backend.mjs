@@ -184,6 +184,14 @@ if (!appliedNames.has("affiliate_pix_withdrawal_and_defaults")) {
   appliedNames.add("affiliate_pix_withdrawal_and_defaults");
 }
 
+if (!appliedNames.has("affiliate_percentage_path_retirement")) {
+  await applyMigration(
+    "affiliate_percentage_path_retirement",
+    "supabase/migrations/20260904052500_affiliate_percentage_path_retirement.sql",
+  );
+  appliedNames.add("affiliate_percentage_path_retirement");
+}
+
 const verification = await readOnly(`
 select
   pg_catalog.to_regclass('public.affiliate_program_settings') is not null as settings_table,
@@ -243,6 +251,31 @@ select
       and upper(btrim(s.withdrawal_method)) = 'PIX'
   ) as confirmed_business_defaults,
   not exists (
+  select 1 from information_schema.routine_privileges
+  where routine_schema = 'public'
+    and routine_name = 'owner_save_affiliate_program_draft'
+    and grantee = 'authenticated'
+    and privilege_type = 'EXECUTE'
+) as legacy_draft_rpc_retired,
+not exists (
+  select 1 from information_schema.routine_privileges
+  where routine_schema = 'public'
+    and routine_name = 'owner_configure_affiliate_program'
+    and grantee = 'authenticated'
+    and privilege_type = 'EXECUTE'
+) as legacy_configure_rpc_retired,
+not exists (
+  select 1 from public.affiliate_program_settings s
+  where s.singleton = true
+    and (s.commission_rate_bps is not null or s.commission_base_mode is not null)
+) as legacy_percentage_settings_cleared,
+(select amount_per_unit = 20 from public.affiliate_commission_tiers where min_units = 1) as tier_1_safe,
+(select amount_per_unit = 20 from public.affiliate_commission_tiers where min_units = 5) as tier_5_safe,
+(select amount_per_unit = 18 from public.affiliate_commission_tiers where min_units = 8) as tier_8_safe,
+(select amount_per_unit = 15 from public.affiliate_commission_tiers where min_units = 15) as tier_15_safe,
+(select amount_per_unit = 15 from public.affiliate_commission_tiers where min_units = 25) as tier_25_safe,
+(select amount_per_unit = 12 from public.affiliate_commission_tiers where min_units = 35) as tier_35_safe,
+  not exists (
     select 1
     from public.affiliate_program_settings s
     where s.singleton = true
@@ -266,6 +299,15 @@ const required = [
   "fixed_snapshot_columns",
   "fixed_tier_count_safe",
   "confirmed_business_defaults",
+  "legacy_draft_rpc_retired",
+  "legacy_configure_rpc_retired",
+  "legacy_percentage_settings_cleared",
+  "tier_1_safe",
+  "tier_5_safe",
+  "tier_8_safe",
+  "tier_15_safe",
+  "tier_25_safe",
+  "tier_35_safe",
   "withdrawal_method_column",
   "customer_dashboard_rpc",
   "owner_overview_rpc",

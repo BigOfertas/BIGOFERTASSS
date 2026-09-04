@@ -3,8 +3,6 @@ import { callSupabaseRpc } from "@/lib/supabase-rpc";
 export type AffiliateAdminOverview = {
   enabled: boolean;
   rulesComplete: boolean;
-  commissionRateBps: number | null;
-  commissionBaseMode: "items_after_discount" | "order_total" | null;
   holdDays: number | null;
   minimumWithdrawal: number | null;
   withdrawalMethod: string | null;
@@ -119,13 +117,6 @@ export type AffiliateRefundReviewRow = {
   resolution_note: string | null;
 };
 
-export type AffiliateProgramDraft = {
-  commissionRateBps: number | null;
-  commissionBaseMode: "items_after_discount" | "order_total" | null;
-  holdDays: number | null;
-  minimumWithdrawal: number | null;
-  withdrawalMethod: string | null;
-};
 
 function recordValue(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -150,16 +141,9 @@ function nullableNumber(value: unknown) {
 
 function normalizeOverview(value: unknown): AffiliateAdminOverview {
   const row = recordValue(value);
-  const base =
-    row.commissionBaseMode === "items_after_discount" || row.commissionBaseMode === "order_total"
-      ? row.commissionBaseMode
-      : null;
-
   return {
     enabled: row.enabled === true,
     rulesComplete: row.rulesComplete === true,
-    commissionRateBps: nullableNumber(row.commissionRateBps),
-    commissionBaseMode: base,
     holdDays: nullableNumber(row.holdDays),
     minimumWithdrawal: nullableNumber(row.minimumWithdrawal),
     withdrawalMethod: text(row.withdrawalMethod),
@@ -241,29 +225,6 @@ export function listAffiliateRefundReviews() {
   });
 }
 
-export function saveAffiliateProgramDraft(draft: AffiliateProgramDraft) {
-  return callSupabaseRpc<unknown>("owner_save_affiliate_program_draft", {
-    p_commission_rate_bps: draft.commissionRateBps,
-    p_commission_base_mode: draft.commissionBaseMode,
-    p_hold_days: draft.holdDays,
-    p_minimum_withdrawal: draft.minimumWithdrawal,
-    p_withdrawal_method: draft.withdrawalMethod,
-  });
-}
-
-export function configureAffiliateProgram(
-  enabled: boolean,
-  draft: Required<AffiliateProgramDraft>,
-) {
-  return callSupabaseRpc<unknown>("owner_configure_affiliate_program", {
-    p_enabled: enabled,
-    p_commission_rate_bps: draft.commissionRateBps,
-    p_commission_base_mode: draft.commissionBaseMode,
-    p_hold_days: draft.holdDays,
-    p_minimum_withdrawal: draft.minimumWithdrawal,
-    p_withdrawal_method: draft.withdrawalMethod,
-  });
-}
 
 export function activateAffiliate(userId: string) {
   return callSupabaseRpc<unknown>("owner_activate_affiliate", {

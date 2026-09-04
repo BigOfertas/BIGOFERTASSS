@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  BadgePercent,
   CheckCircle2,
   CircleDollarSign,
   Clock3,
@@ -8,19 +7,16 @@ import {
   Loader2,
   RefreshCw,
   RotateCcw,
-  Save,
   Search,
-  ShieldCheck,
   UserPlus,
   UsersRound,
   WalletCards,
   XCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 
 import {
   activateAffiliate,
-  configureAffiliateProgram,
   disableAffiliate,
   fetchAffiliateAdminOverview,
   listAdminAffiliateCommissions,
@@ -33,8 +29,6 @@ import {
   markAffiliateWithdrawalPaid,
   rejectAffiliateWithdrawal,
   resolveAffiliateRefundReview,
-  saveAffiliateProgramDraft,
-  type AffiliateProgramDraft,
 } from "@/lib/admin-affiliates";
 import { AffiliateCommissionSettings } from "@/components/admin/AffiliateCommissionSettings";
 import { getUserFacingError } from "@/lib/user-facing-error";
@@ -74,6 +68,12 @@ function withdrawalStatusLabel(value: string | null | undefined) {
   return value || "—";
 }
 
+function refundReviewStatusLabel(value: string | null | undefined) {
+  if (value === "pending") return "Pendente";
+  if (value === "resolved") return "Revisado";
+  return value || "—";
+}
+
 function pixDestinationLabel(snapshot: Record<string, unknown>) {
   const method = typeof snapshot.method === "string" ? snapshot.method.trim() : "";
   const key = typeof snapshot.pixKey === "string" ? snapshot.pixKey.trim() : "";
@@ -92,16 +92,6 @@ function pixDestinationLabel(snapshot: Record<string, unknown>) {
   return method || "Destino não informado";
 }
 
-function formatPercent(bps: number | null | undefined) {
-  if (bps === null || bps === undefined) return "A definir";
-  return `${(bps / 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
-}
-
-function formatBase(value: string | null | undefined) {
-  if (value === "items_after_discount") return "Produtos após descontos, sem frete";
-  if (value === "order_total") return "Total do pedido";
-  return "A definir";
-}
 
 function LoadingBlock({ label = "Carregando..." }: { label?: string }) {
   return (
@@ -119,12 +109,6 @@ function EmptyRow({ message }: { message: string }) {
 export function AffiliateAdmin() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [commissionPercent, setCommissionPercent] = useState("");
-  const [commissionBaseMode, setCommissionBaseMode] = useState("");
-  const [holdDays, setHoldDays] = useState("");
-  const [minimumWithdrawal, setMinimumWithdrawal] = useState("");
-  const [withdrawalMethod, setWithdrawalMethod] = useState("");
-  const [rulesInitialized, setRulesInitialized] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [rejectionNotes, setRejectionNotes] = useState<Record<string, string>>({});
@@ -178,53 +162,6 @@ export function AffiliateAdmin() {
     staleTime: 15_000,
   });
 
-  useEffect(() => {
-    const overview = overviewQuery.data;
-    if (!overview || rulesInitialized) return;
-
-    setCommissionPercent(
-      overview.commissionRateBps === null ? "" : String(overview.commissionRateBps / 100),
-    );
-    setCommissionBaseMode(overview.commissionBaseMode ?? "");
-    setHoldDays(overview.holdDays === null ? "" : String(overview.holdDays));
-    setMinimumWithdrawal(
-      overview.minimumWithdrawal === null ? "" : String(overview.minimumWithdrawal),
-    );
-    setWithdrawalMethod(overview.withdrawalMethod ?? "");
-    setRulesInitialized(true);
-  }, [overviewQuery.data, rulesInitialized]);
-
-  const draft = useMemo<AffiliateProgramDraft>(() => {
-    const percent = Number(commissionPercent.replace(",", "."));
-    const days = Number(holdDays);
-    const minimum = Number(minimumWithdrawal.replace(",", "."));
-
-    return {
-      commissionRateBps:
-        commissionPercent.trim() && Number.isFinite(percent) ? Math.round(percent * 100) : null,
-      commissionBaseMode:
-        commissionBaseMode === "items_after_discount" || commissionBaseMode === "order_total"
-          ? commissionBaseMode
-          : null,
-      holdDays: holdDays.trim() && Number.isInteger(days) ? days : null,
-      minimumWithdrawal:
-        minimumWithdrawal.trim() && Number.isFinite(minimum) ? minimum : null,
-      withdrawalMethod: withdrawalMethod.trim() || null,
-    };
-  }, [commissionPercent, commissionBaseMode, holdDays, minimumWithdrawal, withdrawalMethod]);
-
-  const editorRulesComplete =
-    draft.commissionRateBps !== null &&
-    draft.commissionRateBps >= 1 &&
-    draft.commissionRateBps <= 10000 &&
-    draft.commissionBaseMode !== null &&
-    draft.holdDays !== null &&
-    draft.holdDays >= 0 &&
-    draft.holdDays <= 365 &&
-    draft.minimumWithdrawal !== null &&
-    draft.minimumWithdrawal >= 0.01 &&
-    draft.withdrawalMethod !== null &&
-    draft.withdrawalMethod.length >= 2;
 
   const actionMutation = useMutation({
     mutationFn: async (action: () => Promise<unknown>) => action(),
@@ -247,16 +184,6 @@ export function AffiliateAdmin() {
     }
   }
 
-  function completedDraft() {
-    if (!editorRulesComplete) return null;
-    return {
-      commissionRateBps: draft.commissionRateBps!,
-      commissionBaseMode: draft.commissionBaseMode!,
-      holdDays: draft.holdDays!,
-      minimumWithdrawal: draft.minimumWithdrawal!,
-      withdrawalMethod: draft.withdrawalMethod!,
-    };
-  }
 
   const overview = overviewQuery.data;
   const pageLoading = overviewQuery.isLoading;
@@ -574,7 +501,7 @@ export function AffiliateAdmin() {
               <div key={row.review_id} className="grid gap-4 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)] lg:items-center sm:px-6">
                 <div>
                   <p className="text-sm font-bold text-gray-950">Pedido {row.order_public_number} • {money(row.commission_amount)}</p>
-                  <p className="mt-1 text-xs text-gray-500">{row.affiliate_name || "Afiliado"} • aberto em {dateFormatter.format(new Date(row.created_at))} • {row.review_status}</p>
+                  <p className="mt-1 text-xs text-gray-500">{row.affiliate_name || "Afiliado"} • aberto em {dateFormatter.format(new Date(row.created_at))} • {refundReviewStatusLabel(row.review_status)}</p>
                   {row.resolution_note ? <p className="mt-2 text-xs text-gray-600">{row.resolution_note}</p> : null}
                 </div>
                 {row.review_status === "pending" ? (
@@ -602,7 +529,7 @@ export function AffiliateAdmin() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <article className="rounded-xl border border-gray-200 bg-white p-4"><Clock3 className="h-4.5 w-4.5 text-red-600" /><p className="mt-3 text-xs font-bold text-gray-500">Prazo</p><p className="mt-1 text-sm font-black text-gray-950">{overview.holdDays === null ? "A definir" : `${overview.holdDays} dias`}</p></article>
+        <article className="rounded-xl border border-gray-200 bg-white p-4"><Clock3 className="h-4.5 w-4.5 text-red-600" /><p className="mt-3 text-xs font-bold text-gray-500">Prazo</p><p className="mt-1 text-sm font-black text-gray-950">{overview.holdDays === null ? "A definir" : overview.holdDays === 0 ? "Imediata" : `${overview.holdDays} dias`}</p></article>
         <article className="rounded-xl border border-gray-200 bg-white p-4"><WalletCards className="h-4.5 w-4.5 text-red-600" /><p className="mt-3 text-xs font-bold text-gray-500">Saque mínimo / forma</p><p className="mt-1 text-sm font-black text-gray-950">{overview.minimumWithdrawal === null ? "A definir" : money(overview.minimumWithdrawal)} • {overview.withdrawalMethod ?? "A definir"}</p></article>
       </section>
     </div>
