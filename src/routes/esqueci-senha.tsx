@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft, CheckCircle2, Loader2, Mail } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
+import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserFacingError } from "@/lib/user-facing-error";
 
@@ -50,7 +51,7 @@ function ForgotPasswordPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <Link to="/" className="text-2xl font-black italic tracking-tight text-foreground">
-            <span className="text-red-600">BIG</span>ofertas
+            <BrandWordmark />
           </Link>
         </div>
 
