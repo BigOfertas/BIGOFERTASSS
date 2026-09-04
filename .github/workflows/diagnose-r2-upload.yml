@@ -1,0 +1,55 @@
+name: Diagnose R2 Upload Runtime
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/diagnose-r2-upload.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+
+    steps:
+      - name: Query recent R2 function invocations
+        shell: bash
+        run: |
+          set -euo pipefail
+          START="$(date -u -d '90 minutes ago' +%Y-%m-%dT%H:%M:%SZ)"
+          END="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          SQL="select timestamp, log_attributes['request.pathname'] as path, log_attributes['response.status_code'] as status_code from logs where source = 'function_edge_logs' and (log_attributes['request.pathname'] like '%r2-image-presign%' or log_attributes['request.pathname'] like '%r2-image-complete%') order by timestamp desc limit 100"
+
+          HTTP_CODE="$(curl -sS -o /tmp/r2-logs.json -w '%{http_code}' -G \
+            "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_ID}/analytics/endpoints/logs" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            --data-urlencode "sql=${SQL}" \
+            --data-urlencode "iso_timestamp_start=${START}" \
+            --data-urlencode "iso_timestamp_end=${END}")"
+
+          echo "Supabase logs API status: ${HTTP_CODE}"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('/tmp/r2-logs.json')
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          if payload.get('error'):
+              print('Logs API error:', payload['error'])
+              raise SystemExit(1)
+
+          rows = payload.get('result') or []
+          print(f'R2 function invocations found: {len(rows)}')
+          for row in rows:
+              if isinstance(row, dict):
+                  print(f"{row.get('timestamp')} | {row.get('status_code')} | {row.get('path')}")
+              else:
+                  print(row)
+          PY
