@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { Button } from "@/components/ui/button";
+import { BRAND } from "@/config/brand";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/lib/auth";
 import {
@@ -432,7 +434,7 @@ function CheckoutPage() {
           <ShieldCheck className="mx-auto h-10 w-10 text-amber-600" />
           <h1 className="mt-4 text-xl font-black text-gray-950">Confirme seu e-mail primeiro</h1>
           <p className="mt-2 text-sm leading-6 text-gray-600">
-            A BIGofertas só libera a conta e a finalização da compra depois da confirmação do endereço de e-mail.
+            A {BRAND.officialName} só libera a conta e a finalização da compra depois da confirmação do endereço de e-mail.
           </p>
         </div>
       </main>
@@ -475,7 +477,7 @@ function CheckoutPage() {
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <Link to="/" className="text-xl font-black italic tracking-tight text-gray-950">
-            <span className="text-red-600">BIG</span>ofertas
+            <BrandWordmark />
           </Link>
           <div className="flex items-center gap-2 text-xs font-semibold text-gray-500">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
