@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  BadgePercent,
+  CircleDollarSign,
   CheckCircle2,
   ClipboardCheck,
   Copy,
@@ -99,7 +99,7 @@ function HowItWorks() {
           </p>
         </div>
         <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-4">
-          <BadgePercent className="h-4.5 w-4.5 text-red-600" aria-hidden="true" />
+          <CircleDollarSign className="h-4.5 w-4.5 text-red-600" aria-hidden="true" />
           <p className="mt-3 text-sm font-bold text-gray-950">3. Acompanhe as compras</p>
           <p className="mt-1 text-xs leading-5 text-gray-500">
             Quando esse cliente fizer pedidos elegíveis, as comissões aparecem no seu histórico.
@@ -305,7 +305,7 @@ export function AffiliateAccountPanel() {
             <p className="mt-1 text-xs font-semibold text-gray-500">Clientes indicados</p>
           </article>
           <article className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
-            <BadgePercent className="h-5 w-5 text-amber-600" aria-hidden="true" />
+            <CircleDollarSign className="h-5 w-5 text-amber-600" aria-hidden="true" />
             <p className="mt-3 text-2xl font-black text-gray-950">{money(dashboard.pendingAmount)}</p>
             <p className="mt-1 text-xs font-semibold text-gray-500">Comissões pendentes</p>
           </article>
@@ -322,11 +322,27 @@ export function AffiliateAccountPanel() {
         </div>
       </section>
 
+      {dashboard.rulesComplete && dashboard.commissionTiers.length > 0 ? (
+        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+          <h3 className="font-black text-gray-950">Sua comissão por peça</h3>
+          <p className="mt-1 text-xs leading-5 text-gray-500">A faixa mais alta atingida no pedido define o valor pago por cada peça daquele pedido.</p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {dashboard.commissionTiers.map((tier) => (
+              <div key={tier.minUnits} className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-gray-500">{tier.minUnits === 1 ? "Padrão" : `${tier.minUnits}+ peças`}</p>
+                <p className="mt-1 text-lg font-black text-gray-950">{money(tier.amountPerUnit)}</p>
+                <p className="text-[11px] text-gray-500">por peça</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {!dashboard.rulesComplete ? (
         <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
           <h3 className="font-black text-amber-950">Regras comerciais em definição</h3>
           <p className="mt-2 text-sm leading-6 text-amber-900/75">
-            Percentual de comissão, base de cálculo, prazo de liberação, saque mínimo e forma de pagamento ainda estão sendo definidos. Nenhum valor é estimado nesta tela antes dessa configuração.
+            Os valores fixos de comissão por peça, o prazo de liberação, o saque mínimo e a forma de pagamento ainda estão sendo definidos. Nenhum valor é estimado nesta tela antes dessa configuração.
           </p>
         </section>
       ) : null}

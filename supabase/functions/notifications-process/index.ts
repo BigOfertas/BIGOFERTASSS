@@ -196,7 +196,15 @@ function moneyText(value: string) {
   return Number.isFinite(numeric) ? formatBrl(numeric) : value;
 }
 
-function rateText(value: string) { return value.includes("%") ? value : `${value}%`; }
+function fixedCommissionText(event: NotificationEvent) {
+  const unitAmount = event.payload["commission_unit_amount"];
+  const units = Number(event.payload["commission_units"] ?? 0);
+  if ((typeof unitAmount === "number" && Number.isFinite(unitAmount)) || (typeof unitAmount === "string" && unitAmount.trim())) {
+    const amount = moneyText(String(unitAmount));
+    return units > 0 ? `${amount} por peça • ${units} peças` : `${amount} por peça`;
+  }
+  return "valor fixo por peça conforme a quantidade do pedido";
+}
 function siteUrl() { return (Deno.env.get("PUBLIC_SITE_URL")?.trim() || "https://bigofertas.net").replace(/\/$/, ""); }
 
 function affiliateDashboardUrl() {
@@ -276,7 +284,7 @@ async function prepareEmail(event: NotificationEvent): Promise<PreparedEmail> {
       variables: {
         ...base,
         AFFILIATE_LINK: affiliateRegistrationUrl(event),
-        COMMISSION_RATE: rateText(payloadText(event, "commission_rate")),
+        COMMISSION_RATE: fixedCommissionText(event),
       },
     };
   }

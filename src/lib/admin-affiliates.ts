@@ -81,8 +81,9 @@ export type AdminAffiliateCommissionRow = {
   order_id: string;
   order_public_number: string;
   sale_amount: number;
-  commission_base_amount: number;
-  commission_rate_bps: number;
+  commission_units: number | null;
+  commission_unit_amount: number | null;
+  commission_rule_source: "global" | "affiliate" | null;
   commission_amount: number;
   status: "pending" | "available" | "cancelled";
   available_at: string;
@@ -293,5 +294,89 @@ export function resolveAffiliateRefundReview(reviewId: string, note: string) {
   return callSupabaseRpc<unknown>("owner_resolve_affiliate_refund_review", {
     p_review_id: reviewId,
     p_note: note.trim(),
+  });
+}
+
+
+export type AffiliateCommissionTier = {
+  minUnits: number;
+  amountPerUnit: number;
+  source?: "global" | "affiliate";
+};
+
+export type AffiliateFixedSettings = {
+  enabled: boolean;
+  rulesComplete: boolean;
+  commissionTiers: AffiliateCommissionTier[];
+  holdDays: number | null;
+  minimumWithdrawal: number | null;
+  withdrawalMethod: string | null;
+};
+
+export type AffiliateCommissionRules = {
+  affiliateId: string;
+  globalTiers: AffiliateCommissionTier[];
+  overrides: AffiliateCommissionTier[];
+  effectiveTiers: AffiliateCommissionTier[];
+};
+
+function normalizeTier(value: unknown): AffiliateCommissionTier | null {
+  const row = recordValue(value);
+  const minUnits = numberValue(row.minUnits);
+  const amountPerUnit = numberValue(row.amountPerUnit);
+  if (![1, 5, 8, 15, 25, 35].includes(minUnits) || amountPerUnit <= 0) return null;
+  return {
+    minUnits,
+    amountPerUnit,
+    source: row.source === "affiliate" ? "affiliate" : row.source === "global" ? "global" : undefined,
+  };
+}
+
+function normalizeTiers(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const tier = normalizeTier(item);
+    return tier ? [tier] : [];
+  }).sort((a, b) => a.minUnits - b.minUnits);
+}
+
+export async function fetchAffiliateFixedSettings(): Promise<AffiliateFixedSettings> {
+  const row = recordValue(await callSupabaseRpc<unknown>("owner_get_affiliate_fixed_settings"));
+  return {
+    enabled: row.enabled === true,
+    rulesComplete: row.rulesComplete === true,
+    commissionTiers: normalizeTiers(row.commissionTiers),
+    holdDays: nullableNumber(row.holdDays),
+    minimumWithdrawal: nullableNumber(row.minimumWithdrawal),
+    withdrawalMethod: text(row.withdrawalMethod),
+  };
+}
+
+export function saveAffiliateFixedSettings(settings: AffiliateFixedSettings) {
+  return callSupabaseRpc<unknown>("owner_save_affiliate_fixed_settings", {
+    p_enabled: settings.enabled,
+    p_commission_tiers: settings.commissionTiers.map(({ minUnits, amountPerUnit }) => ({ minUnits, amountPerUnit })),
+    p_hold_days: settings.holdDays,
+    p_minimum_withdrawal: settings.minimumWithdrawal,
+    p_withdrawal_method: settings.withdrawalMethod,
+  });
+}
+
+export async function fetchAffiliateCommissionRules(affiliateId: string): Promise<AffiliateCommissionRules> {
+  const row = recordValue(await callSupabaseRpc<unknown>("owner_get_affiliate_commission_rules", {
+    p_affiliate_id: affiliateId,
+  }));
+  return {
+    affiliateId: text(row.affiliateId) ?? affiliateId,
+    globalTiers: normalizeTiers(row.globalTiers),
+    overrides: normalizeTiers(row.overrides),
+    effectiveTiers: normalizeTiers(row.effectiveTiers),
+  };
+}
+
+export function saveAffiliateCommissionOverrides(affiliateId: string, overrides: AffiliateCommissionTier[]) {
+  return callSupabaseRpc<unknown>("owner_save_affiliate_commission_overrides", {
+    p_affiliate_id: affiliateId,
+    p_overrides: overrides.map(({ minUnits, amountPerUnit }) => ({ minUnits, amountPerUnit })),
   });
 }

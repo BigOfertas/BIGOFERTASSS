@@ -340,8 +340,14 @@ function normalizeMoneyText(value: string) {
   return Number.isFinite(numeric) ? formatBrl(numeric) : value;
 }
 
-function normalizeRate(value: string) {
-  return value.includes("%") ? value : `${value}%`;
+function fixedCommissionText(payload: Record<string, unknown>) {
+  const unitAmount = payload["commission_unit_amount"];
+  const units = Number(payload["commission_units"] ?? 0);
+  if ((typeof unitAmount === "number" && Number.isFinite(unitAmount)) || (typeof unitAmount === "string" && unitAmount.trim())) {
+    const amount = normalizeMoneyText(String(unitAmount));
+    return units > 0 ? `${amount} por peça • ${units} peças` : `${amount} por peça`;
+  }
+  return "valor fixo por peça conforme a quantidade do pedido";
 }
 
 function orderUrl(origin: string) {
@@ -471,13 +477,7 @@ async function prepareEmail(
           "affiliate_link",
           "EMAIL_PROCESSOR_AFFILIATE_LINK_MISSING",
         ),
-        COMMISSION_RATE: normalizeRate(
-          requiredPayloadText(
-            event.payload,
-            "commission_rate",
-            "EMAIL_PROCESSOR_COMMISSION_RATE_MISSING",
-          ),
-        ),
+        COMMISSION_RATE: fixedCommissionText(event.payload),
       },
     };
   }
@@ -513,13 +513,7 @@ async function prepareEmail(
             "EMAIL_PROCESSOR_AFFILIATE_COMMISSION_AMOUNT_MISSING",
           ),
         ),
-        COMMISSION_RATE: normalizeRate(
-          requiredPayloadText(
-            event.payload,
-            "commission_rate",
-            "EMAIL_PROCESSOR_COMMISSION_RATE_MISSING",
-          ),
-        ),
+        COMMISSION_RATE: fixedCommissionText(event.payload),
       },
     };
   }

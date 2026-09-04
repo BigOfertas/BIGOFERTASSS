@@ -1,13 +1,18 @@
 import { callSupabaseRpc } from "@/lib/supabase-rpc";
 
+export type AffiliateCommissionTier = {
+  minUnits: number;
+  amountPerUnit: number;
+  source: "global" | "affiliate";
+};
+
 export type AffiliateDashboard = {
   isAffiliate: boolean;
   programEnabled: boolean;
   rulesComplete: boolean;
   status: "active" | "disabled" | null;
   referralCode: string | null;
-  commissionRateBps: number | null;
-  commissionBaseMode: "items_after_discount" | "order_total" | null;
+  commissionTiers: AffiliateCommissionTier[];
   holdDays: number | null;
   minimumWithdrawal: number | null;
   withdrawalMethod: string | null;
@@ -33,8 +38,11 @@ export type AffiliateCommissionRow = {
   order_id: string;
   order_public_number: string;
   sale_amount: number;
-  commission_base_amount: number;
-  commission_rate_bps: number;
+  commission_base_amount: number | null;
+  commission_rate_bps: number | null;
+  commission_units: number | null;
+  commission_unit_amount: number | null;
+  commission_rule_source: "global" | "affiliate" | null;
   commission_amount: number;
   status: "pending" | "available" | "cancelled";
   available_at: string;
@@ -76,13 +84,24 @@ function nullableNumber(value: unknown) {
   return Number.isFinite(numeric) ? numeric : null;
 }
 
+function normalizeTiers(value: unknown): AffiliateCommissionTier[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const row = recordValue(item);
+    const minUnits = numberValue(row.minUnits);
+    const amountPerUnit = numberValue(row.amountPerUnit);
+    if (![1, 5, 8, 15, 25, 35].includes(minUnits) || amountPerUnit <= 0) return [];
+    return [{
+      minUnits,
+      amountPerUnit,
+      source: row.source === "affiliate" ? "affiliate" as const : "global" as const,
+    }];
+  }).sort((a, b) => a.minUnits - b.minUnits);
+}
+
 function normalizeDashboard(value: unknown): AffiliateDashboard {
   const row = recordValue(value);
   const status = row.status === "active" || row.status === "disabled" ? row.status : null;
-  const base =
-    row.commissionBaseMode === "items_after_discount" || row.commissionBaseMode === "order_total"
-      ? row.commissionBaseMode
-      : null;
 
   return {
     isAffiliate: row.isAffiliate === true,
@@ -90,8 +109,7 @@ function normalizeDashboard(value: unknown): AffiliateDashboard {
     rulesComplete: row.rulesComplete === true,
     status,
     referralCode: text(row.referralCode),
-    commissionRateBps: nullableNumber(row.commissionRateBps),
-    commissionBaseMode: base,
+    commissionTiers: normalizeTiers(row.commissionTiers),
     holdDays: nullableNumber(row.holdDays),
     minimumWithdrawal: nullableNumber(row.minimumWithdrawal),
     withdrawalMethod: text(row.withdrawalMethod),
@@ -104,28 +122,17 @@ function normalizeDashboard(value: unknown): AffiliateDashboard {
 }
 
 export async function fetchMyAffiliateDashboard() {
-  return normalizeDashboard(
-    await callSupabaseRpc<unknown>("get_my_affiliate_dashboard"),
-  );
+  return normalizeDashboard(await callSupabaseRpc<unknown>("get_my_affiliate_dashboard"));
 }
 
 export async function fetchMyAffiliateReferrals() {
-  return callSupabaseRpc<AffiliateReferralRow[]>("list_my_affiliate_referrals", {
-    p_limit: 100,
-    p_offset: 0,
-  });
+  return callSupabaseRpc<AffiliateReferralRow[]>("list_my_affiliate_referrals", { p_limit: 100, p_offset: 0 });
 }
 
 export async function fetchMyAffiliateCommissions() {
-  return callSupabaseRpc<AffiliateCommissionRow[]>("list_my_affiliate_commissions", {
-    p_limit: 100,
-    p_offset: 0,
-  });
+  return callSupabaseRpc<AffiliateCommissionRow[]>("list_my_affiliate_commissions", { p_limit: 100, p_offset: 0 });
 }
 
 export async function fetchMyAffiliateWithdrawals() {
-  return callSupabaseRpc<AffiliateWithdrawalRow[]>("list_my_affiliate_withdrawals", {
-    p_limit: 100,
-    p_offset: 0,
-  });
+  return callSupabaseRpc<AffiliateWithdrawalRow[]>("list_my_affiliate_withdrawals", { p_limit: 100, p_offset: 0 });
 }

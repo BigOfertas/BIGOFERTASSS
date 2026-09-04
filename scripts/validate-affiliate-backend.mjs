@@ -20,6 +20,10 @@ const readiness = read(
 const readinessHardening = read(
   "supabase/migrations/20260904050500_affiliate_program_readiness_hardening.sql",
 );
+const fixed = read(
+  "supabase/migrations/20260904051500_affiliate_fixed_commission_tiers.sql",
+);
+const commissionEditor = read("src/components/admin/AffiliateCommissionSettings.tsx");
 const processor = read("supabase/functions/notifications-process/index.ts");
 const auth = read("src/lib/auth.tsx");
 const referralClient = read("src/lib/affiliate-referral.ts");
@@ -97,13 +101,17 @@ check(
 );
 
 check(
-  "ativacao exige as cinco regras comerciais explicitas",
-  readiness.includes("affiliate_program_enabled_requires_rules") &&
-    readiness.includes("commission_rate_bps IS NOT NULL") &&
-    readiness.includes("commission_base_mode IS NOT NULL") &&
-    readiness.includes("hold_days IS NOT NULL") &&
-    readiness.includes("minimum_withdrawal IS NOT NULL") &&
-    readiness.includes("withdrawal_method IS NOT NULL"),
+  "ativacao exige seis faixas fixas e regras de saque",
+  fixed.includes("affiliate_commission_tiers") &&
+    fixed.includes("(1, 20.00)") &&
+    fixed.includes("(5, 20.00)") &&
+    fixed.includes("(8, 18.00)") &&
+    fixed.includes("(15, 15.00)") &&
+    fixed.includes("(25, 15.00)") &&
+    fixed.includes("(35, 12.00)") &&
+    fixed.includes("hold_days IS NOT NULL") &&
+    fixed.includes("minimum_withdrawal IS NOT NULL") &&
+    fixed.includes("withdrawal_method IS NOT NULL"),
 );
 
 check(
@@ -113,11 +121,20 @@ check(
 );
 
 check(
-  "comissao guarda snapshot financeiro e uma unica linha por pedido",
-  /order_id uuid NOT NULL UNIQUE REFERENCES public\.orders/.test(core) &&
-    core.includes("commission_base_amount") &&
-    core.includes("commission_rate_bps") &&
-    core.includes("commission_amount"),
+  "comissao nova usa valor fixo por peca e snapshot da faixa",
+  fixed.includes("commission_units") &&
+    fixed.includes("commission_unit_amount") &&
+    fixed.includes("commission_rule_source") &&
+    fixed.includes("order_units * tier_row.amount_per_unit") &&
+    !/commission_amount := round\(base_amount */.test(fixed),
+);
+
+check(
+  "comissao individual permite sobrescrever apenas uma faixa",
+  fixed.includes("affiliate_commission_tier_overrides") &&
+    fixed.includes("owner_save_affiliate_commission_overrides") &&
+    commissionEditor.includes("Campo vazio significa") &&
+    commissionEditor.includes("A partir de 35 peças"),
 );
 
 check(
@@ -250,13 +267,14 @@ check(
 );
 
 check(
-  "painel administrativo exibe as cinco regras e bloqueia ativacao incompleta",
-  adminPanel.includes("Comissão (%)") &&
-    adminPanel.includes("Base de cálculo") &&
-    adminPanel.includes("Liberação (dias)") &&
-    adminPanel.includes("Saque mínimo (R$)") &&
-    adminPanel.includes("Forma de pagamento") &&
-    adminPanel.includes("disabled={actionMutation.isPending || !editorRulesComplete}"),
+  "painel administrativo mostra todas as faixas fixas ao mesmo tempo",
+  commissionEditor.includes("Comissão geral dos influenciadores") &&
+    commissionEditor.includes("Valor fixo por peça") &&
+    commissionEditor.includes("Padrão (1 a 4 peças)") &&
+    commissionEditor.includes("A partir de 35 peças") &&
+    commissionEditor.includes("Comissão individual por afiliado") &&
+    !commissionEditor.includes("Comissão (%)") &&
+    !commissionEditor.includes("Base de cálculo"),
 );
 
 check(

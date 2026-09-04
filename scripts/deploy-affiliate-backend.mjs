@@ -168,6 +168,14 @@ if (!appliedNames.has("affiliate_program_readiness_hardening")) {
   appliedNames.add("affiliate_program_readiness_hardening");
 }
 
+if (!appliedNames.has("affiliate_fixed_commission_tiers")) {
+  await applyMigration(
+    "affiliate_fixed_commission_tiers",
+    "supabase/migrations/20260904051500_affiliate_fixed_commission_tiers.sql",
+  );
+  appliedNames.add("affiliate_fixed_commission_tiers");
+}
+
 const verification = await readOnly(`
 select
   pg_catalog.to_regclass('public.affiliate_program_settings') is not null as settings_table,
@@ -176,6 +184,8 @@ select
   pg_catalog.to_regclass('public.affiliate_commissions') is not null as commissions_table,
   pg_catalog.to_regclass('public.affiliate_withdrawals') is not null as withdrawals_table,
   pg_catalog.to_regclass('public.affiliate_refund_reviews') is not null as refund_reviews_table,
+  pg_catalog.to_regclass('public.affiliate_commission_tiers') is not null as fixed_tiers_table,
+  pg_catalog.to_regclass('public.affiliate_commission_tier_overrides') is not null as fixed_overrides_table,
   exists (
     select 1 from information_schema.columns
     where table_schema = 'public'
@@ -212,18 +222,17 @@ select
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'owner_list_affiliate_refund_reviews'
   ) as owner_refund_reviews_rpc,
+  exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'affiliate_commissions' and column_name = 'commission_unit_amount'
+  ) as fixed_snapshot_columns,
+  (select count(*) = 6 from public.affiliate_commission_tiers) as fixed_tier_count_safe,
   not exists (
     select 1
     from public.affiliate_program_settings s
     where s.singleton = true
       and s.enabled
-      and (
-        s.commission_rate_bps is null
-        or s.commission_base_mode is null
-        or s.hold_days is null
-        or s.minimum_withdrawal is null
-        or s.withdrawal_method is null
-      )
+      and (s.hold_days is null or s.minimum_withdrawal is null or s.withdrawal_method is null)
   ) as enabled_configuration_safe;
 `);
 
@@ -237,6 +246,10 @@ const required = [
   "commissions_table",
   "withdrawals_table",
   "refund_reviews_table",
+  "fixed_tiers_table",
+  "fixed_overrides_table",
+  "fixed_snapshot_columns",
+  "fixed_tier_count_safe",
   "withdrawal_method_column",
   "customer_dashboard_rpc",
   "owner_overview_rpc",

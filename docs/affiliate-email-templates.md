@@ -16,7 +16,7 @@ Sua participação no programa de afiliados foi ativada. Seu link pessoal serve 
 
 Quando uma nova pessoa concluir o cadastro por esse link, a conta dela ficará vinculada à sua indicação. Os pedidos elegíveis feitos por esse cliente poderão gerar comissão conforme as regras do programa.
 
-Comissão vigente: `{{COMMISSION_RATE}}`
+Comissão fixa: `{{COMMISSION_RATE}}`
 
 Acompanhe seus clientes indicados, comissões e saques em `{{AFFILIATE_DASHBOARD_URL}}`.
 
@@ -30,7 +30,7 @@ Um cliente cadastrado pela sua indicação fez um pedido elegível.
 
 Pedido: `{{ORDER_NUMBER}}`  
 Valor da venda: `{{SALE_AMOUNT}}`  
-Percentual aplicado: `{{COMMISSION_RATE}}`  
+Regra aplicada: `{{COMMISSION_RATE}}`  
 Comissão registrada: `{{COMMISSION_AMOUNT}}`
 
 A comissão pode permanecer pendente até cumprir o prazo definido pelo programa. Acompanhe o status em `{{AFFILIATE_DASHBOARD_URL}}`.

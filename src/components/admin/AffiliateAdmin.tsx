@@ -36,6 +36,7 @@ import {
   saveAffiliateProgramDraft,
   type AffiliateProgramDraft,
 } from "@/lib/admin-affiliates";
+import { AffiliateCommissionSettings } from "@/components/admin/AffiliateCommissionSettings";
 import { getUserFacingError } from "@/lib/user-facing-error";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -270,152 +271,7 @@ export function AffiliateAdmin() {
         </p>
       ) : null}
 
-      <section className="rounded-xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
-        <div className="flex items-start gap-3">
-          <ShieldCheck className="mt-0.5 h-5 w-5 flex-none text-amber-700" aria-hidden="true" />
-          <div>
-            <h2 className="font-black text-amber-950">Regras comerciais pendentes do cliente</h2>
-            <p className="mt-1 text-sm leading-6 text-amber-900/75">
-              O programa permanece desligado até serem confirmados percentual, base de cálculo, prazo de liberação, saque mínimo e forma de pagamento. O sistema não preenche valores por conta própria.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.1em] text-gray-500">Configuração</p>
-            <h2 className="mt-1 text-xl font-black text-gray-950">Cinco regras do programa</h2>
-            <p className="mt-1 text-sm leading-6 text-gray-500">
-              É possível salvar valores parciais como rascunho. Ativar só fica disponível quando as cinco regras estiverem preenchidas.
-            </p>
-          </div>
-          <span className={`w-fit rounded-full px-3 py-1.5 text-xs font-bold ${editorRulesComplete ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
-            {editorRulesComplete ? "5/5 preenchidas" : "Configuração incompleta"}
-          </span>
-        </div>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <label className="text-sm font-bold text-gray-800">
-            Comissão (%)
-            <input
-              type="number"
-              min="0.01"
-              max="100"
-              step="0.01"
-              value={commissionPercent}
-              onChange={(event) => setCommissionPercent(event.target.value)}
-              placeholder="A definir"
-              disabled={overview.enabled}
-              className="mt-1.5 h-11 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-red-500 focus:ring-4 focus:ring-red-50 disabled:bg-gray-100"
-            />
-          </label>
-
-          <label className="text-sm font-bold text-gray-800">
-            Base de cálculo
-            <select
-              value={commissionBaseMode}
-              onChange={(event) => setCommissionBaseMode(event.target.value)}
-              disabled={overview.enabled}
-              className="mt-1.5 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none focus:border-red-500 focus:ring-4 focus:ring-red-50 disabled:bg-gray-100"
-            >
-              <option value="">A definir</option>
-              <option value="items_after_discount">Produtos após descontos, sem frete</option>
-              <option value="order_total">Total do pedido</option>
-            </select>
-          </label>
-
-          <label className="text-sm font-bold text-gray-800">
-            Liberação (dias)
-            <input
-              type="number"
-              min="0"
-              max="365"
-              step="1"
-              value={holdDays}
-              onChange={(event) => setHoldDays(event.target.value)}
-              placeholder="A definir"
-              disabled={overview.enabled}
-              className="mt-1.5 h-11 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-red-500 focus:ring-4 focus:ring-red-50 disabled:bg-gray-100"
-            />
-          </label>
-
-          <label className="text-sm font-bold text-gray-800">
-            Saque mínimo (R$)
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={minimumWithdrawal}
-              onChange={(event) => setMinimumWithdrawal(event.target.value)}
-              placeholder="A definir"
-              disabled={overview.enabled}
-              className="mt-1.5 h-11 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-red-500 focus:ring-4 focus:ring-red-50 disabled:bg-gray-100"
-            />
-          </label>
-
-          <label className="text-sm font-bold text-gray-800">
-            Forma de pagamento
-            <input
-              value={withdrawalMethod}
-              onChange={(event) => setWithdrawalMethod(event.target.value)}
-              placeholder="A definir"
-              maxLength={60}
-              disabled={overview.enabled}
-              className="mt-1.5 h-11 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-red-500 focus:ring-4 focus:ring-red-50 disabled:bg-gray-100"
-            />
-          </label>
-        </div>
-
-        <div className="mt-5 flex flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={actionMutation.isPending || overview.enabled}
-            onClick={() => void runAction(() => saveAffiliateProgramDraft(draft), "Rascunho das regras salvo. O programa continua desligado.")}
-            className="inline-flex h-10 items-center rounded-lg border border-gray-200 bg-white px-4 text-sm font-bold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Save className="mr-2 h-4 w-4" aria-hidden="true" />
-            Salvar rascunho
-          </button>
-
-          {!overview.enabled ? (
-            <button
-              type="button"
-              disabled={actionMutation.isPending || !editorRulesComplete}
-              onClick={() => {
-                const complete = completedDraft();
-                if (!complete) return;
-                void runAction(
-                  () => configureAffiliateProgram(true, complete),
-                  "Programa de afiliados ativado com as regras confirmadas.",
-                );
-              }}
-              className="inline-flex h-10 items-center rounded-lg bg-red-600 px-4 text-sm font-black text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-300"
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden="true" />
-              Ativar programa
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={actionMutation.isPending || !editorRulesComplete}
-              onClick={() => {
-                const complete = completedDraft();
-                if (!complete) return;
-                void runAction(
-                  () => configureAffiliateProgram(false, complete),
-                  "Programa de afiliados desativado. Os históricos foram preservados.",
-                );
-              }}
-              className="inline-flex h-10 items-center rounded-lg border border-red-200 bg-red-50 px-4 text-sm font-black text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-              Desativar programa
-            </button>
-          )}
-        </div>
-      </section>
+      <AffiliateCommissionSettings />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <article className="rounded-xl border border-gray-200 bg-white p-5">
@@ -596,14 +452,14 @@ export function AffiliateAdmin() {
         {commissionsQuery.isLoading ? <LoadingBlock /> : commissionsQuery.error ? <EmptyRow message="Não foi possível carregar as comissões." /> : (commissionsQuery.data ?? []).length === 0 ? <EmptyRow message="Ainda não há comissões." /> : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[850px] text-left text-sm">
-              <thead className="bg-gray-50 text-xs font-bold text-gray-500"><tr><th className="px-5 py-3">Pedido</th><th className="px-5 py-3">Venda</th><th className="px-5 py-3">Base</th><th className="px-5 py-3">Taxa</th><th className="px-5 py-3">Comissão</th><th className="px-5 py-3">Status</th></tr></thead>
+              <thead className="bg-gray-50 text-xs font-bold text-gray-500"><tr><th className="px-5 py-3">Pedido</th><th className="px-5 py-3">Venda</th><th className="px-5 py-3">Peças</th><th className="px-5 py-3">Valor por peça</th><th className="px-5 py-3">Comissão</th><th className="px-5 py-3">Status</th></tr></thead>
               <tbody className="divide-y divide-gray-100">
                 {(commissionsQuery.data ?? []).map((row) => (
                   <tr key={row.commission_id}>
                     <td className="px-5 py-3 font-bold text-gray-950">{row.order_public_number}</td>
                     <td className="px-5 py-3 tabular-nums text-gray-700">{money(row.sale_amount)}</td>
-                    <td className="px-5 py-3 tabular-nums text-gray-700">{money(row.commission_base_amount)}</td>
-                    <td className="px-5 py-3 text-gray-700">{formatPercent(row.commission_rate_bps)}</td>
+                    <td className="px-5 py-3 tabular-nums text-gray-700">{row.commission_units ?? "—"}</td>
+                    <td className="px-5 py-3 text-gray-700">{row.commission_unit_amount === null ? "Histórico anterior" : money(row.commission_unit_amount)}</td>
                     <td className="px-5 py-3 font-black tabular-nums text-gray-950">{money(row.commission_amount)}</td>
                     <td className="px-5 py-3 text-gray-600">{row.status}</td>
                   </tr>
@@ -704,9 +560,7 @@ export function AffiliateAdmin() {
         )}
       </section>
 
-      <section className="grid gap-4 md:grid-cols-4">
-        <article className="rounded-xl border border-gray-200 bg-white p-4"><BadgePercent className="h-4.5 w-4.5 text-red-600" /><p className="mt-3 text-xs font-bold text-gray-500">Comissão</p><p className="mt-1 text-sm font-black text-gray-950">{formatPercent(overview.commissionRateBps)}</p></article>
-        <article className="rounded-xl border border-gray-200 bg-white p-4"><CircleDollarSign className="h-4.5 w-4.5 text-red-600" /><p className="mt-3 text-xs font-bold text-gray-500">Base</p><p className="mt-1 text-sm font-black text-gray-950">{formatBase(overview.commissionBaseMode)}</p></article>
+      <section className="grid gap-4 md:grid-cols-2">
         <article className="rounded-xl border border-gray-200 bg-white p-4"><Clock3 className="h-4.5 w-4.5 text-red-600" /><p className="mt-3 text-xs font-bold text-gray-500">Prazo</p><p className="mt-1 text-sm font-black text-gray-950">{overview.holdDays === null ? "A definir" : `${overview.holdDays} dias`}</p></article>
         <article className="rounded-xl border border-gray-200 bg-white p-4"><WalletCards className="h-4.5 w-4.5 text-red-600" /><p className="mt-3 text-xs font-bold text-gray-500">Saque mínimo / forma</p><p className="mt-1 text-sm font-black text-gray-950">{overview.minimumWithdrawal === null ? "A definir" : money(overview.minimumWithdrawal)} • {overview.withdrawalMethod ?? "A definir"}</p></article>
       </section>
