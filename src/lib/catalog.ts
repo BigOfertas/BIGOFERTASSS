@@ -41,6 +41,7 @@ export interface CatalogListItem {
   campeonato: string | null;
   liga: string | null;
   time: string | null;
+  commercial_type: string | null;
   created_at: string;
   image_storage_key: string | null;
   fallback_image_url: string | null;
@@ -82,6 +83,7 @@ const catalogItemSchema = z.object({
   campeonato: z.string().nullable(),
   liga: z.string().nullable(),
   time: z.string().nullable(),
+  commercial_type: z.string().nullable().optional().default(null),
   created_at: z.string(),
   image_storage_key: z.string().nullable(),
   fallback_image_url: z.string().nullable(),
@@ -131,8 +133,7 @@ export function parseCatalogFacets(value: Json): CatalogFacets {
 
 export function normalizeCatalogQuery(query: CatalogQuery): Required<
   Pick<CatalogQuery, "sort" | "page" | "pageSize">
-> &
-  CatalogQuery {
+> & CatalogQuery {
   const pageSize = CATALOG_PAGE_SIZES.includes(
     query.pageSize as (typeof CATALOG_PAGE_SIZES)[number],
   )
