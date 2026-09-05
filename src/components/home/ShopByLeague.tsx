@@ -28,7 +28,6 @@ const ShopByLeague: React.FC = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const displayLeague = LEAGUES.find((league) => league.id === displayLeagueId) ?? DEFAULT_LEAGUE;
-
   const { data, isLoading, error } = useCatalogProducts({
     liga: displayLeague.slug,
     pageSize: 24,
@@ -40,10 +39,8 @@ const ShopByLeague: React.FC = () => {
 
   const handleLeagueChange = (id: string) => {
     if (id === activeLeagueId || isTransitioning) return;
-
     setIsTransitioning(true);
     setActiveLeagueId(id);
-
     window.setTimeout(() => {
       setDisplayLeagueId(id);
       setIsTransitioning(false);
@@ -51,15 +48,15 @@ const ShopByLeague: React.FC = () => {
   };
 
   return (
-    <section className="overflow-hidden bg-transparent py-12 sm:py-16 lg:py-20">
+    <section className="overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <div className="mb-7 text-center sm:mb-9">
+        <div className="mb-6 text-center sm:mb-8">
           <p className="display-kicker">Futebol internacional</p>
           <h2 className="display-title-sm mt-2">Compre por liga</h2>
         </div>
 
-        <div className="mb-8 flex justify-center sm:mb-10">
-          <div className="glass-card grid w-full max-w-md grid-cols-6 gap-1 rounded-2xl p-1.5 sm:flex sm:w-auto sm:max-w-full">
+        <div className="mb-7 flex justify-center sm:mb-8">
+          <div className="grid w-full max-w-md grid-cols-6 gap-1 rounded-2xl border border-gray-200 bg-white p-1.5 shadow-sm sm:flex sm:w-auto sm:max-w-full">
             {LEAGUES.map((league, index) => (
               <button
                 type="button"
@@ -71,7 +68,7 @@ const ShopByLeague: React.FC = () => {
                 } ${
                   activeLeagueId === league.id
                     ? "bg-gray-950 text-white shadow-sm"
-                    : "text-gray-500 hover:text-gray-900"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                 }`}
               >
                 {league.name}
@@ -80,12 +77,8 @@ const ShopByLeague: React.FC = () => {
           </div>
         </div>
 
-        <div className="glass-panel rounded-[1.75rem] px-2 py-4 sm:px-4 sm:py-5 lg:px-5">
-          <div
-            className={`relative transition-all duration-150 ease-in-out motion-reduce:transform-none motion-reduce:transition-none ${
-              isTransitioning ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"
-            }`}
-          >
+        <div className="rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
+          <div className={`relative transition-all duration-150 ease-in-out motion-reduce:transform-none motion-reduce:transition-none ${isTransitioning ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`}>
             <ProductCarousel key={displayLeagueId} itemCount={SHOWCASE_SIZE}>
               {products.map((product) => (
                 <ProductCard
@@ -96,6 +89,8 @@ const ShopByLeague: React.FC = () => {
                   price={product.price}
                   promotionalPrice={product.promotional_price}
                   imageUrl={product.displayImageUrl}
+                  time={product.time}
+                  commercialType={product.commercial_type}
                 />
               ))}
               {Array.from({ length: placeholderCount }).map((_, index) => (
@@ -109,9 +104,7 @@ const ShopByLeague: React.FC = () => {
         </div>
 
         {error ? (
-          <span className="sr-only">
-            Não foi possível carregar os produtos da liga selecionada.
-          </span>
+          <span className="sr-only">Não foi possível carregar os produtos da liga selecionada.</span>
         ) : null}
       </div>
     </section>
