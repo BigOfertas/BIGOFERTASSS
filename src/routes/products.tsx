@@ -242,6 +242,8 @@ function ProductsPage() {
                       price={product.price}
                       promotionalPrice={product.promotional_price}
                       imageUrl={product.displayImageUrl}
+                      time={product.time}
+                      commercialType={product.commercial_type}
                     />
                   ))}
                 </div>

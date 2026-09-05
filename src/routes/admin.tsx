@@ -5,6 +5,7 @@ import {
   ExternalLink,
   LayoutDashboard,
   LogOut,
+  Palette,
   ShoppingBag,
   Store,
   UserRound,
@@ -17,6 +18,7 @@ import { OrderAdmin } from "@/components/admin/OrderAdmin";
 import { ProductAdmin } from "@/components/admin/ProductAdmin";
 import { ProductImageAdmin } from "@/components/admin/ProductImageAdmin";
 import { ProductPurchaseAdmin } from "@/components/admin/ProductPurchaseAdmin";
+import { PersonalizationAdmin } from "@/components/admin/PersonalizationAdmin";
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass-card";
 import { BRAND } from "@/config/brand";
@@ -27,7 +29,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type AdminSection = "dashboard" | "orders" | "products" | "affiliates";
+type AdminSection = "dashboard" | "orders" | "products" | "personalization" | "affiliates";
 
 const NAV_ITEMS: Array<{
   id: AdminSection;
@@ -52,6 +54,12 @@ const NAV_ITEMS: Array<{
     label: "Produtos",
     description: "Catálogo e disponibilidade",
     icon: Box,
+  },
+  {
+    id: "personalization",
+    label: "Personalização",
+    description: "Banners e artes da loja",
+    icon: Palette,
   },
   {
     id: "affiliates",
@@ -339,6 +347,8 @@ function AdminPage() {
                 <ProductPurchaseAdmin />
                 <ProductImageAdmin />
               </>
+            ) : section === "personalization" ? (
+              <PersonalizationAdmin />
             ) : (
               <AffiliateAdmin />
             )}

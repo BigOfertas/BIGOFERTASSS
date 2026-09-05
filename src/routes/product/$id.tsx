@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import Header from "@/components/layout/Header";
 import ProductCard from "@/components/product/ProductCard";
 import ProductGallery from "@/components/product/ProductGallery";
+import { ProductShippingCalculator } from "@/components/product/ProductShippingCalculator";
 import { ProductPurchaseOptions } from "@/components/product/ProductPurchaseOptions";
 import ProductSeo from "@/components/product/ProductSeo";
 import {
@@ -253,7 +254,6 @@ function ProductDetail() {
     : variantSelectedOptions;
 
   const builtInSpecs = [
-    { label: "SKU", value: selectedVariant?.sku ?? product.sku },
     detail.category?.name || product.category
       ? { label: "Categoria", value: detail.category?.name ?? product.category ?? "" }
       : null,
@@ -261,15 +261,6 @@ function ProductDetail() {
     product.liga ? { label: "Liga", value: product.liga } : null,
     product.campeonato
       ? { label: "Campeonato", value: product.campeonato }
-      : null,
-    product.weight_grams !== null
-      ? { label: "Peso", value: `${product.weight_grams} g` }
-      : null,
-    product.length_cm !== null && product.width_cm !== null && product.height_cm !== null
-      ? {
-          label: "Dimensões",
-          value: `${product.length_cm} × ${product.width_cm} × ${product.height_cm} cm`,
-        }
       : null,
   ].filter((item): item is { label: string; value: string } => Boolean(item?.value));
 
@@ -312,7 +303,7 @@ function ProductDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white pb-32 md:pb-20">
       <ProductSeo
         product={product}
         selectedVariant={selectedVariant}
@@ -390,10 +381,6 @@ function ProductDetail() {
               >
                 {product.name}
               </h1>
-              <p className="mb-5 text-xs font-medium uppercase tracking-wider text-gray-400">
-                SKU: {selectedVariant?.sku ?? product.sku}
-              </p>
-
               <div className="mb-6" aria-live="polite">
                 {formattedOriginalPrice ? (
                   <div className="mb-1 text-sm font-medium text-gray-400 line-through sm:text-base">
@@ -489,6 +476,10 @@ function ProductDetail() {
                 onChange={setPurchaseCustomization}
               />
             ) : null}
+
+            <div className="my-5">
+              <ProductShippingCalculator productId={product.id} quantity={quantity} />
+            </div>
 
             <div className="mt-auto space-y-5 border-t border-gray-100 pt-6">
               {selectedVariant && selectionComplete ? (
@@ -616,6 +607,23 @@ function ProductDetail() {
           </section>
         ) : null}
       </main>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Valor por peça</p>
+            <p className="truncate text-lg font-black text-gray-950">{currency.format(finalUnitPrice)}</p>
+          </div>
+          <Button
+            onClick={handleAddToCart}
+            disabled={!selectedVariant || !selectionComplete || !purchaseConfig}
+            className="h-12 flex-[1.35] rounded-xl bg-red-600 px-4 text-sm font-black text-white hover:bg-black disabled:bg-gray-200 disabled:text-gray-400"
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            {!selectionComplete ? "Escolha as opções" : "Adicionar"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
