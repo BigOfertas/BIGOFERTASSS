@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import ProductFilters from "@/components/ProductFilters";
 import Header from "@/components/layout/Header";
-import ProductCard from "@/components/product/ProductCard";
+import { CatalogProductGrid } from "@/components/product/CatalogProductGrid";
 import { Button } from "@/components/ui/button";
 import {
   useCatalogFacets,
@@ -222,31 +222,10 @@ function ProductsPage() {
             ) : null}
 
             {isLoading ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="aspect-[4/5] animate-pulse rounded-md bg-gray-100"
-                  />
-                ))}
-              </div>
+              <CatalogProductGrid products={[]} isLoading />
             ) : products.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
-                  {products.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      id={product.id}
-                      slug={product.slug}
-                      name={product.name}
-                      price={product.price}
-                      promotionalPrice={product.promotional_price}
-                      imageUrl={product.displayImageUrl}
-                      time={product.time}
-                      commercialType={product.commercial_type}
-                    />
-                  ))}
-                </div>
+                <CatalogProductGrid products={products} isLoading={false} />
 
                 {totalPages > 1 ? (
                   <nav
