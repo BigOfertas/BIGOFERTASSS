@@ -12,6 +12,7 @@ import internacionalAsset from "@/assets/teams/internacional.png.asset.json";
 import palmeirasAsset from "@/assets/teams/palmeiras.png.asset.json";
 import santosAsset from "@/assets/teams/santos_final.png.asset.json";
 import saoPauloAsset from "@/assets/teams/sao_paulo.png.asset.json";
+import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalization";
 
 interface Team {
   id: string;
@@ -30,11 +31,7 @@ const teams: Team[] = [
   { id: "botafogo", name: "Botafogo", logoUrl: botafogoAsset.url },
   { id: "fluminense", name: "Fluminense", logoUrl: fluminenseAsset.url },
   { id: "gremio", name: "Grêmio", logoUrl: gremioAsset.url },
-  {
-    id: "internacional",
-    name: "Internacional",
-    logoUrl: internacionalAsset.url,
-  },
+  { id: "internacional", name: "Internacional", logoUrl: internacionalAsset.url },
 ];
 
 const TeamLogo: React.FC<{ team: Team }> = ({ team }) => (
@@ -44,28 +41,30 @@ const TeamLogo: React.FC<{ team: Team }> = ({ team }) => (
     aria-label={`Ver produtos do ${team.name}`}
     className="group flex flex-shrink-0 flex-col items-center justify-center"
   >
-    <div className="glass-card flex h-[104px] w-[104px] items-center justify-center rounded-[1.4rem] p-2 lg:h-[80px] lg:w-[80px] xl:h-[100px] xl:w-[100px] 2xl:h-[104px] 2xl:w-[104px]">
-      <div className="glass-media h-full w-full overflow-hidden rounded-[1rem]">
-        <img
-          src={team.logoUrl}
-          alt={team.name}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.035] motion-reduce:transform-none motion-reduce:transition-none"
-        />
-      </div>
+    <div className="flex h-[104px] w-[104px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition group-hover:-translate-y-0.5 group-hover:shadow-md motion-reduce:transform-none motion-reduce:transition-none lg:h-[80px] lg:w-[80px] xl:h-[100px] xl:w-[100px] 2xl:h-[104px] 2xl:w-[104px]">
+      <img
+        src={team.logoUrl}
+        alt={team.name}
+        loading="lazy"
+        decoding="async"
+        width={600}
+        height={600}
+        className="h-full w-full object-contain"
+      />
     </div>
   </Link>
 );
 
 const BrazilianTeams: React.FC = () => {
+  const { data: personalization } = useStorefrontPersonalization();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  const handleScroll = () => {
-    if (!scrollRef.current) {
-      return;
-    }
+  const desktopBanner = personalization?.brasileirao_banner_desktop?.url;
+  const mobileBanner = personalization?.brasileirao_banner_mobile?.url;
 
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
     const maxScroll = scrollWidth - clientWidth;
     setScrollProgress(maxScroll > 0 ? scrollLeft / maxScroll : 0);
@@ -75,14 +74,44 @@ const BrazilianTeams: React.FC = () => {
   const activeDotIndex = Math.round(scrollProgress * (dots.length - 1));
 
   return (
-    <section className="overflow-hidden bg-transparent py-10 sm:py-14">
+    <section className="overflow-hidden bg-transparent py-8 sm:py-10 lg:py-12">
+      {(desktopBanner || mobileBanner) ? (
+        <div className="mx-auto mb-8 max-w-[1920px]">
+          <a href="#brasileirao" aria-label="Ir para produtos do Brasileirão" className="block overflow-hidden bg-gray-100">
+            <picture>
+              {mobileBanner ? <source media="(max-width: 767px)" srcSet={mobileBanner} /> : null}
+              <img
+                src={desktopBanner ?? mobileBanner ?? undefined}
+                alt="Produtos do Brasileirão"
+                loading="lazy"
+                decoding="async"
+                width={1920}
+                height={360}
+                className="hidden h-auto w-full object-cover md:block"
+              />
+              {mobileBanner ? (
+                <img
+                  src={mobileBanner}
+                  alt="Produtos do Brasileirão"
+                  loading="lazy"
+                  decoding="async"
+                  width={1080}
+                  height={540}
+                  className="h-auto w-full object-cover md:hidden"
+                />
+              ) : null}
+            </picture>
+          </a>
+        </div>
+      ) : null}
+
       <div className="mx-auto max-w-7xl px-4 lg:max-w-[1536px] lg:px-4">
-        <div className="mb-7 text-center sm:mb-9">
+        <div className="mb-6 text-center sm:mb-8">
           <p className="display-kicker">Futebol brasileiro</p>
           <h2 className="display-title-sm mt-2">Encontre seu time</h2>
         </div>
 
-        <div className="glass-panel teams-panel rounded-[1.75rem] px-3 py-5 sm:px-5">
+        <div className="rounded-2xl border border-gray-200 bg-white px-3 py-5 shadow-sm sm:px-5">
           <div className="relative">
             <div
               ref={scrollRef}
@@ -91,10 +120,7 @@ const BrazilianTeams: React.FC = () => {
               style={{ scrollSnapType: "x mandatory" }}
             >
               {teams.map((team) => (
-                <div
-                  key={team.id}
-                  className="flex flex-shrink-0 snap-center items-center justify-center"
-                >
+                <div key={team.id} className="flex flex-shrink-0 snap-center items-center justify-center">
                   <TeamLogo team={team} />
                 </div>
               ))}
