@@ -75,17 +75,13 @@ export function CatalogProductGrid({
   products: CatalogListItem[];
   isLoading: boolean;
 }) {
-  const [desktopColumns, setDesktopColumns] = useState<DesktopColumns>(4);
-  const [mobileColumns, setMobileColumns] = useState<MobileColumns>(2);
+  const [desktopColumns, setDesktopColumns] = useState<DesktopColumns>(() => readStoredDesktopColumns());
+  const [mobileColumns, setMobileColumns] = useState<MobileColumns>(() => readStoredMobileColumns());
   const [fading, setFading] = useState(false);
   const timerRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    setDesktopColumns(readStoredDesktopColumns());
-    setMobileColumns(readStoredMobileColumns());
-    return () => {
-      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
-    };
+  useEffect(() => () => {
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
   }, []);
 
   function changeDensity(kind: "desktop" | "mobile", value: DesktopColumns | MobileColumns) {
