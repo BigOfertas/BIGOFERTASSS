@@ -125,6 +125,14 @@ export async function fetchMyAffiliateDashboard() {
   return normalizeDashboard(await callSupabaseRpc<unknown>("get_my_affiliate_dashboard"));
 }
 
+export function activateMyAffiliate() {
+  return callSupabaseRpc<unknown>("activate_my_affiliate");
+}
+
+export function deactivateMyAffiliate() {
+  return callSupabaseRpc<unknown>("deactivate_my_affiliate");
+}
+
 export async function fetchMyAffiliateReferrals() {
   return callSupabaseRpc<AffiliateReferralRow[]>("list_my_affiliate_referrals", { p_limit: 100, p_offset: 0 });
 }
@@ -136,7 +144,6 @@ export async function fetchMyAffiliateCommissions() {
 export async function fetchMyAffiliateWithdrawals() {
   return callSupabaseRpc<AffiliateWithdrawalRow[]>("list_my_affiliate_withdrawals", { p_limit: 100, p_offset: 0 });
 }
-
 
 export type PixKeyType = "cpf" | "cnpj" | "email" | "phone" | "random";
 
