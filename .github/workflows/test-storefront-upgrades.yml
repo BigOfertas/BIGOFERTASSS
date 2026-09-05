@@ -1,0 +1,52 @@
+name: Test Storefront Upgrades
+
+on:
+  push:
+    branches:
+      - storefront-upgrades-20260904
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-storefront-upgrades
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout upgrade branch
+        uses: actions/checkout@v7
+        with:
+          ref: storefront-upgrades-20260904
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate storefront requirements
+        run: node scripts/validate-storefront-upgrades.mjs
+
+      - name: Validate pricing
+        run: bun run validate:pricing
+
+      - name: Validate affiliate regressions
+        run: bun run validate:affiliate
+
+      - name: Validate phase 10 and admin regressions
+        run: bun run validate:phase10
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Build application
+        run: bun run build
+
+      - name: Build Hostinger artifact without publishing
+        run: bun run build:hostinger
