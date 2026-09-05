@@ -9,6 +9,7 @@ interface PromoBannerProps {
   aspectRatio?: string;
   style?: React.CSSProperties;
   href?: string;
+  priority?: boolean;
 }
 
 const PromoBanner: React.FC<PromoBannerProps> = ({
@@ -20,16 +21,14 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
   aspectRatio = "aspect-auto",
   style = {},
   href,
+  priority = false,
 }) => {
   const bannerImages = (images?.length ? images : imageUrl ? [imageUrl] : []).filter(Boolean);
 
-  if (bannerImages.length === 0) {
-    return null;
-  }
+  if (bannerImages.length === 0) return null;
 
   const isCarousel = bannerImages.length > 1;
   const displayItems = isCarousel ? [...bannerImages, ...bannerImages] : bannerImages;
-
   const parsedAspectRatio =
     style.aspectRatio || aspectRatio === "aspect-auto"
       ? style.aspectRatio
@@ -37,16 +36,14 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
 
   const content = (
     <div
-      className={`w-full overflow-hidden bg-gray-100 transition-all duration-300 ${
-        href ? "cursor-pointer hover:shadow-lg" : ""
-      } ${className}`}
+      className={`w-full overflow-hidden bg-gray-100 ${href ? "cursor-pointer" : ""} ${className}`}
       data-banner-id={id}
       style={{ ...style, aspectRatio: parsedAspectRatio }}
     >
       <div
         className={
           isCarousel
-            ? `animate-marquee h-full ${id === "superior" ? "animate-marquee--fast" : ""}`
+            ? `animate-marquee h-full ${id === "superior" ? "animate-marquee--fast marquee-continuous" : ""}`
             : "h-full w-full"
         }
       >
@@ -58,14 +55,12 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
             <img
               src={src}
               alt={isCarousel ? `${altText} ${index + 1}` : altText}
-              className={`h-full w-full object-cover transition-all duration-300 ${
-                id === "inferior"
-                  ? "object-left md:object-center"
-                  : id === "superior"
-                    ? "aspect-[1774/300]"
-                    : "object-center"
+              loading={priority && index === 0 ? "eager" : "lazy"}
+              fetchPriority={priority && index === 0 ? "high" : "auto"}
+              decoding="async"
+              className={`h-full w-full object-cover ${
+                id === "inferior" ? "object-left md:object-center" : "object-center"
               }`}
-              style={id === "superior" ? { aspectRatio: "1774 / 300" } : {}}
             />
           </div>
         ))}
