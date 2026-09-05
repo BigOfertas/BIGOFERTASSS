@@ -31,6 +31,7 @@ const shipping = read("src/components/product/ProductShippingCalculator.tsx");
 const gallery = read("src/components/product/ProductGallery.tsx");
 const seo = read("src/components/product/ProductSeo.tsx");
 const catalog = read("src/lib/catalog.ts");
+const catalogGrid = read("src/components/product/CatalogProductGrid.tsx");
 const migration = read("supabase/migrations/20260904213000_storefront_personalization.sql");
 const catalogMigration = read("supabase/migrations/20260904213500_catalog_commercial_type.sql");
 const config = read("supabase/config.toml");
@@ -50,7 +51,15 @@ check("banner hero não possui link configurado", !index.includes('id="inferior"
 check("banner Brasileirão leva à seção Brasileirão", brazil.includes('href="#brasileirao"') && brazilProducts.includes('id="brasileirao"'));
 
 const expectedNav = ["INÍCIO","KIDS","KITS DE TREINO","SHORTS","BASQUETE / NBA","CORTA-VENTO","MUNDO FIFA","CAMISAS RETRÔ"];
-check("menu contém somente a nova taxonomia comercial principal", expectedNav.every((label) => nav.includes(`name: "${label}"`)) && !nav.includes('name: "JOGADOR"') && !nav.includes('name: "ACESSÓRIOS"'));
+const forbiddenNav = ["COPA DO MUNDO","JOGADOR","KIT REGATA","CONJUNTOS","INFANTIL","FEMININAS","ACESSÓRIOS"];
+check(
+  "menu desktop e mobile usam somente a nova taxonomia comercial",
+  expectedNav.every((label) => nav.includes(`name: "${label}"`)) &&
+    forbiddenNav.every((label) => !nav.includes(`name: "${label}"`)) &&
+    header.includes("<CategoryNav />") &&
+    header.includes("<CategoryNav mobile"),
+);
+
 const categoryOrder = ["Conjunto infantil / Kids","Conjunto de treino / Kits","Short","Basquete / NBA","Corta-vento / Windbreaker","Mundo FIFA","Camisas retrô"];
 check("Monte seu pedido possui sete cards na ordem definida", categoryOrder.every((label, index) => {
   const position = categories.indexOf(`name: "${label}"`);
@@ -69,6 +78,8 @@ check("produto não exibe peso e dimensões da embalagem", !productPage.includes
 check("produto tem calculadora de entrega", productPage.includes("ProductShippingCalculator") && shipping.includes("requestProductShippingQuotes"));
 check("produto tem ação fixa no mobile", productPage.includes("fixed inset-x-0 bottom-0") && productPage.includes("Valor por peça"));
 check("pesquisa tem sugestões dinâmicas", header.includes("useCatalogSearchSuggestions") && header.includes("Ver todos os resultados"));
+check("catálogo possui densidade 2/3/4/5 no PC com padrão 4 e 1/2 no mobile", catalogGrid.includes("useState<DesktopColumns>(4)") && catalogGrid.includes("useState<MobileColumns>(2)") && catalogGrid.includes("([2, 3, 4, 5] as const)") && catalogGrid.includes("([1, 2] as const)"));
+check("troca de densidade usa fade e preserva preferência", catalogGrid.includes("transition-opacity duration-200") && catalogGrid.includes("setFading(true)") && catalogGrid.includes("window.localStorage.setItem"));
 check("galeria e cards possuem dicas de tamanho/performance", gallery.includes("sizes=") && gallery.includes('fetchPriority="high"') && productCard.includes("sizes="));
 check("SEO inclui Open Graph, Twitter e dados estruturados", seo.includes('twitter:card') && seo.includes('og:image:alt') && seo.includes('application/ld+json'));
 check("uploads de personalização validam owner via RLS", migration.includes("site_asset_uploads_owner_all") && migration.includes("site_personalization_assets_owner_all"));
