@@ -1,7 +1,7 @@
 import {
   ArrowLeft,
-  BadgePercent,
   Home,
+  Link2,
   MapPin,
   Package,
   UserRound,
@@ -20,7 +20,7 @@ export function AffiliateAccountPage({
     { section: "dados" as const, label: "Minha conta", icon: UserRound },
     { section: "enderecos" as const, label: "Endereços", icon: MapPin },
     { section: "pedidos" as const, label: "Pedidos", icon: Package },
-    { section: "afiliados" as const, label: "Afiliados", icon: BadgePercent },
+    { section: "afiliados" as const, label: "Afiliados", icon: Link2 },
   ];
 
   return (
