@@ -55,7 +55,7 @@ replaceExact(
 );
 replaceExact(
   "src/routes/product/$id.tsx",
-  `    product.weight_grams !== null\n      ? { label: "Peso", value: \`${product.weight_grams} g\` }\n      : null,\n    product.length_cm !== null && product.width_cm !== null && product.height_cm !== null\n      ? {\n          label: "Dimensões",\n          value: \`${product.length_cm} × ${product.width_cm} × ${product.height_cm} cm\`,\n        }\n      : null,\n`,
+  `    product.weight_grams !== null\n      ? { label: "Peso", value: \`\${product.weight_grams} g\` }\n      : null,\n    product.length_cm !== null && product.width_cm !== null && product.height_cm !== null\n      ? {\n          label: "Dimensões",\n          value: \`\${product.length_cm} × \${product.width_cm} × \${product.height_cm} cm\`,\n        }\n      : null,\n`,
   ``,
 );
 replaceExact(
