@@ -18,9 +18,7 @@ export default function ProductGallery({
     () => images.find((image) => image.isPrimary)?.id ?? images[0]?.id ?? null,
     [images],
   );
-  const [activeImageId, setActiveImageId] = useState<string | null>(
-    preferredImageId,
-  );
+  const [activeImageId, setActiveImageId] = useState<string | null>(preferredImageId);
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -28,10 +26,9 @@ export default function ProductGallery({
   }, [preferredImageId]);
 
   const activeImage =
-    images.find(
-      (image) =>
-        image.id === activeImageId && !failedImageIds.has(image.id),
-    ) ?? images.find((image) => !failedImageIds.has(image.id)) ?? null;
+    images.find((image) => image.id === activeImageId && !failedImageIds.has(image.id)) ??
+    images.find((image) => !failedImageIds.has(image.id)) ??
+    null;
 
   const markFailed = (imageId: string) => {
     setFailedImageIds((current) => new Set(current).add(imageId));
@@ -45,6 +42,11 @@ export default function ProductGallery({
             key={activeImage.id}
             src={activeImage.url}
             alt={activeImage.alt}
+            width={1200}
+            height={1500}
+            sizes="(max-width: 1023px) 92vw, 600px"
+            fetchPriority="high"
+            decoding="async"
             onError={() => markFailed(activeImage.id)}
             className="h-full w-full object-contain p-5 sm:p-10"
           />
@@ -88,6 +90,10 @@ export default function ProductGallery({
                     src={image.url}
                     alt=""
                     loading="lazy"
+                    decoding="async"
+                    width={180}
+                    height={180}
+                    sizes="96px"
                     onError={() => markFailed(image.id)}
                     className="h-full w-full object-contain p-1"
                   />
