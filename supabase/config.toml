@@ -8,6 +8,12 @@ verify_jwt = false
 [functions.r2-image-complete]
 verify_jwt = false
 
+[functions.site-asset-presign]
+verify_jwt = false
+
+[functions.site-asset-complete]
+verify_jwt = false
+
 # Cotacao publica de frete. O token da SuperFrete fica somente nos secrets do Supabase.
 [functions.shipping-quote]
 verify_jwt = false
