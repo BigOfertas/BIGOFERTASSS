@@ -37,6 +37,8 @@ type ShippingErrorPayload = Partial<ShippingQuoteResult> & {
   error?: unknown;
 };
 
+type ShippingItemInput = { productId: string; quantity: number };
+
 export function onlyPostalCodeDigits(value: string) {
   return value.replace(/\D/g, "").slice(0, 8);
 }
@@ -59,10 +61,8 @@ export function formatTransitLabel(quote: ShippingQuote) {
     if (quote.transitRange.min === quote.transitRange.max) {
       return businessDaysLabel(quote.transitRange.max);
     }
-
     return `${quote.transitRange.min}–${quote.transitRange.max} dias úteis`;
   }
-
   return businessDaysLabel(quote.transitBusinessDays);
 }
 
@@ -84,48 +84,41 @@ async function postShippingQuote(url: string, body: string) {
 
 async function shippingResponse(body: string) {
   const edgeUrl = edgeShippingUrl();
-
   if (edgeUrl) {
     try {
       const edgeResponse = await postShippingQuote(edgeUrl, body);
-      if (edgeResponse.status < 500 || !legacyWorkerFallbackAvailable()) {
-        return edgeResponse;
-      }
+      if (edgeResponse.status < 500 || !legacyWorkerFallbackAvailable()) return edgeResponse;
     } catch (error) {
       if (!legacyWorkerFallbackAvailable()) throw error;
     }
   }
-
-  if (legacyWorkerFallbackAvailable()) {
-    return postShippingQuote("/api/shipping/quote", body);
-  }
-
+  if (legacyWorkerFallbackAvailable()) return postShippingQuote("/api/shipping/quote", body);
   throw new Error("Não foi possível calcular o frete agora. Tente novamente em instantes.");
 }
 
-export async function requestShippingQuotes(
+async function requestShippingQuoteItems(
   postalCode: string,
-  cart: CartItem[],
+  items: ShippingItemInput[],
 ): Promise<ShippingQuoteResult> {
   const normalizedPostalCode = onlyPostalCodeDigits(postalCode);
-
   if (normalizedPostalCode.length !== 8) {
     throw new Error("Informe um CEP válido com 8 dígitos.");
   }
 
-  if (cart.length === 0) {
-    throw new Error("Adicione um produto ao carrinho para calcular o frete.");
+  const normalizedItems = items
+    .map((item) => ({
+      productId: item.productId.trim(),
+      quantity: Number.isFinite(item.quantity) ? Math.max(1, Math.trunc(item.quantity)) : 1,
+    }))
+    .filter((item) => item.productId);
+
+  if (normalizedItems.length === 0) {
+    throw new Error("Adicione um produto para calcular o frete.");
   }
 
-  const requestBody = JSON.stringify({
-    postalCode: normalizedPostalCode,
-    items: cart.map((item) => ({
-      productId: item.productId,
-      quantity: item.quantity,
-    })),
-  });
-
-  const response = await shippingResponse(requestBody);
+  const response = await shippingResponse(
+    JSON.stringify({ postalCode: normalizedPostalCode, items: normalizedItems }),
+  );
   const rawBody = await response.text();
   let payload: ShippingErrorPayload | null = null;
 
@@ -147,10 +140,26 @@ export async function requestShippingQuotes(
   }
 
   if (!payload || !Array.isArray(payload.quotes)) {
-    throw new Error(
-      "Não foi possível carregar as opções de entrega agora. Tente novamente.",
-    );
+    throw new Error("Não foi possível carregar as opções de entrega agora. Tente novamente.");
   }
 
   return payload as ShippingQuoteResult;
+}
+
+export async function requestShippingQuotes(
+  postalCode: string,
+  cart: CartItem[],
+): Promise<ShippingQuoteResult> {
+  return requestShippingQuoteItems(
+    postalCode,
+    cart.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+  );
+}
+
+export async function requestProductShippingQuotes(
+  postalCode: string,
+  productId: string,
+  quantity = 1,
+): Promise<ShippingQuoteResult> {
+  return requestShippingQuoteItems(postalCode, [{ productId, quantity }]);
 }
