@@ -6,8 +6,129 @@ import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { Input } from "@/components/ui/input";
 import { BRAND } from "@/config/brand";
 import { useCart } from "@/context/CartContext";
+import { useCatalogSearchSuggestions } from "@/hooks/useCatalogSearchSuggestions";
 import { useAuth } from "@/lib/auth";
 import CategoryNav from "./CategoryNav";
+
+const currency = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+
+function SearchBox({
+  query,
+  onQueryChange,
+  onSubmit,
+  onNavigate,
+  mobile = false,
+}: {
+  query: string;
+  onQueryChange: (value: string) => void;
+  onSubmit: (event: React.FormEvent) => void;
+  onNavigate: () => void;
+  mobile?: boolean;
+}) {
+  const [focused, setFocused] = React.useState(false);
+  const suggestionsQuery = useCatalogSearchSuggestions(query);
+  const suggestions = suggestionsQuery.data ?? [];
+  const showSuggestions = focused && query.trim().length >= 2;
+
+  return (
+    <div className="relative">
+      <form onSubmit={onSubmit} className="relative group" role="search">
+        <Input
+          type="search"
+          aria-label="Buscar produtos"
+          placeholder="Busque por time, camisa, retrô, NBA..."
+          value={query}
+          onChange={(event) => onQueryChange(event.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => window.setTimeout(() => setFocused(false), 140)}
+          className={`glass-input w-full rounded-2xl border-0 text-sm placeholder:text-gray-400 focus:border-red-600 focus:ring-0 focus-visible:ring-2 focus-visible:ring-red-100 ${
+            mobile ? "h-11 pl-4 pr-12" : "h-12 pl-5 pr-14"
+          }`}
+        />
+        <button
+          type="submit"
+          aria-label="Buscar"
+          className={
+            mobile
+              ? "absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-red-600"
+              : "absolute right-1.5 top-1.5 flex h-9 w-10 items-center justify-center rounded-xl text-gray-500 transition-colors group-focus-within:bg-white/70 group-focus-within:text-red-600"
+          }
+        >
+          <Search className="h-5 w-5" />
+        </button>
+      </form>
+
+      {showSuggestions ? (
+        <div className="absolute left-0 right-0 top-full z-[70] mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+          {suggestionsQuery.isLoading ? (
+            <p className="px-4 py-4 text-xs font-semibold text-gray-500">Buscando produtos...</p>
+          ) : suggestions.length > 0 ? (
+            <>
+              <div className="max-h-[360px] overflow-y-auto py-1">
+                {suggestions.map((product) => {
+                  const effectivePrice = product.promotional_price ?? product.price;
+                  return (
+                    <Link
+                      key={product.id}
+                      to="/product/$id"
+                      params={{ id: product.slug || product.id }}
+                      onClick={onNavigate}
+                      className="flex items-center gap-3 px-3 py-2.5 transition hover:bg-gray-50"
+                    >
+                      <div className="flex h-14 w-12 flex-none items-center justify-center overflow-hidden rounded-lg bg-gray-50">
+                        {product.displayImageUrl ? (
+                          <img
+                            src={product.displayImageUrl}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            width={96}
+                            height={120}
+                            className="h-full w-full object-contain p-1"
+                          />
+                        ) : (
+                          <span className="text-[8px] font-black text-red-200">BIG</span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-2 text-xs font-bold leading-4 text-gray-900">{product.name}</p>
+                        {product.time ? <p className="mt-0.5 truncate text-[10px] font-semibold text-gray-400">{product.time}</p> : null}
+                      </div>
+                      <strong className="flex-none text-xs text-gray-950">{currency.format(effectivePrice)}</strong>
+                    </Link>
+                  );
+                })}
+              </div>
+              <Link
+                to="/products"
+                search={{ q: query.trim() }}
+                onClick={onNavigate}
+                className="flex h-11 items-center justify-center border-t border-gray-100 px-4 text-xs font-black text-red-600 hover:bg-red-50"
+              >
+                Ver todos os resultados
+              </Link>
+            </>
+          ) : (
+            <div className="px-4 py-4">
+              <p className="text-xs font-semibold text-gray-500">Nenhum produto encontrado agora.</p>
+              <Link
+                to="/products"
+                search={{ q: query.trim() }}
+                onClick={onNavigate}
+                className="mt-2 inline-block text-xs font-black text-red-600"
+              >
+                Buscar no catálogo
+              </Link>
+            </div>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 const Header: React.FC = () => {
   const { totalItems } = useCart();
@@ -20,15 +141,12 @@ const Header: React.FC = () => {
   const accountTopLabel = isOwner ? "Painel" : user ? "Minha" : "Acessar";
   const accountBottomLabel = isOwner ? "Admin" : "Conta";
 
+  const closeNavigation = () => setMobileMenuOpen(false);
+
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
     const query = searchQuery.trim();
-
-    void navigate({
-      to: "/products",
-      search: query ? { q: query } : {},
-    });
-
+    void navigate({ to: "/products", search: query ? { q: query } : {} });
     setMobileMenuOpen(false);
   };
 
@@ -42,57 +160,31 @@ const Header: React.FC = () => {
               className="flex w-56 flex-shrink-0 items-center"
               aria-label={`${BRAND.officialName} - Início`}
             >
-              <div className="brand-lockup h-14 w-full px-5 text-2xl">
-                <BrandWordmark />
-              </div>
+              <div className="brand-lockup h-14 w-full px-5 text-2xl"><BrandWordmark /></div>
             </Link>
 
-            <div className="relative max-w-2xl flex-1">
-              <form onSubmit={handleSearch} className="relative group" role="search">
-                <Input
-                  type="search"
-                  aria-label="Buscar produtos"
-                  placeholder="O que você está procurando?"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  className="glass-input h-12 w-full rounded-2xl border-0 pl-5 pr-14 text-sm placeholder:text-gray-400 focus:border-red-600 focus:ring-0 focus-visible:ring-2 focus-visible:ring-red-100"
-                />
-                <button
-                  type="submit"
-                  aria-label="Buscar"
-                  className="absolute right-1.5 top-1.5 flex h-9 w-10 items-center justify-center rounded-xl text-gray-500 transition-colors group-focus-within:bg-white/70 group-focus-within:text-red-600"
-                >
-                  <Search className="h-5 w-5" />
-                </button>
-              </form>
+            <div className="max-w-2xl flex-1">
+              <SearchBox
+                query={searchQuery}
+                onQueryChange={setSearchQuery}
+                onSubmit={handleSearch}
+                onNavigate={closeNavigation}
+              />
             </div>
 
             <div className="flex items-center gap-3">
-              <Link
-                to={accountDestination}
-                className="header-action group gap-3 px-3 py-2.5 transition-colors"
-              >
+              <Link to={accountDestination} className="header-action group gap-3 px-3 py-2.5 transition-colors">
                 <User className="h-6 w-6 text-gray-900 transition-colors group-hover:text-red-600" />
                 <div className="flex flex-col items-start leading-tight">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-                    {accountTopLabel}
-                  </span>
-                  <span className="text-sm font-extrabold tracking-[-0.02em] text-gray-900 transition-colors group-hover:text-red-600">
-                    {accountBottomLabel}
-                  </span>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">{accountTopLabel}</span>
+                  <span className="text-sm font-extrabold tracking-[-0.02em] text-gray-900 transition-colors group-hover:text-red-600">{accountBottomLabel}</span>
                 </div>
               </Link>
 
-              <Link
-                to="/cart"
-                aria-label={`Carrinho com ${totalItems} item(ns)`}
-                className="header-action group relative h-12 w-12 transition-colors"
-              >
+              <Link to="/cart" aria-label={`Carrinho com ${totalItems} item(ns)`} className="header-action group relative h-12 w-12 transition-colors">
                 <ShoppingCart className="h-6 w-6 text-gray-900 transition-colors group-hover:text-red-600" />
                 {totalItems > 0 ? (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-600 px-1 text-[9px] font-black text-white shadow-sm">
-                    {totalItems}
-                  </span>
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-600 px-1 text-[9px] font-black text-white shadow-sm">{totalItems}</span>
                 ) : null}
               </Link>
             </div>
@@ -110,70 +202,37 @@ const Header: React.FC = () => {
             aria-expanded={mobileMenuOpen}
             className="header-action -ml-1 h-10 w-10 text-gray-900 active:text-red-600"
           >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
 
-          <Link
-            to="/"
-            className="flex flex-1 justify-center px-3"
-            aria-label={`${BRAND.officialName} - Início`}
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <div className="brand-lockup h-10 w-36 px-3 text-lg">
-              <BrandWordmark />
-            </div>
+          <Link to="/" className="flex flex-1 justify-center px-3" aria-label={`${BRAND.officialName} - Início`} onClick={closeNavigation}>
+            <div className="brand-lockup h-10 w-36 px-3 text-lg"><BrandWordmark /></div>
           </Link>
 
           <div className="-mr-1 flex items-center gap-2">
-            <Link
-              to={accountDestination}
-              aria-label={isOwner ? "Abrir painel administrativo" : user ? "Abrir conta" : "Acessar conta"}
-              className="header-action h-10 w-10 text-gray-900 active:text-red-600"
-            >
+            <Link to={accountDestination} aria-label={isOwner ? "Abrir painel administrativo" : user ? "Abrir conta" : "Acessar conta"} className="header-action h-10 w-10 text-gray-900 active:text-red-600">
               <User className="h-5.5 w-5.5" />
             </Link>
-            <Link
-              to="/cart"
-              aria-label={`Carrinho com ${totalItems} item(ns)`}
-              className="header-action relative h-10 w-10 text-gray-900 active:text-red-600"
-            >
+            <Link to="/cart" aria-label={`Carrinho com ${totalItems} item(ns)`} className="header-action relative h-10 w-10 text-gray-900 active:text-red-600">
               <ShoppingCart className="h-5.5 w-5.5" />
               {totalItems > 0 ? (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border border-white bg-red-600 px-0.5 text-[8px] font-black text-white">
-                  {totalItems}
-                </span>
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border border-white bg-red-600 px-0.5 text-[8px] font-black text-white">{totalItems}</span>
               ) : null}
             </Link>
           </div>
         </div>
 
         <div className="px-4 pb-3">
-          <form onSubmit={handleSearch} className="relative group" role="search">
-            <Input
-              type="search"
-              aria-label="Buscar produtos"
-              placeholder="O que você está procurando?"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              className="glass-input h-11 w-full rounded-2xl border-0 pl-4 pr-12 text-sm focus:border-red-600 focus:ring-0 focus-visible:ring-2 focus-visible:ring-red-100"
-            />
-            <button
-              type="submit"
-              aria-label="Buscar"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-red-600"
-            >
-              <Search className="h-5 w-5" />
-            </button>
-          </form>
+          <SearchBox
+            query={searchQuery}
+            onQueryChange={setSearchQuery}
+            onSubmit={handleSearch}
+            onNavigate={closeNavigation}
+            mobile
+          />
         </div>
 
-        {mobileMenuOpen ? (
-          <CategoryNav mobile onNavigate={() => setMobileMenuOpen(false)} />
-        ) : null}
+        {mobileMenuOpen ? <CategoryNav mobile onNavigate={closeNavigation} /> : null}
       </div>
     </header>
   );
