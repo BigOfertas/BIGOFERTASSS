@@ -76,6 +76,15 @@ export function buildProductImageObjectKey(
     : `products/${productId}/${imageId}.${extension}`;
 }
 
+export function buildSiteAssetObjectKey(
+  slotKey: string,
+  mimeType: AllowedImageMimeType,
+) {
+  const extension = EXTENSION_BY_MIME[mimeType];
+  const safeSlot = slotKey.toLowerCase().replace(/[^a-z0-9_-]+/g, "-");
+  return `site-assets/${safeSlot}/${crypto.randomUUID()}.${extension}`;
+}
+
 export function getUploadTtlSeconds() {
   const configured = Number(Deno.env.get("R2_UPLOAD_URL_TTL_SECONDS") ?? "900");
 
