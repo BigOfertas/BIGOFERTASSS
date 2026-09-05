@@ -46,6 +46,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
             ? `animate-marquee h-full ${id === "superior" ? "animate-marquee--fast marquee-continuous" : ""}`
             : "h-full w-full"
         }
+        style={id === "superior" && isCarousel ? { animationPlayState: "running" } : undefined}
       >
         {displayItems.map((src, index) => (
           <div
