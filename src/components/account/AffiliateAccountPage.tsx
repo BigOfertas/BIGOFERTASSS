@@ -7,7 +7,7 @@ import {
   UserRound,
 } from "lucide-react";
 
-import { AffiliateAccountPanel } from "@/components/account/AffiliateAccountPanel";
+import { AffiliateSelfServicePanel } from "@/components/account/AffiliateSelfServicePanel";
 import type { AccountSection } from "@/components/account/AccountDashboard";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass-card";
 
@@ -40,7 +40,7 @@ export function AffiliateAccountPage({
             <p className="display-kicker">Área do cliente</p>
             <h1 className="display-title mt-2">Afiliados</h1>
             <p className="section-copy mt-3 max-w-2xl">
-              Acompanhe novos clientes cadastrados pela sua indicação, as comissões geradas pelos pedidos deles e seu histórico de saques.
+              Ative seu link exclusivo, acompanhe clientes indicados, comissões e seu histórico de saques.
             </p>
           </div>
 
@@ -93,7 +93,7 @@ export function AffiliateAccountPage({
           })}
         </nav>
 
-        <AffiliateAccountPanel />
+        <AffiliateSelfServicePanel />
       </div>
     </div>
   );
