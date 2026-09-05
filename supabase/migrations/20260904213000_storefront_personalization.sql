@@ -15,21 +15,11 @@ CREATE TABLE IF NOT EXISTS public.site_asset_uploads (
   completed_at timestamptz,
   CONSTRAINT site_asset_uploads_slot_valid CHECK (
     slot_key IN (
-      'top_banner_desktop',
-      'top_banner_mobile',
-      'hero_desktop',
-      'hero_mobile',
-      'brasileirao_banner_desktop',
-      'brasileirao_banner_mobile',
-      'ambient_banner_desktop',
-      'ambient_banner_mobile',
-      'category_kids',
-      'category_training',
-      'category_shorts',
-      'category_basketball',
-      'category_windbreaker',
-      'category_fifa',
-      'category_retro'
+      'top_banner_desktop','top_banner_mobile','hero_desktop','hero_mobile',
+      'brasileirao_banner_desktop','brasileirao_banner_mobile',
+      'ambient_banner_desktop','ambient_banner_mobile',
+      'category_kids','category_training','category_shorts','category_basketball',
+      'category_windbreaker','category_fifa','category_retro'
     )
   ),
   CONSTRAINT site_asset_uploads_status_valid CHECK (status IN ('pending','ready','failed')),
@@ -46,21 +36,11 @@ CREATE TABLE IF NOT EXISTS public.site_personalization_assets (
   updated_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   CONSTRAINT site_personalization_slot_valid CHECK (
     slot_key IN (
-      'top_banner_desktop',
-      'top_banner_mobile',
-      'hero_desktop',
-      'hero_mobile',
-      'brasileirao_banner_desktop',
-      'brasileirao_banner_mobile',
-      'ambient_banner_desktop',
-      'ambient_banner_mobile',
-      'category_kids',
-      'category_training',
-      'category_shorts',
-      'category_basketball',
-      'category_windbreaker',
-      'category_fifa',
-      'category_retro'
+      'top_banner_desktop','top_banner_mobile','hero_desktop','hero_mobile',
+      'brasileirao_banner_desktop','brasileirao_banner_mobile',
+      'ambient_banner_desktop','ambient_banner_mobile',
+      'category_kids','category_training','category_shorts','category_basketball',
+      'category_windbreaker','category_fifa','category_retro'
     )
   )
 );
@@ -68,21 +48,11 @@ CREATE TABLE IF NOT EXISTS public.site_personalization_assets (
 INSERT INTO public.site_personalization_assets (slot_key)
 SELECT slot_key
 FROM unnest(ARRAY[
-  'top_banner_desktop',
-  'top_banner_mobile',
-  'hero_desktop',
-  'hero_mobile',
-  'brasileirao_banner_desktop',
-  'brasileirao_banner_mobile',
-  'ambient_banner_desktop',
-  'ambient_banner_mobile',
-  'category_kids',
-  'category_training',
-  'category_shorts',
-  'category_basketball',
-  'category_windbreaker',
-  'category_fifa',
-  'category_retro'
+  'top_banner_desktop','top_banner_mobile','hero_desktop','hero_mobile',
+  'brasileirao_banner_desktop','brasileirao_banner_mobile',
+  'ambient_banner_desktop','ambient_banner_mobile',
+  'category_kids','category_training','category_shorts','category_basketball',
+  'category_windbreaker','category_fifa','category_retro'
 ]::text[]) AS slot_key
 ON CONFLICT (slot_key) DO NOTHING;
 
@@ -94,8 +64,26 @@ ALTER TABLE public.site_personalization_assets ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON TABLE public.site_asset_uploads FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON TABLE public.site_personalization_assets FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.site_asset_uploads TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.site_personalization_assets TO authenticated;
 GRANT ALL ON TABLE public.site_asset_uploads TO service_role;
 GRANT ALL ON TABLE public.site_personalization_assets TO service_role;
+
+DROP POLICY IF EXISTS site_asset_uploads_owner_all ON public.site_asset_uploads;
+CREATE POLICY site_asset_uploads_owner_all
+ON public.site_asset_uploads
+FOR ALL
+TO authenticated
+USING (public.has_role('owner'::public.app_role))
+WITH CHECK (public.has_role('owner'::public.app_role));
+
+DROP POLICY IF EXISTS site_personalization_assets_owner_all ON public.site_personalization_assets;
+CREATE POLICY site_personalization_assets_owner_all
+ON public.site_personalization_assets
+FOR ALL
+TO authenticated
+USING (public.has_role('owner'::public.app_role))
+WITH CHECK (public.has_role('owner'::public.app_role));
 
 CREATE OR REPLACE FUNCTION public.get_storefront_personalization()
 RETURNS jsonb
@@ -134,7 +122,6 @@ BEGIN
   IF auth.uid() IS NULL OR NOT public.has_role('owner'::public.app_role) THEN
     RAISE EXCEPTION 'Acesso restrito ao administrador';
   END IF;
-
   RETURN public.get_storefront_personalization();
 END;
 $$;
