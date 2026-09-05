@@ -69,7 +69,7 @@ check(
   "afiliado controla desativacao e reativacao do proprio link",
   wrapper.includes("Desativar meu link") &&
     wrapper.includes("Reativar meu link") &&
-    wrapper.includes('runLifecycle("deactivate")'),
+    wrapper.includes('dashboard.status === "active" ? "deactivate" : "activate"'),
 );
 
 check(
