@@ -39,6 +39,9 @@ jobs:
       - name: Validate affiliate regressions
         run: bun run validate:affiliate
 
+      - name: Validate affiliate self-service lifecycle
+        run: node scripts/validate-affiliate-self-service.mjs
+
       - name: Validate phase 10 and admin regressions
         run: bun run validate:phase10
 
