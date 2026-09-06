@@ -18,6 +18,8 @@ import { useState } from "react";
 import { AffiliateWithdrawalForm } from "@/components/account/AffiliateWithdrawalForm";
 import { BRAND } from "@/config/brand";
 import {
+  activateMyAffiliate,
+  deactivateMyAffiliate,
   fetchMyAffiliateCommissions,
   fetchMyAffiliateDashboard,
   fetchMyAffiliateReferrals,
@@ -113,6 +115,8 @@ function HowItWorks() {
 
 export function AffiliateAccountPanel() {
   const [copied, setCopied] = useState(false);
+  const [affiliateAction, setAffiliateAction] = useState<"activate" | "deactivate" | null>(null);
+  const [affiliateActionError, setAffiliateActionError] = useState<string | null>(null);
 
   const dashboardQuery = useQuery({
     queryKey: ["my-affiliate-dashboard"],
@@ -142,6 +146,29 @@ export function AffiliateAccountPanel() {
     enabled: isAffiliate,
     staleTime: 20_000,
   });
+
+  async function changeAffiliateStatus(action: "activate" | "deactivate") {
+    setAffiliateAction(action);
+    setAffiliateActionError(null);
+    try {
+      if (action === "activate") {
+        await activateMyAffiliate();
+      } else {
+        await deactivateMyAffiliate();
+      }
+      await dashboardQuery.refetch();
+    } catch (error) {
+      setAffiliateActionError(
+        error instanceof Error
+          ? error.message
+          : action === "activate"
+            ? "Não foi possível ativar seu perfil de afiliado agora."
+            : "Não foi possível desativar seu perfil de afiliado agora.",
+      );
+    } finally {
+      setAffiliateAction(null);
+    }
+  }
 
   if (dashboardQuery.isLoading) return <LoadingState />;
 
@@ -178,29 +205,47 @@ export function AffiliateAccountPanel() {
                 Programa de afiliados
               </span>
               <h2 className="mt-5 text-2xl font-black tracking-tight sm:text-3xl">
-                Indique novos clientes pela criação da conta
+                Ganhe indicando novos clientes
               </h2>
               <p className="mt-3 max-w-xl text-sm leading-6 text-gray-300 sm:text-base">
-                O afiliado compartilha um link de cadastro. Depois que uma nova pessoa cria a conta por esse link, os pedidos dela podem gerar comissão para quem indicou.
+                Ative seu perfil de afiliado para receber seu link exclusivo. Quando uma nova pessoa criar a conta por esse link, as compras elegíveis dela podem gerar comissão para você.
               </p>
 
-              <div className="mt-6 inline-flex items-start gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white/85">
-                <UsersRound className="mt-0.5 h-4.5 w-4.5 flex-none" aria-hidden="true" />
-                <span>
-                  {dashboard.programEnabled
-                    ? "Sua conta ainda não está cadastrada como afiliada."
-                    : "O programa está sendo configurado antes da abertura para participantes."}
-                </span>
-              </div>
+              {dashboard.programEnabled ? (
+                <button
+                  type="button"
+                  onClick={() => void changeAffiliateStatus("activate")}
+                  disabled={affiliateAction !== null}
+                  className="mt-6 inline-flex h-11 items-center rounded-xl bg-red-600 px-5 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {affiliateAction === "activate" ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                  ) : (
+                    <Link2 className="mr-2 h-4 w-4" aria-hidden="true" />
+                  )}
+                  {affiliateAction === "activate" ? "Ativando..." : "Quero ser afiliado"}
+                </button>
+              ) : (
+                <div className="mt-6 inline-flex items-start gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white/85">
+                  <UsersRound className="mt-0.5 h-4.5 w-4.5 flex-none" aria-hidden="true" />
+                  <span>O programa está temporariamente indisponível para novas ativações.</span>
+                </div>
+              )}
+
+              {affiliateActionError ? (
+                <p className="mt-3 rounded-xl border border-red-300/30 bg-red-950/40 px-4 py-3 text-sm font-semibold text-red-100">
+                  {affiliateActionError}
+                </p>
+              ) : null}
             </div>
           </div>
 
           <div className="grid gap-3 p-5 sm:grid-cols-3 sm:p-6">
             <article className="rounded-xl border border-gray-200 bg-gray-50/70 p-4 sm:p-5">
               <Link2 className="h-5 w-5 text-red-600" aria-hidden="true" />
-              <h3 className="mt-4 text-sm font-extrabold text-gray-950">Link de cadastro</h3>
+              <h3 className="mt-4 text-sm font-extrabold text-gray-950">Link exclusivo</h3>
               <p className="mt-2 text-xs leading-5 text-gray-600">
-                Cada afiliado recebe um link único para convidar novos clientes a criarem uma conta.
+                Seu link único é criado quando você ativa o programa e permanece o mesmo enquanto sua conta existir.
               </p>
             </article>
             <article className="rounded-xl border border-gray-200 bg-gray-50/70 p-4 sm:p-5">
@@ -214,7 +259,7 @@ export function AffiliateAccountPanel() {
               <WalletCards className="h-5 w-5 text-red-600" aria-hidden="true" />
               <h3 className="mt-4 text-sm font-extrabold text-gray-950">Comissões e saques</h3>
               <p className="mt-2 text-xs leading-5 text-gray-600">
-                Comissões e pagamentos ficam organizados nesta área quando o programa estiver ativo.
+                Acompanhe saldo, histórico de comissões e solicitações de saque por PIX nesta área.
               </p>
             </article>
           </div>
@@ -265,35 +310,69 @@ export function AffiliateAccountPanel() {
                 </p>
                 {!dashboard.programEnabled ? (
                   <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-100">
-                    O programa está temporariamente em configuração. Seu histórico e seu código permanecem preservados, mas o link não deve ser compartilhado até a reabertura.
+                    O programa está temporariamente indisponível. Seu histórico e seu código permanecem preservados, mas novas indicações ficam bloqueadas até a reabertura.
                   </p>
                 ) : dashboard.status === "disabled" ? (
                   <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-100">
-                    Sua participação está pausada. O histórico continua visível, mas novas indicações estão desativadas.
+                    Você desativou sua participação. Seu histórico e seu link exclusivo foram preservados, mas o link não aceita novas indicações enquanto estiver desativado.
+                  </p>
+                ) : null}
+
+                {affiliateActionError ? (
+                  <p className="mt-3 rounded-xl border border-red-300/30 bg-red-950/40 px-4 py-3 text-sm font-semibold text-red-100">
+                    {affiliateActionError}
                   </p>
                 ) : null}
               </div>
 
               <div className="rounded-xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-white/60">
-                  Seu link de indicação
+                  Seu link exclusivo
                 </p>
                 <p className="mt-2 break-all text-sm font-semibold text-white">
                   {referralLink ?? "Link ainda não disponível"}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => void copyReferralLink()}
-                  disabled={!sharingEnabled}
-                  className="mt-4 inline-flex h-10 items-center rounded-lg bg-white px-4 text-sm font-black text-gray-950 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-45"
-                >
-                  {copied ? (
-                    <ClipboardCheck className="mr-2 h-4 w-4" aria-hidden="true" />
-                  ) : (
-                    <Copy className="mr-2 h-4 w-4" aria-hidden="true" />
-                  )}
-                  {copied ? "Link copiado" : "Copiar link"}
-                </button>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void copyReferralLink()}
+                    disabled={!sharingEnabled}
+                    className="inline-flex h-10 items-center rounded-lg bg-white px-4 text-sm font-black text-gray-950 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    {copied ? (
+                      <ClipboardCheck className="mr-2 h-4 w-4" aria-hidden="true" />
+                    ) : (
+                      <Copy className="mr-2 h-4 w-4" aria-hidden="true" />
+                    )}
+                    {copied ? "Link copiado" : "Copiar link"}
+                  </button>
+
+                  {dashboard.programEnabled && dashboard.status === "disabled" ? (
+                    <button
+                      type="button"
+                      onClick={() => void changeAffiliateStatus("activate")}
+                      disabled={affiliateAction !== null}
+                      className="inline-flex h-10 items-center rounded-lg bg-red-600 px-4 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {affiliateAction === "activate" ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                      ) : null}
+                      {affiliateAction === "activate" ? "Reativando..." : "Reativar meu link"}
+                    </button>
+                  ) : dashboard.status === "active" ? (
+                    <button
+                      type="button"
+                      onClick={() => void changeAffiliateStatus("deactivate")}
+                      disabled={affiliateAction !== null}
+                      className="inline-flex h-10 items-center rounded-lg border border-white/25 bg-transparent px-4 text-sm font-bold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {affiliateAction === "deactivate" ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                      ) : null}
+                      {affiliateAction === "deactivate" ? "Desativando..." : "Desativar programa de afiliado"}
+                    </button>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
