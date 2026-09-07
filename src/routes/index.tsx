@@ -82,7 +82,7 @@ function Index() {
               {ambientMobile ? <source media="(max-width: 767px)" srcSet={ambientMobile} /> : null}
               <img
                 src={ambientDesktop ?? ambientMobile ?? undefined}
-                alt="Arte promocional BIGofertas"
+                alt={`Arte promocional ${BRAND.officialName}`}
                 loading="lazy"
                 decoding="async"
                 width={1920}
@@ -92,7 +92,7 @@ function Index() {
               {ambientMobile ? (
                 <img
                   src={ambientMobile}
-                  alt="Arte promocional BIGofertas"
+                  alt={`Arte promocional ${BRAND.officialName}`}
                   loading="lazy"
                   decoding="async"
                   width={1080}
