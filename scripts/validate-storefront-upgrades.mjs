@@ -121,7 +121,7 @@ check(
 
 check(
   "FAQ inclui as três dúvidas de afiliados definidas",
-  faq.includes('question: `Como faço para ser afiliado da ${BRAND.officialName}?`') &&
+  faq.includes("question: `Como faço para ser afiliado da ${BRAND.officialName}?`") &&
     faq.includes("clique em “Quero ser afiliado”") &&
     faq.includes("Quanto ganho como afiliado?") &&
     faq.includes("Você recebe um valor fixo por peça") &&
