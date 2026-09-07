@@ -18,6 +18,7 @@ const index = read("src/routes/index.tsx");
 const nav = read("src/components/layout/CategoryNav.tsx");
 const categories = read("src/components/home/VisualCategories.tsx");
 const best = read("src/components/home/BestSellers.tsx");
+const faq = read("src/components/home/FAQ.tsx");
 const productCard = read("src/components/product/ProductCard.tsx");
 const productPage = read("src/routes/product/$id.tsx");
 const header = read("src/components/layout/Header.tsx");
@@ -32,8 +33,11 @@ const gallery = read("src/components/product/ProductGallery.tsx");
 const seo = read("src/components/product/ProductSeo.tsx");
 const catalog = read("src/lib/catalog.ts");
 const catalogGrid = read("src/components/product/CatalogProductGrid.tsx");
+const registration = read("src/routes/cadastro.tsx");
+const auth = read("src/lib/auth.tsx");
 const migration = read("supabase/migrations/20260904213000_storefront_personalization.sql");
 const catalogMigration = read("supabase/migrations/20260904213500_catalog_commercial_type.sql");
+const signupPhoneMigration = read("supabase/migrations/20260907124500_require_phone_on_signup.sql");
 const config = read("supabase/config.toml");
 
 check(
@@ -113,6 +117,31 @@ check(
     forbiddenNav.every((label) => !nav.includes(`name: "${label}"`)) &&
     header.includes("<CategoryNav />") &&
     header.includes("<CategoryNav mobile"),
+);
+
+check(
+  "FAQ inclui as três dúvidas de afiliados definidas",
+  faq.includes("Como faço para ser afiliado da BIGofertas?") &&
+    faq.includes('clique em “Quero ser afiliado”') &&
+    faq.includes("Quanto ganho como afiliado?") &&
+    faq.includes("Você recebe um valor fixo por peça") &&
+    faq.includes("Meu link de afiliado expira?") &&
+    faq.includes("Seu link permanece o mesmo enquanto você for afiliado ativo"),
+);
+check(
+  "cadastro exige telefone brasileiro válido antes de criar a conta",
+  registration.includes("Telefone") &&
+    registration.includes('type="tel"') &&
+    registration.includes("isValidBrazilianPhone(phone)") &&
+    registration.includes("nameValid && phoneValid") &&
+    registration.includes("formatBrazilianPhone"),
+);
+check(
+  "telefone do cadastro é salvo e obrigatório também no banco",
+  auth.includes("phone: onlyDigits(phone, 11)") &&
+    signupPhoneMigration.includes("BEFORE INSERT ON auth.users") &&
+    signupPhoneMigration.includes("is_valid_brazilian_phone") &&
+    signupPhoneMigration.includes("Telefone invalido ou DDD inexistente"),
 );
 
 const categoryOrder = [
