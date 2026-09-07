@@ -10,6 +10,7 @@ import {
   validateAffiliateReferralCode,
 } from "@/lib/affiliate-referral";
 import { useAuth } from "@/lib/auth";
+import { formatBrazilianPhone, isValidBrazilianPhone } from "@/lib/brasil";
 
 export const Route = createFileRoute("/cadastro")({
   component: RegisterPage,
@@ -20,6 +21,7 @@ type ReferralValidation = "idle" | "checking" | "valid" | "invalid" | "unavailab
 function RegisterPage() {
   const { user, loading, isOwner, signUp, resendSignUpConfirmation, signOut } = useAuth();
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -74,9 +76,11 @@ function RegisterPage() {
   }, []);
 
   const nameValid = fullName.trim().length >= 2;
+  const phoneValid = isValidBrazilianPhone(phone);
   const passwordValid = password.length >= 8;
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
-  const formReady = nameValid && email.trim().length > 0 && passwordValid && passwordsMatch;
+  const formReady =
+    nameValid && phoneValid && email.trim().length > 0 && passwordValid && passwordsMatch;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -89,6 +93,7 @@ function RegisterPage() {
       email.trim(),
       password,
       fullName.trim(),
+      phone,
       referralValidation === "invalid" ? null : referralCode,
     );
 
@@ -277,6 +282,26 @@ function RegisterPage() {
           </label>
 
           <label className="block text-sm font-semibold text-gray-800">
+            Telefone
+            <input
+              required
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              maxLength={15}
+              value={phone}
+              onChange={(event) => setPhone(formatBrazilianPhone(event.target.value))}
+              className={`${inputClass} mt-1.5`}
+              placeholder="(84) 9 9999-9999"
+            />
+            {phone && !phoneValid ? (
+              <span className="mt-1.5 block text-xs text-amber-700">
+                Informe um telefone com um DDD brasileiro válido.
+              </span>
+            ) : null}
+          </label>
+
+          <label className="block text-sm font-semibold text-gray-800">
             E-mail
             <input
               required
@@ -327,7 +352,7 @@ function RegisterPage() {
                 type={showConfirmPassword ? "text" : "password"}
                 autoComplete="new-password"
                 value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
+                onChange={(event) => setShowConfirmPassword(event.target.value)}
                 className={`${inputClass} pr-11`}
                 placeholder="Digite a senha novamente"
               />
