@@ -122,7 +122,7 @@ check(
 check(
   "FAQ inclui as três dúvidas de afiliados definidas",
   faq.includes("Como faço para ser afiliado da BIGofertas?") &&
-    faq.includes('clique em “Quero ser afiliado”') &&
+    faq.includes("clique em “Quero ser afiliado”") &&
     faq.includes("Quanto ganho como afiliado?") &&
     faq.includes("Você recebe um valor fixo por peça") &&
     faq.includes("Meu link de afiliado expira?") &&
