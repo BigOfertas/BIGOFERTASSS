@@ -20,10 +20,7 @@ const migrations = [
     "storefront_personalization",
     "supabase/migrations/20260904213000_storefront_personalization.sql",
   ],
-  [
-    "catalog_commercial_type",
-    "supabase/migrations/20260904213500_catalog_commercial_type.sql",
-  ],
+  ["catalog_commercial_type", "supabase/migrations/20260904213500_catalog_commercial_type.sql"],
   [
     "affiliate_self_service_links",
     "supabase/migrations/20260905004500_affiliate_self_service_links.sql",
