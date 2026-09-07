@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { normalizeAffiliateReferralCode } from "@/lib/affiliate-referral";
 import { legacyWorkerFallbackAvailable } from "@/lib/backend-routing";
+import { onlyDigits } from "@/lib/brasil";
 import { getUserFacingError } from "@/lib/user-facing-error";
 
 export type AppRole = Database["public"]["Enums"]["app_role"];
@@ -45,6 +46,7 @@ type AuthContextValue = {
     email: string,
     password: string,
     fullName: string,
+    phone: string,
     referralCode?: string | null,
   ) => Promise<AuthActionResult>;
 
@@ -392,6 +394,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     fullName: string,
+    phone: string,
     referralCode?: string | null,
   ): Promise<AuthActionResult> {
     const emailRedirectTo = getEmailConfirmationRedirectUrl();
@@ -404,6 +407,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...(emailRedirectTo ? { emailRedirectTo } : {}),
         data: {
           full_name: fullName.trim(),
+          phone: onlyDigits(phone, 11),
           ...(normalizedReferralCode ? { affiliate_referral_code: normalizedReferralCode } : {}),
         },
       },
