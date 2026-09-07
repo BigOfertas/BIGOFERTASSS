@@ -63,6 +63,27 @@ const faqData: FAQItem[] = [
     question: "Como entrar em contato?",
     answer: `WhatsApp: ${BRAND.whatsappDisplay}\nE-mail: ${BRAND.contactEmail}`,
   },
+  {
+    id: 9,
+    emoji: "🤝",
+    question: "Como faço para ser afiliado da BIGofertas?",
+    answer:
+      "Crie sua conta, entre em “Minha Conta” e clique em “Quero ser afiliado”. Seu link exclusivo e seu painel serão liberados.",
+  },
+  {
+    id: 10,
+    emoji: "💰",
+    question: "Quanto ganho como afiliado?",
+    answer:
+      "Você recebe um valor fixo por peça nas compras dos clientes vinculados à sua indicação. Consulte os valores aplicáveis à sua conta no painel de afiliado.",
+  },
+  {
+    id: 11,
+    emoji: "🔗",
+    question: "Meu link de afiliado expira?",
+    answer:
+      "Não. Seu link permanece o mesmo enquanto você for afiliado ativo. Se desativar sua participação, ele deixa de aceitar novas indicações, mas seu histórico permanece.",
+  },
 ];
 
 const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
