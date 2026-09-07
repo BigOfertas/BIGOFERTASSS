@@ -66,7 +66,7 @@ const faqData: FAQItem[] = [
   {
     id: 9,
     emoji: "🤝",
-    question: "Como faço para ser afiliado da BIGofertas?",
+    question: `Como faço para ser afiliado da ${BRAND.officialName}?`,
     answer:
       "Crie sua conta, entre em “Minha Conta” e clique em “Quero ser afiliado”. Seu link exclusivo e seu painel serão liberados.",
   },
