@@ -23,9 +23,7 @@ const securityRpc = supabase as unknown as SecurityRpcClient;
 
 function authEdgeUrl() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
-  return supabaseUrl
-    ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/auth-email-2fa`
-    : null;
+  return supabaseUrl ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/auth-email-2fa` : null;
 }
 
 async function postSecurityRequest(
@@ -83,21 +81,18 @@ async function authenticatedRequest(input: {
   let payload: Record<string, unknown> | null = null;
   try {
     const decoded = await response.json();
-    payload = decoded && typeof decoded === "object" && !Array.isArray(decoded)
-      ? (decoded as Record<string, unknown>)
-      : null;
+    payload =
+      decoded && typeof decoded === "object" && !Array.isArray(decoded)
+        ? (decoded as Record<string, unknown>)
+        : null;
   } catch {
     payload = null;
   }
 
   if (!response.ok) {
-    const message =
-      payload && typeof payload["error"] === "string" ? payload["error"] : undefined;
+    const message = payload && typeof payload["error"] === "string" ? payload["error"] : undefined;
     throw new Error(
-      getUserFacingError(
-        message,
-        "Não foi possível concluir a verificação de segurança agora.",
-      ),
+      getUserFacingError(message, "Não foi possível concluir a verificação de segurança agora."),
     );
   }
 
@@ -168,10 +163,7 @@ export async function startEmailTwoFactorEnrollment() {
   };
 }
 
-export async function verifyEmailTwoFactorEnrollment(
-  challengeId: string,
-  code: string,
-) {
+export async function verifyEmailTwoFactorEnrollment(challengeId: string, code: string) {
   const payload = await authenticatedRequest({
     action: "enroll-verify",
     legacyPath: "/api/auth/email-2fa/enroll/verify",
@@ -200,10 +192,7 @@ export async function sendAccountPasswordReset(email: string) {
 
   if (error) {
     throw new Error(
-      getUserFacingError(
-        error,
-        "Não foi possível enviar o link para redefinir a senha agora.",
-      ),
+      getUserFacingError(error, "Não foi possível enviar o link para redefinir a senha agora."),
     );
   }
 }
@@ -212,10 +201,7 @@ export async function signOutOtherAccountSessions() {
   const { error } = await supabase.auth.signOut({ scope: "others" });
   if (error) {
     throw new Error(
-      getUserFacingError(
-        error,
-        "Não foi possível encerrar as outras sessões agora.",
-      ),
+      getUserFacingError(error, "Não foi possível encerrar as outras sessões agora."),
     );
   }
 }

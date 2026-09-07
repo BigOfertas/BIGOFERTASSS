@@ -65,10 +65,7 @@ export function isCheckoutIdentityComplete(identity: CheckoutIdentity | null) {
   }
 
   if (identity.person_type === "business") {
-    return (
-      isValidBrazilianCnpj(identity.cnpj ?? "") &&
-      Boolean(identity.company_name?.trim())
-    );
+    return isValidBrazilianCnpj(identity.cnpj ?? "") && Boolean(identity.company_name?.trim());
   }
 
   return false;
@@ -116,20 +113,16 @@ export async function saveCheckoutIdentity(input: CheckoutIdentityInput) {
     if (companyName.length < 2) throw new Error("Informe a razão social.");
   }
 
-  const { data, error } = await checkoutIdentityRpc.rpc(
-    "update_my_checkout_identity",
-    {
-      p_person_type: input.personType,
-      p_full_name: fullName,
-      p_phone: phone,
-      p_secondary_phone: secondaryPhone || null,
-      p_cpf: input.personType === "individual" ? cpf : null,
-      p_cnpj: input.personType === "business" ? cnpj : null,
-      p_company_name: input.personType === "business" ? companyName : null,
-      p_trade_name:
-        input.personType === "business" && tradeName ? tradeName : null,
-    },
-  );
+  const { data, error } = await checkoutIdentityRpc.rpc("update_my_checkout_identity", {
+    p_person_type: input.personType,
+    p_full_name: fullName,
+    p_phone: phone,
+    p_secondary_phone: secondaryPhone || null,
+    p_cpf: input.personType === "individual" ? cpf : null,
+    p_cnpj: input.personType === "business" ? cnpj : null,
+    p_company_name: input.personType === "business" ? companyName : null,
+    p_trade_name: input.personType === "business" && tradeName ? tradeName : null,
+  });
 
   if (error) {
     throw new Error(getUserFacingError(error, "Não foi possível salvar seus dados."));

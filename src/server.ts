@@ -83,17 +83,14 @@ function asWorkerEnvironment(value: unknown): WorkerEnvironment {
 }
 
 function resolveWorkerEnvironment(value: unknown): WorkerEnvironment {
-  const processEnvironment =
-    typeof process !== "undefined" ? asWorkerEnvironment(process.env) : {};
+  const processEnvironment = typeof process !== "undefined" ? asWorkerEnvironment(process.env) : {};
   const explicitEnvironment = asWorkerEnvironment(value);
 
   return {
     ...processEnvironment,
     ...explicitEnvironment,
     RESEND_FROM:
-      explicitEnvironment.RESEND_FROM ??
-      processEnvironment.RESEND_FROM ??
-      DEFAULT_RESEND_FROM,
+      explicitEnvironment.RESEND_FROM ?? processEnvironment.RESEND_FROM ?? DEFAULT_RESEND_FROM,
   };
 }
 
@@ -140,11 +137,9 @@ export default {
       const url = new URL(request.url);
       isShippingRequest = url.pathname === "/api/shipping/quote";
       isCheckoutRequest = url.pathname === "/api/checkout/start";
-      isInfinitePayWebhook =
-        url.pathname === "/api/payments/infinitepay/webhook";
+      isInfinitePayWebhook = url.pathname === "/api/payments/infinitepay/webhook";
       isAuthSecurityRequest = url.pathname.startsWith("/api/auth/");
-      isNotificationProcessorRequest =
-        url.pathname === "/api/internal/notifications/process";
+      isNotificationProcessorRequest = url.pathname === "/api/internal/notifications/process";
 
       if (isShippingRequest) {
         try {

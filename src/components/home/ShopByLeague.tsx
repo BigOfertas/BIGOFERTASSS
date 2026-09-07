@@ -78,7 +78,9 @@ const ShopByLeague: React.FC = () => {
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
-          <div className={`relative transition-all duration-150 ease-in-out motion-reduce:transform-none motion-reduce:transition-none ${isTransitioning ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`}>
+          <div
+            className={`relative transition-all duration-150 ease-in-out motion-reduce:transform-none motion-reduce:transition-none ${isTransitioning ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`}
+          >
             <ProductCarousel key={displayLeagueId} itemCount={SHOWCASE_SIZE}>
               {products.map((product) => (
                 <ProductCard
@@ -104,7 +106,9 @@ const ShopByLeague: React.FC = () => {
         </div>
 
         {error ? (
-          <span className="sr-only">Não foi possível carregar os produtos da liga selecionada.</span>
+          <span className="sr-only">
+            Não foi possível carregar os produtos da liga selecionada.
+          </span>
         ) : null}
       </div>
     </section>

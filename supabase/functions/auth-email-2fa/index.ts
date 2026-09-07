@@ -9,11 +9,7 @@ const TWO_FACTOR_TTL_MS = 10 * 60 * 1000;
 const TWO_FACTOR_RESEND_WINDOW_MS = 60 * 1000;
 const TWO_FACTOR_MAX_ATTEMPTS = 5;
 
-type Action =
-  | "password-login"
-  | "password-login-verify-2fa"
-  | "enroll-start"
-  | "enroll-verify";
+type Action = "password-login" | "password-login-verify-2fa" | "enroll-start" | "enroll-verify";
 
 type ChallengePurpose = "enroll" | "login";
 
@@ -126,9 +122,7 @@ function response(request: Request, body: unknown, status = 200) {
 
 function errorResponse(request: Request, error: unknown) {
   if (error instanceof EmailTwoFactorError) {
-    console.error(
-      `[email-2fa-edge] ${JSON.stringify({ code: error.code, status: error.status })}`,
-    );
+    console.error(`[email-2fa-edge] ${JSON.stringify({ code: error.code, status: error.status })}`);
     return response(request, { error: error.message, code: error.code }, error.status);
   }
 
@@ -214,12 +208,7 @@ async function passwordGrant(email: string, password: string): Promise<SupabaseP
   >;
 
   if (!upstream.ok) {
-    const source = [
-      payload.error_code,
-      payload.msg,
-      payload.message,
-      payload.error_description,
-    ]
+    const source = [payload.error_code, payload.msg, payload.message, payload.error_description]
       .filter((item): item is string => typeof item === "string")
       .join(" ")
       .toLowerCase();
@@ -232,11 +221,7 @@ async function passwordGrant(email: string, password: string): Promise<SupabaseP
       );
     }
 
-    throw new EmailTwoFactorError(
-      "E-mail ou senha incorretos.",
-      401,
-      "INVALID_LOGIN_CREDENTIALS",
-    );
+    throw new EmailTwoFactorError("E-mail ou senha incorretos.", 401, "INVALID_LOGIN_CREDENTIALS");
   }
 
   const user = payload.user;
@@ -342,11 +327,7 @@ async function securityProfile(userId: string): Promise<SecurityProfile> {
   return payload[0] as SecurityProfile;
 }
 
-async function hmacDigest(
-  challengeId: string,
-  purpose: ChallengePurpose,
-  code: string,
-) {
+async function hmacDigest(challengeId: string, purpose: ChallengePurpose, code: string) {
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(env("EMAIL_2FA_SECRET")),
@@ -359,9 +340,7 @@ async function hmacDigest(
     key,
     new TextEncoder().encode(`${challengeId}:${purpose}:${code}`),
   );
-  return [...new Uint8Array(signature)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+  return [...new Uint8Array(signature)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function constantTimeEqual(left: string, right: string) {
@@ -422,22 +401,19 @@ async function insertChallenge(userId: string, email: string, purpose: Challenge
   const codeDigest = await hmacDigest(challengeId, purpose, code);
   const expiresAt = new Date(Date.now() + TWO_FACTOR_TTL_MS).toISOString();
 
-  const upstream = await fetch(
-    new URL("/rest/v1/email_2fa_challenges", env("SUPABASE_URL")),
-    {
-      method: "POST",
-      headers: { ...serviceHeaders(), prefer: "return=minimal" },
-      body: JSON.stringify({
-        id: challengeId,
-        user_id: userId,
-        email,
-        purpose,
-        code_digest: codeDigest,
-        expires_at: expiresAt,
-      }),
-      signal: AbortSignal.timeout(8_000),
-    },
-  );
+  const upstream = await fetch(new URL("/rest/v1/email_2fa_challenges", env("SUPABASE_URL")), {
+    method: "POST",
+    headers: { ...serviceHeaders(), prefer: "return=minimal" },
+    body: JSON.stringify({
+      id: challengeId,
+      user_id: userId,
+      email,
+      purpose,
+      code_digest: codeDigest,
+      expires_at: expiresAt,
+    }),
+    signal: AbortSignal.timeout(8_000),
+  });
 
   if (!upstream.ok) {
     throw new EmailTwoFactorError(
@@ -655,11 +631,7 @@ async function passwordLogin(body: Record<string, unknown>) {
   const email = normalizeEmail(body.email);
   const password = normalizePassword(body.password);
   if (!email || !password) {
-    throw new EmailTwoFactorError(
-      "Informe e-mail e senha.",
-      400,
-      "EMAIL_2FA_LOGIN_INPUT_INVALID",
-    );
+    throw new EmailTwoFactorError("Informe e-mail e senha.", 400, "EMAIL_2FA_LOGIN_INPUT_INVALID");
   }
 
   const grant = await passwordGrant(email, password);

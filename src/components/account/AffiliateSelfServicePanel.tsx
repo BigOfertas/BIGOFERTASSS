@@ -56,7 +56,9 @@ export function AffiliateSelfServicePanel() {
     return (
       <div className="rounded-2xl border border-gray-200 bg-white px-6 py-14 text-center shadow-sm">
         <Loader2 className="mx-auto h-6 w-6 animate-spin text-red-600 motion-reduce:animate-none" />
-        <p className="mt-3 text-sm font-semibold text-gray-600">Carregando sua área de afiliados...</p>
+        <p className="mt-3 text-sm font-semibold text-gray-600">
+          Carregando sua área de afiliados...
+        </p>
       </div>
     );
   }
@@ -65,7 +67,9 @@ export function AffiliateSelfServicePanel() {
     return (
       <div className="rounded-2xl border border-red-200 bg-white px-6 py-12 text-center shadow-sm">
         <RefreshCw className="mx-auto h-7 w-7 text-red-500" aria-hidden="true" />
-        <h2 className="mt-4 text-lg font-black text-gray-950">Não foi possível carregar esta área</h2>
+        <h2 className="mt-4 text-lg font-black text-gray-950">
+          Não foi possível carregar esta área
+        </h2>
         <button
           type="button"
           onClick={() => void dashboardQuery.refetch()}
@@ -91,7 +95,8 @@ export function AffiliateSelfServicePanel() {
             Ganhe indicando novos clientes
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300 sm:text-base">
-            Ative seu perfil e o sistema cria um link exclusivo para você. As novas contas cadastradas por esse link ficam vinculadas à sua indicação.
+            Ative seu perfil e o sistema cria um link exclusivo para você. As novas contas
+            cadastradas por esse link ficam vinculadas à sua indicação.
           </p>
           <button
             type="button"
@@ -100,15 +105,21 @@ export function AffiliateSelfServicePanel() {
             className="mt-6 inline-flex h-11 items-center rounded-xl bg-red-600 px-5 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-500"
           >
             {lifecycleMutation.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+              <Loader2
+                className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
             ) : (
               <Link2 className="mr-2 h-4 w-4" aria-hidden="true" />
             )}
-            {dashboard.programEnabled ? "Quero ser afiliado" : "Programa temporariamente indisponível"}
+            {dashboard.programEnabled
+              ? "Quero ser afiliado"
+              : "Programa temporariamente indisponível"}
           </button>
         </div>
         <div className="px-5 py-5 text-sm leading-6 text-gray-600 sm:px-7">
-          O link é único, não expira e permanece o mesmo enquanto sua conta existir. Ele só deixa de aceitar novas indicações quando você desativa sua participação ou exclui sua conta.
+          O link é único, não expira e permanece o mesmo enquanto sua conta existir. Ele só deixa de
+          aceitar novas indicações quando você desativa sua participação ou exclui sua conta.
         </div>
       </section>
     );
@@ -122,7 +133,10 @@ export function AffiliateSelfServicePanel() {
         </p>
       ) : null}
       {errorMessage ? (
-        <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+        <p
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+        >
           {errorMessage}
         </p>
       ) : null}
@@ -143,8 +157,13 @@ export function AffiliateSelfServicePanel() {
           </div>
           <button
             type="button"
-            disabled={lifecycleMutation.isPending || (dashboard.status === "disabled" && !dashboard.programEnabled)}
-            onClick={() => void runLifecycle(dashboard.status === "active" ? "deactivate" : "activate")}
+            disabled={
+              lifecycleMutation.isPending ||
+              (dashboard.status === "disabled" && !dashboard.programEnabled)
+            }
+            onClick={() =>
+              void runLifecycle(dashboard.status === "active" ? "deactivate" : "activate")
+            }
             className={`inline-flex h-10 flex-none items-center justify-center rounded-lg px-4 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
               dashboard.status === "active"
                 ? "border border-gray-300 bg-white text-gray-700 hover:border-red-300 hover:text-red-700"
@@ -152,7 +171,10 @@ export function AffiliateSelfServicePanel() {
             }`}
           >
             {lifecycleMutation.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+              <Loader2
+                className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
             ) : (
               <Power className="mr-2 h-4 w-4" aria-hidden="true" />
             )}

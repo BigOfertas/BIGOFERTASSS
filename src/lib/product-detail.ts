@@ -28,8 +28,7 @@ export interface ProductDetailData {
   variants: ProductVariantWithValues[];
 }
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function sortByOrderAndName<T extends { sort_order: number }>(
   values: T[],
@@ -47,10 +46,7 @@ function sortByOrderAndName<T extends { sort_order: number }>(
 async function fetchActiveProduct(identifier: string) {
   const normalizedIdentifier = decodeURIComponent(identifier).trim();
 
-  const query = supabase
-    .from("products")
-    .select("*")
-    .eq("status", "active");
+  const query = supabase.from("products").select("*").eq("status", "active");
 
   const { data, error } = UUID_PATTERN.test(normalizedIdentifier)
     ? await query.eq("id", normalizedIdentifier).maybeSingle()
@@ -67,9 +63,7 @@ async function fetchActiveProduct(identifier: string) {
   return data;
 }
 
-export async function fetchProductDetail(
-  identifier: string,
-): Promise<ProductDetailData> {
+export async function fetchProductDetail(identifier: string): Promise<ProductDetailData> {
   const product = await fetchActiveProduct(identifier);
 
   const [imagesResult, optionsResult, variantsResult] = await Promise.all([
@@ -164,17 +158,11 @@ export async function fetchProductDetail(
   }
 
   return {
-    product: attachProductImages(
-      product,
-      (imagesResult.data ?? []) as ProductImage[],
-    ),
+    product: attachProductImages(product, (imagesResult.data ?? []) as ProductImage[]),
     category,
     options: options.map((option) => ({
       ...option,
-      values: sortByOrderAndName(
-        valuesByOption.get(option.id) ?? [],
-        (value) => value.value,
-      ),
+      values: sortByOrderAndName(valuesByOption.get(option.id) ?? [], (value) => value.value),
     })),
     variants: variants.map((variant) => ({
       ...variant,
@@ -187,30 +175,20 @@ export function getVariantBasePrice(product: Product, variant: ProductVariant) {
   return variant.price_override ?? product.price;
 }
 
-export function getVariantPromotionalPrice(
-  product: Product,
-  variant: ProductVariant,
-) {
+export function getVariantPromotionalPrice(product: Product, variant: ProductVariant) {
   const basePrice = getVariantBasePrice(product, variant);
   const candidate =
     variant.promotional_price_override ??
     (variant.price_override === null ? product.promotional_price : null);
 
-  return candidate !== null && candidate >= 0 && candidate < basePrice
-    ? candidate
-    : null;
+  return candidate !== null && candidate >= 0 && candidate < basePrice ? candidate : null;
 }
 
-export function getVariantEffectivePrice(
-  product: Product,
-  variant: ProductVariant,
-) {
+export function getVariantEffectivePrice(product: Product, variant: ProductVariant) {
   return getVariantPromotionalPrice(product, variant) ?? getVariantBasePrice(product, variant);
 }
 
-export function getDefaultProductVariant(
-  variants: ProductVariantWithValues[],
-) {
+export function getDefaultProductVariant(variants: ProductVariantWithValues[]) {
   return variants.find((variant) => variant.is_default) ?? variants[0] ?? null;
 }
 
@@ -283,7 +261,7 @@ export async function fetchRelatedProducts(
     throw error;
   }
 
-  return parseCatalogPage(data).items
-    .filter((item) => item.id !== product.id)
+  return parseCatalogPage(data)
+    .items.filter((item) => item.id !== product.id)
     .slice(0, 8);
 }

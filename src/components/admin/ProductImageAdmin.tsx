@@ -1,18 +1,5 @@
-import {
-  ChevronDown,
-  ChevronUp,
-  ImagePlus,
-  LoaderCircle,
-  Star,
-  Trash2,
-} from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ChangeEvent,
-} from "react";
+import { ChevronDown, ChevronUp, ImagePlus, LoaderCircle, Star, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -69,10 +56,7 @@ export function ProductImageAdmin() {
 
       setProducts(availableProducts);
       setSelectedProductId((current) => {
-        if (
-          current &&
-          availableProducts.some((product) => product.id === current)
-        ) {
+        if (current && availableProducts.some((product) => product.id === current)) {
           return current;
         }
 
@@ -80,9 +64,7 @@ export function ProductImageAdmin() {
       });
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível carregar os produtos.",
+        error instanceof Error ? error.message : "Não foi possível carregar os produtos.",
       );
     } finally {
       setLoadingProducts(false);
@@ -101,9 +83,7 @@ export function ProductImageAdmin() {
       setImages(await fetchAdminProductImages(productId));
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível carregar as imagens do produto.",
+        error instanceof Error ? error.message : "Não foi possível carregar as imagens do produto.",
       );
     } finally {
       setLoadingImages(false);
@@ -182,9 +162,7 @@ export function ProductImageAdmin() {
       setSuccessMessage("Imagem principal atualizada.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível definir a imagem principal.",
+        error instanceof Error ? error.message : "Não foi possível definir a imagem principal.",
       );
     } finally {
       setBusyImageId(null);
@@ -198,10 +176,7 @@ export function ProductImageAdmin() {
     if (nextIndex < 0 || nextIndex >= images.length) return;
 
     const reordered = [...images];
-    [reordered[index], reordered[nextIndex]] = [
-      reordered[nextIndex],
-      reordered[index],
-    ];
+    [reordered[index], reordered[nextIndex]] = [reordered[nextIndex], reordered[index]];
 
     setBusyImageId(images[index].id);
     setErrorMessage("");
@@ -215,9 +190,7 @@ export function ProductImageAdmin() {
     } catch (error) {
       await loadImages(selectedProductId);
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível salvar a ordem das imagens.",
+        error instanceof Error ? error.message : "Não foi possível salvar a ordem das imagens.",
       );
     } finally {
       setBusyImageId(null);
@@ -239,9 +212,7 @@ export function ProductImageAdmin() {
       setSuccessMessage("Imagem retirada do produto.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível retirar a imagem.",
+        error instanceof Error ? error.message : "Não foi possível retirar a imagem.",
       );
     } finally {
       setBusyImageId(null);
@@ -252,9 +223,7 @@ export function ProductImageAdmin() {
     <>
       <section className="mt-10 border-t border-gray-200 pt-8">
         <div>
-          <h2 className="text-2xl font-black tracking-tight text-gray-950">
-            Imagens dos produtos
-          </h2>
+          <h2 className="text-2xl font-black tracking-tight text-gray-950">Imagens dos produtos</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
             Envie as fotos que aparecem na loja, escolha a principal e ajuste a ordem da galeria.
           </p>
@@ -270,9 +239,7 @@ export function ProductImageAdmin() {
                 onChange={(event) => setSelectedProductId(event.target.value)}
                 className="mt-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {products.length === 0 ? (
-                  <option value="">Nenhum produto disponível</option>
-                ) : null}
+                {products.length === 0 ? <option value="">Nenhum produto disponível</option> : null}
                 {products.map((product) => (
                   <option key={product.id} value={product.id}>
                     {product.name} — {statusLabel(product.status)}
@@ -289,10 +256,7 @@ export function ProductImageAdmin() {
               }`}
             >
               {uploading ? (
-                <LoaderCircle
-                  className="mr-2 h-4 w-4 animate-spin"
-                  aria-hidden="true"
-                />
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
                 <ImagePlus className="mr-2 h-4 w-4" aria-hidden="true" />
               )}
@@ -332,10 +296,7 @@ export function ProductImageAdmin() {
 
           {loadingImages ? (
             <div className="mt-6 flex items-center gap-2 text-sm text-gray-500">
-              <LoaderCircle
-                className="h-4 w-4 animate-spin"
-                aria-hidden="true"
-              />
+              <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
               Carregando imagens...
             </div>
           ) : !selectedProduct ? (
@@ -344,10 +305,7 @@ export function ProductImageAdmin() {
             </p>
           ) : images.length === 0 ? (
             <div className="mt-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-5 py-8 text-center">
-              <ImagePlus
-                className="mx-auto h-7 w-7 text-gray-400"
-                aria-hidden="true"
-              />
+              <ImagePlus className="mx-auto h-7 w-7 text-gray-400" aria-hidden="true" />
               <p className="mt-3 text-sm font-bold text-gray-800">
                 Este produto ainda não tem imagens.
               </p>
@@ -370,9 +328,7 @@ export function ProductImageAdmin() {
                       {imageUrl ? (
                         <img
                           src={imageUrl}
-                          alt={
-                            image.alt_text?.trim() || selectedProduct.name
-                          }
+                          alt={image.alt_text?.trim() || selectedProduct.name}
                           className="h-full w-full object-contain p-3"
                           loading="lazy"
                         />
@@ -384,10 +340,7 @@ export function ProductImageAdmin() {
 
                       {image.is_primary ? (
                         <span className="absolute left-3 top-3 inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800 shadow-sm">
-                          <Star
-                            className="mr-1 h-3.5 w-3.5 fill-current"
-                            aria-hidden="true"
-                          />
+                          <Star className="mr-1 h-3.5 w-3.5 fill-current" aria-hidden="true" />
                           Principal
                         </span>
                       ) : null}
@@ -408,10 +361,7 @@ export function ProductImageAdmin() {
                           onClick={() => void handlePrimary(image.id)}
                           className="inline-flex h-9 items-center justify-center rounded-md border border-gray-300 bg-white px-3 text-xs font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          <Star
-                            className="mr-1.5 h-3.5 w-3.5"
-                            aria-hidden="true"
-                          />
+                          <Star className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
                           {image.is_primary ? "Principal" : "Tornar principal"}
                         </button>
 
@@ -421,10 +371,7 @@ export function ProductImageAdmin() {
                           onClick={() => setArchiveTarget(image)}
                           className="inline-flex h-9 items-center justify-center rounded-md border border-red-200 bg-white px-3 text-xs font-bold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          <Trash2
-                            className="mr-1.5 h-3.5 w-3.5"
-                            aria-hidden="true"
-                          />
+                          <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
                           Retirar
                         </button>
                       </div>
@@ -436,10 +383,7 @@ export function ProductImageAdmin() {
                           onClick={() => void handleMove(index, -1)}
                           className="inline-flex h-9 items-center justify-center rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          <ChevronUp
-                            className="mr-1 h-3.5 w-3.5"
-                            aria-hidden="true"
-                          />
+                          <ChevronUp className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
                           Mover antes
                         </button>
 
@@ -449,10 +393,7 @@ export function ProductImageAdmin() {
                           onClick={() => void handleMove(index, 1)}
                           className="inline-flex h-9 items-center justify-center rounded-md border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          <ChevronDown
-                            className="mr-1 h-3.5 w-3.5"
-                            aria-hidden="true"
-                          />
+                          <ChevronDown className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
                           Mover depois
                         </button>
                       </div>

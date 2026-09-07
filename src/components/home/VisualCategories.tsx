@@ -5,10 +5,18 @@ import CategoryCard from "./CategoryCard";
 
 const categories = [
   { name: "Conjunto infantil / Kids", search: { category: "infantil" }, slot: "category_kids" },
-  { name: "Conjunto de treino / Kits", search: { category: "kit-treino" }, slot: "category_training" },
+  {
+    name: "Conjunto de treino / Kits",
+    search: { category: "kit-treino" },
+    slot: "category_training",
+  },
   { name: "Short", search: { category: "shorts" }, slot: "category_shorts" },
   { name: "Basquete / NBA", search: { category: "basquete" }, slot: "category_basketball" },
-  { name: "Corta-vento / Windbreaker", search: { category: "corta-ventos" }, slot: "category_windbreaker" },
+  {
+    name: "Corta-vento / Windbreaker",
+    search: { category: "corta-ventos" },
+    slot: "category_windbreaker",
+  },
   { name: "Mundo FIFA", search: { campeonato: "copa-do-mundo" }, slot: "category_fifa" },
   { name: "Camisas retrô", search: { category: "retro" }, slot: "category_retro" },
 ] as const;

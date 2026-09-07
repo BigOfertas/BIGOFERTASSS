@@ -99,10 +99,7 @@ Deno.serve(async (request) => {
         requiredHeaders: { "Content-Type": contentType },
       });
     } catch (error) {
-      await supabase
-        .from("site_asset_uploads")
-        .update({ status: "failed" })
-        .eq("id", upload.id);
+      await supabase.from("site_asset_uploads").update({ status: "failed" }).eq("id", upload.id);
       throw error;
     }
   } catch (error) {

@@ -147,16 +147,10 @@ export function OrderAdmin() {
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
-  const [sort, setSort] = useState<
-    "newest" | "oldest" | "total_desc" | "total_asc"
-  >("newest");
+  const [sort, setSort] = useState<"newest" | "oldest" | "total_desc" | "total_asc">("newest");
   const [page, setPage] = useState(1);
-  const [selectedOrder, setSelectedOrder] = useState<AdminOrderRow | null>(
-    null,
-  );
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(
-    null,
-  );
+  const [selectedOrder, setSelectedOrder] = useState<AdminOrderRow | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [runningAction, setRunningAction] = useState(false);
   const [actionError, setActionError] = useState("");
 
@@ -171,8 +165,7 @@ export function OrderAdmin() {
 
   const listQuery = useQuery({
     queryKey: ["admin-orders", search, status, sort, page],
-    queryFn: () =>
-      fetchAdminOrders({ search, status, sort, page, pageSize: PAGE_SIZE }),
+    queryFn: () => fetchAdminOrders({ search, status, sort, page, pageSize: PAGE_SIZE }),
     staleTime: 10_000,
   });
 
@@ -183,10 +176,7 @@ export function OrderAdmin() {
     staleTime: 10_000,
   });
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil((listQuery.data?.total ?? 0) / PAGE_SIZE),
-  );
+  const totalPages = Math.max(1, Math.ceil((listQuery.data?.total ?? 0) / PAGE_SIZE));
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -200,8 +190,8 @@ export function OrderAdmin() {
       return (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm leading-6 text-orange-900">
-            Entre em contato diretamente com o cliente. Depois, registre apenas
-            o resultado combinado.
+            Entre em contato diretamente com o cliente. Depois, registre apenas o resultado
+            combinado.
           </p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -261,9 +251,7 @@ export function OrderAdmin() {
         </p>
         <button
           type="button"
-          onClick={() =>
-            setPendingAction({ ...next, orderId: detail.order.id })
-          }
+          onClick={() => setPendingAction({ ...next, orderId: detail.order.id })}
           className={`inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-bold transition active:scale-[0.99] ${
             next.status === "canceled"
               ? "border border-red-200 bg-white text-red-700 hover:bg-red-50"
@@ -289,10 +277,7 @@ export function OrderAdmin() {
       if (pendingAction.kind === "transition") {
         await transitionOrder(pendingAction.orderId, pendingAction.status);
       } else {
-        await resolveRefundRequest(
-          pendingAction.requestId,
-          pendingAction.resolution,
-        );
+        await resolveRefundRequest(pendingAction.requestId, pendingAction.resolution);
       }
 
       setPendingAction(null);
@@ -300,9 +285,7 @@ export function OrderAdmin() {
       toast.success("Pedido atualizado com segurança.");
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Não foi possível concluir a atualização.";
+        error instanceof Error ? error.message : "Não foi possível concluir a atualização.";
       setActionError(message);
       toast.error(message);
     } finally {
@@ -326,8 +309,7 @@ export function OrderAdmin() {
                 Pedidos
               </h2>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-                Pesquise, acompanhe e registre somente etapas que aconteceram de
-                verdade.
+                Pesquise, acompanhe e registre somente etapas que aconteceram de verdade.
               </p>
             </div>
 
@@ -408,24 +390,15 @@ export function OrderAdmin() {
 
           {listQuery.error ? (
             <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-9 text-center">
-              <RefreshCw
-                className="mx-auto h-6 w-6 text-red-600"
-                aria-hidden="true"
-              />
-              <p className="mt-3 font-bold text-red-900">
-                Não foi possível carregar os pedidos.
-              </p>
+              <RefreshCw className="mx-auto h-6 w-6 text-red-600" aria-hidden="true" />
+              <p className="mt-3 font-bold text-red-900">Não foi possível carregar os pedidos.</p>
               <p className="mt-1 text-sm text-red-700">
-                {listQuery.error instanceof Error
-                  ? listQuery.error.message
-                  : "Tente novamente."}
+                {listQuery.error instanceof Error ? listQuery.error.message : "Tente novamente."}
               </p>
             </div>
           ) : null}
 
-          {!listQuery.isLoading &&
-          !listQuery.error &&
-          listQuery.data?.rows.length === 0 ? (
+          {!listQuery.isLoading && !listQuery.error && listQuery.data?.rows.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border px-5 py-12 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                 <PackageSearch className="h-6 w-6" aria-hidden="true" />
@@ -503,25 +476,17 @@ export function OrderAdmin() {
                   onClick={() => setPage((current) => Math.max(1, current - 1))}
                   className="inline-flex h-9 items-center rounded-lg border border-input bg-background px-3 text-xs font-bold text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  <ArrowLeft
-                    className="mr-1.5 h-3.5 w-3.5"
-                    aria-hidden="true"
-                  />
+                  <ArrowLeft className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
                   Anterior
                 </button>
                 <button
                   type="button"
                   disabled={page >= totalPages}
-                  onClick={() =>
-                    setPage((current) => Math.min(totalPages, current + 1))
-                  }
+                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                   className="inline-flex h-9 items-center rounded-lg border border-input bg-background px-3 text-xs font-bold text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Próxima
-                  <ArrowRight
-                    className="ml-1.5 h-3.5 w-3.5"
-                    aria-hidden="true"
-                  />
+                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -540,12 +505,8 @@ export function OrderAdmin() {
       >
         <DialogContent className="max-h-[92vh] w-[calc(100%-1rem)] max-w-6xl overflow-y-auto rounded-2xl border border-white/70 bg-[#f6f6f6] p-3 shadow-2xl sm:w-[calc(100%-2rem)] sm:p-5">
           <DialogHeader className="sr-only">
-            <DialogTitle>
-              Detalhes do pedido {selectedOrder?.public_number}
-            </DialogTitle>
-            <DialogDescription>
-              Visualização administrativa do pedido.
-            </DialogDescription>
+            <DialogTitle>Detalhes do pedido {selectedOrder?.public_number}</DialogTitle>
+            <DialogDescription>Visualização administrativa do pedido.</DialogDescription>
           </DialogHeader>
 
           {detailQuery.isLoading ? (
@@ -560,9 +521,7 @@ export function OrderAdmin() {
           {detailQuery.error ? (
             <div className="flex min-h-[360px] flex-col items-center justify-center px-5 text-center">
               <RefreshCw className="h-7 w-7 text-red-600" aria-hidden="true" />
-              <p className="mt-3 font-black text-gray-950">
-                Não foi possível abrir o pedido.
-              </p>
+              <p className="mt-3 font-black text-gray-950">Não foi possível abrir o pedido.</p>
               <button
                 type="button"
                 onClick={() => void detailQuery.refetch()}
@@ -574,11 +533,7 @@ export function OrderAdmin() {
           ) : null}
 
           {detailQuery.data ? (
-            <OrderDetailContent
-              detail={detailQuery.data}
-              ownerView
-              actions={detailActions}
-            />
+            <OrderDetailContent detail={detailQuery.data} ownerView actions={detailActions} />
           ) : null}
 
           {actionError ? (
@@ -601,9 +556,7 @@ export function OrderAdmin() {
           }
         }}
         title={pendingAction?.title ?? "Confirmar atualização?"}
-        description={
-          pendingAction?.description ?? "Confirme a atualização do pedido."
-        }
+        description={pendingAction?.description ?? "Confirme a atualização do pedido."}
         confirmLabel={pendingAction?.confirmLabel ?? "Confirmar"}
         cancelLabel="Voltar"
         tone={pendingAction?.tone ?? "neutral"}

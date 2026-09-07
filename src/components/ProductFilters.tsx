@@ -5,11 +5,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import type {
-  CatalogFacetOption,
-  CatalogFacets,
-  CatalogQuery,
-} from "@/lib/catalog";
+import type { CatalogFacetOption, CatalogFacets, CatalogQuery } from "@/lib/catalog";
 
 type FilterKey = "campeonato" | "liga" | "time" | "category";
 
@@ -20,12 +16,8 @@ interface ProductFiltersProps {
 
 const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
   const navigate = useNavigate();
-  const [minPrice, setMinPrice] = React.useState(
-    search.minPrice?.toString() ?? "",
-  );
-  const [maxPrice, setMaxPrice] = React.useState(
-    search.maxPrice?.toString() ?? "",
-  );
+  const [minPrice, setMinPrice] = React.useState(search.minPrice?.toString() ?? "");
+  const [maxPrice, setMaxPrice] = React.useState(search.maxPrice?.toString() ?? "");
 
   React.useEffect(() => {
     setMinPrice(search.minPrice?.toString() ?? "");
@@ -80,13 +72,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
     delete next.page;
 
     const validMin =
-      parsedMin !== null && Number.isFinite(parsedMin) && parsedMin >= 0
-        ? parsedMin
-        : null;
+      parsedMin !== null && Number.isFinite(parsedMin) && parsedMin >= 0 ? parsedMin : null;
     const validMax =
-      parsedMax !== null && Number.isFinite(parsedMax) && parsedMax >= 0
-        ? parsedMax
-        : null;
+      parsedMax !== null && Number.isFinite(parsedMax) && parsedMax >= 0 ? parsedMax : null;
 
     if (validMin === null) delete next.minPrice;
     else next.minPrice = Math.min(validMin, validMax ?? validMin);
@@ -149,9 +137,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
                 <Checkbox
                   id={id}
                   checked={checked}
-                  onCheckedChange={() =>
-                    handleFilterChange(filterKey, item.value)
-                  }
+                  onCheckedChange={() => handleFilterChange(filterKey, item.value)}
                   className="h-4 w-4 rounded-none border-gray-300 transition-all data-[state=checked]:border-red-600 data-[state=checked]:bg-red-600"
                 />
                 <label
@@ -161,9 +147,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
                   }`}
                 >
                   <span>{item.label}</span>
-                  <span className="text-[10px] font-normal text-gray-400">
-                    {item.count}
-                  </span>
+                  <span className="text-[10px] font-normal text-gray-400">{item.count}</span>
                 </label>
               </div>
             );
@@ -175,19 +159,17 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
 
   const hasFilters = Boolean(
     search.campeonato ||
-      search.liga ||
-      search.time ||
-      search.category ||
-      search.minPrice !== undefined ||
-      search.maxPrice !== undefined,
+    search.liga ||
+    search.time ||
+    search.category ||
+    search.minPrice !== undefined ||
+    search.maxPrice !== undefined,
   );
 
   return (
     <div className="flex flex-col">
       <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-2">
-        <h2 className="text-lg font-black uppercase tracking-tight text-gray-900">
-          Filtros
-        </h2>
+        <h2 className="text-lg font-black uppercase tracking-tight text-gray-900">Filtros</h2>
         {hasFilters ? (
           <Button
             variant="ghost"
@@ -233,9 +215,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
 
       <div className="mb-8">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-sm font-black uppercase tracking-wider text-gray-900">
-            Preço
-          </h3>
+          <h3 className="text-sm font-black uppercase tracking-wider text-gray-900">Preço</h3>
           {search.minPrice !== undefined || search.maxPrice !== undefined ? (
             <button
               type="button"

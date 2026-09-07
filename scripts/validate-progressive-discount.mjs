@@ -61,14 +61,18 @@ const checks = [
   [
     "frete gratis vale para todas as faixas a partir de 8 pecas",
     revisionMigration.includes("IF NEW.discount_percent >= 10 THEN") &&
-      revisionMigration.includes("shipping_discount_amount := NEW.shipping_base_amount + NEW.shipping_additional_amount") &&
+      revisionMigration.includes(
+        "shipping_discount_amount := NEW.shipping_base_amount + NEW.shipping_additional_amount",
+      ) &&
       revisionMigration.includes("NEW.shipping_amount := 0"),
   ],
   [
     "frete gratis preserva custo operacional em snapshot separado do valor cobrado",
     baseMigration.includes("shipping_discount_amount") &&
       revisionMigration.includes("NEW.shipping_base_amount + NEW.shipping_additional_amount") &&
-      revisionMigration.includes("NEW.total_amount := NEW.subtotal_amount - NEW.discount_amount + NEW.shipping_amount"),
+      revisionMigration.includes(
+        "NEW.total_amount := NEW.subtotal_amount - NEW.discount_amount + NEW.shipping_amount",
+      ),
   ],
   [
     "create_order_core continua restrita ao service role",

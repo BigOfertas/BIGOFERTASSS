@@ -7,8 +7,7 @@ const ts = require("typescript");
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
-const migrationPath =
-  "supabase/migrations/20260902040000_phase_10_definitive_order_core.sql";
+const migrationPath = "supabase/migrations/20260902040000_phase_10_definitive_order_core.sql";
 const migration = read(migrationPath);
 const ordersLib = read("src/lib/orders.ts");
 const customerOrders = read("src/components/account/CustomerOrders.tsx");
@@ -31,16 +30,8 @@ const check = (name, condition) => checks.push([name, Boolean(condition)]);
 
 check(
   "schema cria pedidos, itens, timeline, reembolso e outbox minimo",
-  [
-    "orders",
-    "order_items",
-    "order_timeline",
-    "refund_requests",
-    "notification_events",
-  ].every((table) =>
-    new RegExp(`CREATE TABLE IF NOT EXISTS public\\.${table}\\s*\\(`).test(
-      migration,
-    ),
+  ["orders", "order_items", "order_timeline", "refund_requests", "notification_events"].every(
+    (table) => new RegExp(`CREATE TABLE IF NOT EXISTS public\\.${table}\\s*\\(`).test(migration),
   ),
 );
 check(
@@ -51,9 +42,7 @@ check(
 );
 check(
   "numero humano usa sequencia e formato BIG-AAAA-NNNNNN",
-  /CREATE SEQUENCE IF NOT EXISTS public\.order_public_number_seq/.test(
-    migration,
-  ) &&
+  /CREATE SEQUENCE IF NOT EXISTS public\.order_public_number_seq/.test(migration) &&
     /'BIG-'[\s\S]*to_char\(CURRENT_DATE, 'YYYY'\)[\s\S]*lpad\(nextval\('public\.order_public_number_seq'\)::text, 6, '0'\)/.test(
       migration,
     ) &&
@@ -80,12 +69,8 @@ check(
   "criacao de pedido e interna, idempotente e sem permissao ao navegador",
   /CREATE OR REPLACE FUNCTION public\.create_order_core/.test(migration) &&
     /orders_user_idempotency_unique/.test(migration) &&
-    /GRANT EXECUTE ON FUNCTION public\.create_order_core[\s\S]*TO service_role/.test(
-      migration,
-    ) &&
-    !/GRANT EXECUTE ON FUNCTION public\.create_order_core[^;]*TO authenticated/.test(
-      migration,
-    ),
+    /GRANT EXECUTE ON FUNCTION public\.create_order_core[\s\S]*TO service_role/.test(migration) &&
+    !/GRANT EXECUTE ON FUNCTION public\.create_order_core[^;]*TO authenticated/.test(migration),
 );
 check(
   "RLS limita leitura ao cliente do pedido ou ao owner",
@@ -99,11 +84,8 @@ check(
 );
 check(
   "tabelas sensiveis recusam escrita direta de authenticated",
-  ["orders", "order_items", "order_timeline", "refund_requests"].every(
-    (table) =>
-      new RegExp(
-        `REVOKE ALL ON TABLE public\\.${table} FROM anon, authenticated`,
-      ).test(migration),
+  ["orders", "order_items", "order_timeline", "refund_requests"].every((table) =>
+    new RegExp(`REVOKE ALL ON TABLE public\\.${table} FROM anon, authenticated`).test(migration),
   ) &&
     !/GRANT (INSERT|UPDATE|DELETE)[^;]*public\.(orders|order_items|order_timeline|refund_requests)[^;]*authenticated/i.test(
       migration,
@@ -114,9 +96,7 @@ check(
   /CREATE OR REPLACE FUNCTION public\.record_order_payment/.test(migration) &&
     /payment_status public\.order_payment_status/.test(migration) &&
     /event_name[\s\S]*'order\.paid'/.test(migration) &&
-    /GRANT EXECUTE ON FUNCTION public\.record_order_payment[^;]*TO service_role/.test(
-      migration,
-    ),
+    /GRANT EXECUTE ON FUNCTION public\.record_order_payment[^;]*TO service_role/.test(migration),
 );
 check(
   "frete futuro possui snapshot sem cotacao inventada",
@@ -129,9 +109,7 @@ check(
     "shipping_transit_business_days",
     "shipping_quoted_at",
   ].every((column) => migration.includes(column)) &&
-    !/SuperFrete|PAC fict[ií]cio|SEDEX fict[ií]cio|prazo simulado/i.test(
-      migration,
-    ),
+    !/SuperFrete|PAC fict[ií]cio|SEDEX fict[ií]cio|prazo simulado/i.test(migration),
 );
 check(
   "timeline e transicoes owner seguem apenas o fluxo normal",
@@ -144,21 +122,13 @@ check(
 );
 check(
   "reembolso e simples, integral e resolvido manualmente pelo owner",
-  /CREATE OR REPLACE FUNCTION public\.request_my_order_refund/.test(
-    migration,
-  ) &&
-    /CREATE OR REPLACE FUNCTION public\.owner_resolve_refund_request/.test(
-      migration,
-    ) &&
+  /CREATE OR REPLACE FUNCTION public\.request_my_order_refund/.test(migration) &&
+    /CREATE OR REPLACE FUNCTION public\.owner_resolve_refund_request/.test(migration) &&
     /'refunded'::public\.refund_request_status/.test(migration) &&
     /'canceled'::public\.refund_request_status/.test(migration) &&
     /entrará em contato/.test(refundDialog) &&
-    /Nenhuma transferência financeira será executada automaticamente/.test(
-      adminOrders,
-    ) &&
-    !/partial_refund|refund_amount|refunded_amount|wallet|ledger/i.test(
-      migration,
-    ),
+    /Nenhuma transferência financeira será executada automaticamente/.test(adminOrders) &&
+    !/partial_refund|refund_amount|refunded_amount|wallet|ledger/i.test(migration),
 );
 check(
   "cliente possui historico, detalhe real e empty state sem mocks",
@@ -191,11 +161,7 @@ check(
   "modelo sob encomenda nao e bloqueado por estoque legado",
   /'made_to_order', true/.test(migration) &&
     !/v\.stock_quantity/.test(
-      migration.slice(
-        migration.indexOf(
-          "CREATE OR REPLACE FUNCTION public.validate_cart_items",
-        ),
-      ),
+      migration.slice(migration.indexOf("CREATE OR REPLACE FUNCTION public.validate_cart_items")),
     ) &&
     !/stock_quantity|sem estoque|Em estoque|Esgotado/.test(productRoute) &&
     /availableStock: null/.test(cartLib),
@@ -219,13 +185,9 @@ check(
 );
 check(
   "tipos Supabase incluem todas as estruturas da fase",
-  [
-    "orders:",
-    "order_items:",
-    "order_timeline:",
-    "refund_requests:",
-    "notification_events:",
-  ].every((token) => generatedTypes.includes(token)) &&
+  ["orders:", "order_items:", "order_timeline:", "refund_requests:", "notification_events:"].every(
+    (token) => generatedTypes.includes(token),
+  ) &&
     /order_status:/.test(generatedTypes) &&
     /refund_request_status:/.test(generatedTypes),
 );
@@ -291,14 +253,8 @@ for (const file of sourceFiles) {
 }
 
 check("nenhum popup nativo existe no frontend", popupMatches.length === 0);
-check(
-  "nenhum pedido ou cliente falso foi embutido",
-  fakeOrderMatches.length === 0,
-);
-check(
-  `${sourceFiles.length} arquivos TS/TSX sem erro sintatico`,
-  syntaxErrors === 0,
-);
+check("nenhum pedido ou cliente falso foi embutido", fakeOrderMatches.length === 0);
+check(`${sourceFiles.length} arquivos TS/TSX sem erro sintatico`, syntaxErrors === 0);
 
 let failed = 0;
 for (const [name, ok] of checks) {
@@ -306,10 +262,8 @@ for (const [name, ok] of checks) {
   if (!ok) failed += 1;
 }
 
-if (popupMatches.length)
-  console.error("Popups nativos:", popupMatches.join(", "));
-if (fakeOrderMatches.length)
-  console.error("Dados falsos:", fakeOrderMatches.join(", "));
+if (popupMatches.length) console.error("Popups nativos:", popupMatches.join(", "));
+if (fakeOrderMatches.length) console.error("Dados falsos:", fakeOrderMatches.join(", "));
 
 if (failed) process.exit(1);
 console.log(`\n${checks.length}/${checks.length} validacoes aprovadas.`);

@@ -1,5 +1,9 @@
 import type { Json } from "@/integrations/supabase/types";
-import { EMPTY_PURCHASE_CUSTOMIZATION, normalizePurchaseCustomization, type PurchaseCustomization } from "@/lib/product-purchase";
+import {
+  EMPTY_PURCHASE_CUSTOMIZATION,
+  normalizePurchaseCustomization,
+  type PurchaseCustomization,
+} from "@/lib/product-purchase";
 
 export const CART_STORAGE_KEY = "bigofertas_cart";
 export const CART_STORAGE_VERSION = 2;
@@ -15,10 +19,7 @@ function isKnownFictitiousCartItem(name: string, imageUrl: string | null) {
   );
 }
 
-export type CartItemStatus =
-  | "available"
-  | "unavailable"
-  | "needs_review";
+export type CartItemStatus = "available" | "unavailable" | "needs_review";
 
 export interface CartOptionSnapshot {
   optionId: string;
@@ -99,15 +100,11 @@ function nullableString(value: unknown): string | null {
 }
 
 function nonNegativeNumber(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) && value >= 0
-    ? value
-    : null;
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
 }
 
 function nonNegativeInteger(value: unknown): number | null {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0
-    ? value
-    : null;
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
 }
 
 function customizationFingerprint(customization: PurchaseCustomization) {
@@ -132,10 +129,7 @@ export function getCartQuantityLimit(_availableStock: number | null) {
   return MAX_CART_LINE_QUANTITY;
 }
 
-export function clampCartQuantity(
-  quantity: number,
-  availableStock: number | null,
-) {
+export function clampCartQuantity(quantity: number, availableStock: number | null) {
   const normalized = Number.isFinite(quantity) ? Math.trunc(quantity) : 1;
   return Math.min(Math.max(normalized, 1), getCartQuantityLimit(availableStock));
 }
@@ -176,18 +170,14 @@ function sanitizeCurrentCartItem(value: unknown): CartItem | null {
   const unitPrice = nonNegativeNumber(value["unitPrice"]);
   const rawQuantity = nonNegativeInteger(value["quantity"]);
   const rawStock =
-    value["availableStock"] === null
-      ? null
-      : nonNegativeInteger(value["availableStock"]);
+    value["availableStock"] === null ? null : nonNegativeInteger(value["availableStock"]);
 
   if (!productId || !name || unitPrice === null || rawQuantity === null) {
     return null;
   }
 
   const variantId = nullableString(value["variantId"]);
-  const status = ["available", "unavailable", "needs_review"].includes(
-    String(value["status"]),
-  )
+  const status = ["available", "unavailable", "needs_review"].includes(String(value["status"]))
     ? (value["status"] as CartItemStatus)
     : variantId
       ? "available"
@@ -271,10 +261,7 @@ export function normalizeCartItems(items: CartItem[]) {
 
     byLine.set(item.lineId, {
       ...item,
-      quantity: clampCartQuantity(
-        current.quantity + item.quantity,
-        item.availableStock,
-      ),
+      quantity: clampCartQuantity(current.quantity + item.quantity, item.availableStock),
     });
   }
 
@@ -320,13 +307,8 @@ export function encodeStoredCart(items: CartItem[]) {
   return JSON.stringify(payload);
 }
 
-export function createCartItem(
-  input: AddCartItemInput,
-  quantity: number,
-): CartItem {
-  const unitPrice = Number.isFinite(input.unitPrice)
-    ? Math.max(0, input.unitPrice)
-    : 0;
+export function createCartItem(input: AddCartItemInput, quantity: number): CartItem {
+  const unitPrice = Number.isFinite(input.unitPrice) ? Math.max(0, input.unitPrice) : 0;
 
   return {
     lineId: createCartLineId(input.productId, input.variantId, input.customization),
@@ -365,9 +347,7 @@ export function parseCartValidationRows(value: Json): CartValidationRow[] {
     const rawStatus = entry["status"];
     if (
       !lineId ||
-      !["available", "out_of_stock", "unavailable", "needs_review"].includes(
-        String(rawStatus),
-      )
+      !["available", "out_of_stock", "unavailable", "needs_review"].includes(String(rawStatus))
     ) {
       return [];
     }
@@ -384,10 +364,7 @@ export function parseCartValidationRows(value: Json): CartValidationRow[] {
         unit_price: nonNegativeNumber(entry["unit_price"]),
         available_stock: null,
         customization: normalizePurchaseCustomization(entry["customization"]),
-        status:
-          rawStatus === "out_of_stock"
-            ? "available"
-            : (rawStatus as CartItemStatus),
+        status: rawStatus === "out_of_stock" ? "available" : (rawStatus as CartItemStatus),
       },
     ];
   });

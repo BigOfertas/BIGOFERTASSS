@@ -5,12 +5,7 @@ import { getUserFacingError } from "@/lib/user-facing-error";
 export const ADMIN_IMAGE_ACCEPT = "image/webp,image/avif,image/jpeg,image/png";
 export const ADMIN_IMAGE_MAX_BYTES = 15 * 1024 * 1024;
 
-const ALLOWED_IMAGE_TYPES = new Set([
-  "image/webp",
-  "image/avif",
-  "image/jpeg",
-  "image/png",
-]);
+const ALLOWED_IMAGE_TYPES = new Set(["image/webp", "image/avif", "image/jpeg", "image/png"]);
 
 type PresignResponse = {
   imageId: string;
@@ -43,9 +38,7 @@ export function validateAdminImageFile(file: File) {
   }
 }
 
-export async function fetchAdminProductImages(
-  productId: string,
-): Promise<ProductImage[]> {
+export async function fetchAdminProductImages(productId: string): Promise<ProductImage[]> {
   const { data, error } = await supabase
     .from("product_images")
     .select("*")
@@ -85,10 +78,7 @@ export async function uploadAdminProductImage(input: {
     });
 
   if (presignError || !presignData?.imageId || !presignData.uploadUrl) {
-    throw friendlyError(
-      presignError,
-      "Não foi possível preparar o envio da imagem.",
-    );
+    throw friendlyError(presignError, "Não foi possível preparar o envio da imagem.");
   }
 
   let uploadResponse: Response;
@@ -131,7 +121,7 @@ export async function uploadAdminProductImage(input: {
 }
 
 export async function setAdminProductPrimaryImage(imageId: string): Promise<void> {
-  const { error } = await (supabase as any).rpc("set_primary_product_image", {
+  const { error } = await supabase.rpc("set_primary_product_image", {
     target_image_id: imageId,
   });
 
@@ -140,9 +130,7 @@ export async function setAdminProductPrimaryImage(imageId: string): Promise<void
   }
 }
 
-export async function saveAdminProductImageOrder(
-  imageIds: string[],
-): Promise<void> {
+export async function saveAdminProductImageOrder(imageIds: string[]): Promise<void> {
   for (const [index, imageId] of imageIds.entries()) {
     const { error } = await supabase
       .from("product_images")
@@ -155,10 +143,7 @@ export async function saveAdminProductImageOrder(
   }
 }
 
-export async function archiveAdminProductImage(
-  imageId: string,
-  productId: string,
-): Promise<void> {
+export async function archiveAdminProductImage(imageId: string, productId: string): Promise<void> {
   const { error } = await supabase
     .from("product_images")
     .update({ status: "archived", is_primary: false })

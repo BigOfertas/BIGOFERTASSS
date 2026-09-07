@@ -1,12 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import {
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  Loader2,
-  MailCheck,
-  UserPlus,
-} from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, Loader2, MailCheck, UserPlus } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
@@ -40,8 +33,7 @@ function RegisterPage() {
   const [referralCode, setReferralCode] = useState<string | null>(() =>
     getPendingAffiliateReferralCode(),
   );
-  const [referralValidation, setReferralValidation] =
-    useState<ReferralValidation>("idle");
+  const [referralValidation, setReferralValidation] = useState<ReferralValidation>("idle");
 
   useEffect(() => {
     const captured =
@@ -181,7 +173,8 @@ function RegisterPage() {
           <p className="display-kicker mt-5">Cadastro criado</p>
           <h1 className="display-title-sm mt-2">Confirme seu e-mail</h1>
           <p className="mt-3 text-sm leading-6 text-gray-600">
-            Enviamos uma confirmação para <strong>{email.trim()}</strong>. Sua conta só poderá ser acessada depois que o e-mail for confirmado.
+            Enviamos uma confirmação para <strong>{email.trim()}</strong>. Sua conta só poderá ser
+            acessada depois que o e-mail for confirmado.
           </p>
           {errorMessage ? (
             <p className="mt-4 rounded-xl border border-red-200 bg-red-50/90 px-3 py-2 text-sm text-red-700">
@@ -222,7 +215,8 @@ function RegisterPage() {
           <p className="display-kicker mt-6">Área do cliente</p>
           <h1 className="display-title-sm mt-2">Criar conta</h1>
           <p className="mt-2 text-sm leading-6 text-gray-500">
-            Comece com o básico. Os dados de compra serão preenchidos só quando você finalizar um pedido.
+            Comece com o básico. Os dados de compra serão preenchidos só quando você finalizar um
+            pedido.
           </p>
         </div>
 
@@ -317,7 +311,9 @@ function RegisterPage() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            <span className={`mt-1.5 block text-xs ${password && !passwordValid ? "text-amber-700" : "text-gray-400"}`}>
+            <span
+              className={`mt-1.5 block text-xs ${password && !passwordValid ? "text-amber-700" : "text-gray-400"}`}
+            >
               Pelo menos 8 caracteres.
             </span>
           </label>
@@ -350,7 +346,10 @@ function RegisterPage() {
           </label>
 
           {errorMessage ? (
-            <p role="alert" className="rounded-xl border border-red-200 bg-red-50/90 px-3 py-2 text-sm text-red-700">
+            <p
+              role="alert"
+              className="rounded-xl border border-red-200 bg-red-50/90 px-3 py-2 text-sm text-red-700"
+            >
               {errorMessage}
             </p>
           ) : null}

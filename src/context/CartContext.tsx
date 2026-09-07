@@ -43,9 +43,7 @@ function loadStoredCart(): CartItem[] {
   return decodeStoredCart(localStorage.getItem(CART_STORAGE_KEY));
 }
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>(loadStoredCart);
   const cartRef = useRef(cart);
   const [isValidating, setIsValidating] = useState(false);
@@ -56,48 +54,41 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem(CART_STORAGE_KEY, encodeStoredCart(cart));
   }, [cart]);
 
-  const addToCart = useCallback(
-    (input: AddCartItemInput, quantity = 1) => {
-      const incoming = createCartItem(input, quantity);
+  const addToCart = useCallback((input: AddCartItemInput, quantity = 1) => {
+    const incoming = createCartItem(input, quantity);
 
-      setCart((previous) => {
-        const existing = previous.find(
-          (item) => item.lineId === incoming.lineId,
-        );
+    setCart((previous) => {
+      const existing = previous.find((item) => item.lineId === incoming.lineId);
 
-        if (!existing) {
-          toast.success(`${input.name} adicionado ao carrinho!`);
-          return [...previous, incoming];
-        }
+      if (!existing) {
+        toast.success(`${input.name} adicionado ao carrinho!`);
+        return [...previous, incoming];
+      }
 
-        const nextQuantity = clampCartQuantity(
-          existing.quantity + incoming.quantity,
-          incoming.availableStock,
-        );
+      const nextQuantity = clampCartQuantity(
+        existing.quantity + incoming.quantity,
+        incoming.availableStock,
+      );
 
-        if (nextQuantity < existing.quantity + incoming.quantity) {
-          toast.warning("A quantidade máxima por item é 99.");
-        } else {
-          toast.success(`Quantidade de ${input.name} atualizada no carrinho!`);
-        }
+      if (nextQuantity < existing.quantity + incoming.quantity) {
+        toast.warning("A quantidade máxima por item é 99.");
+      } else {
+        toast.success(`Quantidade de ${input.name} atualizada no carrinho!`);
+      }
 
-        return previous.map((item) =>
-          item.lineId === incoming.lineId
-            ? {
-                ...incoming,
-                quantity: nextQuantity,
-              }
-            : item,
-        );
-      });
-    },
-    [],
-  );
+      return previous.map((item) =>
+        item.lineId === incoming.lineId
+          ? {
+              ...incoming,
+              quantity: nextQuantity,
+            }
+          : item,
+      );
+    });
+  }, []);
 
   const removeFromCart = useCallback((lineId: string) => {
-    setCart((previous) =>
-      previous.filter((item) => item.lineId !== lineId),
-    );
+    setCart((previous) => previous.filter((item) => item.lineId !== lineId));
   }, []);
 
   const updateQuantity = useCallback(
@@ -108,20 +99,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       setCart((previous) =>
-        normalizeCartItems(previous.map((item) => {
-          if (item.lineId !== lineId) return item;
+        normalizeCartItems(
+          previous.map((item) => {
+            if (item.lineId !== lineId) return item;
 
-          const nextQuantity = clampCartQuantity(
-            quantity,
-            item.availableStock,
-          );
+            const nextQuantity = clampCartQuantity(quantity, item.availableStock);
 
-          if (nextQuantity < quantity) {
-            toast.warning("A quantidade máxima por item é 99.");
-          }
+            if (nextQuantity < quantity) {
+              toast.warning("A quantidade máxima por item é 99.");
+            }
 
-          return { ...item, quantity: nextQuantity };
-        })),
+            return { ...item, quantity: nextQuantity };
+          }),
+        ),
       );
     },
     [removeFromCart],
@@ -146,37 +136,39 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       let adjustedQuantities = false;
 
       setCart((previous) =>
-        normalizeCartItems(previous.map((item) => {
-          const result = byLine.get(item.lineId);
+        normalizeCartItems(
+          previous.map((item) => {
+            const result = byLine.get(item.lineId);
 
-          if (!result) {
-            return { ...item, status: "unavailable" as const };
-          }
+            if (!result) {
+              return { ...item, status: "unavailable" as const };
+            }
 
-          const availableStock = result.available_stock;
-          const quantity = clampCartQuantity(item.quantity, availableStock);
-          if (quantity !== item.quantity) adjustedQuantities = true;
+            const availableStock = result.available_stock;
+            const quantity = clampCartQuantity(item.quantity, availableStock);
+            if (quantity !== item.quantity) adjustedQuantities = true;
 
-          const resolvedVariantId =
-            result.status === "needs_review"
-              ? item.variantId
-              : result.variant_id ?? item.variantId;
+            const resolvedVariantId =
+              result.status === "needs_review"
+                ? item.variantId
+                : (result.variant_id ?? item.variantId);
 
-          return {
-            ...item,
-            lineId: createCartLineId(item.productId, resolvedVariantId, result.customization),
-            productSlug: result.product_slug ?? item.productSlug,
-            variantId: resolvedVariantId,
-            sku: result.variant_sku ?? item.sku,
-            name: result.product_name ?? item.name,
-            variantName: result.variant_name ?? item.variantName,
-            unitPrice: result.unit_price ?? item.unitPrice,
-            availableStock,
-            customization: result.customization,
-            quantity,
-            status: result.status,
-          };
-        })),
+            return {
+              ...item,
+              lineId: createCartLineId(item.productId, resolvedVariantId, result.customization),
+              productSlug: result.product_slug ?? item.productSlug,
+              variantId: resolvedVariantId,
+              sku: result.variant_sku ?? item.sku,
+              name: result.product_name ?? item.name,
+              variantName: result.variant_name ?? item.variantName,
+              unitPrice: result.unit_price ?? item.unitPrice,
+              availableStock,
+              customization: result.customization,
+              quantity,
+              status: result.status,
+            };
+          }),
+        ),
       );
 
       if (adjustedQuantities) {
@@ -191,23 +183,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  const totalItems = useMemo(
-    () => cart.reduce((total, item) => total + item.quantity, 0),
-    [cart],
-  );
+  const totalItems = useMemo(() => cart.reduce((total, item) => total + item.quantity, 0), [cart]);
   const totalPrice = useMemo(
-    () =>
-      cart.reduce(
-        (total, item) => total + item.unitPrice * item.quantity,
-        0,
-      ),
+    () => cart.reduce((total, item) => total + item.unitPrice * item.quantity, 0),
     [cart],
   );
   const hasBlockingIssues = useMemo(
-    () =>
-      cart.some(
-        (item) => item.status !== "available" || item.variantId === null,
-      ),
+    () => cart.some((item) => item.status !== "available" || item.variantId === null),
     [cart],
   );
 

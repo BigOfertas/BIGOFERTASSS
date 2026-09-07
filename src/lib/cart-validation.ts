@@ -6,9 +6,7 @@ import {
   type CartValidationRow,
 } from "@/lib/cart";
 
-export async function validateCartItems(
-  items: CartItem[],
-): Promise<CartValidationRow[]> {
+export async function validateCartItems(items: CartItem[]): Promise<CartValidationRow[]> {
   if (items.length === 0) return [];
 
   const rows: CartValidationRow[] = [];

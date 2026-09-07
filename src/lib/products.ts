@@ -64,14 +64,10 @@ export function matchesTextSearch(product: Product, query: string | undefined) {
       .join(" "),
   );
 
-  return normalizedQuery
-    .split(/\s+/)
-    .every((term) => searchableText.includes(term));
+  return normalizedQuery.split(/\s+/).every((term) => searchableText.includes(term));
 }
 
-export function hasPromotionalPrice(
-  product: Pick<Product, "price" | "promotional_price">,
-) {
+export function hasPromotionalPrice(product: Pick<Product, "price" | "promotional_price">) {
   return (
     product.promotional_price !== null &&
     Number.isFinite(product.promotional_price) &&
@@ -80,17 +76,11 @@ export function hasPromotionalPrice(
   );
 }
 
-export function getEffectiveProductPrice(
-  product: Pick<Product, "price" | "promotional_price">,
-) {
-  return hasPromotionalPrice(product)
-    ? (product.promotional_price as number)
-    : product.price;
+export function getEffectiveProductPrice(product: Pick<Product, "price" | "promotional_price">) {
+  return hasPromotionalPrice(product) ? (product.promotional_price as number) : product.price;
 }
 
-export function isKnownFictitiousProduct(
-  product: Pick<Product, "name" | "image_url">,
-) {
+export function isKnownFictitiousProduct(product: Pick<Product, "name" | "image_url">) {
   return (
     typeof product.name === "string" &&
     typeof product.image_url === "string" &&

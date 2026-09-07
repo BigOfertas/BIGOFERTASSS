@@ -70,13 +70,7 @@ const BUNDESLIGA_CLUBS = [
   "Stuttgart",
 ] as const;
 
-const LIGUE_1_CLUBS = [
-  "Lille",
-  "Lyon",
-  "Marseille",
-  "Monaco",
-  "Paris Saint-Germain",
-] as const;
+const LIGUE_1_CLUBS = ["Lille", "Lyon", "Marseille", "Monaco", "Paris Saint-Germain"] as const;
 
 const OTHER_EUROPEAN_CLUBS = [
   "Ajax",

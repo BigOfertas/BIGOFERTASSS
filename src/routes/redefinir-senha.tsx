@@ -195,13 +195,20 @@ function ResetPasswordPage() {
                     aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                     className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground transition hover:text-foreground"
                   >
-                    {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4.5 w-4.5" />
+                    ) : (
+                      <Eye className="h-4.5 w-4.5" />
+                    )}
                   </button>
                 </div>
               </div>
 
               <div className="mt-4 space-y-2">
-                <label htmlFor="confirmNewPassword" className="text-sm font-semibold text-foreground">
+                <label
+                  htmlFor="confirmNewPassword"
+                  className="text-sm font-semibold text-foreground"
+                >
                   Confirmar nova senha
                 </label>
                 <div className="relative">
@@ -222,16 +229,27 @@ function ResetPasswordPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword((value) => !value)}
-                    aria-label={showConfirmPassword ? "Ocultar confirmação da senha" : "Mostrar confirmação da senha"}
+                    aria-label={
+                      showConfirmPassword
+                        ? "Ocultar confirmação da senha"
+                        : "Mostrar confirmação da senha"
+                    }
                     className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground transition hover:text-foreground"
                   >
-                    {showConfirmPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4.5 w-4.5" />
+                    ) : (
+                      <Eye className="h-4.5 w-4.5" />
+                    )}
                   </button>
                 </div>
               </div>
 
               {errorMessage ? (
-                <p role="alert" className="mt-4 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <p
+                  role="alert"
+                  className="mt-4 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                >
                   {errorMessage}
                 </p>
               ) : null}

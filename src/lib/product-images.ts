@@ -32,10 +32,7 @@ export function encodeR2ObjectKey(storageKey: string) {
     .join("/");
 }
 
-export function buildR2PublicImageUrl(
-  storageKey: string,
-  baseUrl = getR2PublicBaseUrl(),
-) {
+export function buildR2PublicImageUrl(storageKey: string, baseUrl = getR2PublicBaseUrl()) {
   const normalizedKey = storageKey.trim().replace(/^\/+/, "");
 
   if (!baseUrl || !normalizedKey || normalizedKey.includes("..")) {
@@ -83,17 +80,12 @@ export function getPrimaryProductImageUrl(
   images: ProductImage[],
 ) {
   const preferredImage = getPreferredProductImage(images);
-  const r2Url = preferredImage
-    ? buildR2PublicImageUrl(preferredImage.storage_key)
-    : null;
+  const r2Url = preferredImage ? buildR2PublicImageUrl(preferredImage.storage_key) : null;
 
   return r2Url ?? product.image_url ?? null;
 }
 
-export function attachProductImages(
-  product: Product,
-  images: ProductImage[],
-): CatalogProduct {
+export function attachProductImages(product: Product, images: ProductImage[]): CatalogProduct {
   const readyImages = sortReadyProductImages(images);
 
   return {
@@ -102,7 +94,6 @@ export function attachProductImages(
     displayImageUrl: getPrimaryProductImageUrl(product, readyImages),
   };
 }
-
 
 export interface ProductGalleryItem {
   id: string;
@@ -123,11 +114,12 @@ export function getProductGalleryItems(
     ? readyImages.filter((image) => image.variant_id === selectedVariantId)
     : [];
 
-  const orderedImages = selectedVariantImages.length > 0
-    ? [...selectedVariantImages, ...productImages]
-    : productImages.length > 0
-      ? productImages
-      : readyImages;
+  const orderedImages =
+    selectedVariantImages.length > 0
+      ? [...selectedVariantImages, ...productImages]
+      : productImages.length > 0
+        ? productImages
+        : readyImages;
 
   const seen = new Set<string>();
   const gallery = orderedImages.flatMap((image) => {
@@ -138,13 +130,15 @@ export function getProductGalleryItems(
     }
 
     seen.add(url);
-    return [{
-      id: image.id,
-      url,
-      alt: image.alt_text?.trim() || product.name,
-      variantId: image.variant_id,
-      isPrimary: image.is_primary,
-    } satisfies ProductGalleryItem];
+    return [
+      {
+        id: image.id,
+        url,
+        alt: image.alt_text?.trim() || product.name,
+        variantId: image.variant_id,
+        isPrimary: image.is_primary,
+      } satisfies ProductGalleryItem,
+    ];
   });
 
   if (product.image_url && !seen.has(product.image_url)) {

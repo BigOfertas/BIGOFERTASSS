@@ -1,13 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-  ArrowLeft,
-  Eye,
-  EyeOff,
-  KeyRound,
-  Loader2,
-  MailCheck,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, KeyRound, Loader2, MailCheck, ShieldCheck } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
@@ -27,14 +19,7 @@ function Brand() {
 
 function LoginPage() {
   const navigate = useNavigate();
-  const {
-    user,
-    loading,
-    isOwner,
-    signIn,
-    verifySignInTwoFactor,
-    signOut,
-  } = useAuth();
+  const { user, loading, isOwner, signIn, verifySignInTwoFactor, signOut } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -182,7 +167,10 @@ function LoginPage() {
             </button>
 
             {errorMessage ? (
-              <p role="alert" className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <p
+                role="alert"
+                className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
                 {errorMessage}
               </p>
             ) : null}
@@ -252,7 +240,10 @@ function LoginPage() {
             </div>
 
             {errorMessage ? (
-              <p role="alert" className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <p
+                role="alert"
+                className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
                 {errorMessage}
               </p>
             ) : null}
@@ -368,7 +359,10 @@ function LoginPage() {
           </div>
 
           {errorMessage ? (
-            <p role="alert" className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <p
+              role="alert"
+              className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
               {errorMessage}
             </p>
           ) : null}
@@ -394,7 +388,10 @@ function LoginPage() {
 
           <p className="text-center text-sm text-muted-foreground">
             Ainda não tem uma conta?{" "}
-            <Link to="/cadastro" className="font-semibold text-red-600 underline-offset-4 hover:underline">
+            <Link
+              to="/cadastro"
+              className="font-semibold text-red-600 underline-offset-4 hover:underline"
+            >
               Criar conta
             </Link>
           </p>

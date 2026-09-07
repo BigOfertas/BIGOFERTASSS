@@ -8,19 +8,11 @@ type CategoryRow = Tables<"categories">;
 
 export type AdminProductStatus = Enums<"product_status">;
 
-export type AdminCategory = Pick<
-  CategoryRow,
-  "id" | "name" | "slug" | "is_active" | "sort_order"
->;
+export type AdminCategory = Pick<CategoryRow, "id" | "name" | "slug" | "is_active" | "sort_order">;
 
 export type AdminDefaultVariant = Pick<
   VariantRow,
-  | "id"
-  | "sku"
-  | "name"
-  | "stock_quantity"
-  | "status"
-  | "is_default"
+  "id" | "sku" | "name" | "stock_quantity" | "status" | "is_default"
 >;
 
 type AdminVariantLookup = AdminDefaultVariant & Pick<VariantRow, "product_id">;
@@ -114,9 +106,7 @@ function validateInput(input: AdminProductInput) {
   }
 
   if (!Number.isInteger(input.stockQuantity) || input.stockQuantity < 0) {
-    throw new Error(
-      "O estoque precisa ser um número inteiro igual ou maior que zero.",
-    );
+    throw new Error("O estoque precisa ser um número inteiro igual ou maior que zero.");
   }
 
   const dimensions = [input.lengthCm, input.widthCm, input.heightCm];
@@ -136,9 +126,7 @@ function validateInput(input: AdminProductInput) {
 }
 
 async function allocateProductIdentity(): Promise<ProductIdentityReservation> {
-  const { data, error } = await (supabase as any).rpc(
-    "allocate_product_identity",
-  );
+  const { data, error } = await supabase.rpc("allocate_product_identity");
 
   if (error) {
     throw friendlyError(error, "Não foi possível preparar o cadastro do produto.");
@@ -160,7 +148,7 @@ async function allocateProductIdentity(): Promise<ProductIdentityReservation> {
 }
 
 async function releaseProductIdentity(reservationId: number): Promise<void> {
-  const { error } = await (supabase as any).rpc("release_product_identity", {
+  const { error } = await supabase.rpc("release_product_identity", {
     target_reservation_id: reservationId,
   });
 
@@ -206,7 +194,10 @@ export async function fetchAdminCatalog(): Promise<AdminCatalogSnapshot> {
       .order("sort_order", { ascending: true });
 
     if (variantsResult.error) {
-      throw friendlyError(variantsResult.error, "Não foi possível carregar as variações dos produtos.");
+      throw friendlyError(
+        variantsResult.error,
+        "Não foi possível carregar as variações dos produtos.",
+      );
     }
 
     variants = variantsResult.data ?? [];
@@ -230,9 +221,7 @@ export async function fetchAdminCatalog(): Promise<AdminCatalogSnapshot> {
   };
 }
 
-export async function saveAdminProduct(
-  input: AdminProductInput,
-): Promise<string> {
+export async function saveAdminProduct(input: AdminProductInput): Promise<string> {
   validateInput(input);
 
   const productPayload = {
@@ -269,7 +258,10 @@ export async function saveAdminProduct(
         .eq("product_id", input.id);
 
       if (variantResult.error) {
-        throw friendlyError(variantResult.error, "Não foi possível atualizar a variação do produto.");
+        throw friendlyError(
+          variantResult.error,
+          "Não foi possível atualizar a variação do produto.",
+        );
       }
     } else {
       const productIdentityResult = await supabase

@@ -6,10 +6,7 @@ type RpcResponse = {
 };
 
 type DynamicRpcClient = {
-  rpc: (
-    functionName: string,
-    args?: Record<string, unknown>,
-  ) => PromiseLike<RpcResponse>;
+  rpc: (functionName: string, args?: Record<string, unknown>) => PromiseLike<RpcResponse>;
 };
 
 export async function callSupabaseRpc<T>(

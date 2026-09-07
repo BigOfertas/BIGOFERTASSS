@@ -1,7 +1,8 @@
 const RESEND_EMAILS_URL = "https://api.resend.com/emails";
 const DEFAULT_FROM = "BIGofertas <contato@bigofertas.net>";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const CORREIOS_TRACKING_URL = "https://www.correios.com.br/home-page-2024/rastreamento/acompanhe-seu-objeto";
+const CORREIOS_TRACKING_URL =
+  "https://www.correios.com.br/home-page-2024/rastreamento/acompanhe-seu-objeto";
 const LOGGI_TRACKING_URL = "https://www.loggi.com/rastreador/";
 
 type NotificationEvent = {
@@ -58,7 +59,11 @@ function response(body: unknown, status = 200) {
 async function readJson(upstream: Response) {
   const text = await upstream.text();
   if (!text) return null;
-  try { return JSON.parse(text); } catch { return null; }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
 async function isAuthorizedProcessorCaller(request: Request) {
@@ -110,9 +115,8 @@ async function releaseDueAffiliateCommissions() {
     });
     if (upstream.ok) return;
 
-    const payload = await readJson(upstream) as { code?: unknown } | null;
-    const functionNotInstalled =
-      upstream.status === 404 || payload?.code === "PGRST202";
+    const payload = (await readJson(upstream)) as { code?: unknown } | null;
+    const functionNotInstalled = upstream.status === 404 || payload?.code === "PGRST202";
 
     if (!functionNotInstalled) {
       console.warn(
@@ -127,7 +131,9 @@ async function releaseDueAffiliateCommissions() {
 }
 
 async function claimEvents(limit = 20): Promise<NotificationEvent[]> {
-  const upstream = await rpc("claim_notification_events", { p_limit: Math.min(Math.max(limit, 1), 50) });
+  const upstream = await rpc("claim_notification_events", {
+    p_limit: Math.min(Math.max(limit, 1), 50),
+  });
   const payload = await readJson(upstream);
   if (!upstream.ok || !Array.isArray(payload)) throw new Error("EMAIL_CLAIM_FAILED");
   return payload.map((row) => ({
@@ -135,20 +141,28 @@ async function claimEvents(limit = 20): Promise<NotificationEvent[]> {
     user_id: String(row.user_id ?? ""),
     order_id: typeof row.order_id === "string" ? row.order_id : null,
     event_name: String(row.event_name ?? ""),
-    payload: row.payload && typeof row.payload === "object" && !Array.isArray(row.payload) ? row.payload : {},
+    payload:
+      row.payload && typeof row.payload === "object" && !Array.isArray(row.payload)
+        ? row.payload
+        : {},
     idempotency_key: String(row.idempotency_key ?? ""),
     occurred_at: String(row.occurred_at ?? ""),
   }));
 }
 
 async function completeEvent(id: string, providerId: string) {
-  const upstream = await rpc("complete_notification_event", { p_event_id: id, p_provider_message_id: providerId });
+  const upstream = await rpc("complete_notification_event", {
+    p_event_id: id,
+    p_provider_message_id: providerId,
+  });
   if (!upstream.ok) throw new Error("EMAIL_COMPLETE_FAILED");
 }
 
 async function failEvent(id: string, error: unknown) {
   const message = error instanceof Error ? error.message : "Falha inesperada no envio";
-  await rpc("fail_notification_event", { p_event_id: id, p_error: message.slice(0, 1000) }).catch(() => undefined);
+  await rpc("fail_notification_event", { p_event_id: id, p_error: message.slice(0, 1000) }).catch(
+    () => undefined,
+  );
 }
 
 async function fetchOne(table: string, select: string, filter: string, value: string) {
@@ -156,7 +170,10 @@ async function fetchOne(table: string, select: string, filter: string, value: st
   endpoint.searchParams.set("select", select);
   endpoint.searchParams.set(filter, `eq.${value}`);
   endpoint.searchParams.set("limit", "1");
-  const upstream = await fetch(endpoint, { headers: serviceHeaders(), signal: AbortSignal.timeout(8_000) });
+  const upstream = await fetch(endpoint, {
+    headers: serviceHeaders(),
+    signal: AbortSignal.timeout(8_000),
+  });
   const payload = await readJson(upstream);
   return upstream.ok && Array.isArray(payload) && payload.length === 1 ? payload[0] : null;
 }
@@ -199,13 +216,18 @@ function moneyText(value: string) {
 function fixedCommissionText(event: NotificationEvent) {
   const unitAmount = event.payload["commission_unit_amount"];
   const units = Number(event.payload["commission_units"] ?? 0);
-  if ((typeof unitAmount === "number" && Number.isFinite(unitAmount)) || (typeof unitAmount === "string" && unitAmount.trim())) {
+  if (
+    (typeof unitAmount === "number" && Number.isFinite(unitAmount)) ||
+    (typeof unitAmount === "string" && unitAmount.trim())
+  ) {
     const amount = moneyText(String(unitAmount));
     return units > 0 ? `${amount} por peça • ${units} peças` : `${amount} por peça`;
   }
   return "valor fixo por peça conforme a quantidade do pedido";
 }
-function siteUrl() { return (Deno.env.get("PUBLIC_SITE_URL")?.trim() || "https://bigofertas.net").replace(/\/$/, ""); }
+function siteUrl() {
+  return (Deno.env.get("PUBLIC_SITE_URL")?.trim() || "https://bigofertas.net").replace(/\/$/, "");
+}
 
 function affiliateDashboardUrl() {
   return `${siteUrl()}/conta?secao=afiliados`;
@@ -223,7 +245,12 @@ function affiliateRegistrationUrl(event: NotificationEvent) {
 
 async function prepareEmail(event: NotificationEvent): Promise<PreparedEmail> {
   const order = event.order_id
-    ? await fetchOne("orders", "id,public_number,customer_name,customer_email,total_amount,shipping_provider,shipping_service,shipping_tracking_code", "id", event.order_id) as OrderRow | null
+    ? ((await fetchOne(
+        "orders",
+        "id,public_number,customer_name,customer_email,total_amount,shipping_provider,shipping_service,shipping_tracking_code",
+        "id",
+        event.order_id,
+      )) as OrderRow | null)
     : null;
 
   if (event.event_name.startsWith("order.") || event.event_name === "refund.requested") {
@@ -236,7 +263,11 @@ async function prepareEmail(event: NotificationEvent): Promise<PreparedEmail> {
     const to = requiredEmail(order.customer_email);
 
     if (event.event_name === "order.paid") {
-      return { to, templateId: "order-paid", variables: { ...common, ORDER_TOTAL: formatBrl(order.total_amount) } };
+      return {
+        to,
+        templateId: "order-paid",
+        variables: { ...common, ORDER_TOTAL: formatBrl(order.total_amount) },
+      };
     }
     if (event.event_name === "order.in_production") {
       return { to, templateId: "order-in-production", variables: common };
@@ -247,7 +278,8 @@ async function prepareEmail(event: NotificationEvent): Promise<PreparedEmail> {
       const service = order.shipping_service?.toLowerCase() ?? "";
       const provider = order.shipping_provider?.toLowerCase() ?? "";
       const isLoggi = service.includes("loggi") || provider.includes("loggi");
-      const isCorreios = service.includes("pac") || service.includes("sedex") || provider.includes("correios");
+      const isCorreios =
+        service.includes("pac") || service.includes("sedex") || provider.includes("correios");
       if (!isLoggi && !isCorreios) throw new Error("EMAIL_CARRIER_INVALID");
       return {
         to,
@@ -269,7 +301,12 @@ async function prepareEmail(event: NotificationEvent): Promise<PreparedEmail> {
     throw new Error("EMAIL_ORDER_EVENT_UNSUPPORTED");
   }
 
-  const profile = await fetchOne("profiles", "id,email,full_name", "id", event.user_id) as ProfileRow | null;
+  const profile = (await fetchOne(
+    "profiles",
+    "id,email,full_name",
+    "id",
+    event.user_id,
+  )) as ProfileRow | null;
   if (!profile) throw new Error("EMAIL_PROFILE_NOT_FOUND");
   const to = requiredEmail(profile.email);
   const base = {
@@ -289,28 +326,73 @@ async function prepareEmail(event: NotificationEvent): Promise<PreparedEmail> {
     };
   }
   if (event.event_name === "affiliate.commission.created") {
-    return { to, templateId: "affiliate-commission-created", variables: { ...base, ORDER_NUMBER: order?.public_number ?? payloadText(event, "order_number"), SALE_AMOUNT: order ? formatBrl(order.total_amount) : moneyText(payloadText(event, "sale_amount")), COMMISSION_AMOUNT: moneyText(payloadText(event, "commission_amount")), COMMISSION_RATE: fixedCommissionText(event) } };
+    return {
+      to,
+      templateId: "affiliate-commission-created",
+      variables: {
+        ...base,
+        ORDER_NUMBER: order?.public_number ?? payloadText(event, "order_number"),
+        SALE_AMOUNT: order
+          ? formatBrl(order.total_amount)
+          : moneyText(payloadText(event, "sale_amount")),
+        COMMISSION_AMOUNT: moneyText(payloadText(event, "commission_amount")),
+        COMMISSION_RATE: fixedCommissionText(event),
+      },
+    };
   }
   if (event.event_name === "affiliate.commission.available") {
-    return { to, templateId: "affiliate-commission-available", variables: { ...base, AVAILABLE_AMOUNT: moneyText(payloadText(event, "available_amount")) } };
+    return {
+      to,
+      templateId: "affiliate-commission-available",
+      variables: { ...base, AVAILABLE_AMOUNT: moneyText(payloadText(event, "available_amount")) },
+    };
   }
   if (event.event_name === "affiliate.withdrawal.requested") {
-    return { to, templateId: "affiliate-withdrawal-requested", variables: { ...base, WITHDRAWAL_AMOUNT: moneyText(payloadText(event, "withdrawal_amount")) } };
+    return {
+      to,
+      templateId: "affiliate-withdrawal-requested",
+      variables: { ...base, WITHDRAWAL_AMOUNT: moneyText(payloadText(event, "withdrawal_amount")) },
+    };
   }
   if (event.event_name === "affiliate.withdrawal.paid") {
-    const paidDate = typeof event.payload.paid_date === "string" && event.payload.paid_date.trim()
-      ? event.payload.paid_date.trim()
-      : new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(new Date(event.occurred_at));
-    return { to, templateId: "affiliate-withdrawal-paid", variables: { ...base, WITHDRAWAL_AMOUNT: moneyText(payloadText(event, "withdrawal_amount")), PAID_DATE: paidDate } };
+    const paidDate =
+      typeof event.payload.paid_date === "string" && event.payload.paid_date.trim()
+        ? event.payload.paid_date.trim()
+        : new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(
+            new Date(event.occurred_at),
+          );
+    return {
+      to,
+      templateId: "affiliate-withdrawal-paid",
+      variables: {
+        ...base,
+        WITHDRAWAL_AMOUNT: moneyText(payloadText(event, "withdrawal_amount")),
+        PAID_DATE: paidDate,
+      },
+    };
   }
   if (event.event_name === "affiliate.withdrawal.rejected") {
-    return { to, templateId: "affiliate-withdrawal-rejected", variables: { ...base, WITHDRAWAL_AMOUNT: moneyText(payloadText(event, "withdrawal_amount")), REJECTION_REASON: payloadText(event, "rejection_reason") } };
+    return {
+      to,
+      templateId: "affiliate-withdrawal-rejected",
+      variables: {
+        ...base,
+        WITHDRAWAL_AMOUNT: moneyText(payloadText(event, "withdrawal_amount")),
+        REJECTION_REASON: payloadText(event, "rejection_reason"),
+      },
+    };
   }
   throw new Error("EMAIL_EVENT_UNSUPPORTED");
 }
 
 function safeTag(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9_-]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 256) || "transactional";
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 256) || "transactional"
+  );
 }
 
 async function sendEmail(event: NotificationEvent, prepared: PreparedEmail) {
@@ -331,9 +413,11 @@ async function sendEmail(event: NotificationEvent, prepared: PreparedEmail) {
     }),
     signal: AbortSignal.timeout(10_000),
   });
-  const payload = await readJson(upstream) as { id?: unknown; message?: unknown } | null;
+  const payload = (await readJson(upstream)) as { id?: unknown; message?: unknown } | null;
   if (!upstream.ok || typeof payload?.id !== "string" || !payload.id.trim()) {
-    console.error(`[resend-edge] ${JSON.stringify({ event: event.event_name, template: prepared.templateId, status: upstream.status, providerError: typeof payload?.message === "string" ? payload.message.slice(0, 300) : null })}`);
+    console.error(
+      `[resend-edge] ${JSON.stringify({ event: event.event_name, template: prepared.templateId, status: upstream.status, providerError: typeof payload?.message === "string" ? payload.message.slice(0, 300) : null })}`,
+    );
     throw new Error("RESEND_SEND_FAILED");
   }
   return payload.id;
@@ -355,7 +439,9 @@ async function processOutbox() {
     } catch (error) {
       failed += 1;
       await failEvent(event.id, error);
-      console.error(`[notification-email-edge] ${JSON.stringify({ eventId: event.id, eventName: event.event_name, error: error instanceof Error ? error.message : "unknown" })}`);
+      console.error(
+        `[notification-email-edge] ${JSON.stringify({ eventId: event.id, eventName: event.event_name, error: error instanceof Error ? error.message : "unknown" })}`,
+      );
     }
   }
 
@@ -363,7 +449,8 @@ async function processOutbox() {
 }
 
 Deno.serve(async (request) => {
-  if (request.method !== "POST") return response({ success: false, code: "METHOD_NOT_ALLOWED" }, 405);
+  if (request.method !== "POST")
+    return response({ success: false, code: "METHOD_NOT_ALLOWED" }, 405);
 
   if (!(await isAuthorizedProcessorCaller(request))) {
     return response({ success: false, code: "UNAUTHORIZED" }, 401);
@@ -375,6 +462,9 @@ Deno.serve(async (request) => {
     return response({ success: true, ...result });
   } catch (error) {
     console.error(error);
-    return response({ success: false, code: error instanceof Error ? error.message : "EMAIL_PROCESSOR_ERROR" }, 500);
+    return response(
+      { success: false, code: error instanceof Error ? error.message : "EMAIL_PROCESSOR_ERROR" },
+      500,
+    );
   }
 });

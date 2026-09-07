@@ -75,14 +75,21 @@ export function CatalogProductGrid({
   products: CatalogListItem[];
   isLoading: boolean;
 }) {
-  const [desktopColumns, setDesktopColumns] = useState<DesktopColumns>(() => readStoredDesktopColumns());
-  const [mobileColumns, setMobileColumns] = useState<MobileColumns>(() => readStoredMobileColumns());
+  const [desktopColumns, setDesktopColumns] = useState<DesktopColumns>(() =>
+    readStoredDesktopColumns(),
+  );
+  const [mobileColumns, setMobileColumns] = useState<MobileColumns>(() =>
+    readStoredMobileColumns(),
+  );
   const [fading, setFading] = useState(false);
   const timerRef = useRef<number | null>(null);
 
-  useEffect(() => () => {
-    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    },
+    [],
+  );
 
   function changeDensity(kind: "desktop" | "mobile", value: DesktopColumns | MobileColumns) {
     const current = kind === "desktop" ? desktopColumns : mobileColumns;
@@ -110,8 +117,13 @@ export function CatalogProductGrid({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-end gap-2" aria-label="Modo de visualização do catálogo">
-        <span className="mr-1 text-[11px] font-bold uppercase tracking-wide text-gray-400">Visualização</span>
+      <div
+        className="mb-4 flex items-center justify-end gap-2"
+        aria-label="Modo de visualização do catálogo"
+      >
+        <span className="mr-1 text-[11px] font-bold uppercase tracking-wide text-gray-400">
+          Visualização
+        </span>
         <div className="flex gap-1.5 lg:hidden">
           {([1, 2] as const).map((columns) => (
             <DensityButton
@@ -134,14 +146,13 @@ export function CatalogProductGrid({
         </div>
       </div>
 
-      <div className={`transition-opacity duration-200 ease-out ${fading ? "opacity-0" : "opacity-100"}`}>
+      <div
+        className={`transition-opacity duration-200 ease-out ${fading ? "opacity-0" : "opacity-100"}`}
+      >
         {isLoading ? (
           <div className={`grid ${gridClass} gap-4 md:gap-6`}>
             {Array.from({ length: 8 }).map((_, index) => (
-              <div
-                key={index}
-                className="aspect-[4/5] animate-pulse rounded-md bg-gray-100"
-              />
+              <div key={index} className="aspect-[4/5] animate-pulse rounded-md bg-gray-100" />
             ))}
           </div>
         ) : (

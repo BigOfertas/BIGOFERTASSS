@@ -73,14 +73,8 @@ function parseLegacySpecifications(value: string | null) {
       .map((spec) => {
         const separatorIndex = spec.indexOf(":");
         return {
-          label:
-            separatorIndex >= 0
-              ? spec.slice(0, separatorIndex).trim()
-              : "Detalhe",
-          value:
-            separatorIndex >= 0
-              ? spec.slice(separatorIndex + 1).trim()
-              : spec,
+          label: separatorIndex >= 0 ? spec.slice(0, separatorIndex).trim() : "Detalhe",
+          value: separatorIndex >= 0 ? spec.slice(separatorIndex + 1).trim() : spec,
         };
       }) ?? []
   );
@@ -127,11 +121,7 @@ function ProductDetail() {
     if (!detail) return null;
     if (detail.options.length === 0) return defaultVariant;
 
-    return findVariantForSelection(
-      detail.variants,
-      selection,
-      requiredOptionIds,
-    );
+    return findVariantForSelection(detail.variants, selection, requiredOptionIds);
   }, [defaultVariant, detail, requiredOptionIds, selection]);
 
   const selectionComplete = requiredOptionIds.every((optionId) => selection[optionId]);
@@ -166,8 +156,7 @@ function ProductDetail() {
       product?.campeonato_key,
       detail?.category?.slug,
     ],
-    queryFn: () =>
-      fetchRelatedProducts(product!, detail?.category?.slug ?? null),
+    queryFn: () => fetchRelatedProducts(product!, detail?.category?.slug ?? null),
     enabled: Boolean(product),
     staleTime: 60_000,
   });
@@ -198,12 +187,9 @@ function ProductDetail() {
         <Header />
         <main className="flex min-h-[60vh] flex-col items-center justify-center px-4">
           <AlertTriangle className="mb-4 h-16 w-16 text-red-600" />
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">
-            Produto não encontrado
-          </h1>
+          <h1 className="mb-2 text-2xl font-bold text-gray-900">Produto não encontrado</h1>
           <p className="mb-6 max-w-md text-center text-gray-500">
-            O produto pode ter sido removido, estar indisponível ou o link pode
-            estar incorreto.
+            O produto pode ter sido removido, estar indisponível ou o link pode estar incorreto.
           </p>
           <Button asChild className="bg-red-600 font-bold text-white hover:bg-black">
             <Link to="/products" search={{}}>
@@ -215,15 +201,13 @@ function ProductDetail() {
     );
   }
 
-  const basePrice = selectedVariant
-    ? getVariantBasePrice(product, selectedVariant)
-    : product.price;
+  const basePrice = selectedVariant ? getVariantBasePrice(product, selectedVariant) : product.price;
   const promotionalPrice = selectedVariant
     ? getVariantPromotionalPrice(product, selectedVariant)
     : product.promotional_price;
   const effectivePrice = selectedVariant
     ? getVariantEffectivePrice(product, selectedVariant)
-    : promotionalPrice ?? basePrice;
+    : (promotionalPrice ?? basePrice);
   const hasPromotion = promotionalPrice !== null && promotionalPrice < basePrice;
   const formattedPrice = currency.format(effectivePrice);
   const formattedOriginalPrice = hasPromotion ? currency.format(basePrice) : null;
@@ -250,7 +234,10 @@ function ProductDetail() {
     : 0;
   const finalUnitPrice = effectivePrice + purchaseSurcharge;
   const selectedOptions = purchaseConfig
-    ? [...variantSelectedOptions, ...customizationToCartOptions(purchaseConfig, purchaseCustomization)]
+    ? [
+        ...variantSelectedOptions,
+        ...customizationToCartOptions(purchaseConfig, purchaseCustomization),
+      ]
     : variantSelectedOptions;
 
   const builtInSpecs = [
@@ -259,15 +246,10 @@ function ProductDetail() {
       : null,
     product.time ? { label: "Time", value: product.time } : null,
     product.liga ? { label: "Liga", value: product.liga } : null,
-    product.campeonato
-      ? { label: "Campeonato", value: product.campeonato }
-      : null,
+    product.campeonato ? { label: "Campeonato", value: product.campeonato } : null,
   ].filter((item): item is { label: string; value: string } => Boolean(item?.value));
 
-  const specifications = [
-    ...builtInSpecs,
-    ...parseLegacySpecifications(product.specifications),
-  ];
+  const specifications = [...builtInSpecs, ...parseLegacySpecifications(product.specifications)];
 
   const handleAddToCart = () => {
     if (!selectedVariant || !selectionComplete) {
@@ -393,9 +375,7 @@ function ProductDetail() {
               </div>
 
               {product.description ? (
-                <p className="max-w-2xl leading-relaxed text-gray-600">
-                  {product.description}
-                </p>
+                <p className="max-w-2xl leading-relaxed text-gray-600">{product.description}</p>
               ) : null}
             </div>
 
@@ -439,11 +419,9 @@ function ProductDetail() {
                                   return next;
                                 }
 
-                                const fallbackVariant =
-                                  detail.variants.find(
-                                    (variant) =>
-                                      variant.optionValueIds[option.id] === value.id,
-                                  );
+                                const fallbackVariant = detail.variants.find(
+                                  (variant) => variant.optionValueIds[option.id] === value.id,
+                                );
 
                                 return fallbackVariant
                                   ? { ...fallbackVariant.optionValueIds }
@@ -528,7 +506,6 @@ function ProductDetail() {
                     ? "Adicionar ao Carrinho"
                     : "Indisponível"}
               </Button>
-
             </div>
           </section>
         </div>
@@ -569,7 +546,10 @@ function ProductDetail() {
         ) : null}
 
         {relatedQuery.data && relatedQuery.data.length > 0 ? (
-          <section className="mt-16 border-t border-gray-100 pt-12 sm:mt-24" aria-labelledby="related-title">
+          <section
+            className="mt-16 border-t border-gray-100 pt-12 sm:mt-24"
+            aria-labelledby="related-title"
+          >
             <div className="mb-8 flex items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-600">
@@ -611,8 +591,12 @@ function ProductDetail() {
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-xl items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Valor por peça</p>
-            <p className="truncate text-lg font-black text-gray-950">{currency.format(finalUnitPrice)}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">
+              Valor por peça
+            </p>
+            <p className="truncate text-lg font-black text-gray-950">
+              {currency.format(finalUnitPrice)}
+            </p>
           </div>
           <Button
             onClick={handleAddToCart}

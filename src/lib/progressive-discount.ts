@@ -21,10 +21,7 @@ export type ProgressiveDiscount = {
   } | null;
 };
 
-export function getProgressiveDiscount(
-  units: number,
-  subtotal: number,
-): ProgressiveDiscount {
+export function getProgressiveDiscount(units: number, subtotal: number): ProgressiveDiscount {
   const normalizedUnits = Number.isFinite(units) ? Math.max(0, Math.trunc(units)) : 0;
   const normalizedSubtotal = Number.isFinite(subtotal) ? Math.max(0, subtotal) : 0;
 

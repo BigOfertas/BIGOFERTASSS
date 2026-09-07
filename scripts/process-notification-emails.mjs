@@ -21,9 +21,7 @@ const response = await fetch(endpoint, {
 
 const body = await response.text();
 if (!response.ok) {
-  throw new Error(
-    `Processador de e-mails retornou HTTP ${response.status}: ${body.slice(0, 500)}`,
-  );
+  throw new Error(`Processador de e-mails retornou HTTP ${response.status}: ${body.slice(0, 500)}`);
 }
 
 console.log(body);

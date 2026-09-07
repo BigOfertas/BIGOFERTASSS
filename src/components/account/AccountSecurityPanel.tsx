@@ -143,9 +143,7 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
       setMessage("Verificação em duas etapas ativada com sucesso.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível confirmar o código.",
+        error instanceof Error ? error.message : "Não foi possível confirmar o código.",
       );
     } finally {
       setChangingTwoFactor(false);
@@ -183,9 +181,7 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
       setMessage("As outras sessões da sua conta foram encerradas.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível encerrar as outras sessões.",
+        error instanceof Error ? error.message : "Não foi possível encerrar as outras sessões.",
       );
     } finally {
       setEndingSessions(false);
@@ -234,9 +230,12 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
                   <div>
                     <p className="font-bold text-gray-950">Verificação em duas etapas</p>
                     <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
-                      Quando ativada, um código enviado por e-mail será solicitado ao entrar na conta.
+                      Quando ativada, um código enviado por e-mail será solicitado ao entrar na
+                      conta.
                     </p>
-                    <p className={`mt-1 text-xs font-semibold ${twoFactorEnabled ? "text-emerald-700" : "text-red-600"}`}>
+                    <p
+                      className={`mt-1 text-xs font-semibold ${twoFactorEnabled ? "text-emerald-700" : "text-red-600"}`}
+                    >
                       {twoFactorEnabled ? "Ativada" : "Desativada"}
                     </p>
                   </div>
@@ -246,7 +245,11 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
                   type="button"
                   role="switch"
                   aria-checked={twoFactorEnabled}
-                  aria-label={twoFactorEnabled ? "Desativar verificação em duas etapas" : "Ativar verificação em duas etapas"}
+                  aria-label={
+                    twoFactorEnabled
+                      ? "Desativar verificação em duas etapas"
+                      : "Ativar verificação em duas etapas"
+                  }
                   disabled={!status || changingTwoFactor}
                   onClick={() => void handleTwoFactorToggle()}
                   className={`relative inline-flex h-8 w-14 flex-none items-center rounded-full border border-white/60 shadow-inner transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 disabled:cursor-not-allowed disabled:opacity-50 ${twoFactorEnabled ? "bg-emerald-500" : "bg-red-500"}`}
@@ -267,7 +270,9 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
                     <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                       <input
                         value={code}
-                        onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                        onChange={(event) =>
+                          setCode(event.target.value.replace(/\D/g, "").slice(0, 6))
+                        }
                         inputMode="numeric"
                         autoComplete="one-time-code"
                         maxLength={6}
@@ -307,7 +312,8 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
                   <div>
                     <p className="font-bold text-gray-950">Redefinir senha</p>
                     <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
-                      Receba por e-mail um link para criar uma nova senha. Não é necessário informar a senha atual.
+                      Receba por e-mail um link para criar uma nova senha. Não é necessário informar
+                      a senha atual.
                     </p>
                   </div>
                 </div>
@@ -329,7 +335,8 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
                   <div>
                     <p className="font-bold text-gray-950">Outros dispositivos</p>
                     <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
-                      Encerre acessos abertos em outros celulares ou computadores sem sair deste dispositivo.
+                      Encerre acessos abertos em outros celulares ou computadores sem sair deste
+                      dispositivo.
                     </p>
                   </div>
                 </div>
@@ -360,13 +367,19 @@ export function AccountSecurityPanel({ email }: AccountSecurityPanelProps) {
           )}
 
           {message ? (
-            <p role="status" className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-800 shadow-sm">
+            <p
+              role="status"
+              className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-800 shadow-sm"
+            >
               {message}
             </p>
           ) : null}
 
           {errorMessage ? (
-            <p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-700 shadow-sm">
+            <p
+              role="alert"
+              className="mt-5 rounded-xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-700 shadow-sm"
+            >
               {errorMessage}
             </p>
           ) : null}

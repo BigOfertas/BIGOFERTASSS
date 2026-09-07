@@ -104,8 +104,7 @@ function resolveEnvironment(
     (request as NitroCloudflareRequest).runtime?.cloudflare?.env,
   );
   const entryEnvironment = asEnvironment(explicitEnvironment);
-  const processEnvironment =
-    typeof process !== "undefined" ? asEnvironment(process.env) : {};
+  const processEnvironment = typeof process !== "undefined" ? asEnvironment(process.env) : {};
 
   return {
     supabaseUrl:
@@ -148,15 +147,16 @@ function jsonResponse(payload: unknown, status = 200) {
 
 function errorResponse(error: unknown) {
   if (error instanceof EmailTwoFactorError) {
-    console.error(
-      `[email-2fa] ${JSON.stringify({ code: error.code, status: error.status })}`,
-    );
+    console.error(`[email-2fa] ${JSON.stringify({ code: error.code, status: error.status })}`);
     return jsonResponse({ error: error.message, code: error.code }, error.status);
   }
 
   console.error(error);
   return jsonResponse(
-    { error: "Não foi possível concluir a verificação de segurança agora.", code: "EMAIL_2FA_INTERNAL_ERROR" },
+    {
+      error: "Não foi possível concluir a verificação de segurança agora.",
+      code: "EMAIL_2FA_INTERNAL_ERROR",
+    },
     500,
   );
 }
@@ -188,11 +188,7 @@ function requireCoreConfiguration(environment: ResolvedEnvironment) {
 }
 
 function requireEmailTwoFactorConfiguration(environment: ResolvedEnvironment) {
-  if (
-    !environment.resendApiKey ||
-    !environment.resendFrom ||
-    !environment.emailTwoFactorSecret
-  ) {
+  if (!environment.resendApiKey || !environment.resendFrom || !environment.emailTwoFactorSecret) {
     throw new EmailTwoFactorError(
       "A verificação por e-mail ainda não está disponível.",
       503,
@@ -238,9 +234,7 @@ function normalizeEmail(value: unknown) {
 }
 
 function normalizePassword(value: unknown) {
-  return typeof value === "string" && value.length >= 6 && value.length <= 512
-    ? value
-    : null;
+  return typeof value === "string" && value.length >= 6 && value.length <= 512 ? value : null;
 }
 
 function maskEmail(email: string) {
@@ -314,11 +308,7 @@ async function supabasePasswordGrant(
       );
     }
 
-    throw new EmailTwoFactorError(
-      "E-mail ou senha incorretos.",
-      401,
-      "INVALID_LOGIN_CREDENTIALS",
-    );
+    throw new EmailTwoFactorError("E-mail ou senha incorretos.", 401, "INVALID_LOGIN_CREDENTIALS");
   }
 
   const user = payload.user;
@@ -472,9 +462,7 @@ async function hmacDigest(
     key,
     new TextEncoder().encode(`${challengeId}:${purpose}:${code}`),
   );
-  return [...new Uint8Array(signature)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+  return [...new Uint8Array(signature)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function constantTimeEqual(left: string, right: string) {
@@ -552,12 +540,7 @@ async function insertChallenge(
 
   const challengeId = crypto.randomUUID();
   const code = generateSixDigitCode();
-  const codeDigest = await hmacDigest(
-    challengeId,
-    purpose,
-    code,
-    environment.emailTwoFactorSecret,
-  );
+  const codeDigest = await hmacDigest(challengeId, purpose, code, environment.emailTwoFactorSecret);
   const expiresAt = new Date(Date.now() + TWO_FACTOR_TTL_MS).toISOString();
 
   const endpoint = new URL("/rest/v1/email_2fa_challenges", environment.supabaseUrl);
@@ -846,12 +829,7 @@ async function parseRequestBody(request: Request) {
     }
     return body as Record<string, unknown>;
   } catch (cause) {
-    throw new EmailTwoFactorError(
-      "Dados inválidos.",
-      400,
-      "EMAIL_2FA_REQUEST_INVALID",
-      cause,
-    );
+    throw new EmailTwoFactorError("Dados inválidos.", 400, "EMAIL_2FA_REQUEST_INVALID", cause);
   }
 }
 

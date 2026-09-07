@@ -28,8 +28,7 @@ async function isAuthenticated(request: Request) {
   if (!authorization?.startsWith("Bearer ")) return false;
 
   const supabaseUrl = value("SUPABASE_URL");
-  const publishableKey =
-    value("SUPABASE_PUBLISHABLE_KEY") || value("SUPABASE_ANON_KEY");
+  const publishableKey = value("SUPABASE_PUBLISHABLE_KEY") || value("SUPABASE_ANON_KEY");
   if (!supabaseUrl || !publishableKey) return false;
 
   try {
@@ -62,9 +61,7 @@ async function processQueuedEmails() {
       signal: AbortSignal.timeout(25_000),
     });
     if (!upstream.ok) {
-      console.error(
-        `[notifications-kick] ${JSON.stringify({ status: upstream.status })}`,
-      );
+      console.error(`[notifications-kick] ${JSON.stringify({ status: upstream.status })}`);
     }
   } catch (error) {
     console.error(

@@ -17,21 +17,19 @@ export class ResendTemplateError extends Error {
 function required(value: string | undefined, code: string) {
   const normalized = value?.trim();
   if (!normalized) {
-    throw new ResendTemplateError(
-      "Configuração de e-mail indisponível.",
-      503,
-      code,
-    );
+    throw new ResendTemplateError("Configuração de e-mail indisponível.", 503, code);
   }
   return normalized;
 }
 
 function safeTagValue(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 256) || "transactional";
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 256) || "transactional"
+  );
 }
 
 export async function sendResendTemplate(input: {
@@ -47,10 +45,7 @@ export async function sendResendTemplate(input: {
   const from = required(input.from, "RESEND_FROM_MISSING");
   const to = required(input.to, "RESEND_RECIPIENT_MISSING");
   const templateId = required(input.templateId, "RESEND_TEMPLATE_MISSING");
-  const idempotencyKey = required(
-    input.idempotencyKey,
-    "RESEND_IDEMPOTENCY_KEY_MISSING",
-  );
+  const idempotencyKey = required(input.idempotencyKey, "RESEND_IDEMPOTENCY_KEY_MISSING");
 
   let response: Response;
   try {

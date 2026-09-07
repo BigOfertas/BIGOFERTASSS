@@ -75,9 +75,13 @@ const BrazilianTeams: React.FC = () => {
 
   return (
     <section className="overflow-hidden bg-transparent py-8 sm:py-10 lg:py-12">
-      {(desktopBanner || mobileBanner) ? (
+      {desktopBanner || mobileBanner ? (
         <div className="mx-auto mb-8 max-w-[1920px]">
-          <a href="#brasileirao" aria-label="Ir para produtos do Brasileirão" className="block overflow-hidden bg-gray-100">
+          <a
+            href="#brasileirao"
+            aria-label="Ir para produtos do Brasileirão"
+            className="block overflow-hidden bg-gray-100"
+          >
             <picture>
               {mobileBanner ? <source media="(max-width: 767px)" srcSet={mobileBanner} /> : null}
               <img
@@ -120,7 +124,10 @@ const BrazilianTeams: React.FC = () => {
               style={{ scrollSnapType: "x mandatory" }}
             >
               {teams.map((team) => (
-                <div key={team.id} className="flex flex-shrink-0 snap-center items-center justify-center">
+                <div
+                  key={team.id}
+                  className="flex flex-shrink-0 snap-center items-center justify-center"
+                >
                   <TeamLogo team={team} />
                 </div>
               ))}

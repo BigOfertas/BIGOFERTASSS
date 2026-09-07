@@ -64,9 +64,7 @@ export default function Footer() {
                 <p className="text-[11px] font-black uppercase tracking-[0.14em] text-white">
                   {title}
                 </p>
-                <p className="mt-0.5 text-xs leading-relaxed text-gray-400">
-                  {description}
-                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-gray-400">{description}</p>
               </div>
             </div>
           ))}
@@ -127,13 +125,14 @@ export default function Footer() {
 
             <ul
               className={`space-y-3 overflow-hidden text-sm text-gray-400 transition-all duration-300 motion-reduce:transition-none lg:!max-h-none lg:!opacity-100 ${
-                expandedAccordions.acessoRapido
-                  ? "max-h-72 opacity-100"
-                  : "max-h-0 opacity-0"
+                expandedAccordions.acessoRapido ? "max-h-72 opacity-100" : "max-h-0 opacity-0"
               }`}
             >
               <li>
-                <Link to="/" className="transition-colors hover:text-white motion-reduce:transition-none">
+                <Link
+                  to="/"
+                  className="transition-colors hover:text-white motion-reduce:transition-none"
+                >
                   Início
                 </Link>
               </li>
@@ -147,7 +146,10 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/cart" className="transition-colors hover:text-white motion-reduce:transition-none">
+                <Link
+                  to="/cart"
+                  className="transition-colors hover:text-white motion-reduce:transition-none"
+                >
                   Carrinho
                 </Link>
               </li>
@@ -173,21 +175,25 @@ export default function Footer() {
 
             <ul
               className={`space-y-3 overflow-hidden text-sm text-gray-400 transition-all duration-300 motion-reduce:transition-none lg:!max-h-none lg:!opacity-100 ${
-                expandedAccordions.minhaConta
-                  ? "max-h-72 opacity-100"
-                  : "max-h-0 opacity-0"
+                expandedAccordions.minhaConta ? "max-h-72 opacity-100" : "max-h-0 opacity-0"
               }`}
             >
               {isOwner ? (
                 <li>
-                  <Link to="/admin" className="transition-colors hover:text-white motion-reduce:transition-none">
+                  <Link
+                    to="/admin"
+                    className="transition-colors hover:text-white motion-reduce:transition-none"
+                  >
                     Painel administrativo
                   </Link>
                 </li>
               ) : user ? (
                 <>
                   <li>
-                    <Link to="/conta" className="transition-colors hover:text-white motion-reduce:transition-none">
+                    <Link
+                      to="/conta"
+                      className="transition-colors hover:text-white motion-reduce:transition-none"
+                    >
                       Minha conta
                     </Link>
                   </li>
@@ -213,7 +219,10 @@ export default function Footer() {
               ) : (
                 <>
                   <li>
-                    <Link to="/login" className="transition-colors hover:text-white motion-reduce:transition-none">
+                    <Link
+                      to="/login"
+                      className="transition-colors hover:text-white motion-reduce:transition-none"
+                    >
                       Entrar
                     </Link>
                   </li>
@@ -228,7 +237,10 @@ export default function Footer() {
                 </>
               )}
               <li>
-                <Link to="/cart" className="transition-colors hover:text-white motion-reduce:transition-none">
+                <Link
+                  to="/cart"
+                  className="transition-colors hover:text-white motion-reduce:transition-none"
+                >
                   Meu carrinho
                 </Link>
               </li>
@@ -260,7 +272,10 @@ export default function Footer() {
           <section aria-labelledby="footer-payment-title">
             <div className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-red-500" aria-hidden="true" />
-              <h3 id="footer-payment-title" className="text-xs font-black uppercase tracking-[0.14em] text-white">
+              <h3
+                id="footer-payment-title"
+                className="text-xs font-black uppercase tracking-[0.14em] text-white"
+              >
                 Formas de pagamento
               </h3>
             </div>
@@ -283,10 +298,16 @@ export default function Footer() {
             </div>
           </section>
 
-          <section aria-labelledby="footer-security-title" className="lg:border-l lg:border-white/10 lg:pl-8">
+          <section
+            aria-labelledby="footer-security-title"
+            className="lg:border-l lg:border-white/10 lg:pl-8"
+          >
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-emerald-400" aria-hidden="true" />
-              <h3 id="footer-security-title" className="text-xs font-black uppercase tracking-[0.14em] text-white">
+              <h3
+                id="footer-security-title"
+                className="text-xs font-black uppercase tracking-[0.14em] text-white"
+              >
                 Site seguro
               </h3>
             </div>

@@ -195,9 +195,7 @@ export function AccountDashboard({
       setCpf(formatBrazilianCpf(snapshot.profile.cpf ?? ""));
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível carregar sua conta.",
+        error instanceof Error ? error.message : "Não foi possível carregar sua conta.",
       );
     } finally {
       setLoading(false);
@@ -226,9 +224,9 @@ export function AccountDashboard({
   const profileComplete = nameValid && phoneValid && cpfValid;
   const profileDirty = Boolean(
     profile &&
-      (fullName.trim() !== (profile.full_name ?? "") ||
-        onlyDigits(phone, 11) !== (profile.phone ?? "") ||
-        onlyDigits(cpf, 11) !== (profile.cpf ?? "")),
+    (fullName.trim() !== (profile.full_name ?? "") ||
+      onlyDigits(phone, 11) !== (profile.phone ?? "") ||
+      onlyDigits(cpf, 11) !== (profile.cpf ?? "")),
   );
   const canSaveProfile = profileDirty && profileComplete && !savingProfile;
   const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? "";
@@ -331,9 +329,7 @@ export function AccountDashboard({
       setSuccessMessage("Seus dados foram atualizados.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível atualizar seus dados.",
+        error instanceof Error ? error.message : "Não foi possível atualizar seus dados.",
       );
     } finally {
       setSavingProfile(false);
@@ -371,9 +367,7 @@ export function AccountDashboard({
       setSuccessMessage(input.id ? "Endereço atualizado." : "Endereço adicionado.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível salvar o endereço.",
+        error instanceof Error ? error.message : "Não foi possível salvar o endereço.",
       );
     } finally {
       setSavingAddress(false);
@@ -393,9 +387,7 @@ export function AccountDashboard({
       setSuccessMessage("Endereço principal atualizado.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível alterar o endereço principal.",
+        error instanceof Error ? error.message : "Não foi possível alterar o endereço principal.",
       );
     } finally {
       setBusyAddressId("");
@@ -417,9 +409,7 @@ export function AccountDashboard({
       setSuccessMessage("Endereço excluído.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível excluir o endereço.",
+        error instanceof Error ? error.message : "Não foi possível excluir o endereço.",
       );
     } finally {
       setBusyAddressId("");
@@ -435,9 +425,7 @@ export function AccountDashboard({
     try {
       await onSignOut();
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Não foi possível sair da conta.",
-      );
+      setErrorMessage(error instanceof Error ? error.message : "Não foi possível sair da conta.");
       setSigningOut(false);
     }
   }
@@ -488,9 +476,7 @@ export function AccountDashboard({
           {!loading ? (
             <div
               className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-xs font-bold ${
-                profileComplete
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "bg-amber-50 text-amber-800"
+                profileComplete ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"
               }`}
             >
               {profileComplete ? (
@@ -538,9 +524,7 @@ export function AccountDashboard({
                     {badge ? (
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                          active
-                            ? "bg-red-100 text-red-700"
-                            : "bg-gray-100 text-gray-500"
+                          active ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-500"
                         }`}
                       >
                         {badge}
@@ -599,10 +583,7 @@ export function AccountDashboard({
                   </div>
                 </div>
 
-                <form
-                  onSubmit={(event) => void handleSaveProfile(event)}
-                  className="p-5 sm:p-6"
-                >
+                <form onSubmit={(event) => void handleSaveProfile(event)} className="p-5 sm:p-6">
                   <div className="grid gap-5 sm:grid-cols-2">
                     <label className="text-sm font-semibold text-gray-800 sm:col-span-2">
                       Nome completo
@@ -749,11 +730,10 @@ export function AccountDashboard({
                       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-500">
                         <MapPin className="h-6 w-6" />
                       </div>
-                      <h3 className="mt-4 font-bold text-gray-900">
-                        Nenhum endereço cadastrado
-                      </h3>
+                      <h3 className="mt-4 font-bold text-gray-900">Nenhum endereço cadastrado</h3>
                       <p className="mx-auto mt-1 max-w-md text-sm text-gray-500">
-                        Adicione seu primeiro endereço para deixá-lo pronto para as próximas compras.
+                        Adicione seu primeiro endereço para deixá-lo pronto para as próximas
+                        compras.
                       </p>
                       <button
                         type="button"
@@ -859,7 +839,8 @@ export function AccountDashboard({
                         {addressForm.id ? "Editar endereço" : "Novo endereço"}
                       </h3>
                       <p className="mt-1 text-sm text-gray-500">
-                        Campos obrigatórios garantem que o endereço fique pronto para entrega. Complemento é opcional.
+                        Campos obrigatórios garantem que o endereço fique pronto para entrega.
+                        Complemento é opcional.
                       </p>
                     </div>
 
@@ -882,7 +863,9 @@ export function AccountDashboard({
                           <input
                             required
                             value={addressForm.recipientName}
-                            onChange={(event) => updateAddressField("recipientName", event.target.value)}
+                            onChange={(event) =>
+                              updateAddressField("recipientName", event.target.value)
+                            }
                             className={fieldClassName()}
                             maxLength={120}
                             autoComplete="name"
@@ -896,7 +879,10 @@ export function AccountDashboard({
                               required
                               value={addressForm.postalCode}
                               onChange={(event) => {
-                                updateAddressField("postalCode", formatPostalCode(event.target.value));
+                                updateAddressField(
+                                  "postalCode",
+                                  formatPostalCode(event.target.value),
+                                );
                                 setCepStatus("idle");
                               }}
                               onBlur={() => void handleLookupPostalCode()}
@@ -911,7 +897,8 @@ export function AccountDashboard({
                           </div>
                           {cepStatus === "found" ? (
                             <span className="mt-1.5 flex items-center gap-1 text-xs font-normal text-emerald-700">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Endereço encontrado. Confira o número.
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Endereço encontrado. Confira
+                              o número.
                             </span>
                           ) : null}
                           {cepStatus === "not-found" ? (
@@ -970,7 +957,9 @@ export function AccountDashboard({
                           Complemento <span className="font-normal text-gray-400">(opcional)</span>
                           <input
                             value={addressForm.complement}
-                            onChange={(event) => updateAddressField("complement", event.target.value)}
+                            onChange={(event) =>
+                              updateAddressField("complement", event.target.value)
+                            }
                             className={fieldClassName()}
                             placeholder="Apto, bloco, referência..."
                             autoComplete="address-line2"
@@ -982,7 +971,9 @@ export function AccountDashboard({
                           <input
                             required
                             value={addressForm.neighborhood}
-                            onChange={(event) => updateAddressField("neighborhood", event.target.value)}
+                            onChange={(event) =>
+                              updateAddressField("neighborhood", event.target.value)
+                            }
                             className={fieldClassName()}
                             autoComplete="address-level3"
                           />
@@ -1005,7 +996,9 @@ export function AccountDashboard({
                           type="checkbox"
                           checked={addressForm.isDefault}
                           disabled={Boolean(addressForm.id && addressForm.isDefault)}
-                          onChange={(event) => updateAddressField("isDefault", event.target.checked)}
+                          onChange={(event) =>
+                            updateAddressField("isDefault", event.target.checked)
+                          }
                           className="mt-0.5 h-4 w-4 accent-red-600"
                         />
                         <span>
@@ -1049,9 +1042,7 @@ export function AccountDashboard({
               </div>
             ) : null}
 
-            {!loading && section === "pedidos" ? (
-              <CustomerOrders />
-            ) : null}
+            {!loading && section === "pedidos" ? <CustomerOrders /> : null}
           </section>
         </div>
       </div>
@@ -1070,9 +1061,7 @@ export function AccountDashboard({
         confirmLabel="Excluir endereço"
         cancelLabel="Manter endereço"
         tone="danger"
-        loading={Boolean(
-          pendingDeleteAddress && busyAddressId === pendingDeleteAddress.id,
-        )}
+        loading={Boolean(pendingDeleteAddress && busyAddressId === pendingDeleteAddress.id)}
         onConfirm={handleDeleteAddress}
       />
 

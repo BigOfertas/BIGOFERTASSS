@@ -13,9 +13,7 @@ export function ProductionNotice({ compact = false }: { compact?: boolean }) {
           <Clock3 className="h-5 w-5" aria-hidden="true" />
         </div>
         <div>
-          <p className="text-sm font-black tracking-tight text-gray-950">
-            Prazo de produção
-          </p>
+          <p className="text-sm font-black tracking-tight text-gray-950">Prazo de produção</p>
           <p className="mt-1 text-sm leading-6 text-gray-600">
             Produção em até 5 dias úteis antes do envio.
           </p>

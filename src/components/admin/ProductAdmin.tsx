@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-} from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -85,8 +79,7 @@ function productToForm(product: AdminProduct): ProductFormState {
     name: product.name,
     description: product.description ?? "",
     price: String(product.price),
-    promotionalPrice:
-      product.promotional_price === null ? "" : String(product.promotional_price),
+    promotionalPrice: product.promotional_price === null ? "" : String(product.promotional_price),
     status: product.status,
     primaryCategoryId: product.primary_category_id ?? "",
     contextType: inferProductContext(product.campeonato, product.liga),
@@ -192,9 +185,7 @@ export function ProductAdmin() {
       setCategories(snapshot.categories);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível carregar os produtos.",
+        error instanceof Error ? error.message : "Não foi possível carregar os produtos.",
       );
     } finally {
       setLoading(false);
@@ -222,29 +213,19 @@ export function ProductAdmin() {
   }, [products, search]);
 
   const availableCompetitions = useMemo(
-    () =>
-      form.contextType
-        ? getCompetitionOptionsForContext(form.contextType)
-        : [],
+    () => (form.contextType ? getCompetitionOptionsForContext(form.contextType) : []),
     [form.contextType],
   );
 
   const selectedCompetition = getCompetitionOption(form.competition);
   const availableTeams = selectedCompetition?.teams ?? [];
-  const legacyCompetition = Boolean(
-    form.competition && !getCompetitionOption(form.competition),
-  );
-  const legacyTeam = Boolean(
-    form.time && !availableTeams.some((team) => team === form.time),
-  );
+  const legacyCompetition = Boolean(form.competition && !getCompetitionOption(form.competition));
+  const legacyTeam = Boolean(form.time && !availableTeams.some((team) => team === form.time));
   const legacySeason = Boolean(
     form.season && !PRODUCT_SEASON_OPTIONS.some((season) => season === form.season),
   );
 
-  function updateField<K extends keyof ProductFormState>(
-    key: K,
-    value: ProductFormState[K],
-  ) {
+  function updateField<K extends keyof ProductFormState>(key: K, value: ProductFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
@@ -331,9 +312,7 @@ export function ProductAdmin() {
 
       const input: AdminProductInput = {
         ...(form.id ? { id: form.id } : {}),
-        ...(form.defaultVariantId
-          ? { defaultVariantId: form.defaultVariantId }
-          : {}),
+        ...(form.defaultVariantId ? { defaultVariantId: form.defaultVariantId } : {}),
         name: form.name,
         description: form.description,
         price: parseRequiredNumber(form.price, "um preço"),
@@ -344,10 +323,7 @@ export function ProductAdmin() {
         campeonato,
         liga,
         time,
-        specifications: mergeSeasonIntoSpecifications(
-          form.specifications,
-          form.season,
-        ),
+        specifications: mergeSeasonIntoSpecifications(form.specifications, form.season),
         weightGrams: parseOptionalNumber(form.weightGrams),
         lengthCm: parseOptionalNumber(form.lengthCm),
         widthCm: parseOptionalNumber(form.widthCm),
@@ -388,9 +364,7 @@ export function ProductAdmin() {
       setSuccessMessage("Produto arquivado com sucesso.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível arquivar o produto.",
+        error instanceof Error ? error.message : "Não foi possível arquivar o produto.",
       );
     } finally {
       setArchiving(false);
@@ -417,13 +391,19 @@ export function ProductAdmin() {
       </div>
 
       {errorMessage && !showForm ? (
-        <div role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div
+          role="alert"
+          className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {errorMessage}
         </div>
       ) : null}
 
       {successMessage ? (
-        <div role="status" className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div
+          role="status"
+          className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+        >
           {successMessage}
         </div>
       ) : null}
@@ -489,7 +469,8 @@ export function ProductAdmin() {
                   <option value="">Sem categoria</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
-                      {category.name}{category.is_active ? "" : " (inativa)"}
+                      {category.name}
+                      {category.is_active ? "" : " (inativa)"}
                     </option>
                   ))}
                 </select>
@@ -547,11 +528,7 @@ export function ProductAdmin() {
                 Time / seleção
                 <select
                   required={Boolean(form.contextType && form.contextType !== "other")}
-                  disabled={
-                    !form.contextType ||
-                    form.contextType === "other" ||
-                    !form.competition
-                  }
+                  disabled={!form.contextType || form.contextType === "other" || !form.competition}
                   value={form.contextType === "other" ? "" : form.time}
                   onChange={(event) => updateField("time", event.target.value)}
                   className={`${fieldClassName()} disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400`}
@@ -622,7 +599,9 @@ export function ProductAdmin() {
                 Situação
                 <select
                   value={form.status}
-                  onChange={(event) => updateField("status", event.target.value as AdminProductStatus)}
+                  onChange={(event) =>
+                    updateField("status", event.target.value as AdminProductStatus)
+                  }
                   className={fieldClassName()}
                 >
                   <option value="draft">Rascunho</option>
@@ -720,7 +699,10 @@ export function ProductAdmin() {
             </div>
 
             {errorMessage ? (
-              <div role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div
+                role="alert"
+                className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              >
                 {errorMessage}
               </div>
             ) : null}
@@ -751,7 +733,8 @@ export function ProductAdmin() {
           <div>
             <h3 className="font-bold text-gray-950">Catálogo</h3>
             <p className="mt-1 text-xs text-gray-500">
-              {products.length} produto{products.length === 1 ? "" : "s"} cadastrado{products.length === 1 ? "" : "s"}
+              {products.length} produto{products.length === 1 ? "" : "s"} cadastrado
+              {products.length === 1 ? "" : "s"}
             </p>
           </div>
           <input
@@ -789,7 +772,9 @@ export function ProductAdmin() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h4 className="truncate font-bold text-gray-950">{product.name}</h4>
-                      <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusClassName(product.status)}`}>
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusClassName(product.status)}`}
+                      >
                         {statusLabel(product.status)}
                       </span>
                     </div>
@@ -803,7 +788,9 @@ export function ProductAdmin() {
                   <div className="text-sm">
                     <p className="font-bold text-gray-950">{formatMoney(currentPrice)}</p>
                     {product.promotional_price !== null ? (
-                      <p className="text-xs text-gray-500 line-through">{formatMoney(product.price)}</p>
+                      <p className="text-xs text-gray-500 line-through">
+                        {formatMoney(product.price)}
+                      </p>
                     ) : null}
                     <p className="mt-1 text-xs font-medium text-emerald-700">
                       Produção sob encomenda

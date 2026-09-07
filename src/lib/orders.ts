@@ -8,11 +8,9 @@ export type OrderItem = Tables<"order_items">;
 export type OrderTimelineEntry = Tables<"order_timeline">;
 export type RefundRequest = Tables<"refund_requests">;
 
-export type RefundReason =
-  "arrependimento" | "tamanho" | "produto" | "entrega" | "outro";
+export type RefundReason = "arrependimento" | "tamanho" | "produto" | "entrega" | "outro";
 
-export type OrderDisplayStatus =
-  Order["status"] | "refund_requested" | "refund_canceled";
+export type OrderDisplayStatus = Order["status"] | "refund_requested" | "refund_canceled";
 
 export type OrderSummary = {
   order: Order;
@@ -109,16 +107,13 @@ async function kickTransactionalEmails() {
   if (error || !data.session?.access_token) return;
 
   try {
-    await fetch(
-      `${supabaseUrl.replace(/\/$/, "")}/functions/v1/notifications-kick`,
-      {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${data.session.access_token}`,
-          accept: "application/json",
-        },
+    await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/notifications-kick`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${data.session.access_token}`,
+        accept: "application/json",
       },
-    );
+    });
   } catch {
     // O evento permanece na outbox e poderá ser processado em nova tentativa.
   }
@@ -136,17 +131,14 @@ export function getOrderDisplayStatus(
 export function canRequestRefund(summary: OrderSummary) {
   return (
     !summary.refundRequest &&
-    ["paid", "in_production", "shipped", "delivered"].includes(
-      summary.order.status,
-    )
+    ["paid", "in_production", "shipped", "delivered"].includes(summary.order.status)
   );
 }
 
 export function getOrderItemImageUrl(item: OrderItem) {
   return (
-    (item.image_storage_key
-      ? buildR2PublicImageUrl(item.image_storage_key)
-      : null) ?? item.image_url
+    (item.image_storage_key ? buildR2PublicImageUrl(item.image_storage_key) : null) ??
+    item.image_url
   );
 }
 
@@ -154,8 +146,7 @@ export function parseSelectedOptions(value: Json) {
   if (!Array.isArray(value)) return [];
 
   return value.flatMap((option) => {
-    if (!option || typeof option !== "object" || Array.isArray(option))
-      return [];
+    if (!option || typeof option !== "object" || Array.isArray(option)) return [];
     const optionName = option["option_name"];
     const valueLabel = option["value_label"];
 
@@ -192,7 +183,10 @@ async function fetchOrderRelations(orderIds: string[]) {
   }
   if (refundsResult.error) {
     throw new Error(
-      getUserFacingError(refundsResult.error, "Não foi possível carregar as informações do pedido."),
+      getUserFacingError(
+        refundsResult.error,
+        "Não foi possível carregar as informações do pedido.",
+      ),
     );
   }
 
@@ -237,12 +231,8 @@ export async function fetchMyOrders(): Promise<OrderSummary[]> {
   }));
 }
 
-export async function fetchOrderDetail(
-  publicNumber: string,
-): Promise<OrderDetail | null> {
-  const normalizedNumber = decodeURIComponent(publicNumber)
-    .trim()
-    .toUpperCase();
+export async function fetchOrderDetail(publicNumber: string): Promise<OrderDetail | null> {
+  const normalizedNumber = decodeURIComponent(publicNumber).trim().toUpperCase();
   const { data: order, error } = await supabase
     .from("orders")
     .select("*")
@@ -277,11 +267,7 @@ export async function fetchOrderDetail(
   };
 }
 
-export async function requestOrderRefund(
-  orderId: string,
-  reason: RefundReason,
-  message: string,
-) {
+export async function requestOrderRefund(orderId: string, reason: RefundReason, message: string) {
   const result = await orderRpc.rpc("request_my_order_refund", {
     p_order_id: orderId,
     p_reason: reason,

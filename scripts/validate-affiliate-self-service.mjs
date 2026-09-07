@@ -53,9 +53,15 @@ check(
 check(
   "somente usuario autenticado executa ativacao e desativacao",
   migration.includes("REVOKE ALL ON FUNCTION public.activate_my_affiliate() FROM PUBLIC, anon") &&
-    migration.includes("REVOKE ALL ON FUNCTION public.deactivate_my_affiliate() FROM PUBLIC, anon") &&
-    migration.includes("GRANT EXECUTE ON FUNCTION public.activate_my_affiliate() TO authenticated") &&
-    migration.includes("GRANT EXECUTE ON FUNCTION public.deactivate_my_affiliate() TO authenticated"),
+    migration.includes(
+      "REVOKE ALL ON FUNCTION public.deactivate_my_affiliate() FROM PUBLIC, anon",
+    ) &&
+    migration.includes(
+      "GRANT EXECUTE ON FUNCTION public.activate_my_affiliate() TO authenticated",
+    ) &&
+    migration.includes(
+      "GRANT EXECUTE ON FUNCTION public.deactivate_my_affiliate() TO authenticated",
+    ),
 );
 
 check(

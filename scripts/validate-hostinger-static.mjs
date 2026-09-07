@@ -33,33 +33,91 @@ const orders = files["src/lib/orders.ts"];
 const notificationKick = files["supabase/functions/notifications-kick/index.ts"];
 const supabaseConfig = files["supabase/config.toml"];
 
-check("build Hostinger usa plugin oficial do TanStack", hostinger.includes("@tanstack/react-start/plugin/vite"));
-check("build Hostinger nao usa preset Lovable/Cloudflare", !hostinger.includes("@lovable.dev/vite-tanstack-config"));
+check(
+  "build Hostinger usa plugin oficial do TanStack",
+  hostinger.includes("@tanstack/react-start/plugin/vite"),
+);
+check(
+  "build Hostinger nao usa preset Lovable/Cloudflare",
+  !hostinger.includes("@lovable.dev/vite-tanstack-config"),
+);
 check("SPA mode esta ativo", /spa\s*:\s*\{[\s\S]*enabled\s*:\s*true/.test(hostinger));
 check("shell Hostinger sai como index.html", hostinger.includes('outputPath: "/index.html"'));
-check("Hostinger reescreve rotas para index.html", /RewriteRule\s+\^\s+index\.html\s+\[L\]/.test(htaccess));
-check("arquivos reais escapam do rewrite", htaccess.includes("%{REQUEST_FILENAME} -f") && htaccess.includes("%{REQUEST_FILENAME} -d"));
+check(
+  "Hostinger reescreve rotas para index.html",
+  /RewriteRule\s+\^\s+index\.html\s+\[L\]/.test(htaccess),
+);
+check(
+  "arquivos reais escapam do rewrite",
+  htaccess.includes("%{REQUEST_FILENAME} -f") && htaccess.includes("%{REQUEST_FILENAME} -d"),
+);
 
-check("fallback legado e restrito a localhost/Worker", routing.includes('hostname.endsWith(".workers.dev")') && routing.includes('hostname === "localhost"'));
-check("frete principal usa Supabase Edge Function", shipping.includes("/functions/v1/shipping-quote"));
+check(
+  "fallback legado e restrito a localhost/Worker",
+  routing.includes('hostname.endsWith(".workers.dev")') &&
+    routing.includes('hostname === "localhost"'),
+);
+check(
+  "frete principal usa Supabase Edge Function",
+  shipping.includes("/functions/v1/shipping-quote"),
+);
 check("frete condiciona fallback legado", shipping.includes("legacyWorkerFallbackAvailable"));
-check("checkout principal usa Supabase Edge Function", checkout.includes("/functions/v1/checkout-start"));
+check(
+  "checkout principal usa Supabase Edge Function",
+  checkout.includes("/functions/v1/checkout-start"),
+);
 check("checkout condiciona fallback legado", checkout.includes("legacyWorkerFallbackAvailable"));
-check("login/2FA principal usa Supabase Edge Function", auth.includes("/functions/v1/auth-email-2fa"));
+check(
+  "login/2FA principal usa Supabase Edge Function",
+  auth.includes("/functions/v1/auth-email-2fa"),
+);
 check("login condiciona fallback legado", auth.includes("legacyWorkerFallbackAvailable"));
 check("ativacao 2FA usa Supabase Edge Function", security.includes("/functions/v1/auth-email-2fa"));
-check("ativacao 2FA condiciona fallback legado", security.includes("legacyWorkerFallbackAvailable"));
+check(
+  "ativacao 2FA condiciona fallback legado",
+  security.includes("legacyWorkerFallbackAvailable"),
+);
 
-check("acoes de pedido acionam a fila transacional", orders.includes("/functions/v1/notifications-kick") && orders.includes("kickTransactionalEmails"));
-check("pedido em producao/envio e reembolso preservam kick de email", /requestOrderRefund[\s\S]*kickTransactionalEmails\(\)/.test(orders) && /transitionOrder[\s\S]*kickTransactionalEmails\(\)/.test(orders));
-check("acionador de emails exige usuario autenticado", notificationKick.includes("/auth/v1/user") && notificationKick.includes('authorization?.startsWith("Bearer ")'));
-check("acionador usa processador interno com service role", notificationKick.includes("/functions/v1/notifications-process") && notificationKick.includes("SUPABASE_SERVICE_ROLE_KEY"));
+check(
+  "acoes de pedido acionam a fila transacional",
+  orders.includes("/functions/v1/notifications-kick") && orders.includes("kickTransactionalEmails"),
+);
+check(
+  "pedido em producao/envio e reembolso preservam kick de email",
+  /requestOrderRefund[\s\S]*kickTransactionalEmails\(\)/.test(orders) &&
+    /transitionOrder[\s\S]*kickTransactionalEmails\(\)/.test(orders),
+);
+check(
+  "acionador de emails exige usuario autenticado",
+  notificationKick.includes("/auth/v1/user") &&
+    notificationKick.includes('authorization?.startsWith("Bearer ")'),
+);
+check(
+  "acionador usa processador interno com service role",
+  notificationKick.includes("/functions/v1/notifications-process") &&
+    notificationKick.includes("SUPABASE_SERVICE_ROLE_KEY"),
+);
 
-check("shipping-quote continua publica", /\[functions\.shipping-quote\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig));
-check("checkout-start continua com auth interna", /\[functions\.checkout-start\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig));
-check("webhook InfinitePay continua publico", /\[functions\.infinitepay-webhook\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig));
-check("auth-email-2fa usa validacao interna", /\[functions\.auth-email-2fa\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig));
-check("notifications-kick usa validacao interna", /\[functions\.notifications-kick\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig));
+check(
+  "shipping-quote continua publica",
+  /\[functions\.shipping-quote\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig),
+);
+check(
+  "checkout-start continua com auth interna",
+  /\[functions\.checkout-start\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig),
+);
+check(
+  "webhook InfinitePay continua publico",
+  /\[functions\.infinitepay-webhook\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig),
+);
+check(
+  "auth-email-2fa usa validacao interna",
+  /\[functions\.auth-email-2fa\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig),
+);
+check(
+  "notifications-kick usa validacao interna",
+  /\[functions\.notifications-kick\][\s\S]*?verify_jwt\s*=\s*false/.test(supabaseConfig),
+);
 
 const forbiddenPublicSecrets = [
   "VITE_SUPABASE_SERVICE_ROLE_KEY",

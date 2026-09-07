@@ -20,16 +20,44 @@ const homeLeague = read("src/components/home/ShopByLeague.tsx");
 const checks = [
   ["migration Fase 04 existe", /Fase 04/.test(migration)],
   ["pg_trgm preparado", /CREATE EXTENSION IF NOT EXISTS pg_trgm/.test(migration)],
-  ["vetor de busca indexado", /catalog_search_vector/.test(migration) && /USING gin \(catalog_search_vector\)/.test(migration)],
-  ["fallback trigram indexado", /products_catalog_search_trgm_idx/.test(migration) && /gin_trgm_ops/.test(migration)],
-  ["indices de catalogo ativo", /products_active_newest_idx/.test(migration) && /products_active_effective_price_idx/.test(migration)],
-  ["indices de campeonato liga time", /products_active_campeonato_idx/.test(migration) && /products_active_liga_idx/.test(migration) && /products_active_time_idx/.test(migration)],
+  [
+    "vetor de busca indexado",
+    /catalog_search_vector/.test(migration) &&
+      /USING gin \(catalog_search_vector\)/.test(migration),
+  ],
+  [
+    "fallback trigram indexado",
+    /products_catalog_search_trgm_idx/.test(migration) && /gin_trgm_ops/.test(migration),
+  ],
+  [
+    "indices de catalogo ativo",
+    /products_active_newest_idx/.test(migration) &&
+      /products_active_effective_price_idx/.test(migration),
+  ],
+  [
+    "indices de campeonato liga time",
+    /products_active_campeonato_idx/.test(migration) &&
+      /products_active_liga_idx/.test(migration) &&
+      /products_active_time_idx/.test(migration),
+  ],
   ["RPC paginada", /CREATE OR REPLACE FUNCTION public\.catalog_products_page/.test(migration)],
-  ["limite maximo por pagina 48", /LEAST\(GREATEST\(COALESCE\(p_page_size, 24\), 1\), 48\)/.test(migration)],
-  ["RPC retorna somente imagem preferida", /LEFT JOIN LATERAL/.test(migration) && /LIMIT 1/.test(migration)],
-  ["facetas fora da pagina atual", /CREATE OR REPLACE FUNCTION public\.catalog_filter_facets/.test(migration)],
+  [
+    "limite maximo por pagina 48",
+    /LEAST\(GREATEST\(COALESCE\(p_page_size, 24\), 1\), 48\)/.test(migration),
+  ],
+  [
+    "RPC retorna somente imagem preferida",
+    /LEFT JOIN LATERAL/.test(migration) && /LIMIT 1/.test(migration),
+  ],
+  [
+    "facetas fora da pagina atual",
+    /CREATE OR REPLACE FUNCTION public\.catalog_filter_facets/.test(migration),
+  ],
   ["facetas possuem contagens", /'count', count/.test(migration)],
-  ["busca usa RPC e nao select completo", /rpc\("catalog_products_page"/.test(hook) && !/\.from\("products"\)/.test(hook)],
+  [
+    "busca usa RPC e nao select completo",
+    /rpc\("catalog_products_page"/.test(hook) && !/\.from\("products"\)/.test(hook),
+  ],
   ["facetas usam RPC propria", /rpc\("catalog_filter_facets"/.test(hook)],
   ["react-query preserva pagina durante troca", /keepPreviousData/.test(hook)],
   ["cache curto da pagina", /staleTime: 30_000/.test(hook)],
@@ -39,15 +67,27 @@ const checks = [
   ["URL suporta faixa de preco", /minPrice:/.test(route) && /maxPrice:/.test(route)],
   ["UI tem paginação", /Paginação do catálogo/.test(route) && /goToPage/.test(route)],
   ["UI tem tamanho de pagina limitado", /CATALOG_PAGE_SIZES/.test(route)],
-  ["filtros usam facetas e nao produtos da pagina", /facets: CatalogFacets/.test(filters) && !/products: Product\[\]/.test(filters)],
+  [
+    "filtros usam facetas e nao produtos da pagina",
+    /facets: CatalogFacets/.test(filters) && !/products: Product\[\]/.test(filters),
+  ],
   ["filtros mostram contagem", /item\.count/.test(filters)],
   ["filtro de preco funcional", /applyPrice/.test(filters)],
   ["tipos incluem RPC paginada", /catalog_products_page: \{/.test(types)],
-  ["tipos incluem campos de indice", /catalog_search_text: string/.test(types) && /campeonato_key: string/.test(types)],
-  ["parser valida resposta da RPC", /catalogPageSchema/.test(catalog) && /parseCatalogPage/.test(catalog)],
+  [
+    "tipos incluem campos de indice",
+    /catalog_search_text: string/.test(types) && /campeonato_key: string/.test(types),
+  ],
+  [
+    "parser valida resposta da RPC",
+    /catalogPageSchema/.test(catalog) && /parseCatalogPage/.test(catalog),
+  ],
   ["Home recentes limita consulta", /pageSize: 12/.test(homeRecent)],
   ["Home brasileira filtra no backend", /campeonato: "brasileirao"/.test(homeBrazil)],
-  ["Home por liga usa facetas", /useCatalogFacets/.test(homeLeague) && /liga: activeLeague/.test(homeLeague)],
+  [
+    "Home por liga usa facetas",
+    /useCatalogFacets/.test(homeLeague) && /liga: activeLeague/.test(homeLeague),
+  ],
   ["Fase 04 nao carrega produtos em massa", !/INSERT\s+INTO\s+public\.products/i.test(migration)],
   ["Fase 04 nao cria imagens reais", !/INSERT\s+INTO\s+public\.product_images/i.test(migration)],
 ];
@@ -92,7 +132,9 @@ for (const file of sourceFiles) {
     }
   }
 }
-console.log(`${syntaxErrors === 0 ? "PASS" : "FAIL"} - ${sourceFiles.length} TS/TSX sem erro sintatico`);
+console.log(
+  `${syntaxErrors === 0 ? "PASS" : "FAIL"} - ${sourceFiles.length} TS/TSX sem erro sintatico`,
+);
 if (syntaxErrors) failed += 1;
 
 if (failed) process.exit(1);

@@ -103,9 +103,7 @@ function AdminPage() {
     const { error } = await signOut();
 
     if (error) {
-      setErrorMessage(
-        getUserFacingError(error, "Não foi possível sair do painel agora."),
-      );
+      setErrorMessage(getUserFacingError(error, "Não foi possível sair do painel agora."));
       setSigningOut(false);
       return;
     }
@@ -154,9 +152,7 @@ function AdminPage() {
                 <p className="text-base font-black tracking-[-0.035em] text-gray-950">
                   <BrandWordmark />
                 </p>
-                <p className="text-[11px] font-semibold text-gray-400">
-                  Administração
-                </p>
+                <p className="text-[11px] font-semibold text-gray-400">Administração</p>
               </div>
             </Link>
           </div>

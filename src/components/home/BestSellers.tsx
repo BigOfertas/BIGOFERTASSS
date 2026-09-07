@@ -40,17 +40,12 @@ const BestSellers: React.FC = () => {
               />
             ))}
             {Array.from({ length: placeholderCount }).map((_, index) => (
-              <ProductCardPlaceholder
-                key={`new-placeholder-${index}`}
-                loading={isLoading}
-              />
+              <ProductCardPlaceholder key={`new-placeholder-${index}`} loading={isLoading} />
             ))}
           </ProductCarousel>
         </div>
 
-        {error ? (
-          <span className="sr-only">Não foi possível carregar os lançamentos.</span>
-        ) : null}
+        {error ? <span className="sr-only">Não foi possível carregar os lançamentos.</span> : null}
       </div>
     </section>
   );

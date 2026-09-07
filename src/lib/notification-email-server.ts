@@ -86,8 +86,7 @@ function resolveEnvironment(
   explicitEnvironment?: NotificationEmailEnvironment,
 ): ResolvedEnvironment {
   const explicit = asEnvironment(explicitEnvironment);
-  const processEnvironment =
-    typeof process !== "undefined" ? asEnvironment(process.env) : {};
+  const processEnvironment = typeof process !== "undefined" ? asEnvironment(process.env) : {};
 
   return {
     supabaseUrl:
@@ -100,8 +99,7 @@ function resolveEnvironment(
       nonEmptyString(explicit.SUPABASE_SERVICE_ROLE_KEY) ??
       nonEmptyString(processEnvironment.SUPABASE_SERVICE_ROLE_KEY),
     resendApiKey:
-      nonEmptyString(explicit.RESEND_API_KEY) ??
-      nonEmptyString(processEnvironment.RESEND_API_KEY),
+      nonEmptyString(explicit.RESEND_API_KEY) ?? nonEmptyString(processEnvironment.RESEND_API_KEY),
     resendFrom:
       nonEmptyString(explicit.RESEND_FROM) ??
       nonEmptyString(processEnvironment.RESEND_FROM) ??
@@ -167,10 +165,7 @@ function normalizePayload(value: unknown): Record<string, unknown> {
 
 async function claimEvents(environment: ResolvedEnvironment, limit: number) {
   if (!environment.supabaseUrl) return [];
-  const endpoint = new URL(
-    "/rest/v1/rpc/claim_notification_events",
-    environment.supabaseUrl,
-  );
+  const endpoint = new URL("/rest/v1/rpc/claim_notification_events", environment.supabaseUrl);
   const response = await fetch(endpoint, {
     method: "POST",
     headers: serviceHeaders(environment),
@@ -208,10 +203,7 @@ async function completeEvent(
   environment: ResolvedEnvironment,
 ) {
   if (!environment.supabaseUrl) return;
-  const endpoint = new URL(
-    "/rest/v1/rpc/complete_notification_event",
-    environment.supabaseUrl,
-  );
+  const endpoint = new URL("/rest/v1/rpc/complete_notification_event", environment.supabaseUrl);
   const response = await fetch(endpoint, {
     method: "POST",
     headers: serviceHeaders(environment),
@@ -230,20 +222,11 @@ async function completeEvent(
   }
 }
 
-async function failEvent(
-  eventId: string,
-  error: unknown,
-  environment: ResolvedEnvironment,
-) {
+async function failEvent(eventId: string, error: unknown, environment: ResolvedEnvironment) {
   if (!environment.supabaseUrl) return;
   const message =
-    error instanceof Error && error.message
-      ? error.message
-      : "Falha inesperada no envio do e-mail";
-  const endpoint = new URL(
-    "/rest/v1/rpc/fail_notification_event",
-    environment.supabaseUrl,
-  );
+    error instanceof Error && error.message ? error.message : "Falha inesperada no envio do e-mail";
+  const endpoint = new URL("/rest/v1/rpc/fail_notification_event", environment.supabaseUrl);
   await fetch(endpoint, {
     method: "POST",
     headers: serviceHeaders(environment),
@@ -304,19 +287,11 @@ function requiredEmail(value: string | null | undefined) {
   return email;
 }
 
-function requiredPayloadText(
-  payload: Record<string, unknown>,
-  key: string,
-  code: string,
-) {
+function requiredPayloadText(payload: Record<string, unknown>, key: string, code: string) {
   const value = payload[key];
   if (typeof value === "number" && Number.isFinite(value)) return String(value);
   if (typeof value === "string" && value.trim()) return value.trim();
-  throw new NotificationEmailError(
-    "Evento de notificação incompleto.",
-    422,
-    code,
-  );
+  throw new NotificationEmailError("Evento de notificação incompleto.", 422, code);
 }
 
 function formatBrl(value: number | string) {
@@ -343,7 +318,10 @@ function normalizeMoneyText(value: string) {
 function fixedCommissionText(payload: Record<string, unknown>) {
   const unitAmount = payload["commission_unit_amount"];
   const units = Number(payload["commission_units"] ?? 0);
-  if ((typeof unitAmount === "number" && Number.isFinite(unitAmount)) || (typeof unitAmount === "string" && unitAmount.trim())) {
+  if (
+    (typeof unitAmount === "number" && Number.isFinite(unitAmount)) ||
+    (typeof unitAmount === "string" && unitAmount.trim())
+  ) {
     const amount = normalizeMoneyText(String(unitAmount));
     return units > 0 ? `${amount} por peça • ${units} peças` : `${amount} por peça`;
   }
@@ -366,11 +344,7 @@ function carrierDetails(order: OrderRow) {
     return { carrier: "Loggi", trackingUrl: LOGGI_TRACKING_URL };
   }
 
-  if (
-    service.includes("pac") ||
-    service.includes("sedex") ||
-    provider.includes("correios")
-  ) {
+  if (service.includes("pac") || service.includes("sedex") || provider.includes("correios")) {
     return { carrier: "Correios", trackingUrl: CORREIOS_TRACKING_URL };
   }
 
@@ -484,7 +458,8 @@ async function prepareEmail(
 
   if (event.event_name === "affiliate.commission.created") {
     const affiliateOrder = order;
-    const orderNumber = affiliateOrder?.public_number ??
+    const orderNumber =
+      affiliateOrder?.public_number ??
       requiredPayloadText(
         event.payload,
         "order_number",
@@ -553,10 +528,9 @@ async function prepareEmail(
   }
 
   if (event.event_name === "affiliate.withdrawal.paid") {
-    const paidDate = nonEmptyString(event.payload["paid_date"]) ??
-      new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(
-        new Date(event.occurred_at),
-      );
+    const paidDate =
+      nonEmptyString(event.payload["paid_date"]) ??
+      new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(new Date(event.occurred_at));
     return {
       to,
       templateId: "affiliate-withdrawal-paid",
@@ -702,9 +676,6 @@ export async function handleProcessNotificationEmailsRequest(
     }
 
     console.error(error);
-    return jsonResponse(
-      { success: false, code: "EMAIL_PROCESSOR_INTERNAL_ERROR" },
-      500,
-    );
+    return jsonResponse({ success: false, code: "EMAIL_PROCESSOR_INTERNAL_ERROR" }, 500);
   }
 }

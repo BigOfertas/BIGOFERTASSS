@@ -67,11 +67,14 @@ function ForgotPasswordPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Se existir uma conta cadastrada com <strong className="text-foreground">{email.trim()}</strong>, você receberá um link para criar uma nova senha.
+                Se existir uma conta cadastrada com{" "}
+                <strong className="text-foreground">{email.trim()}</strong>, você receberá um link
+                para criar uma nova senha.
               </p>
 
               <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                O envio pode levar alguns instantes. Confira também a caixa de spam ou lixo eletrônico.
+                O envio pode levar alguns instantes. Confira também a caixa de spam ou lixo
+                eletrônico.
               </p>
 
               <Link
@@ -118,7 +121,10 @@ function ForgotPasswordPage() {
               </div>
 
               {errorMessage ? (
-                <p role="alert" className="mt-4 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <p
+                  role="alert"
+                  className="mt-4 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                >
                   {errorMessage}
                 </p>
               ) : null}

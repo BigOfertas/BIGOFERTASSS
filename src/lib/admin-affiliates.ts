@@ -117,7 +117,6 @@ export type AffiliateRefundReviewRow = {
   resolution_note: string | null;
 };
 
-
 function recordValue(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -161,9 +160,7 @@ function normalizeOverview(value: unknown): AffiliateAdminOverview {
 }
 
 export async function fetchAffiliateAdminOverview() {
-  return normalizeOverview(
-    await callSupabaseRpc<unknown>("owner_get_affiliate_overview"),
-  );
+  return normalizeOverview(await callSupabaseRpc<unknown>("owner_get_affiliate_overview"));
 }
 
 export function listAffiliateCandidates(search = "") {
@@ -225,7 +222,6 @@ export function listAffiliateRefundReviews() {
   });
 }
 
-
 export function activateAffiliate(userId: string) {
   return callSupabaseRpc<unknown>("owner_activate_affiliate", {
     p_user_id: userId,
@@ -258,7 +254,6 @@ export function resolveAffiliateRefundReview(reviewId: string, note: string) {
   });
 }
 
-
 export type AffiliateCommissionTier = {
   minUnits: number;
   amountPerUnit: number;
@@ -289,16 +284,19 @@ function normalizeTier(value: unknown): AffiliateCommissionTier | null {
   return {
     minUnits,
     amountPerUnit,
-    source: row.source === "affiliate" ? "affiliate" : row.source === "global" ? "global" : undefined,
+    source:
+      row.source === "affiliate" ? "affiliate" : row.source === "global" ? "global" : undefined,
   };
 }
 
 function normalizeTiers(value: unknown) {
   if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => {
-    const tier = normalizeTier(item);
-    return tier ? [tier] : [];
-  }).sort((a, b) => a.minUnits - b.minUnits);
+  return value
+    .flatMap((item) => {
+      const tier = normalizeTier(item);
+      return tier ? [tier] : [];
+    })
+    .sort((a, b) => a.minUnits - b.minUnits);
 }
 
 export async function fetchAffiliateFixedSettings(): Promise<AffiliateFixedSettings> {
@@ -316,17 +314,24 @@ export async function fetchAffiliateFixedSettings(): Promise<AffiliateFixedSetti
 export function saveAffiliateFixedSettings(settings: AffiliateFixedSettings) {
   return callSupabaseRpc<unknown>("owner_save_affiliate_fixed_settings", {
     p_enabled: settings.enabled,
-    p_commission_tiers: settings.commissionTiers.map(({ minUnits, amountPerUnit }) => ({ minUnits, amountPerUnit })),
+    p_commission_tiers: settings.commissionTiers.map(({ minUnits, amountPerUnit }) => ({
+      minUnits,
+      amountPerUnit,
+    })),
     p_hold_days: settings.holdDays,
     p_minimum_withdrawal: settings.minimumWithdrawal,
     p_withdrawal_method: settings.withdrawalMethod,
   });
 }
 
-export async function fetchAffiliateCommissionRules(affiliateId: string): Promise<AffiliateCommissionRules> {
-  const row = recordValue(await callSupabaseRpc<unknown>("owner_get_affiliate_commission_rules", {
-    p_affiliate_id: affiliateId,
-  }));
+export async function fetchAffiliateCommissionRules(
+  affiliateId: string,
+): Promise<AffiliateCommissionRules> {
+  const row = recordValue(
+    await callSupabaseRpc<unknown>("owner_get_affiliate_commission_rules", {
+      p_affiliate_id: affiliateId,
+    }),
+  );
   return {
     affiliateId: text(row.affiliateId) ?? affiliateId,
     globalTiers: normalizeTiers(row.globalTiers),
@@ -335,7 +340,10 @@ export async function fetchAffiliateCommissionRules(affiliateId: string): Promis
   };
 }
 
-export function saveAffiliateCommissionOverrides(affiliateId: string, overrides: AffiliateCommissionTier[]) {
+export function saveAffiliateCommissionOverrides(
+  affiliateId: string,
+  overrides: AffiliateCommissionTier[],
+) {
   return callSupabaseRpc<unknown>("owner_save_affiliate_commission_overrides", {
     p_affiliate_id: affiliateId,
     p_overrides: overrides.map(({ minUnits, amountPerUnit }) => ({ minUnits, amountPerUnit })),

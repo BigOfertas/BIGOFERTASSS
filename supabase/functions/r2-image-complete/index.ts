@@ -1,10 +1,6 @@
 import { requireOwner } from "../_shared/auth.ts";
 import { corsHeaders, errorResponse, jsonResponse } from "../_shared/http.ts";
-import {
-  getMaxImageBytes,
-  headProductImage,
-  isAllowedImageMimeType,
-} from "../_shared/r2.ts";
+import { getMaxImageBytes, headProductImage, isAllowedImageMimeType } from "../_shared/r2.ts";
 
 type CompleteRequest = {
   imageId?: string;
@@ -71,7 +67,12 @@ Deno.serve(async (request) => {
         .from("product_images")
         .update({ status: "failed", is_primary: false })
         .eq("id", image.id);
-      return errorResponse(request, 422, "Objeto no R2 nao e uma imagem suportada", "invalid_remote_type");
+      return errorResponse(
+        request,
+        422,
+        "Objeto no R2 nao e uma imagem suportada",
+        "invalid_remote_type",
+      );
     }
 
     if (remoteType !== image.mime_type) {
@@ -79,11 +80,21 @@ Deno.serve(async (request) => {
         .from("product_images")
         .update({ status: "failed", is_primary: false })
         .eq("id", image.id);
-      return errorResponse(request, 422, "Content-Type do objeto difere do upload autorizado", "content_type_mismatch");
+      return errorResponse(
+        request,
+        422,
+        "Content-Type do objeto difere do upload autorizado",
+        "content_type_mismatch",
+      );
     }
 
     if (remote.byteSize === null || remote.byteSize <= 0) {
-      return errorResponse(request, 422, "Objeto vazio ou sem tamanho verificavel", "invalid_remote_size");
+      return errorResponse(
+        request,
+        422,
+        "Objeto vazio ou sem tamanho verificavel",
+        "invalid_remote_size",
+      );
     }
 
     if (remote.byteSize > getMaxImageBytes()) {

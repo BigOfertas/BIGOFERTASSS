@@ -19,11 +19,7 @@ class PaymentError extends Error {
 function environment(name: string) {
   const value = Deno.env.get(name)?.trim();
   if (!value) {
-    throw new PaymentError(
-      "Integração de pagamento indisponível.",
-      503,
-      `PAYMENT_${name}_MISSING`,
-    );
+    throw new PaymentError("Integração de pagamento indisponível.", 503, `PAYMENT_${name}_MISSING`);
   }
   return value;
 }
@@ -153,11 +149,7 @@ async function verifyPayment(orderNumber: string, transactionNsu: string, invoic
   };
 
   if (!upstream.ok || payload.success !== true || payload.paid !== true) {
-    throw new PaymentError(
-      "Pagamento ainda não confirmado.",
-      400,
-      "PAYMENT_NOT_CONFIRMED",
-    );
+    throw new PaymentError("Pagamento ainda não confirmado.", 400, "PAYMENT_NOT_CONFIRMED");
   }
 
   const amount = Number(payload.amount);
@@ -258,11 +250,7 @@ Deno.serve(async (request) => {
     }
 
     if (!rawBody || typeof rawBody !== "object" || Array.isArray(rawBody)) {
-      throw new PaymentError(
-        "Notificação de pagamento inválida.",
-        400,
-        "PAYMENT_WEBHOOK_INVALID",
-      );
+      throw new PaymentError("Notificação de pagamento inválida.", 400, "PAYMENT_WEBHOOK_INVALID");
     }
 
     const payload = rawBody as Record<string, unknown>;
@@ -276,9 +264,11 @@ Deno.serve(async (request) => {
       order.payment_provider?.toLowerCase() === "infinitepay" &&
       order.payment_reference === transactionNsu
     ) {
-      EdgeRuntime.waitUntil(triggerEmailProcessor().catch((error) => {
-        console.error("[notification-email-trigger]", error);
-      }));
+      EdgeRuntime.waitUntil(
+        triggerEmailProcessor().catch((error) => {
+          console.error("[notification-email-trigger]", error);
+        }),
+      );
       return response({ success: true, message: null });
     }
 
@@ -300,9 +290,11 @@ Deno.serve(async (request) => {
       verification.amountInCents / 100,
     );
 
-    EdgeRuntime.waitUntil(triggerEmailProcessor().catch((error) => {
-      console.error("[notification-email-trigger]", error);
-    }));
+    EdgeRuntime.waitUntil(
+      triggerEmailProcessor().catch((error) => {
+        console.error("[notification-email-trigger]", error);
+      }),
+    );
 
     console.info(
       `[infinitepay-webhook-edge] ${JSON.stringify({
@@ -325,9 +317,6 @@ Deno.serve(async (request) => {
     }
 
     console.error(error);
-    return response(
-      { success: false, message: "Não foi possível processar a notificação." },
-      500,
-    );
+    return response({ success: false, message: "Não foi possível processar a notificação." }, 500);
   }
 });

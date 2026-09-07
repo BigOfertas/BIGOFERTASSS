@@ -1,13 +1,71 @@
 export const BRAZILIAN_DDDS: ReadonlySet<string> = new Set([
-  "11", "12", "13", "14", "15", "16", "17", "18", "19",
-  "21", "22", "24", "27", "28",
-  "31", "32", "33", "34", "35", "37", "38",
-  "41", "42", "43", "44", "45", "46", "47", "48", "49",
-  "51", "53", "54", "55",
-  "61", "62", "63", "64", "65", "66", "67", "68", "69",
-  "71", "73", "74", "75", "77", "79",
-  "81", "82", "83", "84", "85", "86", "87", "88", "89",
-  "91", "92", "93", "94", "95", "96", "97", "98", "99",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "21",
+  "22",
+  "24",
+  "27",
+  "28",
+  "31",
+  "32",
+  "33",
+  "34",
+  "35",
+  "37",
+  "38",
+  "41",
+  "42",
+  "43",
+  "44",
+  "45",
+  "46",
+  "47",
+  "48",
+  "49",
+  "51",
+  "53",
+  "54",
+  "55",
+  "61",
+  "62",
+  "63",
+  "64",
+  "65",
+  "66",
+  "67",
+  "68",
+  "69",
+  "71",
+  "73",
+  "74",
+  "75",
+  "77",
+  "79",
+  "81",
+  "82",
+  "83",
+  "84",
+  "85",
+  "86",
+  "87",
+  "88",
+  "89",
+  "91",
+  "92",
+  "93",
+  "94",
+  "95",
+  "96",
+  "97",
+  "98",
+  "99",
 ]);
 
 export function onlyDigits(value: string, maxLength?: number) {
@@ -66,10 +124,7 @@ export function isValidBrazilianCpf(value: string) {
     return remainder === 10 ? 0 : remainder;
   };
 
-  return (
-    calculateDigit(9) === Number(cpf[9]) &&
-    calculateDigit(10) === Number(cpf[10])
-  );
+  return calculateDigit(9) === Number(cpf[9]) && calculateDigit(10) === Number(cpf[10]);
 }
 
 export function formatBrazilianCnpj(value: string) {
@@ -99,16 +154,10 @@ export function isValidBrazilianCnpj(value: string) {
       baseLength === 12
         ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
         : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-    const sum = weights.reduce(
-      (total, weight, index) => total + Number(cnpj[index]) * weight,
-      0,
-    );
+    const sum = weights.reduce((total, weight, index) => total + Number(cnpj[index]) * weight, 0);
     const remainder = sum % 11;
     return remainder < 2 ? 0 : 11 - remainder;
   };
 
-  return (
-    calculateDigit(12) === Number(cnpj[12]) &&
-    calculateDigit(13) === Number(cnpj[13])
-  );
+  return calculateDigit(12) === Number(cnpj[12]) && calculateDigit(13) === Number(cnpj[13]);
 }

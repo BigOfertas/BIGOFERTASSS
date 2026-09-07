@@ -44,9 +44,7 @@ export function OrderShippingControl({
       toast.success("Pedido marcado como enviado e rastreio salvo.");
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Não foi possível confirmar o envio agora.";
+        error instanceof Error ? error.message : "Não foi possível confirmar o envio agora.";
       setErrorMessage(message);
       toast.error(message);
     } finally {
@@ -70,7 +68,8 @@ export function OrderShippingControl({
                 Informe o código antes de marcar como enviado
               </h3>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
-                Cole abaixo o código fornecido pela SuperFrete ou pela transportadora. Ao confirmar, o pedido será marcado como enviado e o cliente verá esse mesmo código na área dele.
+                Cole abaixo o código fornecido pela SuperFrete ou pela transportadora. Ao confirmar,
+                o pedido será marcado como enviado e o cliente verá esse mesmo código na área dele.
               </p>
             </div>
           </div>
@@ -114,7 +113,8 @@ export function OrderShippingControl({
         </div>
 
         <p className="mt-3 text-xs leading-5 text-gray-500">
-          Depois da confirmação, o cliente encontra o código em <strong>Minha Conta → Pedidos → {publicNumber} → Entrega</strong>.
+          Depois da confirmação, o cliente encontra o código em{" "}
+          <strong>Minha Conta → Pedidos → {publicNumber} → Entrega</strong>.
         </p>
 
         {errorMessage ? (

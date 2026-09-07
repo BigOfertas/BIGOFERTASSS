@@ -7,10 +7,7 @@ import ProductFilters from "@/components/ProductFilters";
 import Header from "@/components/layout/Header";
 import { CatalogProductGrid } from "@/components/product/CatalogProductGrid";
 import { Button } from "@/components/ui/button";
-import {
-  useCatalogFacets,
-  useCatalogProducts,
-} from "@/hooks/useCatalogProducts";
+import { useCatalogFacets, useCatalogProducts } from "@/hooks/useCatalogProducts";
 import {
   CATALOG_DEFAULT_PAGE_SIZE,
   CATALOG_PAGE_SIZES,
@@ -36,9 +33,7 @@ const productSearchSchema = z
     maxPrice: z.coerce.number().min(0).max(1_000_000).optional(),
     sort: catalogSortSchema.optional(),
     page: z.coerce.number().int().min(1).max(100_000).optional(),
-    pageSize: z
-      .union([z.literal(12), z.literal(24), z.literal(48)])
-      .optional(),
+    pageSize: z.union([z.literal(12), z.literal(24), z.literal(48)]).optional(),
   })
   .refine(
     (value) =>
@@ -67,17 +62,8 @@ function getVisiblePages(current: number, total: number) {
 function ProductsPage() {
   const search = Route.useSearch() satisfies CatalogQuery;
   const navigate = useNavigate();
-  const {
-    data: catalog,
-    isLoading,
-    isFetching,
-    error,
-  } = useCatalogProducts(search);
-  const {
-    data: facets,
-    isLoading: facetsLoading,
-    error: facetsError,
-  } = useCatalogFacets();
+  const { data: catalog, isLoading, isFetching, error } = useCatalogProducts(search);
+  const { data: facets, isLoading: facetsLoading, error: facetsError } = useCatalogFacets();
 
   const currentPage = catalog?.page ?? search.page ?? 1;
   const pageSize = catalog?.pageSize ?? search.pageSize ?? CATALOG_DEFAULT_PAGE_SIZE;
@@ -109,12 +95,9 @@ function ProductsPage() {
         <Header />
         <main className="flex flex-grow items-center justify-center p-8">
           <div className="text-center">
-            <h2 className="mb-2 text-2xl font-bold text-red-600">
-              Erro ao carregar produtos
-            </h2>
+            <h2 className="mb-2 text-2xl font-bold text-red-600">Erro ao carregar produtos</h2>
             <p className="text-gray-600">
-              Não foi possível consultar o catálogo agora. Tente novamente mais
-              tarde.
+              Não foi possível consultar o catálogo agora. Tente novamente mais tarde.
             </p>
           </div>
         </main>
@@ -204,9 +187,7 @@ function ProductsPage() {
                   ))}
                 </div>
               ) : facetsError ? (
-                <p className="text-sm text-gray-500">
-                  Filtros temporariamente indisponíveis.
-                </p>
+                <p className="text-sm text-gray-500">Filtros temporariamente indisponíveis.</p>
               ) : null}
             </div>
           </aside>
@@ -243,34 +224,30 @@ function ProductsPage() {
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
 
-                    {getVisiblePages(currentPage, totalPages).map(
-                      (page, index, visiblePages) => {
-                        const previous = visiblePages[index - 1];
-                        const showGap = previous !== undefined && page - previous > 1;
+                    {getVisiblePages(currentPage, totalPages).map((page, index, visiblePages) => {
+                      const previous = visiblePages[index - 1];
+                      const showGap = previous !== undefined && page - previous > 1;
 
-                        return (
-                          <React.Fragment key={page}>
-                            {showGap ? (
-                              <span className="px-1 text-gray-400">…</span>
-                            ) : null}
-                            <Button
-                              type="button"
-                              variant={page === currentPage ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => goToPage(page)}
-                              aria-current={page === currentPage ? "page" : undefined}
-                              className={
-                                page === currentPage
-                                  ? "bg-red-600 text-white hover:bg-red-700"
-                                  : undefined
-                              }
-                            >
-                              {page}
-                            </Button>
-                          </React.Fragment>
-                        );
-                      },
-                    )}
+                      return (
+                        <React.Fragment key={page}>
+                          {showGap ? <span className="px-1 text-gray-400">…</span> : null}
+                          <Button
+                            type="button"
+                            variant={page === currentPage ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => goToPage(page)}
+                            aria-current={page === currentPage ? "page" : undefined}
+                            className={
+                              page === currentPage
+                                ? "bg-red-600 text-white hover:bg-red-700"
+                                : undefined
+                            }
+                          >
+                            {page}
+                          </Button>
+                        </React.Fragment>
+                      );
+                    })}
 
                     <Button
                       type="button"

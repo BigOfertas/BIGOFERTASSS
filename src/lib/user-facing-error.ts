@@ -1,11 +1,11 @@
 const CPF_EM_USO =
-  'Este CPF já está vinculado a outra conta. Confira o número informado. Se o CPF for seu, entre na conta já cadastrada ou use “Esqueci minha senha”.';
+  "Este CPF já está vinculado a outra conta. Confira o número informado. Se o CPF for seu, entre na conta já cadastrada ou use “Esqueci minha senha”.";
 
 const CNPJ_EM_USO =
-  'Este CNPJ já está vinculado a outra conta. Confira o número informado. Se o CNPJ for seu, entre na conta já cadastrada ou use “Esqueci minha senha”.';
+  "Este CNPJ já está vinculado a outra conta. Confira o número informado. Se o CNPJ for seu, entre na conta já cadastrada ou use “Esqueci minha senha”.";
 
 const EMAIL_EM_USO =
-  'Já existe uma conta com este e-mail. Entre na sua conta ou use “Esqueci minha senha”.';
+  "Já existe uma conta com este e-mail. Entre na sua conta ou use “Esqueci minha senha”.";
 
 function readMessage(error: unknown) {
   if (error instanceof Error) return error.message.trim();

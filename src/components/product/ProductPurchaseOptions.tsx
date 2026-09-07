@@ -39,13 +39,18 @@ export function ProductPurchaseOptions({
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs font-medium text-gray-500">O tamanho não altera o preço do produto.</p>
+          <p className="mt-2 text-xs font-medium text-gray-500">
+            O tamanho não altera o preço do produto.
+          </p>
         </fieldset>
       ) : null}
 
       {config.personalizationEnabled ? (
         <div>
-          <label className="text-xs font-black uppercase tracking-widest text-gray-800" htmlFor="personalizar">
+          <label
+            className="text-xs font-black uppercase tracking-widest text-gray-800"
+            htmlFor="personalizar"
+          >
             Personalizar
           </label>
           <select
@@ -70,10 +75,15 @@ export function ProductPurchaseOptions({
                 <input
                   value={value.personalization?.name ?? ""}
                   maxLength={config.personalizationNameMax}
-                  onChange={(event) => onChange({
-                    ...value,
-                    personalization: { name: event.target.value, number: value.personalization?.number ?? "" },
-                  })}
+                  onChange={(event) =>
+                    onChange({
+                      ...value,
+                      personalization: {
+                        name: event.target.value,
+                        number: value.personalization?.number ?? "",
+                      },
+                    })
+                  }
                   className="mt-1 h-11 w-full rounded-md border border-gray-300 px-3 outline-none focus:border-red-500"
                   placeholder={`Até ${config.personalizationNameMax} caracteres`}
                 />
@@ -84,10 +94,15 @@ export function ProductPurchaseOptions({
                   inputMode="numeric"
                   maxLength={3}
                   value={value.personalization?.number ?? ""}
-                  onChange={(event) => onChange({
-                    ...value,
-                    personalization: { name: value.personalization?.name ?? "", number: event.target.value.replace(/\D/g, "").slice(0, 3) },
-                  })}
+                  onChange={(event) =>
+                    onChange({
+                      ...value,
+                      personalization: {
+                        name: value.personalization?.name ?? "",
+                        number: event.target.value.replace(/\D/g, "").slice(0, 3),
+                      },
+                    })
+                  }
                   className="mt-1 h-11 w-full rounded-md border border-gray-300 px-3 outline-none focus:border-red-500"
                   placeholder="Ex.: 10"
                 />
@@ -98,7 +113,10 @@ export function ProductPurchaseOptions({
       ) : null}
 
       <div>
-        <label className="text-xs font-black uppercase tracking-widest text-gray-800" htmlFor="patch">
+        <label
+          className="text-xs font-black uppercase tracking-widest text-gray-800"
+          htmlFor="patch"
+        >
           Patch
         </label>
         <select
@@ -114,12 +132,17 @@ export function ProductPurchaseOptions({
             </option>
           ))}
         </select>
-        <p className="mt-2 text-xs text-amber-700">Escolha com atenção: os patches disponíveis variam conforme o produto.</p>
+        <p className="mt-2 text-xs text-amber-700">
+          Escolha com atenção: os patches disponíveis variam conforme o produto.
+        </p>
       </div>
 
       {config.phraseEnabled ? (
         <div>
-          <label className="text-xs font-black uppercase tracking-widest text-gray-800" htmlFor="frase-personalizada">
+          <label
+            className="text-xs font-black uppercase tracking-widest text-gray-800"
+            htmlFor="frase-personalizada"
+          >
             Frase personalizada
           </label>
           <select
@@ -148,7 +171,7 @@ export function ProductPurchaseOptions({
                 placeholder={`Até ${config.phraseMax} caracteres, sem número separado`}
               />
               <span className="mt-1 block text-right text-xs font-medium text-gray-400">
-                {(value.phrase?.trimStart().length ?? 0)}/{config.phraseMax}
+                {value.phrase?.trimStart().length ?? 0}/{config.phraseMax}
               </span>
             </label>
           ) : null}
@@ -162,7 +185,10 @@ export function ProductPurchaseOptions({
       ) : null}
 
       <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-xs leading-5 text-gray-600">
-        <strong className="text-gray-900">Prazo:</strong> preparação em até {config.productionBusinessDays} dias úteis após a confirmação do pagamento. Entrega estimada em {config.deliveryMinBusinessDays} a {config.deliveryMaxBusinessDays} dias úteis, podendo variar conforme a localidade.
+        <strong className="text-gray-900">Prazo:</strong> preparação em até{" "}
+        {config.productionBusinessDays} dias úteis após a confirmação do pagamento. Entrega estimada
+        em {config.deliveryMinBusinessDays} a {config.deliveryMaxBusinessDays} dias úteis, podendo
+        variar conforme a localidade.
       </div>
     </div>
   );

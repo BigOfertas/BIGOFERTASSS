@@ -128,8 +128,7 @@ function resolveEnvironment(
     (request as NitroCloudflareRequest).runtime?.cloudflare?.env,
   );
   const entryEnvironment = asEnvironment(explicitEnvironment);
-  const processEnvironment =
-    typeof process !== "undefined" ? asEnvironment(process.env) : {};
+  const processEnvironment = typeof process !== "undefined" ? asEnvironment(process.env) : {};
 
   const supabaseUrl =
     nonEmptyString(runtimeEnvironment.VITE_SUPABASE_URL) ??
@@ -296,11 +295,7 @@ async function authenticateCustomer(
   };
 
   if (typeof payload.id !== "string" || !UUID_PATTERN.test(payload.id)) {
-    throw new CheckoutError(
-      "Sua sessão não pôde ser confirmada.",
-      401,
-      "CHECKOUT_AUTH_INVALID",
-    );
+    throw new CheckoutError("Sua sessão não pôde ser confirmada.", 401, "CHECKOUT_AUTH_INVALID");
   }
 
   return {
@@ -345,9 +340,10 @@ function normalizeStartCheckoutInput(value: unknown): StartCheckoutInput {
     const variantId = itemRecord["variantId"];
     const quantity = itemRecord["quantity"];
     const customizationRaw = itemRecord["customization"];
-    const customization = customizationRaw && typeof customizationRaw === "object" && !Array.isArray(customizationRaw)
-      ? (customizationRaw as Record<string, unknown>)
-      : {};
+    const customization =
+      customizationRaw && typeof customizationRaw === "object" && !Array.isArray(customizationRaw)
+        ? (customizationRaw as Record<string, unknown>)
+        : {};
     if (JSON.stringify(customization).length > 3000) {
       throw new CheckoutError("Personalização inválida.", 400, "CHECKOUT_CART_INVALID");
     }
@@ -456,8 +452,7 @@ async function calculateAuthoritativeShipping(
     { source: "cloudflare-entry" },
   );
   const payload = (await readJson(response, "CHECKOUT_SHIPPING_PARSE_ERROR")) as
-    | ShippingQuotePayload
-    | { error?: unknown };
+    ShippingQuotePayload | { error?: unknown };
 
   if (!response.ok || !("quotes" in payload) || !Array.isArray(payload.quotes)) {
     const message =
@@ -467,9 +462,7 @@ async function calculateAuthoritativeShipping(
     throw new CheckoutError(message, 422, "CHECKOUT_SHIPPING_UNAVAILABLE");
   }
 
-  const quote = payload.quotes.find(
-    (candidate) => candidate.serviceId === input.shippingServiceId,
-  );
+  const quote = payload.quotes.find((candidate) => candidate.serviceId === input.shippingServiceId);
 
   if (!quote) {
     throw new CheckoutError(
@@ -532,9 +525,7 @@ async function createOrder(
         ? (payload as { message?: unknown }).message
         : null;
     throw new CheckoutError(
-      typeof message === "string" && message.trim()
-        ? message
-        : "Não foi possível criar o pedido.",
+      typeof message === "string" && message.trim() ? message : "Não foi possível criar o pedido.",
       422,
       "CHECKOUT_ORDER_CREATE_FAILED",
     );
@@ -602,10 +593,7 @@ async function createInfinitePayLink(
       body: JSON.stringify({
         handle: environment.infinitePayHandle,
         redirect_url: new URL("/conta", requestUrl.origin).toString(),
-        webhook_url: new URL(
-          "/api/payments/infinitepay/webhook",
-          requestUrl.origin,
-        ).toString(),
+        webhook_url: new URL("/api/payments/infinitepay/webhook", requestUrl.origin).toString(),
         order_nsu: order.public_number,
         items: [
           {
@@ -717,24 +705,10 @@ export async function handleStartCheckoutRequest(
     }
 
     const input = normalizeStartCheckoutInput(rawBody);
-    const address = await fetchCustomerAddress(
-      user.id,
-      input.addressId,
-      environment,
-    );
-    const shipping = await calculateAuthoritativeShipping(
-      request,
-      input,
-      address,
-      environment,
-    );
+    const address = await fetchCustomerAddress(user.id, input.addressId, environment);
+    const shipping = await calculateAuthoritativeShipping(request, input, address, environment);
     const order = await createOrder(user, input, shipping, environment);
-    const checkoutUrl = await createInfinitePayLink(
-      request,
-      order,
-      address,
-      environment,
-    );
+    const checkoutUrl = await createInfinitePayLink(request, order, address, environment);
 
     return jsonResponse({
       checkoutUrl,
@@ -747,10 +721,7 @@ export async function handleStartCheckoutRequest(
   }
 }
 
-async function fetchOrderByPublicNumber(
-  publicNumber: string,
-  environment: ResolvedEnvironment,
-) {
+async function fetchOrderByPublicNumber(publicNumber: string, environment: ResolvedEnvironment) {
   if (!environment.supabaseUrl) {
     throw new CheckoutError(
       "Integração de pagamento indisponível.",
@@ -774,11 +745,7 @@ async function fetchOrderByPublicNumber(
   const payload = await readJson(response, "PAYMENT_ORDER_PARSE_ERROR");
 
   if (!response.ok || !Array.isArray(payload) || payload.length !== 1) {
-    throw new CheckoutError(
-      "Pedido não encontrado.",
-      400,
-      "PAYMENT_ORDER_NOT_FOUND",
-    );
+    throw new CheckoutError("Pedido não encontrado.", 400, "PAYMENT_ORDER_NOT_FOUND");
   }
 
   return payload[0] as {
@@ -849,11 +816,7 @@ async function verifyPaymentWithInfinitePay(
   )) as InfinitePayPaymentCheckResponse;
 
   if (!response.ok || payload.success !== true || payload.paid !== true) {
-    throw new CheckoutError(
-      "Pagamento ainda não confirmado.",
-      400,
-      "PAYMENT_NOT_CONFIRMED",
-    );
+    throw new CheckoutError("Pagamento ainda não confirmado.", 400, "PAYMENT_NOT_CONFIRMED");
   }
 
   const amount = Number(payload.amount);
@@ -867,10 +830,7 @@ async function verifyPaymentWithInfinitePay(
 
   return {
     amountInCents: amount,
-    method:
-      typeof payload.capture_method === "string"
-        ? payload.capture_method
-        : "infinitepay",
+    method: typeof payload.capture_method === "string" ? payload.capture_method : "infinitepay",
   };
 }
 
@@ -945,19 +905,12 @@ export async function handleInfinitePayWebhookRequest(
     }
 
     if (!rawBody || typeof rawBody !== "object" || Array.isArray(rawBody)) {
-      throw new CheckoutError(
-        "Notificação de pagamento inválida.",
-        400,
-        "PAYMENT_WEBHOOK_INVALID",
-      );
+      throw new CheckoutError("Notificação de pagamento inválida.", 400, "PAYMENT_WEBHOOK_INVALID");
     }
 
     const payload = rawBody as InfinitePayWebhookPayload;
     const orderNumber = requiredWebhookString(payload.order_nsu, "order_nsu");
-    const transactionNsu = requiredWebhookString(
-      payload.transaction_nsu,
-      "transaction_nsu",
-    );
+    const transactionNsu = requiredWebhookString(payload.transaction_nsu, "transaction_nsu");
     const invoiceSlug = requiredWebhookString(payload.invoice_slug, "invoice_slug");
     const order = await fetchOrderByPublicNumber(orderNumber, environment);
 

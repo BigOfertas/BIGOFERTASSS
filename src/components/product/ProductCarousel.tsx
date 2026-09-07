@@ -5,10 +5,7 @@ interface ProductCarouselProps {
   itemCount: number;
 }
 
-const ProductCarousel: React.FC<ProductCarouselProps> = ({
-  children,
-  itemCount,
-}) => {
+const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }) => {
   const [activePage, setActivePage] = useState(0);
   const productsPerPage = 5;
   const products = React.Children.toArray(children);
@@ -68,10 +65,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
       <div className="md:hidden">
         <div className="custom-scrollbar flex snap-x gap-4 overflow-x-auto scroll-smooth pb-4">
           {products.map((child, index) => (
-            <div
-              key={index}
-              className="mb-2 w-[46%] flex-shrink-0 snap-start"
-            >
+            <div key={index} className="mb-2 w-[46%] flex-shrink-0 snap-start">
               {child}
             </div>
           ))}

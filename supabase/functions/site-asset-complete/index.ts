@@ -1,10 +1,6 @@
 import { requireOwner } from "../_shared/auth.ts";
 import { corsHeaders, errorResponse, jsonResponse } from "../_shared/http.ts";
-import {
-  getMaxImageBytes,
-  headProductImage,
-  isAllowedImageMimeType,
-} from "../_shared/r2.ts";
+import { getMaxImageBytes, headProductImage, isAllowedImageMimeType } from "../_shared/r2.ts";
 
 type CompleteRequest = {
   uploadId?: string;
@@ -55,10 +51,7 @@ Deno.serve(async (request) => {
     const remoteType = remote.contentType ?? upload.mime_type;
 
     if (!isAllowedImageMimeType(remoteType) || remoteType !== upload.mime_type) {
-      await supabase
-        .from("site_asset_uploads")
-        .update({ status: "failed" })
-        .eq("id", upload.id);
+      await supabase.from("site_asset_uploads").update({ status: "failed" }).eq("id", upload.id);
       return errorResponse(request, 422, "Arquivo enviado invalido", "invalid_remote_file");
     }
 
@@ -67,7 +60,12 @@ Deno.serve(async (request) => {
         .from("site_asset_uploads")
         .update({ status: "failed", byte_size: remote.byteSize })
         .eq("id", upload.id);
-      return errorResponse(request, 422, "Tamanho do arquivo enviado invalido", "invalid_remote_size");
+      return errorResponse(
+        request,
+        422,
+        "Tamanho do arquivo enviado invalido",
+        "invalid_remote_size",
+      );
     }
 
     const { data: completed, error: completeError } = await supabase
@@ -87,13 +85,14 @@ Deno.serve(async (request) => {
 
     if (completeError) throw new Error(completeError.message);
 
-    const { error: slotError } = await supabase
-      .from("site_personalization_assets")
-      .upsert({
+    const { error: slotError } = await supabase.from("site_personalization_assets").upsert(
+      {
         slot_key: upload.slot_key,
         upload_id: upload.id,
         updated_at: new Date().toISOString(),
-      }, { onConflict: "slot_key" });
+      },
+      { onConflict: "slot_key" },
+    );
 
     if (slotError) throw new Error(slotError.message);
 

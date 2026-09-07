@@ -16,16 +16,10 @@ type CheckoutErrorPayload = {
 
 function edgeCheckoutUrl() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
-  return supabaseUrl
-    ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/checkout-start`
-    : null;
+  return supabaseUrl ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/checkout-start` : null;
 }
 
-async function postCheckout(
-  url: string,
-  accessToken: string,
-  body: string,
-) {
+async function postCheckout(url: string, accessToken: string, body: string) {
   return fetch(url, {
     method: "POST",
     headers: {
@@ -96,10 +90,7 @@ export async function startInfinitePayCheckout(input: {
     items,
   });
 
-  const response = await checkoutResponse(
-    data.session.access_token,
-    requestBody,
-  );
+  const response = await checkoutResponse(data.session.access_token, requestBody);
 
   let payload: (CheckoutStartResult & CheckoutErrorPayload) | null = null;
   try {

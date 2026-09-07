@@ -1,9 +1,5 @@
 import { fetchAdminCatalog } from "@/lib/admin-products";
-import {
-  fetchAdminOrders,
-  type AdminOrderRow,
-  type OrderDisplayStatus,
-} from "@/lib/orders";
+import { fetchAdminOrders, type AdminOrderRow, type OrderDisplayStatus } from "@/lib/orders";
 
 export type AdminDashboardStatusMetric = {
   status: OrderDisplayStatus;
@@ -67,12 +63,8 @@ export async function fetchAdminDashboardSnapshot(): Promise<AdminDashboardSnaps
     fetchAdminCatalog(),
   ]);
 
-  const activeProducts = catalog.products.filter(
-    (product) => product.status === "active",
-  ).length;
-  const draftProducts = catalog.products.filter(
-    (product) => product.status === "draft",
-  ).length;
+  const activeProducts = catalog.products.filter((product) => product.status === "active").length;
+  const draftProducts = catalog.products.filter((product) => product.status === "draft").length;
 
   return {
     totalOrders: recent.total,

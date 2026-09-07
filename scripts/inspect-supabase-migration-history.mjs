@@ -73,11 +73,7 @@ if (remoteOnly.length > 0) {
   for (const item of remoteOnly) console.log(`${item.version} ${item.name || "(unnamed)"}`);
 }
 
-const affiliateVersions = new Set([
-  "20260904041000",
-  "20260904042500",
-  "20260904044000",
-]);
+const affiliateVersions = new Set(["20260904041000", "20260904042500", "20260904044000"]);
 const affiliatePending = pending.filter((item) => affiliateVersions.has(item.version));
 console.log(`\nAffiliate migrations pending remotely: ${affiliatePending.length}`);
 for (const item of affiliatePending) console.log(`${item.version} ${item.name}`);
@@ -140,14 +136,14 @@ const readinessResponse = await fetch(
 );
 
 if (!readinessResponse.ok) {
-  console.error(`Supabase live schema readiness request failed with HTTP ${readinessResponse.status}.`);
+  console.error(
+    `Supabase live schema readiness request failed with HTTP ${readinessResponse.status}.`,
+  );
   process.exit(5);
 }
 
 const readinessPayload = await readinessResponse.json();
-const readiness = Array.isArray(readinessPayload)
-  ? readinessPayload[0]
-  : readinessPayload;
+const readiness = Array.isArray(readinessPayload) ? readinessPayload[0] : readinessPayload;
 
 console.log("\nAFFILIATE_LIVE_READINESS");
 console.log(JSON.stringify(readiness, null, 2));

@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import {
-  Check,
-  Gift,
-  LoaderCircle,
-  MapPin,
-  RefreshCw,
-  Truck,
-} from "lucide-react";
+import { Check, Gift, LoaderCircle, MapPin, RefreshCw, Truck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { BRAND } from "@/config/brand";
@@ -95,8 +88,7 @@ export function ShippingCalculator({
       setResult(nextResult);
 
       const cheapest = nextResult.quotes.reduce<ShippingQuote | null>(
-        (current, quote) =>
-          !current || quote.totalPrice < current.totalPrice ? quote : current,
+        (current, quote) => (!current || quote.totalPrice < current.totalPrice ? quote : current),
         null,
       );
       onSelectionChange(cheapest);
@@ -104,9 +96,7 @@ export function ShippingCalculator({
     } catch (error) {
       setResult(null);
       onPostalCodeQuoted?.(null);
-      setErrorMessage(
-        getUserFacingError(error, "Não foi possível calcular o frete agora."),
-      );
+      setErrorMessage(getUserFacingError(error, "Não foi possível calcular o frete agora."));
     } finally {
       setIsLoading(false);
     }
@@ -144,9 +134,7 @@ export function ShippingCalculator({
             autoComplete="postal-code"
             placeholder="00000-000"
             value={postalCode}
-            onChange={(event) =>
-              setPostalCode(formatPostalCode(event.target.value))
-            }
+            onChange={(event) => setPostalCode(formatPostalCode(event.target.value))}
             className="h-11 min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none transition focus:border-red-400 focus:ring-4 focus:ring-red-50 motion-reduce:transition-none"
           />
           <Button

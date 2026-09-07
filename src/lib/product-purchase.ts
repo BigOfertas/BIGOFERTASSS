@@ -1,14 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type ProductCommercialType =
-  | "torcedor"
-  | "feminino"
-  | "jogador"
-  | "retro"
-  | "infantil"
-  | "calcao"
-  | "basquete"
-  | "other";
+  "torcedor" | "feminino" | "jogador" | "retro" | "infantil" | "calcao" | "basquete" | "other";
 
 export type PurchaseCustomization = {
   size: string | null;
@@ -62,7 +55,8 @@ export function normalizePurchaseCustomization(value: unknown): PurchaseCustomiz
   const row = record(value);
   const personalizationRow = record(row.personalization);
   const name = typeof personalizationRow.name === "string" ? personalizationRow.name.trim() : "";
-  const number = typeof personalizationRow.number === "string" ? personalizationRow.number.trim() : "";
+  const number =
+    typeof personalizationRow.number === "string" ? personalizationRow.number.trim() : "";
   return {
     size: typeof row.size === "string" && row.size.trim() ? row.size.trim().toUpperCase() : null,
     personalization: name || number ? { name, number } : null,
@@ -75,7 +69,14 @@ export function normalizePurchaseCustomization(value: unknown): PurchaseCustomiz
 function normalizeConfig(value: unknown): ProductPurchaseConfig {
   const row = record(value);
   const allowedTypes: ProductCommercialType[] = [
-    "torcedor", "feminino", "jogador", "retro", "infantil", "calcao", "basquete", "other",
+    "torcedor",
+    "feminino",
+    "jogador",
+    "retro",
+    "infantil",
+    "calcao",
+    "basquete",
+    "other",
   ];
   const commercialType = allowedTypes.includes(row.commercialType as ProductCommercialType)
     ? (row.commercialType as ProductCommercialType)
@@ -108,7 +109,7 @@ function normalizeConfig(value: unknown): ProductPurchaseConfig {
 }
 
 export async function fetchProductPurchaseConfig(productId: string) {
-  const { data, error } = await (supabase as any).rpc("get_product_purchase_config", {
+  const { data, error } = await supabase.rpc("get_product_purchase_config", {
     p_product_id: productId,
   });
   if (error) throw error;
@@ -171,18 +172,49 @@ export function customizationToCartOptions(
     valueLabel: string;
   }> = [];
   if (customization.size) {
-    options.push({ optionId: "purchase-size", optionName: "Tamanho", optionKind: "size", valueId: customization.size.toLowerCase(), valueLabel: customization.size });
+    options.push({
+      optionId: "purchase-size",
+      optionName: "Tamanho",
+      optionKind: "size",
+      valueId: customization.size.toLowerCase(),
+      valueLabel: customization.size,
+    });
   }
   if (customization.personalization) {
-    options.push({ optionId: "purchase-name", optionName: "Nome personalizado", optionKind: "other", valueId: "custom-name", valueLabel: customization.personalization.name });
-    options.push({ optionId: "purchase-number", optionName: "Número", optionKind: "other", valueId: "custom-number", valueLabel: customization.personalization.number });
+    options.push({
+      optionId: "purchase-name",
+      optionName: "Nome personalizado",
+      optionKind: "other",
+      valueId: "custom-name",
+      valueLabel: customization.personalization.name,
+    });
+    options.push({
+      optionId: "purchase-number",
+      optionName: "Número",
+      optionKind: "other",
+      valueId: "custom-number",
+      valueLabel: customization.personalization.number,
+    });
   }
   if (customization.phrase) {
-    options.push({ optionId: "purchase-phrase", optionName: "Frase personalizada", optionKind: "other", valueId: "custom-phrase", valueLabel: customization.phrase });
+    options.push({
+      optionId: "purchase-phrase",
+      optionName: "Frase personalizada",
+      optionKind: "other",
+      valueId: "custom-phrase",
+      valueLabel: customization.phrase,
+    });
   }
   if (customization.patchCode) {
     const patch = config.patches.find((item) => item.code === customization.patchCode);
-    if (patch) options.push({ optionId: "purchase-patch", optionName: "Patch", optionKind: "other", valueId: patch.code, valueLabel: patch.label });
+    if (patch)
+      options.push({
+        optionId: "purchase-patch",
+        optionName: "Patch",
+        optionKind: "other",
+        valueId: patch.code,
+        valueLabel: patch.label,
+      });
   }
   return options;
 }

@@ -1,7 +1,4 @@
-import {
-  HeadObjectCommand,
-  S3Client,
-} from "npm:@aws-sdk/client-s3@3.1121.0";
+import { HeadObjectCommand, S3Client } from "npm:@aws-sdk/client-s3@3.1121.0";
 import { AwsClient } from "npm:aws4fetch@1.0.20";
 
 export const ALLOWED_IMAGE_MIME_TYPES = [
@@ -57,9 +54,7 @@ export function getR2Client() {
   });
 }
 
-export function isAllowedImageMimeType(
-  value: string,
-): value is AllowedImageMimeType {
+export function isAllowedImageMimeType(value: string): value is AllowedImageMimeType {
   return (ALLOWED_IMAGE_MIME_TYPES as readonly string[]).includes(value);
 }
 
@@ -76,10 +71,7 @@ export function buildProductImageObjectKey(
     : `products/${productId}/${imageId}.${extension}`;
 }
 
-export function buildSiteAssetObjectKey(
-  slotKey: string,
-  mimeType: AllowedImageMimeType,
-) {
+export function buildSiteAssetObjectKey(slotKey: string, mimeType: AllowedImageMimeType) {
   const extension = EXTENSION_BY_MIME[mimeType];
   const safeSlot = slotKey.toLowerCase().replace(/[^a-z0-9_-]+/g, "-");
   return `site-assets/${safeSlot}/${crypto.randomUUID()}.${extension}`;
@@ -112,10 +104,7 @@ function encodeObjectKey(objectKey: string) {
     .join("/");
 }
 
-export async function createImageUploadUrl(
-  objectKey: string,
-  contentType: AllowedImageMimeType,
-) {
+export async function createImageUploadUrl(objectKey: string, contentType: AllowedImageMimeType) {
   const { accountId, accessKeyId, secretAccessKey } = getR2Credentials();
   const bucket = getR2BucketName();
   const expiresIn = getUploadTtlSeconds();
@@ -158,6 +147,6 @@ export async function headProductImage(objectKey: string) {
   return {
     byteSize: result.ContentLength ?? null,
     contentType: result.ContentType?.toLowerCase() ?? null,
-    etag: result.ETag?.replace(/^\"|\"$/g, "") ?? null,
+    etag: result.ETag?.replace(/^"|"$/g, "") ?? null,
   };
 }

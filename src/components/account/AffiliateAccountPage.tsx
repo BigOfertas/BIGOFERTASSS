@@ -1,11 +1,4 @@
-import {
-  ArrowLeft,
-  Home,
-  Link2,
-  MapPin,
-  Package,
-  UserRound,
-} from "lucide-react";
+import { ArrowLeft, Home, Link2, MapPin, Package, UserRound } from "lucide-react";
 
 import { AffiliateSelfServicePanel } from "@/components/account/AffiliateSelfServicePanel";
 import type { AccountSection } from "@/components/account/AccountDashboard";
@@ -40,7 +33,8 @@ export function AffiliateAccountPage({
             <p className="display-kicker">Área do cliente</p>
             <h1 className="display-title mt-2">Afiliados</h1>
             <p className="section-copy mt-3 max-w-2xl">
-              Ative seu link exclusivo, acompanhe clientes indicados, comissões e seu histórico de saques.
+              Ative seu link exclusivo, acompanhe clientes indicados, comissões e seu histórico de
+              saques.
             </p>
           </div>
 
@@ -60,7 +54,10 @@ export function AffiliateAccountPage({
           </LiquidGlassCard>
         </div>
 
-        <nav className="mb-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap" aria-label="Navegação da conta">
+        <nav
+          className="mb-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
+          aria-label="Navegação da conta"
+        >
           {navigation.map(({ section, label, icon: Icon }) => {
             const active = section === "afiliados";
             return (

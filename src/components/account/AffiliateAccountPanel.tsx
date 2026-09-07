@@ -66,7 +66,9 @@ function LoadingState() {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white px-6 py-14 text-center shadow-sm">
       <Loader2 className="mx-auto h-6 w-6 animate-spin text-red-600 motion-reduce:animate-none" />
-      <p className="mt-3 text-sm font-semibold text-gray-600">Carregando sua área de afiliados...</p>
+      <p className="mt-3 text-sm font-semibold text-gray-600">
+        Carregando sua área de afiliados...
+      </p>
     </div>
   );
 }
@@ -81,7 +83,8 @@ function HowItWorks() {
         <div>
           <h3 className="text-base font-black text-gray-950">Como funciona a indicação</h3>
           <p className="mt-1 text-sm leading-6 text-gray-600">
-            O link serve para convidar uma pessoa nova a criar uma conta na {BRAND.officialName}. A indicação fica vinculada ao cadastro, não a um produto específico.
+            O link serve para convidar uma pessoa nova a criar uma conta na {BRAND.officialName}. A
+            indicação fica vinculada ao cadastro, não a um produto específico.
           </p>
         </div>
       </div>
@@ -98,7 +101,8 @@ function HowItWorks() {
           <UserRoundPlus className="h-4.5 w-4.5 text-red-600" aria-hidden="true" />
           <p className="mt-3 text-sm font-bold text-gray-950">2. O cliente se cadastra</p>
           <p className="mt-1 text-xs leading-5 text-gray-500">
-            Se o cadastro for concluído pelo seu link, essa nova conta fica vinculada à sua indicação.
+            Se o cadastro for concluído pelo seu link, essa nova conta fica vinculada à sua
+            indicação.
           </p>
         </div>
         <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-4">
@@ -176,7 +180,9 @@ export function AffiliateAccountPanel() {
     return (
       <div className="rounded-2xl border border-red-200 bg-white px-6 py-12 text-center shadow-sm">
         <RefreshCw className="mx-auto h-7 w-7 text-red-500" aria-hidden="true" />
-        <h2 className="mt-4 text-lg font-black text-gray-950">Não foi possível carregar esta área</h2>
+        <h2 className="mt-4 text-lg font-black text-gray-950">
+          Não foi possível carregar esta área
+        </h2>
         <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-gray-500">
           Tente novamente em instantes. Nenhum dado da sua conta foi alterado.
         </p>
@@ -208,7 +214,9 @@ export function AffiliateAccountPanel() {
                 Ganhe indicando novos clientes
               </h2>
               <p className="mt-3 max-w-xl text-sm leading-6 text-gray-300 sm:text-base">
-                Ative seu perfil de afiliado para receber seu link exclusivo. Quando uma nova pessoa criar a conta por esse link, as compras elegíveis dela podem gerar comissão para você.
+                Ative seu perfil de afiliado para receber seu link exclusivo. Quando uma nova pessoa
+                criar a conta por esse link, as compras elegíveis dela podem gerar comissão para
+                você.
               </p>
 
               {dashboard.programEnabled ? (
@@ -219,7 +227,10 @@ export function AffiliateAccountPanel() {
                   className="mt-6 inline-flex h-11 items-center rounded-xl bg-red-600 px-5 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {affiliateAction === "activate" ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                    <Loader2
+                      className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none"
+                      aria-hidden="true"
+                    />
                   ) : (
                     <Link2 className="mr-2 h-4 w-4" aria-hidden="true" />
                   )}
@@ -245,7 +256,8 @@ export function AffiliateAccountPanel() {
               <Link2 className="h-5 w-5 text-red-600" aria-hidden="true" />
               <h3 className="mt-4 text-sm font-extrabold text-gray-950">Link exclusivo</h3>
               <p className="mt-2 text-xs leading-5 text-gray-600">
-                Seu link único é criado quando você ativa o programa e permanece o mesmo enquanto sua conta existir.
+                Seu link único é criado quando você ativa o programa e permanece o mesmo enquanto
+                sua conta existir.
               </p>
             </article>
             <article className="rounded-xl border border-gray-200 bg-gray-50/70 p-4 sm:p-5">
@@ -306,15 +318,18 @@ export function AffiliateAccountPanel() {
                   Convide novos clientes para criar uma conta
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300 sm:text-base">
-                  As compras futuras das contas cadastradas pela sua indicação ficam vinculadas ao seu histórico de afiliado.
+                  As compras futuras das contas cadastradas pela sua indicação ficam vinculadas ao
+                  seu histórico de afiliado.
                 </p>
                 {!dashboard.programEnabled ? (
                   <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-100">
-                    O programa está temporariamente indisponível. Seu histórico e seu código permanecem preservados, mas novas indicações ficam bloqueadas até a reabertura.
+                    O programa está temporariamente indisponível. Seu histórico e seu código
+                    permanecem preservados, mas novas indicações ficam bloqueadas até a reabertura.
                   </p>
                 ) : dashboard.status === "disabled" ? (
                   <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-100">
-                    Você desativou sua participação. Seu histórico e seu link exclusivo foram preservados, mas o link não aceita novas indicações enquanto estiver desativado.
+                    Você desativou sua participação. Seu histórico e seu link exclusivo foram
+                    preservados, mas o link não aceita novas indicações enquanto estiver desativado.
                   </p>
                 ) : null}
 
@@ -355,7 +370,10 @@ export function AffiliateAccountPanel() {
                       className="inline-flex h-10 items-center rounded-lg bg-red-600 px-4 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {affiliateAction === "activate" ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                        <Loader2
+                          className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none"
+                          aria-hidden="true"
+                        />
                       ) : null}
                       {affiliateAction === "activate" ? "Reativando..." : "Reativar meu link"}
                     </button>
@@ -367,9 +385,14 @@ export function AffiliateAccountPanel() {
                       className="inline-flex h-10 items-center rounded-lg border border-white/25 bg-transparent px-4 text-sm font-bold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {affiliateAction === "deactivate" ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                        <Loader2
+                          className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none"
+                          aria-hidden="true"
+                        />
                       ) : null}
-                      {affiliateAction === "deactivate" ? "Desativando..." : "Desativar programa de afiliado"}
+                      {affiliateAction === "deactivate"
+                        ? "Desativando..."
+                        : "Desativar programa de afiliado"}
                     </button>
                   ) : null}
                 </div>
@@ -386,17 +409,23 @@ export function AffiliateAccountPanel() {
           </article>
           <article className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
             <CircleDollarSign className="h-5 w-5 text-amber-600" aria-hidden="true" />
-            <p className="mt-3 text-2xl font-black text-gray-950">{money(dashboard.pendingAmount)}</p>
+            <p className="mt-3 text-2xl font-black text-gray-950">
+              {money(dashboard.pendingAmount)}
+            </p>
             <p className="mt-1 text-xs font-semibold text-gray-500">Comissões pendentes</p>
           </article>
           <article className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
             <WalletCards className="h-5 w-5 text-emerald-600" aria-hidden="true" />
-            <p className="mt-3 text-2xl font-black text-gray-950">{money(dashboard.availableAmount)}</p>
+            <p className="mt-3 text-2xl font-black text-gray-950">
+              {money(dashboard.availableAmount)}
+            </p>
             <p className="mt-1 text-xs font-semibold text-gray-500">Saldo disponível</p>
           </article>
           <article className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
             <CheckCircle2 className="h-5 w-5 text-blue-600" aria-hidden="true" />
-            <p className="mt-3 text-2xl font-black text-gray-950">{money(dashboard.paidWithdrawalAmount)}</p>
+            <p className="mt-3 text-2xl font-black text-gray-950">
+              {money(dashboard.paidWithdrawalAmount)}
+            </p>
             <p className="mt-1 text-xs font-semibold text-gray-500">Saques pagos</p>
           </article>
         </div>
@@ -405,11 +434,18 @@ export function AffiliateAccountPanel() {
       {dashboard.rulesComplete && dashboard.commissionTiers.length > 0 ? (
         <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
           <h3 className="font-black text-gray-950">Sua comissão por peça</h3>
-          <p className="mt-1 text-xs leading-5 text-gray-500">A faixa mais alta atingida no pedido define o valor pago por cada peça daquele pedido.</p>
+          <p className="mt-1 text-xs leading-5 text-gray-500">
+            A faixa mais alta atingida no pedido define o valor pago por cada peça daquele pedido.
+          </p>
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {dashboard.commissionTiers.map((tier) => (
-              <div key={tier.minUnits} className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-gray-500">{tier.minUnits === 1 ? "Padrão" : `${tier.minUnits}+ peças`}</p>
+              <div
+                key={tier.minUnits}
+                className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3"
+              >
+                <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-gray-500">
+                  {tier.minUnits === 1 ? "Padrão" : `${tier.minUnits}+ peças`}
+                </p>
                 <p className="mt-1 text-lg font-black text-gray-950">{money(tier.amountPerUnit)}</p>
                 <p className="text-[11px] text-gray-500">por peça</p>
               </div>
@@ -424,7 +460,9 @@ export function AffiliateAccountPanel() {
         <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
           <h3 className="font-black text-amber-950">Regras comerciais em definição</h3>
           <p className="mt-2 text-sm leading-6 text-amber-900/75">
-            Os valores fixos de comissão por peça, o prazo de liberação, o saque mínimo e a forma de pagamento ainda estão sendo definidos. Nenhum valor é estimado nesta tela antes dessa configuração.
+            Os valores fixos de comissão por peça, o prazo de liberação, o saque mínimo e a forma de
+            pagamento ainda estão sendo definidos. Nenhum valor é estimado nesta tela antes dessa
+            configuração.
           </p>
         </section>
       ) : null}
@@ -453,7 +491,8 @@ export function AffiliateAccountPanel() {
             <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
               <h3 className="font-black text-gray-950">Clientes indicados</h3>
               <p className="mt-1 text-xs leading-5 text-gray-500">
-                Pessoas que criaram uma conta usando seu link. O e-mail aparece parcialmente oculto por privacidade.
+                Pessoas que criaram uma conta usando seu link. O e-mail aparece parcialmente oculto
+                por privacidade.
               </p>
             </div>
             {(referralsQuery.data ?? []).length === 0 ? (
@@ -463,13 +502,19 @@ export function AffiliateAccountPanel() {
             ) : (
               <div className="divide-y divide-gray-100">
                 {(referralsQuery.data ?? []).map((row) => (
-                  <div key={`${row.masked_email}-${row.referred_at}`} className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-6">
+                  <div
+                    key={`${row.masked_email}-${row.referred_at}`}
+                    className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-6"
+                  >
                     <div>
                       <p className="text-sm font-bold text-gray-950">{row.display_name}</p>
-                      <p className="mt-1 text-xs text-gray-500">{row.masked_email} • desde {dateFormatter.format(new Date(row.referred_at))}</p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {row.masked_email} • desde {dateFormatter.format(new Date(row.referred_at))}
+                      </p>
                     </div>
                     <p className="text-xs font-semibold text-gray-500">
-                      {row.commissions_count} {row.commissions_count === 1 ? "comissão" : "comissões"}
+                      {row.commissions_count}{" "}
+                      {row.commissions_count === 1 ? "comissão" : "comissões"}
                     </p>
                     <p className="text-sm font-black tabular-nums text-gray-950">
                       {money(row.generated_commission_amount)}
@@ -496,20 +541,32 @@ export function AffiliateAccountPanel() {
                 {(commissionsQuery.data ?? []).map((row) => {
                   const status = commissionStatus(row);
                   return (
-                    <div key={row.id} className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-6">
+                    <div
+                      key={row.id}
+                      className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-6"
+                    >
                       <div>
-                        <p className="text-sm font-bold text-gray-950">Pedido {row.order_public_number}</p>
-                        <p className="mt-1 text-xs text-gray-500">Registrada em {dateFormatter.format(new Date(row.created_at))}</p>
+                        <p className="text-sm font-bold text-gray-950">
+                          Pedido {row.order_public_number}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Registrada em {dateFormatter.format(new Date(row.created_at))}
+                        </p>
                         {row.commission_units && row.commission_unit_amount ? (
                           <p className="mt-1 text-xs font-semibold text-gray-600">
-                            {row.commission_units} peças × {money(row.commission_unit_amount)} por peça
+                            {row.commission_units} peças × {money(row.commission_unit_amount)} por
+                            peça
                           </p>
                         ) : null}
                       </div>
-                      <span className={`w-fit rounded-full px-2.5 py-1 text-[11px] font-bold ${status.className}`}>
+                      <span
+                        className={`w-fit rounded-full px-2.5 py-1 text-[11px] font-bold ${status.className}`}
+                      >
                         {status.label}
                       </span>
-                      <p className="text-sm font-black tabular-nums text-gray-950">{money(row.commission_amount)}</p>
+                      <p className="text-sm font-black tabular-nums text-gray-950">
+                        {money(row.commission_amount)}
+                      </p>
                     </div>
                   );
                 })}
@@ -522,7 +579,8 @@ export function AffiliateAccountPanel() {
               <div>
                 <h3 className="font-black text-gray-950">Saques</h3>
                 <p className="mt-1 text-xs leading-5 text-gray-500">
-                  Histórico de solicitações e pagamentos do seu saldo de afiliado. O saldo disponível permanece acumulado até você solicitar o saque.
+                  Histórico de solicitações e pagamentos do seu saldo de afiliado. O saldo
+                  disponível permanece acumulado até você solicitar o saque.
                 </p>
               </div>
               <span className="w-fit rounded-lg bg-gray-100 px-3 py-2 text-xs font-bold text-gray-600">
@@ -534,7 +592,8 @@ export function AffiliateAccountPanel() {
                 <p className="text-sm text-gray-500">Ainda não há solicitações de saque.</p>
                 {!dashboard.rulesComplete ? (
                   <p className="mx-auto mt-2 max-w-lg text-xs leading-5 text-gray-400">
-                    A solicitação de saque será liberada depois que as regras comerciais e a forma de pagamento forem confirmadas.
+                    A solicitação de saque será liberada depois que as regras comerciais e a forma
+                    de pagamento forem confirmadas.
                   </p>
                 ) : null}
               </div>
@@ -543,17 +602,26 @@ export function AffiliateAccountPanel() {
                 {(withdrawalsQuery.data ?? []).map((row) => {
                   const status = withdrawalStatus(row);
                   return (
-                    <div key={row.id} className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-6">
+                    <div
+                      key={row.id}
+                      className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-6"
+                    >
                       <div>
-                        <p className="text-sm font-bold text-gray-950">Solicitação de {dateFormatter.format(new Date(row.requested_at))}</p>
+                        <p className="text-sm font-bold text-gray-950">
+                          Solicitação de {dateFormatter.format(new Date(row.requested_at))}
+                        </p>
                         {row.status === "rejected" && row.rejection_reason ? (
                           <p className="mt-1 text-xs text-red-600">{row.rejection_reason}</p>
                         ) : null}
                       </div>
-                      <span className={`w-fit rounded-full px-2.5 py-1 text-[11px] font-bold ${status.className}`}>
+                      <span
+                        className={`w-fit rounded-full px-2.5 py-1 text-[11px] font-bold ${status.className}`}
+                      >
                         {status.label}
                       </span>
-                      <p className="text-sm font-black tabular-nums text-gray-950">{money(row.amount)}</p>
+                      <p className="text-sm font-black tabular-nums text-gray-950">
+                        {money(row.amount)}
+                      </p>
                     </div>
                   );
                 })}

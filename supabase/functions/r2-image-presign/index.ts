@@ -119,10 +119,7 @@ Deno.serve(async (request) => {
     }
 
     try {
-      const { uploadUrl, expiresIn } = await createImageUploadUrl(
-        objectKey,
-        contentType,
-      );
+      const { uploadUrl, expiresIn } = await createImageUploadUrl(objectKey, contentType);
 
       return jsonResponse(request, {
         imageId: image.id,
@@ -135,10 +132,7 @@ Deno.serve(async (request) => {
         },
       });
     } catch (signError) {
-      await supabase
-        .from("product_images")
-        .update({ status: "failed" })
-        .eq("id", image.id);
+      await supabase.from("product_images").update({ status: "failed" }).eq("id", image.id);
       throw signError;
     }
   } catch (error) {

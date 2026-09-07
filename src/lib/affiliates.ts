@@ -86,17 +86,21 @@ function nullableNumber(value: unknown) {
 
 function normalizeTiers(value: unknown): AffiliateCommissionTier[] {
   if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => {
-    const row = recordValue(item);
-    const minUnits = numberValue(row.minUnits);
-    const amountPerUnit = numberValue(row.amountPerUnit);
-    if (![1, 5, 8, 15, 25, 35].includes(minUnits) || amountPerUnit <= 0) return [];
-    return [{
-      minUnits,
-      amountPerUnit,
-      source: row.source === "affiliate" ? "affiliate" as const : "global" as const,
-    }];
-  }).sort((a, b) => a.minUnits - b.minUnits);
+  return value
+    .flatMap((item) => {
+      const row = recordValue(item);
+      const minUnits = numberValue(row.minUnits);
+      const amountPerUnit = numberValue(row.amountPerUnit);
+      if (![1, 5, 8, 15, 25, 35].includes(minUnits) || amountPerUnit <= 0) return [];
+      return [
+        {
+          minUnits,
+          amountPerUnit,
+          source: row.source === "affiliate" ? ("affiliate" as const) : ("global" as const),
+        },
+      ];
+    })
+    .sort((a, b) => a.minUnits - b.minUnits);
 }
 
 function normalizeDashboard(value: unknown): AffiliateDashboard {
@@ -134,15 +138,24 @@ export function deactivateMyAffiliate() {
 }
 
 export async function fetchMyAffiliateReferrals() {
-  return callSupabaseRpc<AffiliateReferralRow[]>("list_my_affiliate_referrals", { p_limit: 100, p_offset: 0 });
+  return callSupabaseRpc<AffiliateReferralRow[]>("list_my_affiliate_referrals", {
+    p_limit: 100,
+    p_offset: 0,
+  });
 }
 
 export async function fetchMyAffiliateCommissions() {
-  return callSupabaseRpc<AffiliateCommissionRow[]>("list_my_affiliate_commissions", { p_limit: 100, p_offset: 0 });
+  return callSupabaseRpc<AffiliateCommissionRow[]>("list_my_affiliate_commissions", {
+    p_limit: 100,
+    p_offset: 0,
+  });
 }
 
 export async function fetchMyAffiliateWithdrawals() {
-  return callSupabaseRpc<AffiliateWithdrawalRow[]>("list_my_affiliate_withdrawals", { p_limit: 100, p_offset: 0 });
+  return callSupabaseRpc<AffiliateWithdrawalRow[]>("list_my_affiliate_withdrawals", {
+    p_limit: 100,
+    p_offset: 0,
+  });
 }
 
 export type PixKeyType = "cpf" | "cnpj" | "email" | "phone" | "random";

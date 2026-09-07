@@ -29,9 +29,7 @@ export function EmailTwoFactorPrompt() {
     void fetchAccountSecurityStatus()
       .then((status) => {
         if (!active) return;
-        setVisible(
-          !status.email_2fa_enabled && !status.email_2fa_prompt_dismissed_at,
-        );
+        setVisible(!status.email_2fa_enabled && !status.email_2fa_prompt_dismissed_at);
       })
       .catch((error) => {
         console.error("Falha ao carregar a sugestão de segurança da conta:", error);
@@ -139,11 +137,15 @@ export function EmailTwoFactorPrompt() {
               <p className="mt-6 text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
                 Segurança da conta
               </p>
-              <h2 id="email-2fa-title" className="mt-2 text-2xl font-black tracking-tight text-gray-950 sm:text-3xl">
+              <h2
+                id="email-2fa-title"
+                className="mt-2 text-2xl font-black tracking-tight text-gray-950 sm:text-3xl"
+              >
                 Proteja ainda mais sua conta
               </h2>
               <p className="mt-3 text-sm leading-6 text-gray-600">
-                Ative a verificação em duas etapas. Quando você entrar, além da senha, a {BRAND.officialName} pedirá um código enviado para o seu e-mail.
+                Ative a verificação em duas etapas. Quando você entrar, além da senha, a{" "}
+                {BRAND.officialName} pedirá um código enviado para o seu e-mail.
               </p>
 
               <div className="mt-5 space-y-3 rounded-2xl bg-gray-50 p-4 text-sm text-gray-700">
@@ -158,7 +160,10 @@ export function EmailTwoFactorPrompt() {
               </div>
 
               {errorMessage ? (
-                <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <p
+                  role="alert"
+                  className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                >
                   {errorMessage}
                 </p>
               ) : null}
@@ -170,7 +175,11 @@ export function EmailTwoFactorPrompt() {
                   disabled={busy}
                   className="inline-flex h-12 items-center justify-center rounded-xl bg-red-600 px-5 text-sm font-black text-white transition hover:bg-red-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                  {busy ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                  )}
                   Ativar verificação em duas etapas
                 </button>
                 <button
@@ -197,14 +206,21 @@ export function EmailTwoFactorPrompt() {
               <p className="mt-6 text-xs font-black uppercase tracking-[0.14em] text-red-600">
                 Confirme seu e-mail
               </p>
-              <h2 id="email-2fa-title" className="mt-2 text-2xl font-black tracking-tight text-gray-950">
+              <h2
+                id="email-2fa-title"
+                className="mt-2 text-2xl font-black tracking-tight text-gray-950"
+              >
                 Digite o código enviado
               </h2>
               <p className="mt-3 text-sm leading-6 text-gray-600">
-                Enviamos um código de segurança para <strong className="text-gray-950">{maskedEmail}</strong>.
+                Enviamos um código de segurança para{" "}
+                <strong className="text-gray-950">{maskedEmail}</strong>.
               </p>
 
-              <label className="mt-6 block text-sm font-bold text-gray-800" htmlFor="enroll-2fa-code">
+              <label
+                className="mt-6 block text-sm font-bold text-gray-800"
+                htmlFor="enroll-2fa-code"
+              >
                 Código de 6 dígitos
               </label>
               <input
@@ -223,11 +239,16 @@ export function EmailTwoFactorPrompt() {
                 placeholder="000000"
               />
               <p className="mt-2 text-xs text-gray-500">
-                {expiresLabel ? `O código expira por volta de ${expiresLabel}.` : "O código expira em 10 minutos."}
+                {expiresLabel
+                  ? `O código expira por volta de ${expiresLabel}.`
+                  : "O código expira em 10 minutos."}
               </p>
 
               {errorMessage ? (
-                <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <p
+                  role="alert"
+                  className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                >
                   {errorMessage}
                 </p>
               ) : null}
@@ -238,7 +259,11 @@ export function EmailTwoFactorPrompt() {
                 disabled={busy || code.length !== 6}
                 className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-xl bg-red-600 px-5 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
+                {busy ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <KeyRound className="mr-2 h-4 w-4" />
+                )}
                 Confirmar e ativar
               </button>
 
@@ -261,11 +286,15 @@ export function EmailTwoFactorPrompt() {
               <p className="mt-6 text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
                 Proteção ativada
               </p>
-              <h2 id="email-2fa-title" className="mt-2 text-2xl font-black tracking-tight text-gray-950">
+              <h2
+                id="email-2fa-title"
+                className="mt-2 text-2xl font-black tracking-tight text-gray-950"
+              >
                 Sua conta ficou mais segura
               </h2>
               <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-gray-600">
-                Nos próximos acessos, sua senha será seguida por um código enviado para o seu e-mail.
+                Nos próximos acessos, sua senha será seguida por um código enviado para o seu
+                e-mail.
               </p>
               <button
                 type="button"

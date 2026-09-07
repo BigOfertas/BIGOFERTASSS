@@ -1,9 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import {
-  isValidBrazilianCpf,
-  isValidBrazilianPhone,
-  onlyDigits,
-} from "@/lib/brasil";
+import { isValidBrazilianCpf, isValidBrazilianPhone, onlyDigits } from "@/lib/brasil";
 import { getUserFacingError } from "@/lib/user-facing-error";
 
 export type CustomerProfile = {
@@ -95,14 +91,8 @@ type CustomerAccountRpcClient = {
       p_is_default: boolean;
     },
   ): RpcResult<string>;
-  rpc(
-    name: "set_default_my_customer_address",
-    args: { p_id: string },
-  ): RpcResult<null>;
-  rpc(
-    name: "delete_my_customer_address",
-    args: { p_id: string },
-  ): RpcResult<null>;
+  rpc(name: "set_default_my_customer_address", args: { p_id: string }): RpcResult<null>;
+  rpc(name: "delete_my_customer_address", args: { p_id: string }): RpcResult<null>;
 };
 
 const accountRpc = supabase as unknown as CustomerAccountRpcClient;
@@ -122,14 +112,11 @@ export async function lookupBrazilianPostalCode(
     throw new Error("Digite um CEP com 8 números.");
   }
 
-  const response = await fetch(
-    `https://viacep.com.br/ws/${normalizedPostalCode}/json/`,
-    {
-      headers: {
-        Accept: "application/json",
-      },
+  const response = await fetch(`https://viacep.com.br/ws/${normalizedPostalCode}/json/`, {
+    headers: {
+      Accept: "application/json",
     },
-  );
+  });
 
   if (!response.ok) {
     throw new Error("Não foi possível consultar o CEP agora.");
@@ -158,10 +145,7 @@ export async function fetchCustomerAccount() {
   ]);
 
   throwRpcError(profileResult.error, "Não foi possível carregar seus dados.");
-  throwRpcError(
-    addressesResult.error,
-    "Não foi possível carregar seus endereços.",
-  );
+  throwRpcError(addressesResult.error, "Não foi possível carregar seus endereços.");
 
   const profile = profileResult.data?.[0];
 
@@ -175,11 +159,7 @@ export async function fetchCustomerAccount() {
   };
 }
 
-export async function saveCustomerProfile(
-  fullName: string,
-  phone: string,
-  cpf: string,
-) {
+export async function saveCustomerProfile(fullName: string, phone: string, cpf: string) {
   const normalizedName = fullName.trim();
 
   if (normalizedName.length < 2) {

@@ -120,9 +120,7 @@ function response(request: Request, body: unknown, status = 200) {
 
 function errorResponse(request: Request, error: unknown) {
   if (error instanceof CheckoutError) {
-    console.error(
-      `[checkout-edge] ${JSON.stringify({ code: error.code, status: error.status })}`,
-    );
+    console.error(`[checkout-edge] ${JSON.stringify({ code: error.code, status: error.status })}`);
     return response(request, { error: error.message, code: error.code }, error.status);
   }
 
@@ -203,11 +201,7 @@ async function authenticateCustomer(request: Request) {
   };
 
   if (typeof payload.id !== "string" || !UUID_PATTERN.test(payload.id)) {
-    throw new CheckoutError(
-      "Sua sessão não pôde ser confirmada.",
-      401,
-      "CHECKOUT_AUTH_INVALID",
-    );
+    throw new CheckoutError("Sua sessão não pôde ser confirmada.", 401, "CHECKOUT_AUTH_INVALID");
   }
 
   return {
@@ -251,9 +245,10 @@ function normalizeInput(value: unknown): StartCheckoutInput {
     const variantId = (item as Record<string, unknown>).variantId;
     const quantity = (item as Record<string, unknown>).quantity;
     const customizationRaw = (item as Record<string, unknown>).customization;
-    const customization = customizationRaw && typeof customizationRaw === "object" && !Array.isArray(customizationRaw)
-      ? (customizationRaw as Record<string, unknown>)
-      : {};
+    const customization =
+      customizationRaw && typeof customizationRaw === "object" && !Array.isArray(customizationRaw)
+        ? (customizationRaw as Record<string, unknown>)
+        : {};
     if (JSON.stringify(customization).length > 3000) {
       throw new CheckoutError("Personalização inválida.", 400, "CHECKOUT_CART_INVALID");
     }
@@ -333,9 +328,11 @@ async function authoritativeShipping(input: StartCheckoutInput, address: Custome
     signal: AbortSignal.timeout(15_000),
   });
 
-  const payload = (await readJson(upstream, "CHECKOUT_SHIPPING_PARSE_ERROR")) as
-    | { quotes?: unknown; quotedAt?: unknown; error?: unknown }
-    | null;
+  const payload = (await readJson(upstream, "CHECKOUT_SHIPPING_PARSE_ERROR")) as {
+    quotes?: unknown;
+    quotedAt?: unknown;
+    error?: unknown;
+  } | null;
 
   if (!upstream.ok || !payload || !Array.isArray(payload.quotes)) {
     throw new CheckoutError(

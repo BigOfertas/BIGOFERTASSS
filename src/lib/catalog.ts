@@ -120,9 +120,8 @@ export function parseCatalogPage(value: Json): CatalogPage {
     items: parsed.items.map((item) => ({
       ...item,
       displayImageUrl:
-        (item.image_storage_key
-          ? buildR2PublicImageUrl(item.image_storage_key)
-          : null) ?? item.fallback_image_url,
+        (item.image_storage_key ? buildR2PublicImageUrl(item.image_storage_key) : null) ??
+        item.fallback_image_url,
     })),
   };
 }
@@ -131,9 +130,9 @@ export function parseCatalogFacets(value: Json): CatalogFacets {
   return catalogFacetsSchema.parse(value);
 }
 
-export function normalizeCatalogQuery(query: CatalogQuery): Required<
-  Pick<CatalogQuery, "sort" | "page" | "pageSize">
-> & CatalogQuery {
+export function normalizeCatalogQuery(
+  query: CatalogQuery,
+): Required<Pick<CatalogQuery, "sort" | "page" | "pageSize">> & CatalogQuery {
   const pageSize = CATALOG_PAGE_SIZES.includes(
     query.pageSize as (typeof CATALOG_PAGE_SIZES)[number],
   )

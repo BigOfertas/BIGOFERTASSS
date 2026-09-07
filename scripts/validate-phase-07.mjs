@@ -12,9 +12,7 @@ const adminUi = read("src/components/admin/ProductAdmin.tsx");
 const adminLib = read("src/lib/admin-products.ts");
 const taxonomy = read("src/lib/product-taxonomy.ts");
 const auth = read("src/lib/auth.tsx");
-const phase02 = read(
-  "supabase/migrations/20260831233500_phase_02_definitive_product_model.sql",
-);
+const phase02 = read("supabase/migrations/20260831233500_phase_02_definitive_product_model.sql");
 const phase07Identity = read(
   "supabase/migrations/20260901183000_phase_07_product_identity_pool.sql",
 );
@@ -28,10 +26,7 @@ const checks = [
     "papel owner continua vindo de user_roles",
     /from\("user_roles"\)/.test(auth) && /role === "owner"/.test(auth),
   ],
-  [
-    "painel carrega administracao de produtos",
-    /<ProductAdmin\s*\/>/.test(adminRoute),
-  ],
+  ["painel carrega administracao de produtos", /<ProductAdmin\s*\/>/.test(adminRoute)],
   [
     "administracao lista produtos sem RPC publica de catalogo",
     /from\("products"\)/.test(adminLib) && /limit\(500\)/.test(adminLib),
@@ -40,28 +35,19 @@ const checks = [
     "administracao lista categorias normalizadas",
     /from\("categories"\)/.test(adminLib) && /primary_category_id/.test(adminLib),
   ],
-  [
-    "produto novo nasce em rascunho",
-    /status: "draft"/.test(adminLib),
-  ],
+  ["produto novo nasce em rascunho", /status: "draft"/.test(adminLib)],
   [
     "produto novo ganha variante padrao",
-    /from\("product_variants"\)\.insert/.test(adminLib) &&
-      /is_default: true/.test(adminLib),
+    /from\("product_variants"\)\.insert/.test(adminLib) && /is_default: true/.test(adminLib),
   ],
-  [
-    "estoque e salvo na variante",
-    /stock_quantity: input\.stockQuantity/.test(adminLib),
-  ],
+  ["estoque e salvo na variante", /stock_quantity: input\.stockQuantity/.test(adminLib)],
   [
     "administracao nao atualiza products.stock diretamente",
     !/\.update\(\{[^}]*stock:/s.test(adminLib),
   ],
   [
     "produto ativo depende de variante ativa no banco",
-    /Produto so pode ser ativado quando possuir ao menos uma variante ativa/.test(
-      phase02,
-    ),
+    /Produto so pode ser ativado quando possuir ao menos uma variante ativa/.test(phase02),
   ],
   [
     "produto pode ser arquivado sem exclusao fisica pela interface",
@@ -69,9 +55,8 @@ const checks = [
   ],
   [
     "pool de identificadores mantem reservas para produtos futuros",
-    /CREATE TABLE IF NOT EXISTS public\.product_identity_slots/.test(
-      phase07Identity,
-    ) && /ensure_product_identity_pool\(20\)/.test(phase07Identity),
+    /CREATE TABLE IF NOT EXISTS public\.product_identity_slots/.test(phase07Identity) &&
+      /ensure_product_identity_pool\(20\)/.test(phase07Identity),
   ],
   [
     "somente owner pode alocar identificadores",
@@ -118,8 +103,7 @@ const checks = [
   ],
   [
     "temporada e armazenada sem nova tabela",
-    /mergeSeasonIntoSpecifications/.test(adminUi) &&
-      /Temporada:/.test(taxonomy),
+    /mergeSeasonIntoSpecifications/.test(adminUi) && /Temporada:/.test(taxonomy),
   ],
   [
     "formulario inclui peso e dimensoes",

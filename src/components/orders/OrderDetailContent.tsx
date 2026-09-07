@@ -50,11 +50,13 @@ function paymentLabel(status: OrderDetail["order"]["payment_status"]) {
 }
 
 function refundStatusLabel(status: OrderDetail["refundRequest"] extends infer _T ? string : never) {
-  return {
-    requested: "Aguardando atendimento",
-    refunded: "Reembolso registrado",
-    canceled: "Solicitação cancelada",
-  }[status] ?? status;
+  return (
+    {
+      requested: "Aguardando atendimento",
+      refunded: "Reembolso registrado",
+      canceled: "Solicitação cancelada",
+    }[status] ?? status
+  );
 }
 
 export function OrderDetailContent({
@@ -101,7 +103,9 @@ export function OrderDetailContent({
                     {refundStatusLabel(refundRequest.status)}
                   </h2>
                   <p className="mt-2 text-sm font-bold text-orange-900">
-                    Motivo: {REFUND_REASON_LABELS[refundRequest.reason as RefundReason] ?? refundRequest.reason}
+                    Motivo:{" "}
+                    {REFUND_REASON_LABELS[refundRequest.reason as RefundReason] ??
+                      refundRequest.reason}
                   </p>
                   {refundRequest.message ? (
                     <p className="mt-2 max-w-3xl whitespace-pre-wrap text-sm leading-6 text-orange-950/80">
@@ -119,9 +123,7 @@ export function OrderDetailContent({
             </div>
 
             {hasPendingRefund && actions ? (
-              <div className="mt-5 border-t border-orange-200/80 pt-5">
-                {actions}
-              </div>
+              <div className="mt-5 border-t border-orange-200/80 pt-5">{actions}</div>
             ) : null}
           </div>
         </section>
@@ -132,9 +134,7 @@ export function OrderDetailContent({
           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-red-600/20 blur-3xl" />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-300">
-                Pedido
-              </p>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-300">Pedido</p>
               <h1 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">
                 {order.public_number}
               </h1>
@@ -148,15 +148,10 @@ export function OrderDetailContent({
 
         {usesDedicatedShippingControl ? (
           <div className="border-b border-gray-100 bg-sky-50/30 px-4 py-4 sm:px-6">
-            <OrderShippingControl
-              orderId={order.id}
-              publicNumber={order.public_number}
-            />
+            <OrderShippingControl orderId={order.id} publicNumber={order.public_number} />
           </div>
         ) : actions && !(ownerView && hasPendingRefund) ? (
-          <div className="border-b border-gray-100 bg-gray-50/70 px-5 py-4 sm:px-7">
-            {actions}
-          </div>
+          <div className="border-b border-gray-100 bg-gray-50/70 px-5 py-4 sm:px-7">{actions}</div>
         ) : null}
 
         <div className="p-5 sm:p-7">
@@ -195,10 +190,7 @@ export function OrderDetailContent({
                           className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none motion-reduce:transition-none"
                         />
                       ) : (
-                        <Package
-                          className="h-7 w-7 text-gray-300"
-                          aria-hidden="true"
-                        />
+                        <Package className="h-7 w-7 text-gray-300" aria-hidden="true" />
                       )}
                     </div>
 
@@ -209,9 +201,7 @@ export function OrderDetailContent({
                             {item.product_name}
                           </h3>
                           {item.variant_name ? (
-                            <p className="mt-0.5 text-sm text-gray-500">
-                              {item.variant_name}
-                            </p>
+                            <p className="mt-0.5 text-sm text-gray-500">{item.variant_name}</p>
                           ) : null}
                           {ownerView ? (
                             <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-gray-400">
@@ -231,9 +221,7 @@ export function OrderDetailContent({
                               key={`${item.id}-${option.optionName}`}
                               className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600"
                             >
-                              <dt className="inline font-semibold">
-                                {option.optionName}:{" "}
-                              </dt>
+                              <dt className="inline font-semibold">{option.optionName}: </dt>
                               <dd className="inline">{option.valueLabel}</dd>
                             </div>
                           ))}
@@ -241,8 +229,7 @@ export function OrderDetailContent({
                       ) : null}
 
                       <p className="mt-3 text-xs text-gray-500">
-                        {item.quantity} ×{" "}
-                        {currencyFormatter.format(item.unit_price)}
+                        {item.quantity} × {currencyFormatter.format(item.unit_price)}
                       </p>
                     </div>
                   </article>
@@ -253,10 +240,7 @@ export function OrderDetailContent({
 
           <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-6 flex items-center gap-2.5">
-              <ReceiptText
-                className="h-5 w-5 text-red-600"
-                aria-hidden="true"
-              />
+              <ReceiptText className="h-5 w-5 text-red-600" aria-hidden="true" />
               <h2 className="font-black text-gray-950">Acompanhamento</h2>
             </div>
             <OrderTimeline entries={timeline} />
@@ -300,14 +284,10 @@ export function OrderDetailContent({
               <h2 className="font-black text-gray-950">Endereço de entrega</h2>
             </div>
             <address className="mt-4 not-italic text-sm leading-6 text-gray-600">
-              <p className="font-bold text-gray-900">
-                {order.address_recipient_name}
-              </p>
+              <p className="font-bold text-gray-900">{order.address_recipient_name}</p>
               <p>
                 {order.address_street}, {order.address_number}
-                {order.address_complement
-                  ? ` — ${order.address_complement}`
-                  : ""}
+                {order.address_complement ? ` — ${order.address_complement}` : ""}
               </p>
               <p>{order.address_neighborhood}</p>
               <p>
@@ -326,10 +306,8 @@ export function OrderDetailContent({
               <div className="mt-4 text-sm text-gray-600">
                 <p className="font-bold text-gray-900">
                   {ownerView
-                    ? [order.shipping_provider, order.shipping_service]
-                        .filter(Boolean)
-                        .join(" — ")
-                    : order.shipping_service ?? "Entrega"}
+                    ? [order.shipping_provider, order.shipping_service].filter(Boolean).join(" — ")
+                    : (order.shipping_service ?? "Entrega")}
                 </p>
                 {order.shipping_transit_business_days !== null ? (
                   <p className="mt-1.5">
@@ -367,7 +345,8 @@ export function OrderDetailContent({
                       Rastreio em atualização
                     </p>
                     <p className="mt-1.5 text-xs leading-5 text-amber-900/80">
-                      O pedido já foi enviado, mas o código de rastreio ainda não está disponível aqui.
+                      O pedido já foi enviado, mas o código de rastreio ainda não está disponível
+                      aqui.
                     </p>
                   </div>
                 ) : null}
@@ -388,35 +367,24 @@ export function OrderDetailContent({
               {paymentLabel(order.payment_status)}
             </p>
             {order.payment_method ? (
-              <p className="mt-1 text-sm text-gray-500">
-                Método: {order.payment_method}
-              </p>
+              <p className="mt-1 text-sm text-gray-500">Método: {order.payment_method}</p>
             ) : null}
           </section>
 
           {ownerView ? (
             <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="flex items-center gap-2.5">
-                <UserRound
-                  className="h-5 w-5 text-red-600"
-                  aria-hidden="true"
-                />
+                <UserRound className="h-5 w-5 text-red-600" aria-hidden="true" />
                 <h2 className="font-black text-gray-950">Cliente</h2>
               </div>
               <div className="mt-4 space-y-2.5 text-sm text-gray-600">
                 <p className="font-bold text-gray-900">{order.customer_name}</p>
                 <p className="flex items-center gap-2 break-all">
-                  <Mail
-                    className="h-4 w-4 flex-none text-gray-400"
-                    aria-hidden="true"
-                  />
+                  <Mail className="h-4 w-4 flex-none text-gray-400" aria-hidden="true" />
                   {order.customer_email}
                 </p>
                 <p className="flex items-center gap-2">
-                  <Phone
-                    className="h-4 w-4 flex-none text-gray-400"
-                    aria-hidden="true"
-                  />
+                  <Phone className="h-4 w-4 flex-none text-gray-400" aria-hidden="true" />
                   {formatBrazilianPhone(order.customer_phone)}
                 </p>
               </div>
@@ -425,12 +393,9 @@ export function OrderDetailContent({
 
           {!ownerView && refundRequest ? (
             <section className="rounded-2xl border border-orange-200 bg-orange-50/70 p-5 shadow-sm sm:p-6">
-              <h2 className="font-black text-orange-950">
-                Solicitação de reembolso
-              </h2>
+              <h2 className="font-black text-orange-950">Solicitação de reembolso</h2>
               <p className="mt-2 text-sm font-bold text-orange-900">
-                {REFUND_REASON_LABELS[refundRequest.reason as RefundReason] ??
-                  refundRequest.reason}
+                {REFUND_REASON_LABELS[refundRequest.reason as RefundReason] ?? refundRequest.reason}
               </p>
               {refundRequest.message ? (
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-orange-900/80">

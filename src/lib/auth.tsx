@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -96,16 +89,10 @@ async function readAuthResponse(response: Response) {
 
 function authEdgeUrl() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
-  return supabaseUrl
-    ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/auth-email-2fa`
-    : null;
+  return supabaseUrl ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/auth-email-2fa` : null;
 }
 
-async function postAuthRequest(
-  url: string,
-  body: Record<string, unknown>,
-  authorization?: string,
-) {
+async function postAuthRequest(url: string, body: Record<string, unknown>, authorization?: string) {
   return fetch(url, {
     method: "POST",
     headers: {
@@ -118,11 +105,7 @@ async function postAuthRequest(
 }
 
 async function authBackendRequest(input: {
-  action:
-    | "password-login"
-    | "password-login-verify-2fa"
-    | "enroll-start"
-    | "enroll-verify";
+  action: "password-login" | "password-login-verify-2fa" | "enroll-start" | "enroll-verify";
   legacyPath: string;
   body?: Record<string, unknown>;
   authorization?: string;
@@ -157,10 +140,7 @@ function readPasswordSession(payload: Record<string, unknown> | null) {
   if (!session || typeof session !== "object" || Array.isArray(session)) return null;
 
   const record = session as Record<string, unknown>;
-  if (
-    typeof record["accessToken"] !== "string" ||
-    typeof record["refreshToken"] !== "string"
-  ) {
+  if (typeof record["accessToken"] !== "string" || typeof record["refreshToken"] !== "string") {
     return null;
   }
 
@@ -424,9 +404,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...(emailRedirectTo ? { emailRedirectTo } : {}),
         data: {
           full_name: fullName.trim(),
-          ...(normalizedReferralCode
-            ? { affiliate_referral_code: normalizedReferralCode }
-            : {}),
+          ...(normalizedReferralCode ? { affiliate_referral_code: normalizedReferralCode } : {}),
         },
       },
     });
@@ -434,9 +412,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return friendlyAuthResult(error, "Não foi possível criar sua conta agora.");
   }
 
-  async function resendSignUpConfirmation(
-    email: string,
-  ): Promise<AuthActionResult> {
+  async function resendSignUpConfirmation(email: string): Promise<AuthActionResult> {
     const emailRedirectTo = getEmailConfirmationRedirectUrl();
     const { error } = await supabase.auth.resend({
       type: "signup",
@@ -446,10 +422,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
 
-    return friendlyAuthResult(
-      error,
-      "Não foi possível reenviar o e-mail de confirmação agora.",
-    );
+    return friendlyAuthResult(error, "Não foi possível reenviar o e-mail de confirmação agora.");
   }
 
   async function signOut(): Promise<AuthActionResult> {

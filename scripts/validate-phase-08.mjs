@@ -10,9 +10,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const migration = read(
   "supabase/migrations/20260901195500_phase_08_customer_account_addresses.sql",
 );
-const hardening = read(
-  "supabase/migrations/20260901202000_phase_08_default_address_hardening.sql",
-);
+const hardening = read("supabase/migrations/20260901202000_phase_08_default_address_hardening.sql");
 const identityMigration = read(
   "supabase/migrations/20260902022000_phase_08_required_customer_identity.sql",
 );
@@ -103,9 +101,7 @@ const checks = [
   [
     "enderecos ficam em tabela propria vinculada ao usuario",
     /CREATE TABLE IF NOT EXISTS public\.customer_addresses/.test(migration) &&
-      /user_id uuid NOT NULL REFERENCES auth\.users\(id\) ON DELETE CASCADE/.test(
-        migration,
-      ),
+      /user_id uuid NOT NULL REFERENCES auth\.users\(id\) ON DELETE CASCADE/.test(migration),
   ],
   [
     "cep e uf possuem validacao no banco",
@@ -123,14 +119,11 @@ const checks = [
   ],
   [
     "apenas um endereco principal por usuario",
-    /CREATE UNIQUE INDEX IF NOT EXISTS customer_addresses_one_default_per_user/.test(
-      migration,
-    ),
+    /CREATE UNIQUE INDEX IF NOT EXISTS customer_addresses_one_default_per_user/.test(migration),
   ],
   [
     "troca de endereco principal remove o anterior antes de marcar o novo",
-    /SET is_default = false/.test(hardening) &&
-      /SET is_default = true/.test(hardening),
+    /SET is_default = false/.test(hardening) && /SET is_default = true/.test(hardening),
   ],
   [
     "enderecos sao protegidos pelo proprio usuario",
@@ -139,8 +132,7 @@ const checks = [
   ],
   [
     "rota conta exige usuario autenticado",
-    /createFileRoute\("\/conta"\)/.test(accountRoute) &&
-      /to: "\/login"/.test(accountRoute),
+    /createFileRoute\("\/conta"\)/.test(accountRoute) && /to: "\/login"/.test(accountRoute),
   ],
   [
     "area de conta separa dados enderecos e pedidos",
@@ -155,8 +147,7 @@ const checks = [
   ],
   [
     "cep pode preencher endereco automaticamente",
-    /lookupBrazilianPostalCode/.test(accountUi) &&
-      /viacep\.com\.br\/ws\//.test(accountLib),
+    /lookupBrazilianPostalCode/.test(accountUi) && /viacep\.com\.br\/ws\//.test(accountLib),
   ],
   [
     "falha de cep nao bloqueia preenchimento manual",
@@ -200,19 +191,15 @@ const checks = [
   ],
   [
     "email de confirmacao retorna para a conta publicada",
-    /emailRedirectTo/.test(auth) &&
-      /new URL\("\/conta", window\.location\.origin\)/.test(auth),
+    /emailRedirectTo/.test(auth) && /new URL\("\/conta", window\.location\.origin\)/.test(auth),
   ],
   [
     "cadastro permite reenviar confirmacao",
-    /resendSignUpConfirmation/.test(cadastro) &&
-      /Reenviar e-mail de confirmação/.test(cadastro),
+    /resendSignUpConfirmation/.test(cadastro) && /Reenviar e-mail de confirmação/.test(cadastro),
   ],
   [
     "login permite visualizar senha e mostra progresso",
-    /showPassword/.test(login) &&
-      /Mostrar senha/.test(login) &&
-      /Entrando\.\.\./.test(login),
+    /showPassword/.test(login) && /Mostrar senha/.test(login) && /Entrando\.\.\./.test(login),
   ],
   [
     "header leva cliente autenticado para conta e owner para admin",
@@ -225,9 +212,7 @@ const checks = [
   [
     "fase 08 nao cria pedidos checkout ou pagamento",
     !/CREATE TABLE IF NOT EXISTS public\.(orders|payments|checkouts)/.test(migration) &&
-      !/CREATE TABLE IF NOT EXISTS public\.(orders|payments|checkouts)/.test(
-        identityMigration,
-      ),
+      !/CREATE TABLE IF NOT EXISTS public\.(orders|payments|checkouts)/.test(identityMigration),
   ],
 ];
 

@@ -69,9 +69,7 @@ async function applyMigration(name, file) {
 
 let history = await readHistory();
 const appliedNames = new Set(
-  history
-    .map((item) => (typeof item?.name === "string" ? item.name : ""))
-    .filter(Boolean),
+  history.map((item) => (typeof item?.name === "string" ? item.name : "")).filter(Boolean),
 );
 
 const before = await readOnly(`
@@ -149,7 +147,10 @@ select
   pg_catalog.to_regclass('public.affiliate_refund_reviews') is not null as refund_reviews_live;
 `);
 
-if (readinessState?.withdrawal_method_live !== true || readinessState?.refund_reviews_live !== true) {
+if (
+  readinessState?.withdrawal_method_live !== true ||
+  readinessState?.refund_reviews_live !== true
+) {
   if (appliedNames.has("affiliate_program_readiness")) {
     throw new Error("AFFILIATE_READINESS_RECORDED_BUT_NOT_LIVE");
   }

@@ -30,18 +30,10 @@ type AccountOverviewProps = {
 };
 
 function profileIsComplete(profile: CustomerProfile | null) {
-  return Boolean(
-    profile?.full_name?.trim() &&
-      profile.phone?.trim() &&
-      profile.cpf?.trim(),
-  );
+  return Boolean(profile?.full_name?.trim() && profile.phone?.trim() && profile.cpf?.trim());
 }
 
-export function AccountOverview({
-  email,
-  onNavigate,
-  onSignOut,
-}: AccountOverviewProps) {
+export function AccountOverview({ email, onNavigate, onSignOut }: AccountOverviewProps) {
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,10 +62,7 @@ export function AccountOverview({
     };
   }, []);
 
-  const firstName = useMemo(
-    () => profile?.full_name?.trim().split(/\s+/)[0] ?? "",
-    [profile],
-  );
+  const firstName = useMemo(() => profile?.full_name?.trim().split(/\s+/)[0] ?? "", [profile]);
   const complete = profileIsComplete(profile);
 
   async function handleSignOut() {
@@ -140,7 +129,8 @@ export function AccountOverview({
               {firstName ? `Olá, ${firstName}` : "Minha conta"}
             </h1>
             <p className="section-copy mt-3 max-w-2xl">
-              Encontre rapidamente o que precisa para acompanhar suas compras e manter seus dados em dia.
+              Encontre rapidamente o que precisa para acompanhar suas compras e manter seus dados em
+              dia.
             </p>
           </div>
 

@@ -45,10 +45,7 @@ interface CategoryNavProps {
   onNavigate?: () => void;
 }
 
-const CategoryNav: React.FC<CategoryNavProps> = ({
-  mobile = false,
-  onNavigate,
-}) => {
+const CategoryNav: React.FC<CategoryNavProps> = ({ mobile = false, onNavigate }) => {
   const location = useLocation();
   const currentSearch = location.search as ProductSearchFilters;
 
@@ -86,7 +83,9 @@ const CategoryNav: React.FC<CategoryNavProps> = ({
 
             const className = mobile
               ? `rounded-lg px-3 py-2.5 text-left text-[12px] font-extrabold tracking-wide transition-colors ${
-                  isActive ? "bg-red-50 text-red-600" : "text-gray-900 hover:bg-gray-50 hover:text-red-600"
+                  isActive
+                    ? "bg-red-50 text-red-600"
+                    : "text-gray-900 hover:bg-gray-50 hover:text-red-600"
                 }`
               : `group relative whitespace-nowrap px-0.5 py-1.5 text-[11px] font-extrabold tracking-[0.04em] transition-colors ${
                   isActive ? "text-red-600" : "text-gray-900 hover:text-red-600"

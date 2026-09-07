@@ -13,10 +13,7 @@ import {
 } from "lucide-react";
 
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
-import {
-  fetchAdminDashboardSnapshot,
-  type AdminDashboardSnapshot,
-} from "@/lib/admin-dashboard";
+import { fetchAdminDashboardSnapshot, type AdminDashboardSnapshot } from "@/lib/admin-dashboard";
 import type { AdminOrderRow, OrderDisplayStatus } from "@/lib/orders";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -61,12 +58,8 @@ function MetricCard({
     <>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-500">
-            {label}
-          </p>
-          <p className="mt-2 text-3xl font-black tracking-tight text-gray-950">
-            {value}
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-500">{label}</p>
+          <p className="mt-2 text-3xl font-black tracking-tight text-gray-950">{value}</p>
         </div>
         <span
           className={`flex h-10 w-10 items-center justify-center rounded-lg ${
@@ -125,22 +118,13 @@ function DashboardSkeleton() {
   );
 }
 
-function OperationsOverview({
-  snapshot,
-}: {
-  snapshot: AdminDashboardSnapshot;
-}) {
-  const maxValue = Math.max(
-    1,
-    ...snapshot.statusMetrics.map((metric) => metric.total),
-  );
+function OperationsOverview({ snapshot }: { snapshot: AdminDashboardSnapshot }) {
+  const maxValue = Math.max(1, ...snapshot.statusMetrics.map((metric) => metric.total));
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-500">
-          Operação
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-500">Operação</p>
         <h2 className="mt-1 text-lg font-bold text-gray-950">Pedidos por etapa</h2>
         <p className="mt-1 text-sm leading-6 text-gray-500">
           Veja rapidamente onde os pedidos estão no fluxo da loja.
@@ -155,9 +139,7 @@ function OperationsOverview({
             <div key={metric.status}>
               <div className="mb-2 flex items-center justify-between gap-3 text-xs">
                 <span className="font-semibold text-gray-700">{metric.label}</span>
-                <span className="font-bold tabular-nums text-gray-950">
-                  {metric.total}
-                </span>
+                <span className="font-bold tabular-nums text-gray-950">{metric.total}</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-gray-100">
                 <div
@@ -173,20 +155,12 @@ function OperationsOverview({
   );
 }
 
-function RecentOrders({
-  rows,
-  onOpenOrders,
-}: {
-  rows: AdminOrderRow[];
-  onOpenOrders: () => void;
-}) {
+function RecentOrders({ rows, onOpenOrders }: { rows: AdminOrderRow[]; onOpenOrders: () => void }) {
   return (
     <section className="rounded-xl border border-gray-200 bg-white">
       <div className="flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-500">
-            Pedidos
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-gray-500">Pedidos</p>
           <h2 className="mt-1 text-lg font-bold text-gray-950">Mais recentes</h2>
         </div>
         <button
@@ -217,9 +191,7 @@ function RecentOrders({
               className="grid w-full gap-3 px-5 py-4 text-left transition hover:bg-gray-50 motion-reduce:transition-none sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-6"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-gray-950">
-                  {row.public_number}
-                </p>
+                <p className="truncate text-sm font-bold text-gray-950">{row.public_number}</p>
                 <p className="mt-1 truncate text-xs text-gray-500">
                   {row.customer_name} • {dateFormatter.format(new Date(row.created_at))}
                 </p>
@@ -238,11 +210,7 @@ function RecentOrders({
   );
 }
 
-export function AdminDashboard({
-  onNavigate,
-}: {
-  onNavigate: (section: AdminSection) => void;
-}) {
+export function AdminDashboard({ onNavigate }: { onNavigate: (section: AdminSection) => void }) {
   const dashboardQuery = useQuery({
     queryKey: ["admin-dashboard"],
     queryFn: fetchAdminDashboardSnapshot,
@@ -255,9 +223,7 @@ export function AdminDashboard({
     return (
       <div className="rounded-xl border border-red-200 bg-white px-6 py-12 text-center">
         <RefreshCw className="mx-auto h-7 w-7 text-red-500" aria-hidden="true" />
-        <h2 className="mt-4 text-xl font-bold text-gray-950">
-          Não foi possível carregar o painel
-        </h2>
+        <h2 className="mt-4 text-xl font-bold text-gray-950">Não foi possível carregar o painel</h2>
         <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-gray-500">
           Tente novamente em instantes.
         </p>
@@ -273,8 +239,7 @@ export function AdminDashboard({
   }
 
   const snapshot = dashboardQuery.data;
-  const attentionTotal =
-    snapshot.pendingPayment + snapshot.inProduction + snapshot.refundRequested;
+  const attentionTotal = snapshot.pendingPayment + snapshot.inProduction + snapshot.refundRequested;
 
   return (
     <div className="space-y-6">
@@ -283,9 +248,7 @@ export function AdminDashboard({
           <p className="text-sm font-medium capitalize text-gray-500">
             {todayFormatter.format(new Date())}
           </p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight text-gray-950">
-            Visão geral
-          </h1>
+          <h1 className="mt-1 text-3xl font-black tracking-tight text-gray-950">Visão geral</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
             Pedidos, produção, entregas e catálogo em uma visão rápida da operação.
           </p>
@@ -296,9 +259,7 @@ export function AdminDashboard({
           onClick={() => onNavigate("orders")}
           className="flex w-fit items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left transition hover:border-red-300 motion-reduce:transition-none"
         >
-          <span className="text-2xl font-black tabular-nums text-red-700">
-            {attentionTotal}
-          </span>
+          <span className="text-2xl font-black tabular-nums text-red-700">{attentionTotal}</span>
           <span>
             <span className="block text-xs font-bold text-red-800">Precisam de atenção</span>
             <span className="mt-0.5 block text-[11px] text-red-700/75">
@@ -344,10 +305,7 @@ export function AdminDashboard({
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-        <RecentOrders
-          rows={snapshot.recentOrders}
-          onOpenOrders={() => onNavigate("orders")}
-        />
+        <RecentOrders rows={snapshot.recentOrders} onOpenOrders={() => onNavigate("orders")} />
         <OperationsOverview snapshot={snapshot} />
       </div>
 
@@ -376,9 +334,7 @@ export function AdminDashboard({
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
             <Truck className="h-4.5 w-4.5" aria-hidden="true" />
           </span>
-          <p className="mt-4 text-sm font-bold text-gray-950">
-            {snapshot.shipped} em transporte
-          </p>
+          <p className="mt-4 text-sm font-bold text-gray-950">{snapshot.shipped} em transporte</p>
           <p className="mt-1 text-xs leading-5 text-gray-500">
             Pedidos enviados que ainda não foram marcados como entregues.
           </p>
@@ -388,9 +344,7 @@ export function AdminDashboard({
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
             <PackageCheck className="h-4.5 w-4.5" aria-hidden="true" />
           </span>
-          <p className="mt-4 text-sm font-bold text-gray-950">
-            {snapshot.delivered} entregues
-          </p>
+          <p className="mt-4 text-sm font-bold text-gray-950">{snapshot.delivered} entregues</p>
           <p className="mt-1 text-xs leading-5 text-gray-500">
             Pedidos concluídos e registrados no histórico.
           </p>
@@ -409,9 +363,7 @@ export function AdminDashboard({
             </p>
           </div>
         </div>
-        <span className="text-xs font-semibold text-gray-500">
-          Regra atual da operação
-        </span>
+        <span className="text-xs font-semibold text-gray-500">Regra atual da operação</span>
       </section>
     </div>
   );

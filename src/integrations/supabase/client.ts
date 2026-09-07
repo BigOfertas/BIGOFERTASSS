@@ -7,19 +7,13 @@ const supabaseUrl = import.meta.env["VITE_SUPABASE_URL"];
 const supabasePublishableKey = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 
 if (!supabaseUrl || !supabasePublishableKey) {
-  throw new Error(
-    "Variáveis VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY não configuradas.",
-  );
+  throw new Error("Variáveis VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY não configuradas.");
 }
 
-export const supabase = createClient<Database>(
-  supabaseUrl,
-  supabasePublishableKey,
-  {
-    auth: {
-      storage: brokeredPreviewStorage(),
-      persistSession: true,
-      autoRefreshToken: true,
-    },
+export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
+  auth: {
+    storage: brokeredPreviewStorage(),
+    persistSession: true,
+    autoRefreshToken: true,
   },
-);
+});

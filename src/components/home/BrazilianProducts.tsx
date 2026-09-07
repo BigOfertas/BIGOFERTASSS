@@ -16,7 +16,10 @@ const BrazilianProducts: React.FC = () => {
   const placeholderCount = Math.max(0, SHOWCASE_SIZE - brazilianProducts.length);
 
   return (
-    <section id="brasileirao" className="scroll-mt-28 overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14">
+    <section
+      id="brasileirao"
+      className="scroll-mt-28 overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14"
+    >
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <div className="mb-7 text-center sm:mb-8">
           <p className="display-kicker">Campeonato brasileiro</p>

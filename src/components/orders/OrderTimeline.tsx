@@ -46,10 +46,7 @@ const STANDARD_STEPS = [
   },
 ] as const;
 
-const INCIDENT_CONFIG: Record<
-  string,
-  { label: string; icon: typeof Clock3; tone: string }
-> = {
+const INCIDENT_CONFIG: Record<string, { label: string; icon: typeof Clock3; tone: string }> = {
   order_canceled: {
     label: "Pedido cancelado",
     icon: Ban,
@@ -202,10 +199,7 @@ export function OrderTimeline({ entries }: { entries: OrderTimelineEntry[] }) {
               const Icon = config.icon;
 
               return (
-                <article
-                  key={entry.id}
-                  className={`rounded-xl border px-3.5 py-3 ${config.tone}`}
-                >
+                <article key={entry.id} className={`rounded-xl border px-3.5 py-3 ${config.tone}`}>
                   <div className="flex items-start gap-3">
                     <Icon className="mt-0.5 h-4.5 w-4.5 flex-none" aria-hidden="true" />
                     <div className="min-w-0 flex-1">

@@ -6,9 +6,7 @@ interface ProductCardPlaceholderProps {
   loading?: boolean;
 }
 
-const ProductCardPlaceholder: React.FC<ProductCardPlaceholderProps> = ({
-  loading = false,
-}) => (
+const ProductCardPlaceholder: React.FC<ProductCardPlaceholderProps> = ({ loading = false }) => (
   <div
     aria-hidden="true"
     className={`glass-card flex h-full flex-col rounded-[1.35rem] p-2.5 sm:p-3.5 ${

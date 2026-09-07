@@ -20,8 +20,7 @@ const CONFIG = {
   loggiServiceId: 31,
 } as const;
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type QuoteRequestItem = {
   productId: string;
@@ -119,9 +118,7 @@ function normalizeItems(value: unknown): QuoteRequestItem[] | null {
     quantity,
   }));
 
-  return normalized.reduce((sum, item) => sum + item.quantity, 0) <= 999
-    ? normalized
-    : null;
+  return normalized.reduce((sum, item) => sum + item.quantity, 0) <= 999 ? normalized : null;
 }
 
 function requiredEnvironment(name: string) {
@@ -230,8 +227,7 @@ function buildPackage(items: Array<QuoteRequestItem & { weightGrams: number }>) 
     ...items.map((item) => item.weightGrams),
   );
   const unitsPerPackage = Math.min(totalUnits, CONFIG.maxShirtsPerPackage);
-  const quotedWeightGramsPerPackage =
-    unitsPerPackage * heaviestUnit + CONFIG.packagingWeightGrams;
+  const quotedWeightGramsPerPackage = unitsPerPackage * heaviestUnit + CONFIG.packagingWeightGrams;
 
   return {
     packageCount,
@@ -315,8 +311,7 @@ async function requestProvider(input: {
   }
 
   return payload.filter(
-    (row): row is ProviderRow =>
-      Boolean(row) && typeof row === "object" && !Array.isArray(row),
+    (row): row is ProviderRow => Boolean(row) && typeof row === "object" && !Array.isArray(row),
   );
 }
 
@@ -437,14 +432,12 @@ async function calculateQuotes(postalCode: string, items: QuoteRequestItem[]) {
     }
   }
 
-  const available = [
-    ...new Map(quotes.map((quote) => [quote.serviceId, quote])).values(),
-  ].sort((left, right) => left.totalPrice - right.totalPrice);
+  const available = [...new Map(quotes.map((quote) => [quote.serviceId, quote])).values()].sort(
+    (left, right) => left.totalPrice - right.totalPrice,
+  );
 
   if (available.length === 0) {
-    const rejected = [correiosResult, loggiResult].find(
-      (result) => result.status === "rejected",
-    );
+    const rejected = [correiosResult, loggiResult].find((result) => result.status === "rejected");
     if (rejected?.status === "rejected") throw rejected.reason;
 
     throw new ShippingError(
@@ -504,11 +497,7 @@ Deno.serve(async (request) => {
     }
 
     if (!items) {
-      throw new ShippingError(
-        "Carrinho inválido para cotação.",
-        400,
-        "SHIPPING_CART_INVALID",
-      );
+      throw new ShippingError("Carrinho inválido para cotação.", 400, "SHIPPING_CART_INVALID");
     }
 
     return response(request, await calculateQuotes(postalCode, items));
@@ -519,10 +508,6 @@ Deno.serve(async (request) => {
     }
 
     console.error("[shipping-quote] unexpected", error);
-    return response(
-      request,
-      { error: "Não foi possível calcular o frete agora." },
-      500,
-    );
+    return response(request, { error: "Não foi possível calcular o frete agora." }, 500);
   }
 });

@@ -1,11 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  CalendarDays,
-  Package,
-  RefreshCw,
-  ShoppingBag,
-} from "lucide-react";
+import { ArrowRight, CalendarDays, Package, RefreshCw, ShoppingBag } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
@@ -60,9 +54,7 @@ export function CustomerOrders() {
     try {
       setOrders(await fetchMyOrders());
     } catch {
-      setErrorMessage(
-        "Não foi possível carregar seus pedidos agora. Tente novamente.",
-      );
+      setErrorMessage("Não foi possível carregar seus pedidos agora. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -83,9 +75,7 @@ export function CustomerOrders() {
         <h2 className="mt-4 text-lg font-black text-gray-950">
           Não foi possível abrir seus pedidos
         </h2>
-        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-gray-500">
-          {errorMessage}
-        </p>
+        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-gray-500">{errorMessage}</p>
         <button
           type="button"
           onClick={() => void loadOrders()}
@@ -125,9 +115,7 @@ export function CustomerOrders() {
   return (
     <div className="space-y-4">
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <h2 className="text-2xl font-black tracking-tight text-gray-950">
-          Meus pedidos
-        </h2>
+        <h2 className="text-2xl font-black tracking-tight text-gray-950">Meus pedidos</h2>
         <p className="text-sm text-gray-500">
           {orders.length} {orders.length === 1 ? "pedido" : "pedidos"}
         </p>
@@ -136,9 +124,7 @@ export function CustomerOrders() {
       {orders.map((summary) => {
         const { order, items, refundRequest } = summary;
         const previewItem = items[0];
-        const previewImage = previewItem
-          ? getOrderItemImageUrl(previewItem)
-          : null;
+        const previewImage = previewItem ? getOrderItemImageUrl(previewItem) : null;
         const units = items.reduce((total, item) => total + item.quantity, 0);
 
         return (
@@ -151,18 +137,11 @@ export function CustomerOrders() {
                 {previewImage ? (
                   <img
                     src={previewImage}
-                    alt={
-                      previewItem?.image_alt_text ??
-                      previewItem?.product_name ??
-                      "Pedido"
-                    }
+                    alt={previewItem?.image_alt_text ?? previewItem?.product_name ?? "Pedido"}
                     className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-105 motion-reduce:transform-none motion-reduce:transition-none"
                   />
                 ) : (
-                  <Package
-                    className="h-7 w-7 text-gray-300"
-                    aria-hidden="true"
-                  />
+                  <Package className="h-7 w-7 text-gray-300" aria-hidden="true" />
                 )}
               </div>
 
@@ -171,9 +150,7 @@ export function CustomerOrders() {
                   <h3 className="text-lg font-black tracking-tight text-gray-950">
                     {order.public_number}
                   </h3>
-                  <OrderStatusBadge
-                    status={getOrderDisplayStatus(order, refundRequest)}
-                  />
+                  <OrderStatusBadge status={getOrderDisplayStatus(order, refundRequest)} />
                 </div>
                 <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-gray-500">
                   <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />

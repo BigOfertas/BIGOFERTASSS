@@ -22,10 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/context/CartContext";
 import { getCartQuantityLimit, type CartItem } from "@/lib/cart";
-import {
-  PROGRESSIVE_DISCOUNT_TIERS,
-  getProgressiveDiscount,
-} from "@/lib/progressive-discount";
+import { PROGRESSIVE_DISCOUNT_TIERS, getProgressiveDiscount } from "@/lib/progressive-discount";
 import type { ShippingQuote } from "@/lib/shipping";
 
 export const Route = createFileRoute("/cart")({
@@ -48,9 +45,7 @@ function CartStatus({ item }: { item: CartItem }) {
   }
 
   const text =
-    item.status === "needs_review"
-      ? "Escolha novamente as opções deste item"
-      : "Item indisponível";
+    item.status === "needs_review" ? "Escolha novamente as opções deste item" : "Item indisponível";
 
   return (
     <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700">
@@ -73,9 +68,7 @@ function CartPage() {
     totalPrice,
   } = useCart();
   const navigate = useNavigate();
-  const [selectedShipping, setSelectedShipping] = useState<ShippingQuote | null>(
-    null,
-  );
+  const [selectedShipping, setSelectedShipping] = useState<ShippingQuote | null>(null);
   const [quotedPostalCode, setQuotedPostalCode] = useState<string | null>(null);
 
   useEffect(() => {
@@ -83,9 +76,7 @@ function CartPage() {
   }, [validateCart]);
 
   const discount = getProgressiveDiscount(totalItems, totalPrice);
-  const shippingAmount = discount.freeShipping
-    ? 0
-    : (selectedShipping?.totalPrice ?? 0);
+  const shippingAmount = discount.freeShipping ? 0 : (selectedShipping?.totalPrice ?? 0);
   const total = discount.subtotalAfterDiscount + shippingAmount;
   const tiersAscending = [...PROGRESSIVE_DISCOUNT_TIERS].reverse();
 
@@ -99,9 +90,7 @@ function CartPage() {
               <ShoppingBag className="h-10 w-10 text-gray-400" aria-hidden="true" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Seu carrinho está vazio</h1>
-            <p className="text-gray-500">
-              Escolha seus produtos e volte aqui para finalizar.
-            </p>
+            <p className="text-gray-500">Escolha seus produtos e volte aqui para finalizar.</p>
             <Button
               onClick={() => void navigate({ to: "/products" })}
               className="w-full bg-red-600 py-6 text-lg text-white hover:bg-red-700"
@@ -244,9 +233,7 @@ function CartPage() {
                               <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1">
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    updateQuantity(item.lineId, item.quantity - 1)
-                                  }
+                                  onClick={() => updateQuantity(item.lineId, item.quantity - 1)}
                                   className="p-1 transition-colors hover:text-red-600 disabled:cursor-not-allowed disabled:text-gray-300 motion-reduce:transition-none"
                                   disabled={!editable || item.quantity <= 1}
                                   aria-label="Diminuir quantidade"
@@ -270,9 +257,7 @@ function CartPage() {
                                 />
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    updateQuantity(item.lineId, item.quantity + 1)
-                                  }
+                                  onClick={() => updateQuantity(item.lineId, item.quantity + 1)}
                                   className="p-1 transition-colors hover:text-red-600 disabled:cursor-not-allowed disabled:text-gray-300 motion-reduce:transition-none"
                                   disabled={!editable || item.quantity >= quantityLimit}
                                   aria-label="Aumentar quantidade"
@@ -348,7 +333,8 @@ function CartPage() {
                           <>
                             <Gift className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
                             <p>
-                              Você ganhou <strong>{discount.percent}% de desconto e frete grátis</strong>.
+                              Você ganhou{" "}
+                              <strong>{discount.percent}% de desconto e frete grátis</strong>.
                             </p>
                           </>
                         ) : discount.nextTier ? (
@@ -356,8 +342,8 @@ function CartPage() {
                             <Sparkles className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
                             <p>
                               Adicione mais <strong>{discount.nextTier.unitsRemaining}</strong>{" "}
-                              {discount.nextTier.unitsRemaining === 1 ? "peça" : "peças"} para ganhar{" "}
-                              <strong>{discount.nextTier.percent}% de desconto</strong>
+                              {discount.nextTier.unitsRemaining === 1 ? "peça" : "peças"} para
+                              ganhar <strong>{discount.nextTier.percent}% de desconto</strong>
                               {discount.nextTier.freeShipping ? " e frete grátis" : ""}.
                             </p>
                           </>

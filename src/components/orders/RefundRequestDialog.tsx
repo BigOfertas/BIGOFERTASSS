@@ -12,9 +12,7 @@ import {
 import { BRAND } from "@/config/brand";
 import { REFUND_REASON_LABELS, type RefundReason } from "@/lib/orders";
 
-const REASONS = Object.entries(REFUND_REASON_LABELS) as Array<
-  [RefundReason, string]
->;
+const REASONS = Object.entries(REFUND_REASON_LABELS) as Array<[RefundReason, string]>;
 
 export function RefundRequestDialog({
   open,
@@ -53,17 +51,12 @@ export function RefundRequestDialog({
     try {
       await onSubmit(reason, message);
     } catch {
-      setErrorMessage(
-        "Não foi possível enviar sua solicitação agora. Tente novamente.",
-      );
+      setErrorMessage("Não foi possível enviar sua solicitação agora. Tente novamente.");
     }
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => !loading && onOpenChange(nextOpen)}
-    >
+    <Dialog open={open} onOpenChange={(nextOpen) => !loading && onOpenChange(nextOpen)}>
       <DialogContent className="w-[calc(100%-2rem)] max-w-lg overflow-hidden rounded-2xl border border-white/70 bg-white p-0 shadow-2xl">
         <form onSubmit={(event) => void handleSubmit(event)}>
           <div className="border-b border-gray-100 bg-gradient-to-br from-orange-50 to-white p-6 sm:p-7">
@@ -85,9 +78,7 @@ export function RefundRequestDialog({
               Motivo
               <select
                 value={reason}
-                onChange={(event) =>
-                  setReason(event.target.value as RefundReason)
-                }
+                onChange={(event) => setReason(event.target.value as RefundReason)}
                 className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
               >
                 {REASONS.map(([value, label]) => (
@@ -105,9 +96,7 @@ export function RefundRequestDialog({
               ) : null}
               <textarea
                 value={message}
-                onChange={(event) =>
-                  setMessage(event.target.value.slice(0, 1000))
-                }
+                onChange={(event) => setMessage(event.target.value.slice(0, 1000))}
                 required={reason === "outro"}
                 minLength={reason === "outro" ? 3 : undefined}
                 rows={4}
@@ -148,10 +137,7 @@ export function RefundRequestDialog({
               >
                 {loading ? (
                   <>
-                    <Loader2
-                      className="mr-2 h-4 w-4 animate-spin"
-                      aria-hidden="true"
-                    />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                     Enviando...
                   </>
                 ) : (

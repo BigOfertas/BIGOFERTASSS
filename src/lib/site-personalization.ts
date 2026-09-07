@@ -38,21 +38,156 @@ export type SiteAssetDefinition = {
 };
 
 export const SITE_ASSET_DEFINITIONS: SiteAssetDefinition[] = [
-  { key: "top_banner_desktop", group: "top", label: "Carrossel superior", device: "PC", width: 1920, height: 100, format: "WebP recomendado; PNG se houver transparência", behavior: "Carrossel infinito, sem pausar ao passar o mouse." },
-  { key: "top_banner_mobile", group: "top", label: "Carrossel superior", device: "Mobile", width: 1080, height: 169, format: "WebP recomendado; PNG se houver transparência", behavior: "Carrossel infinito, sem pausar ao tocar ou passar o mouse." },
-  { key: "hero_desktop", group: "hero", label: "Banner abaixo do cabeçalho", device: "PC", width: 1920, height: 550, format: "WebP recomendado; PNG se houver transparência", behavior: "Banner visual. O clique não executa nenhuma ação." },
-  { key: "hero_mobile", group: "hero", label: "Banner abaixo do cabeçalho", device: "Mobile", width: 1080, height: 1067, format: "WebP recomendado; PNG se houver transparência", behavior: "Banner visual. O toque não executa nenhuma ação." },
-  { key: "brasileirao_banner_desktop", group: "brasileirao", label: "Banner Brasileirão", device: "PC", width: 1920, height: 360, format: "WebP recomendado; PNG se houver transparência", behavior: "Ao clicar, rola para a seção de produtos do Brasileirão." },
-  { key: "brasileirao_banner_mobile", group: "brasileirao", label: "Banner Brasileirão", device: "Mobile", width: 1080, height: 540, format: "WebP recomendado; PNG se houver transparência", behavior: "Ao tocar, rola para a seção de produtos do Brasileirão." },
-  { key: "ambient_banner_desktop", group: "ambient", label: "Faixa entre Monte seu pedido e Brasileirão", device: "PC", width: 1920, height: 208, format: "WebP recomendado; PNG se houver transparência", behavior: "Faixa visual sem ação de clique." },
-  { key: "ambient_banner_mobile", group: "ambient", label: "Faixa entre Monte seu pedido e Brasileirão", device: "Mobile", width: 1080, height: 443, format: "WebP recomendado; PNG se houver transparência", behavior: "Faixa visual sem ação de clique." },
-  { key: "category_kids", group: "categories", label: "Conjunto infantil / Kids", device: "PC e Mobile", width: 800, height: 1200, format: "WebP recomendado", behavior: "Abre a categoria Kids." },
-  { key: "category_training", group: "categories", label: "Conjunto de treino / Kits", device: "PC e Mobile", width: 800, height: 1200, format: "WebP recomendado", behavior: "Abre Kits de Treino." },
-  { key: "category_shorts", group: "categories", label: "Short", device: "PC e Mobile", width: 800, height: 1200, format: "WebP recomendado", behavior: "Abre Shorts." },
-  { key: "category_basketball", group: "categories", label: "Basquete / NBA", device: "PC e Mobile", width: 800, height: 1200, format: "WebP recomendado", behavior: "Abre Basquete / NBA." },
-  { key: "category_windbreaker", group: "categories", label: "Corta-vento / Windbreaker", device: "PC e Mobile", width: 800, height: 1200, format: "WebP recomendado", behavior: "Abre Corta-vento." },
-  { key: "category_fifa", group: "categories", label: "Mundo FIFA", device: "PC e Mobile", width: 800, height: 1200, format: "WebP recomendado", behavior: "Abre Mundo FIFA." },
-  { key: "category_retro", group: "categories", label: "Camisas retrô", device: "PC e Mobile", width: 800, height: 1200, format: "WebP recomendado", behavior: "Abre Camisas Retrô." },
+  {
+    key: "top_banner_desktop",
+    group: "top",
+    label: "Carrossel superior",
+    device: "PC",
+    width: 1920,
+    height: 100,
+    format: "WebP recomendado; PNG se houver transparência",
+    behavior: "Carrossel infinito, sem pausar ao passar o mouse.",
+  },
+  {
+    key: "top_banner_mobile",
+    group: "top",
+    label: "Carrossel superior",
+    device: "Mobile",
+    width: 1080,
+    height: 169,
+    format: "WebP recomendado; PNG se houver transparência",
+    behavior: "Carrossel infinito, sem pausar ao tocar ou passar o mouse.",
+  },
+  {
+    key: "hero_desktop",
+    group: "hero",
+    label: "Banner abaixo do cabeçalho",
+    device: "PC",
+    width: 1920,
+    height: 550,
+    format: "WebP recomendado; PNG se houver transparência",
+    behavior: "Banner visual. O clique não executa nenhuma ação.",
+  },
+  {
+    key: "hero_mobile",
+    group: "hero",
+    label: "Banner abaixo do cabeçalho",
+    device: "Mobile",
+    width: 1080,
+    height: 1067,
+    format: "WebP recomendado; PNG se houver transparência",
+    behavior: "Banner visual. O toque não executa nenhuma ação.",
+  },
+  {
+    key: "brasileirao_banner_desktop",
+    group: "brasileirao",
+    label: "Banner Brasileirão",
+    device: "PC",
+    width: 1920,
+    height: 360,
+    format: "WebP recomendado; PNG se houver transparência",
+    behavior: "Ao clicar, rola para a seção de produtos do Brasileirão.",
+  },
+  {
+    key: "brasileirao_banner_mobile",
+    group: "brasileirao",
+    label: "Banner Brasileirão",
+    device: "Mobile",
+    width: 1080,
+    height: 540,
+    format: "WebP recomendado; PNG se houver transparência",
+    behavior: "Ao tocar, rola para a seção de produtos do Brasileirão.",
+  },
+  {
+    key: "ambient_banner_desktop",
+    group: "ambient",
+    label: "Faixa entre Monte seu pedido e Brasileirão",
+    device: "PC",
+    width: 1920,
+    height: 208,
+    format: "WebP recomendado; PNG se houver transparência",
+    behavior: "Faixa visual sem ação de clique.",
+  },
+  {
+    key: "ambient_banner_mobile",
+    group: "ambient",
+    label: "Faixa entre Monte seu pedido e Brasileirão",
+    device: "Mobile",
+    width: 1080,
+    height: 443,
+    format: "WebP recomendado; PNG se houver transparência",
+    behavior: "Faixa visual sem ação de clique.",
+  },
+  {
+    key: "category_kids",
+    group: "categories",
+    label: "Conjunto infantil / Kids",
+    device: "PC e Mobile",
+    width: 800,
+    height: 1200,
+    format: "WebP recomendado",
+    behavior: "Abre a categoria Kids.",
+  },
+  {
+    key: "category_training",
+    group: "categories",
+    label: "Conjunto de treino / Kits",
+    device: "PC e Mobile",
+    width: 800,
+    height: 1200,
+    format: "WebP recomendado",
+    behavior: "Abre Kits de Treino.",
+  },
+  {
+    key: "category_shorts",
+    group: "categories",
+    label: "Short",
+    device: "PC e Mobile",
+    width: 800,
+    height: 1200,
+    format: "WebP recomendado",
+    behavior: "Abre Shorts.",
+  },
+  {
+    key: "category_basketball",
+    group: "categories",
+    label: "Basquete / NBA",
+    device: "PC e Mobile",
+    width: 800,
+    height: 1200,
+    format: "WebP recomendado",
+    behavior: "Abre Basquete / NBA.",
+  },
+  {
+    key: "category_windbreaker",
+    group: "categories",
+    label: "Corta-vento / Windbreaker",
+    device: "PC e Mobile",
+    width: 800,
+    height: 1200,
+    format: "WebP recomendado",
+    behavior: "Abre Corta-vento.",
+  },
+  {
+    key: "category_fifa",
+    group: "categories",
+    label: "Mundo FIFA",
+    device: "PC e Mobile",
+    width: 800,
+    height: 1200,
+    format: "WebP recomendado",
+    behavior: "Abre Mundo FIFA.",
+  },
+  {
+    key: "category_retro",
+    group: "categories",
+    label: "Camisas retrô",
+    device: "PC e Mobile",
+    width: 800,
+    height: 1200,
+    format: "WebP recomendado",
+    behavior: "Abre Camisas Retrô.",
+  },
 ];
 
 export type SiteAsset = {
@@ -123,12 +258,16 @@ export async function fetchStorefrontPersonalization() {
 }
 
 export async function fetchAdminStorefrontPersonalization() {
-  return parsePersonalization(await callSupabaseRpc<unknown>("owner_get_storefront_personalization"));
+  return parsePersonalization(
+    await callSupabaseRpc<unknown>("owner_get_storefront_personalization"),
+  );
 }
 
 export async function clearAdminStorefrontAsset(slotKey: SiteAssetSlotKey) {
   return parsePersonalization(
-    await callSupabaseRpc<unknown>("owner_clear_storefront_personalization", { p_slot_key: slotKey }),
+    await callSupabaseRpc<unknown>("owner_clear_storefront_personalization", {
+      p_slot_key: slotKey,
+    }),
   );
 }
 
@@ -155,10 +294,7 @@ export async function readImageDimensions(file: File) {
   }
 }
 
-export async function uploadAdminStorefrontAsset(input: {
-  slotKey: SiteAssetSlotKey;
-  file: File;
-}) {
+export async function uploadAdminStorefrontAsset(input: { slotKey: SiteAssetSlotKey; file: File }) {
   validateSiteAssetFile(input.file);
   const dimensions = await readImageDimensions(input.file);
 
@@ -175,7 +311,9 @@ export async function uploadAdminStorefrontAsset(input: {
   );
 
   if (presignError || !presign?.uploadId || !presign.uploadUrl) {
-    throw new Error(getUserFacingError(presignError, "Não foi possível preparar o envio da imagem."));
+    throw new Error(
+      getUserFacingError(presignError, "Não foi possível preparar o envio da imagem."),
+    );
   }
 
   const uploadResponse = await fetch(presign.uploadUrl, {
@@ -186,19 +324,19 @@ export async function uploadAdminStorefrontAsset(input: {
 
   if (!uploadResponse.ok) throw new Error("Não foi possível enviar a imagem agora.");
 
-  const { data: completed, error: completeError } = await supabase.functions.invoke<CompleteResponse>(
-    "site-asset-complete",
-    {
+  const { data: completed, error: completeError } =
+    await supabase.functions.invoke<CompleteResponse>("site-asset-complete", {
       body: {
         uploadId: presign.uploadId,
         widthPx: dimensions.width,
         heightPx: dimensions.height,
       },
-    },
-  );
+    });
 
   if (completeError || !completed?.asset?.storageKey) {
-    throw new Error(getUserFacingError(completeError, "A imagem foi enviada, mas não foi possível ativá-la."));
+    throw new Error(
+      getUserFacingError(completeError, "A imagem foi enviada, mas não foi possível ativá-la."),
+    );
   }
 
   return {

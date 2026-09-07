@@ -62,12 +62,20 @@ export function AffiliateWithdrawalForm({ dashboard }: { dashboard: AffiliateDas
       return `Você poderá sacar quando o saldo disponível chegar a ${money(minimum)}.`;
     }
     return `Saque mínimo: ${money(minimum)}. Seu saldo disponível não expira e permanece aqui até você solicitar o pagamento.`;
-  }, [dashboard.availableAmount, dashboard.programEnabled, dashboard.rulesComplete, dashboard.status, minimum]);
+  }, [
+    dashboard.availableAmount,
+    dashboard.programEnabled,
+    dashboard.rulesComplete,
+    dashboard.status,
+    minimum,
+  ]);
 
   const mutation = useMutation({
     mutationFn: () => requestMyAffiliateWithdrawal(parsedAmount, pixKeyType, pixKey.trim()),
     onSuccess: async () => {
-      setMessage("Solicitação de saque enviada. O pagamento será feito por PIX após a conferência.");
+      setMessage(
+        "Solicitação de saque enviada. O pagamento será feito por PIX após a conferência.",
+      );
       setErrorMessage("");
       setAmount("");
       setPixKey("");
@@ -78,9 +86,7 @@ export function AffiliateWithdrawalForm({ dashboard }: { dashboard: AffiliateDas
     },
     onError: (error) => {
       setMessage("");
-      setErrorMessage(
-        getUserFacingError(error, "Não foi possível solicitar o saque agora."),
-      );
+      setErrorMessage(getUserFacingError(error, "Não foi possível solicitar o saque agora."));
     },
   });
 
@@ -102,7 +108,10 @@ export function AffiliateWithdrawalForm({ dashboard }: { dashboard: AffiliateDas
         </p>
       ) : null}
       {errorMessage ? (
-        <p role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+        <p
+          role="alert"
+          className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+        >
           {errorMessage}
         </p>
       ) : null}
@@ -178,7 +187,8 @@ export function AffiliateWithdrawalForm({ dashboard }: { dashboard: AffiliateDas
 
       <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500">
         <span>
-          Saldo disponível: <strong className="text-gray-800">{money(dashboard.availableAmount)}</strong>
+          Saldo disponível:{" "}
+          <strong className="text-gray-800">{money(dashboard.availableAmount)}</strong>
         </span>
         <span>
           Pagamento: <strong className="text-gray-800">PIX</strong>

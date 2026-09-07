@@ -2,27 +2,16 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const read = (relativePath) =>
-  fs.readFileSync(path.join(root, relativePath), "utf8");
+const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
-const core = read(
-  "supabase/migrations/20260904041000_affiliate_referral_backend.sql",
-);
-const hardening = read(
-  "supabase/migrations/20260904042500_affiliate_backend_hardening.sql",
-);
-const admin = read(
-  "supabase/migrations/20260904044000_affiliate_admin_queries.sql",
-);
-const readiness = read(
-  "supabase/migrations/20260904050000_affiliate_program_readiness.sql",
-);
+const core = read("supabase/migrations/20260904041000_affiliate_referral_backend.sql");
+const hardening = read("supabase/migrations/20260904042500_affiliate_backend_hardening.sql");
+const admin = read("supabase/migrations/20260904044000_affiliate_admin_queries.sql");
+const readiness = read("supabase/migrations/20260904050000_affiliate_program_readiness.sql");
 const readinessHardening = read(
   "supabase/migrations/20260904050500_affiliate_program_readiness_hardening.sql",
 );
-const fixed = read(
-  "supabase/migrations/20260904051500_affiliate_fixed_commission_tiers.sql",
-);
+const fixed = read("supabase/migrations/20260904051500_affiliate_fixed_commission_tiers.sql");
 const finalRules = read(
   "supabase/migrations/20260904052000_affiliate_pix_withdrawal_and_defaults.sql",
 );
@@ -63,9 +52,7 @@ check(
 
 check(
   "vinculo do indicado e unico e imutavel por conta",
-  /CREATE TABLE public\.affiliate_referrals[\s\S]*referred_user_id uuid PRIMARY KEY/.test(
-    core,
-  ) &&
+  /CREATE TABLE public\.affiliate_referrals[\s\S]*referred_user_id uuid PRIMARY KEY/.test(core) &&
     core.includes("ON CONFLICT (referred_user_id) DO NOTHING") &&
     !core.includes("UPDATE public.affiliate_referrals SET affiliate_id"),
 );
@@ -86,7 +73,7 @@ check(
 check(
   "frontend envia codigo de indicacao no metadata do novo usuario",
   auth.includes("affiliate_referral_code: normalizedReferralCode") &&
-    registerPage.includes("referralValidation === \"invalid\" ? null : referralCode"),
+    registerPage.includes('referralValidation === "invalid" ? null : referralCode'),
 );
 
 check(
@@ -98,15 +85,14 @@ check(
 
 check(
   "cadastro valida indicacao sem bloquear conta por indisponibilidade temporaria",
-  registerPage.includes('ReferralValidation = "idle" | "checking" | "valid" | "invalid" | "unavailable"') &&
+  registerPage.includes(
+    'ReferralValidation = "idle" | "checking" | "valid" | "invalid" | "unavailable"',
+  ) &&
     registerPage.includes('setReferralValidation("unavailable")') &&
     registerPage.includes("o servidor fará a verificação final"),
 );
 
-check(
-  "programa nasce desligado",
-  core.includes("enabled boolean NOT NULL DEFAULT false"),
-);
+check("programa nasce desligado", core.includes("enabled boolean NOT NULL DEFAULT false"));
 
 check(
   "ativacao exige seis faixas fixas e regras de saque",
@@ -211,7 +197,9 @@ check(
 check(
   "comissao confirmada fica disponivel imediatamente e nao expira",
   finalRules.includes("hold_days = 0") &&
-    finalRules.includes("initial_status := CASE WHEN settings_row.hold_days = 0 THEN 'available'") &&
+    finalRules.includes(
+      "initial_status := CASE WHEN settings_row.hold_days = 0 THEN 'available'",
+    ) &&
     !finalRules.includes("expires_at"),
 );
 
@@ -231,23 +219,28 @@ check(
     "affiliate_referrals",
     "affiliate_commissions",
     "affiliate_withdrawals",
-  ].every((table) =>
-    core.includes(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`),
-  ) && readiness.includes("ALTER TABLE public.affiliate_refund_reviews ENABLE ROW LEVEL SECURITY"),
+  ].every((table) => core.includes(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`)) &&
+    readiness.includes("ALTER TABLE public.affiliate_refund_reviews ENABLE ROW LEVEL SECURITY"),
 );
 
 check(
   "cliente acessa somente dados do proprio afiliado e e-mail indicado fica mascarado",
   core.includes("masked_email") &&
-    /list_my_affiliate_referrals[\s\S]*JOIN public\.affiliates AS a ON a\.id = r\.affiliate_id AND a\.user_id = auth\.uid\(\)/.test(core) &&
+    /list_my_affiliate_referrals[\s\S]*JOIN public\.affiliates AS a ON a\.id = r\.affiliate_id AND a\.user_id = auth\.uid\(\)/.test(
+      core,
+    ) &&
     /list_my_affiliate_commissions[\s\S]*WHERE a\.user_id = auth\.uid\(\)/.test(core) &&
     /list_my_affiliate_withdrawals[\s\S]*WHERE a\.user_id = auth\.uid\(\)/.test(core),
 );
 
 check(
   "escrita financeira direta do cliente permanece revogada",
-  core.includes("REVOKE ALL ON TABLE public.affiliate_commissions FROM PUBLIC, anon, authenticated") &&
-    core.includes("REVOKE ALL ON TABLE public.affiliate_withdrawals FROM PUBLIC, anon, authenticated"),
+  core.includes(
+    "REVOKE ALL ON TABLE public.affiliate_commissions FROM PUBLIC, anon, authenticated",
+  ) &&
+    core.includes(
+      "REVOKE ALL ON TABLE public.affiliate_withdrawals FROM PUBLIC, anon, authenticated",
+    ),
 );
 
 check(
@@ -298,8 +291,12 @@ check(
 
 check(
   "caminho percentual antigo foi aposentado no frontend e no banco",
-  percentageRetirement.includes("REVOKE ALL ON FUNCTION public.owner_save_affiliate_program_draft") &&
-    percentageRetirement.includes("REVOKE ALL ON FUNCTION public.owner_configure_affiliate_program") &&
+  percentageRetirement.includes(
+    "REVOKE ALL ON FUNCTION public.owner_save_affiliate_program_draft",
+  ) &&
+    percentageRetirement.includes(
+      "REVOKE ALL ON FUNCTION public.owner_configure_affiliate_program",
+    ) &&
     !adminPanel.includes("commissionPercent") &&
     !adminPanel.includes("commissionBaseMode") &&
     !adminAffiliates.includes("saveAffiliateProgramDraft") &&
@@ -319,8 +316,7 @@ check(
 
 check(
   "administracao inclui afiliados na navegacao principal",
-  adminRoute.includes('id: "affiliates"') &&
-    adminRoute.includes("<AffiliateAdmin />"),
+  adminRoute.includes('id: "affiliates"') && adminRoute.includes("<AffiliateAdmin />"),
 );
 
 check(
