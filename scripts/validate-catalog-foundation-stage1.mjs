@@ -90,7 +90,9 @@ const checks = [
     "detalhe publico nao solicita sku de produto ou variante",
     /storefront_product_detail_v1/.test(detail) &&
       /CREATE OR REPLACE FUNCTION public\.storefront_product_detail_v1/.test(stage3Migration) &&
-      !/'sku'/.test(stage3Migration.split("CREATE OR REPLACE FUNCTION public.storefront_product_detail_v1")[1]),
+      !/'sku'/.test(
+        stage3Migration.split("CREATE OR REPLACE FUNCTION public.storefront_product_detail_v1")[1],
+      ),
   ],
   [
     "escolha real de variacao nao e preenchida automaticamente",
