@@ -98,6 +98,7 @@ export function attachProductImages(product: Product, images: ProductImage[]): C
 export interface ProductGalleryItem {
   id: string;
   url: string;
+  thumbnailUrl: string;
   alt: string;
   variantId: string | null;
   isPrimary: boolean;
@@ -124,6 +125,9 @@ export function getProductGalleryItems(
   const seen = new Set<string>();
   const gallery = orderedImages.flatMap((image) => {
     const url = buildR2PublicImageUrl(image.storage_key);
+    const thumbnailUrl = image.thumb_storage_key
+      ? buildR2PublicImageUrl(image.thumb_storage_key)
+      : null;
 
     if (!url || seen.has(url)) {
       return [];
@@ -134,6 +138,7 @@ export function getProductGalleryItems(
       {
         id: image.id,
         url,
+        thumbnailUrl: thumbnailUrl ?? url,
         alt: image.alt_text?.trim() || product.name,
         variantId: image.variant_id,
         isPrimary: image.is_primary,
@@ -145,6 +150,7 @@ export function getProductGalleryItems(
     gallery.push({
       id: "legacy-image",
       url: product.image_url,
+      thumbnailUrl: product.image_url,
       alt: product.name,
       variantId: null,
       isPrimary: gallery.length === 0,
