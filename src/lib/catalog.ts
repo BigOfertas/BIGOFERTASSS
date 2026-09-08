@@ -31,7 +31,6 @@ export interface CatalogQuery {
 
 export interface CatalogListItem {
   id: string;
-  sku: string;
   slug: string;
   name: string;
   price: number;
@@ -41,6 +40,9 @@ export interface CatalogListItem {
   campeonato: string | null;
   liga: string | null;
   time: string | null;
+  season: string | null;
+  brand: string | null;
+  audience: string | null;
   commercial_type: string | null;
   created_at: string;
   image_storage_key: string | null;
@@ -73,7 +75,6 @@ export interface CatalogFacets {
 
 const catalogItemSchema = z.object({
   id: z.string().uuid(),
-  sku: z.string(),
   slug: z.string(),
   name: z.string(),
   price: z.coerce.number().nonnegative(),
@@ -83,6 +84,9 @@ const catalogItemSchema = z.object({
   campeonato: z.string().nullable(),
   liga: z.string().nullable(),
   time: z.string().nullable(),
+  season: z.string().nullable().optional().default(null),
+  brand: z.string().nullable().optional().default(null),
+  audience: z.string().nullable().optional().default(null),
   commercial_type: z.string().nullable().optional().default(null),
   created_at: z.string(),
   image_storage_key: z.string().nullable(),
