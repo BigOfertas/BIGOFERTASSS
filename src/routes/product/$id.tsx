@@ -38,6 +38,7 @@ import {
   isValueCompatibleWithSelection,
 } from "@/lib/product-detail";
 import { getProductGalleryItems } from "@/lib/product-images";
+import { buildProductHead } from "@/lib/product-seo";
 import {
   EMPTY_PURCHASE_CUSTOMIZATION,
   calculatePurchaseSurcharge,
@@ -47,15 +48,19 @@ import {
 } from "@/lib/product-purchase";
 
 export const Route = createFileRoute("/product/$id")({
-  head: () => ({
-    meta: [
-      { title: `Produto | ${BRAND.officialName}` },
-      {
-        name: "description",
-        content: `Confira os detalhes do produto no catálogo ${BRAND.officialName}.`,
-      },
-    ],
-  }),
+  loader: ({ params }) => fetchProductDetail(params.id),
+  head: ({ loaderData }) =>
+    loaderData
+      ? buildProductHead(loaderData)
+      : {
+          meta: [
+            { title: `Produto | ${BRAND.officialName}` },
+            {
+              name: "description",
+              content: `Confira os detalhes do produto no catálogo ${BRAND.officialName}.`,
+            },
+          ],
+        },
   component: ProductDetail,
 });
 
@@ -82,6 +87,7 @@ function parseLegacySpecifications(value: string | null) {
 
 function ProductDetail() {
   const { id } = Route.useParams();
+  const loaderDetail = Route.useLoaderData();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selection, setSelection] = useState<Record<string, string>>({});
@@ -94,6 +100,7 @@ function ProductDetail() {
   } = useQuery({
     queryKey: ["product-detail", id],
     queryFn: () => fetchProductDetail(id),
+    initialData: loaderDetail,
     staleTime: 60_000,
   });
 
@@ -397,7 +404,7 @@ function ProductDetail() {
                           detail.variants,
                           option.id,
                           value.id,
-                          {},
+                          selection,
                         );
                         const selected = selection[option.id] === value.id;
 

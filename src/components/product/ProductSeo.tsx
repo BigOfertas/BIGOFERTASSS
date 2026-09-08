@@ -57,7 +57,7 @@ export default function ProductSeo({
         0,
         160,
       );
-    const canonicalUrl = `${window.location.origin}/product/${encodeURIComponent(product.slug)}`;
+    const canonicalUrl = `${BRAND.siteUrl}/product/${encodeURIComponent(product.slug)}`;
     const primaryImage = images[0]?.url ?? product.image_url ?? undefined;
     const productTitle = `${product.name} | ${BRAND.officialName}`;
 
