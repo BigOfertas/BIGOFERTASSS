@@ -1,7 +1,14 @@
 import type { Tables } from "@/integrations/supabase/types";
 import type { CatalogQuery } from "@/lib/catalog";
 
-export type Product = Tables<"products">;
+export type Product = Tables<"products"> & {
+  season?: string | null;
+  brand?: string | null;
+  audience?: string | null;
+  season_key?: string;
+  brand_key?: string;
+  audience_key?: string;
+};
 export type ProductCategory = Tables<"categories">;
 export type ProductImage = Tables<"product_images"> & {
   card_storage_key?: string | null;
