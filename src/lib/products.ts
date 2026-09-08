@@ -52,7 +52,6 @@ export function matchesTextSearch(product: Product, query: string | undefined) {
   const searchableText = normalizeSearchText(
     [
       product.name,
-      product.sku,
       product.slug,
       product.description,
       product.category,
@@ -93,7 +92,6 @@ export function isUsableCatalogProduct(product: Product) {
   return (
     Boolean(product.id) &&
     Boolean(product.name.trim()) &&
-    Boolean(product.sku.trim()) &&
     Boolean(product.slug.trim()) &&
     product.status === "active" &&
     Number.isFinite(product.price) &&
