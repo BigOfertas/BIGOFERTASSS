@@ -71,6 +71,19 @@ export function buildProductImageObjectKey(
     : `products/${productId}/${imageId}.${extension}`;
 }
 
+export function buildProductImageObjectKeys(productId: string, variantId: string | null) {
+  const imageId = crypto.randomUUID();
+  const prefix = variantId
+    ? `products/${productId}/variants/${variantId}/${imageId}`
+    : `products/${productId}/${imageId}`;
+
+  return {
+    full: `${prefix}.webp`,
+    card: `${prefix}-card.webp`,
+    thumb: `${prefix}-thumb.webp`,
+  };
+}
+
 export function buildSiteAssetObjectKey(slotKey: string, mimeType: AllowedImageMimeType) {
   const extension = EXTENSION_BY_MIME[mimeType];
   const safeSlot = slotKey.toLowerCase().replace(/[^a-z0-9_-]+/g, "-");
