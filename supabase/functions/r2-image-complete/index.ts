@@ -43,75 +43,53 @@ Deno.serve(async (request) => {
 
     const { data: image, error: imageError } = await supabase
       .from("product_images")
-      .select("id, storage_key, mime_type, status")
+      .select("id, storage_key, card_storage_key, thumb_storage_key, mime_type, status")
       .eq("id", imageId)
       .maybeSingle();
 
-    if (imageError) {
-      throw new Error(imageError.message);
-    }
-
+    if (imageError) throw new Error(imageError.message);
     if (!image) {
       return errorResponse(request, 404, "Imagem nao encontrada", "image_not_found");
     }
-
     if (image.status === "archived") {
       return errorResponse(request, 409, "Imagem arquivada", "image_archived");
     }
 
-    const remote = await headProductImage(image.storage_key);
-    const remoteType = remote.contentType ?? image.mime_type;
+    const keys = [image.storage_key, image.card_storage_key, image.thumb_storage_key].filter(
+      (value): value is string => Boolean(value),
+    );
+    const remotes = await Promise.all(keys.map((key) => headProductImage(key)));
+    const mainRemote = remotes[0];
 
-    if (!isAllowedImageMimeType(remoteType)) {
-      await supabase
-        .from("product_images")
-        .update({ status: "failed", is_primary: false })
-        .eq("id", image.id);
-      return errorResponse(
-        request,
-        422,
-        "Objeto no R2 nao e uma imagem suportada",
-        "invalid_remote_type",
-      );
+    if (!mainRemote) {
+      return errorResponse(request, 422, "Imagem principal ausente no R2", "missing_remote_image");
     }
 
-    if (remoteType !== image.mime_type) {
-      await supabase
-        .from("product_images")
-        .update({ status: "failed", is_primary: false })
-        .eq("id", image.id);
-      return errorResponse(
-        request,
-        422,
-        "Content-Type do objeto difere do upload autorizado",
-        "content_type_mismatch",
-      );
-    }
-
-    if (remote.byteSize === null || remote.byteSize <= 0) {
-      return errorResponse(
-        request,
-        422,
-        "Objeto vazio ou sem tamanho verificavel",
-        "invalid_remote_size",
-      );
-    }
-
-    if (remote.byteSize > getMaxImageBytes()) {
-      await supabase
-        .from("product_images")
-        .update({ status: "failed", is_primary: false, byte_size: remote.byteSize })
-        .eq("id", image.id);
-      return errorResponse(request, 413, "Objeto excede o limite configurado", "image_too_large");
+    for (const remote of remotes) {
+      const remoteType = remote.contentType ?? image.mime_type;
+      if (!isAllowedImageMimeType(remoteType) || remoteType !== image.mime_type) {
+        await supabase
+          .from("product_images")
+          .update({ status: "failed", is_primary: false })
+          .eq("id", image.id);
+        return errorResponse(request, 422, "Derivados da imagem sao invalidos", "invalid_remote_type");
+      }
+      if (remote.byteSize === null || remote.byteSize <= 0 || remote.byteSize > getMaxImageBytes()) {
+        await supabase
+          .from("product_images")
+          .update({ status: "failed", is_primary: false })
+          .eq("id", image.id);
+        return errorResponse(request, 422, "Derivados da imagem possuem tamanho invalido", "invalid_remote_size");
+      }
     }
 
     const { data: completedImage, error: updateError } = await supabase
       .from("product_images")
       .update({
         status: "ready",
-        mime_type: remoteType,
-        byte_size: remote.byteSize,
-        etag: remote.etag,
+        mime_type: mainRemote.contentType ?? image.mime_type,
+        byte_size: mainRemote.byteSize,
+        etag: mainRemote.etag,
         width_px: widthPx,
         height_px: heightPx,
       })
@@ -119,10 +97,7 @@ Deno.serve(async (request) => {
       .select("*")
       .single();
 
-    if (updateError) {
-      throw new Error(updateError.message);
-    }
-
+    if (updateError) throw new Error(updateError.message);
     return jsonResponse(request, { image: completedImage });
   } catch (error) {
     if (error instanceof Response) {
