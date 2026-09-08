@@ -49,6 +49,21 @@ const CategoryNav: React.FC<CategoryNavProps> = ({ mobile = false, onNavigate })
   const location = useLocation();
   const currentSearch = location.search as ProductSearchFilters;
 
+  const handleHomeClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    onNavigate?.();
+
+    if (location.pathname !== "/") return;
+
+    event.preventDefault();
+    const launches = document.getElementById("lancamentos");
+    if (launches) {
+      launches.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <nav
       className={
@@ -102,7 +117,7 @@ const CategoryNav: React.FC<CategoryNavProps> = ({ mobile = false, onNavigate })
             return (
               <li key={category.name} className="flex-shrink-0">
                 {category.href === "/" ? (
-                  <Link to="/" onClick={onNavigate} className={className}>
+                  <Link to="/" onClick={handleHomeClick} className={className}>
                     {category.name}
                     {underline}
                   </Link>
