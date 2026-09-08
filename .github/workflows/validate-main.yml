@@ -34,6 +34,9 @@ jobs:
       - name: Validate catalog foundation
         run: node scripts/validate-catalog-foundation-stage1.mjs
 
+      - name: Validate catalog bulk import bridge
+        run: bun run validate:catalog-import
+
       - name: Validate storefront customer experience
         run: node scripts/validate-storefront-upgrades.mjs
 
