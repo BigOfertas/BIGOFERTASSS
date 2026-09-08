@@ -11,6 +11,9 @@ on:
       - "supabase/migrations/20260904213500_catalog_commercial_type.sql"
       - "supabase/migrations/20260905004500_affiliate_self_service_links.sql"
       - "supabase/migrations/20260907124500_require_phone_on_signup.sql"
+      - "supabase/migrations/20260908113000_catalog_foundation_stage_1.sql"
+      - "supabase/migrations/20260908114500_scale_purchase_admin.sql"
+      - "supabase/migrations/20260908115000_fix_catalog_variant_upsert.sql"
   workflow_dispatch:
 
 permissions:
