@@ -67,10 +67,16 @@ AS $$
     JOIN LATERAL (
       SELECT i.storage_key
       FROM public.product_images i
+      LEFT JOIN public.product_variants pv ON pv.id = i.variant_id
       WHERE i.product_id = p.id
-        AND i.variant_id IS NULL
         AND i.status = 'ready'::public.product_image_status
-      ORDER BY i.is_primary DESC, i.sort_order ASC, i.created_at ASC, i.id ASC
+      ORDER BY
+        (i.variant_id IS NULL) DESC,
+        COALESCE(pv.is_default, false) DESC,
+        i.is_primary DESC,
+        i.sort_order ASC,
+        i.created_at ASC,
+        i.id ASC
       LIMIT 1
     ) image ON true
     WHERE p.status = 'active'::public.product_status
@@ -214,7 +220,6 @@ AS $$
       AND EXISTS (
         SELECT 1 FROM public.product_images i
         WHERE i.product_id = p.id
-          AND i.variant_id IS NULL
           AND i.status = 'ready'::public.product_image_status
       )
       AND (
