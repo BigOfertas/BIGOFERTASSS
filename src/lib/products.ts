@@ -3,7 +3,16 @@ import type { CatalogQuery } from "@/lib/catalog";
 
 export type Product = Tables<"products">;
 export type ProductCategory = Tables<"categories">;
-export type ProductImage = Tables<"product_images">;
+export type ProductImage = Tables<"product_images"> & {
+  card_storage_key?: string | null;
+  thumb_storage_key?: string | null;
+  card_width_px?: number | null;
+  card_height_px?: number | null;
+  thumb_width_px?: number | null;
+  thumb_height_px?: number | null;
+  card_byte_size?: number | null;
+  thumb_byte_size?: number | null;
+};
 export type ProductOption = Tables<"product_options">;
 export type ProductOptionValue = Tables<"product_option_values">;
 export type ProductVariant = Tables<"product_variants">;
