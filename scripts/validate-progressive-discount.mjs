@@ -84,11 +84,12 @@ const checks = [
       ),
   ],
   [
-    "rodape mostra pagamentos e seguranca sem Reclame Aqui ou selo Google inventado",
+    "rodape mostra pagamentos e confiança sem selos inventados ou texto técnico",
     footer.includes("Formas de pagamento") &&
-      footer.includes("Site seguro") &&
+      footer.includes("PEDIDO ACOMPANHADO") &&
+      footer.includes("PAGAMENTO ONLINE") &&
       footer.includes("INFINITEPAY") &&
-      footer.includes("HTTPS ativo") &&
+      !footer.includes("HTTPS ativo") &&
       !/reclame\s*aqui/i.test(footer) &&
       !/google\s*site\s*seguro/i.test(footer),
   ],
