@@ -157,7 +157,7 @@ check(
 check(
   "cards de Monte seu pedido usam artes administráveis em proporção 2:3",
   categories.includes("useStorefrontPersonalization") &&
-    categories.includes("image={data?.[category.slot]?.url ?? null}") &&
+    categories.includes('image={data?.[category.slot]?.url ?? null}') &&
     categories.includes('className="aspect-[2/3]') &&
     categories.includes("category_retro"),
 );
@@ -198,9 +198,7 @@ check(
 
 check(
   "vitrine não usa Mais vendidos falso",
-  !best.includes("Mais vendidos") &&
-    !best.includes("bestSellingProducts") &&
-    best.includes("Lançamentos"),
+  !best.includes("Mais vendidos") && !best.includes("bestSellingProducts") && best.includes("Lançamentos"),
 );
 check(
   "placeholders aparecem somente durante carregamento",
@@ -229,9 +227,7 @@ check(
 check(
   "catálogo etapa 2 possui filtros comerciais completos",
   ["season", "brand", "audience", "commercialType"].every(
-    (key) =>
-      catalog.includes(`${key}?: string`) &&
-      products.includes(`${key}: filterKeySchema.optional()`),
+    (key) => catalog.includes(`${key}?: string`) && products.includes(`${key}: filterKeySchema.optional()`),
   ) &&
     filters.includes('title="Temporada"') &&
     filters.includes('title="Marca"') &&
@@ -257,9 +253,9 @@ check(
     catalogHooks.includes("catalogFilterArgs(facetQuery)"),
 );
 check(
-  "catálogo usa RPC v2 para filtros e sugestões",
-  catalogHooks.includes('"catalog_products_page_v2"') &&
-    searchSuggestions.includes('"catalog_products_page_v2"') &&
+  "catálogo usa RPC atual para produtos e preserva facetas da etapa 2",
+  catalogHooks.includes('"catalog_products_page_v3"') &&
+    searchSuggestions.includes('"catalog_products_page_v3"') &&
     stage2Migration.includes("CREATE OR REPLACE FUNCTION public.catalog_products_page_v2") &&
     stage2Migration.includes("CREATE OR REPLACE FUNCTION public.catalog_filter_facets_v2"),
 );
@@ -328,22 +324,16 @@ check(
 );
 check(
   "cliente recorrente pode reutilizar dados do checkout",
-  checkout.includes("Usar estes dados") &&
-    checkout.includes("Editar") &&
-    checkout.includes("identity"),
+  checkout.includes("Usar estes dados") && checkout.includes("Editar") && checkout.includes("identity"),
 );
 
 check(
   "galeria e cards mantêm dicas de tamanho e prioridade",
-  gallery.includes("sizes=") &&
-    gallery.includes('fetchPriority="high"') &&
-    productCard.includes("sizes="),
+  gallery.includes("sizes=") && gallery.includes('fetchPriority="high"') && productCard.includes("sizes="),
 );
 check(
   "SEO mantém Open Graph, Twitter e dados estruturados",
-  seo.includes("twitter:card") &&
-    seo.includes("og:image:alt") &&
-    seo.includes("application/ld+json"),
+  seo.includes("twitter:card") && seo.includes("og:image:alt") && seo.includes("application/ld+json"),
 );
 
 const institutionalRoutes = [
