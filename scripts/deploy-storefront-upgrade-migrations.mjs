@@ -31,6 +31,10 @@ const migrations = [
     "supabase/migrations/20260908113000_catalog_foundation_stage_1.sql",
   ],
   ["scale_purchase_admin", "supabase/migrations/20260908114500_scale_purchase_admin.sql"],
+  [
+    "fix_catalog_variant_upsert",
+    "supabase/migrations/20260908115000_fix_catalog_variant_upsert.sql",
+  ],
 ];
 
 function migrationSql(file) {
