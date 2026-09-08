@@ -14,9 +14,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { AffiliateAdmin } from "@/components/admin/AffiliateAdmin";
+import { CatalogFoundationAdmin } from "@/components/admin/CatalogFoundationAdmin";
 import { OrderAdmin } from "@/components/admin/OrderAdmin";
-import { ProductAdmin } from "@/components/admin/ProductAdmin";
-import { ProductImageAdmin } from "@/components/admin/ProductImageAdmin";
 import { ProductPurchaseAdmin } from "@/components/admin/ProductPurchaseAdmin";
 import { PersonalizationAdmin } from "@/components/admin/PersonalizationAdmin";
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
@@ -52,7 +51,7 @@ const NAV_ITEMS: Array<{
   {
     id: "products",
     label: "Produtos",
-    description: "Catálogo e disponibilidade",
+    description: "Catálogo, variações e imagens",
     icon: Box,
   },
   {
@@ -339,9 +338,8 @@ function AdminPage() {
               <OrderAdmin />
             ) : section === "products" ? (
               <>
-                <ProductAdmin />
+                <CatalogFoundationAdmin />
                 <ProductPurchaseAdmin />
-                <ProductImageAdmin />
               </>
             ) : section === "personalization" ? (
               <PersonalizationAdmin />
