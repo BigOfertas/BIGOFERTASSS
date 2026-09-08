@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import { BRAND } from "@/config/brand";
 import type { ProductGalleryItem } from "@/lib/product-images";
@@ -38,6 +38,21 @@ function setManagedMeta(
   cleanups.push(() => element.remove());
 }
 
+export function buildProductSeoDescription(product: Product) {
+  const context = [product.time, product.category, product.campeonato].filter(Boolean).join(" · ");
+  return (
+    product.description?.trim().slice(0, 160) ||
+    `${product.name}${context ? ` — ${context}` : ""}. Confira fotos, opções e entrega na ${BRAND.officialName}.`.slice(
+      0,
+      160,
+    )
+  );
+}
+
+export function buildProductCanonicalUrl(product: Pick<Product, "slug">) {
+  return `${BRAND.siteUrl}/product/${encodeURIComponent(product.slug)}`;
+}
+
 export default function ProductSeo({
   product,
   selectedVariant: _selectedVariant,
@@ -45,21 +60,34 @@ export default function ProductSeo({
   inStock,
   images,
 }: ProductSeoProps) {
+  const description = buildProductSeoDescription(product);
+  const canonicalUrl = buildProductCanonicalUrl(product);
+  const primaryImage = images[0]?.url ?? product.image_url ?? undefined;
+  const productTitle = `${product.name} | ${BRAND.officialName}`;
+
+  const jsonLd = useMemo(
+    () => ({
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.name,
+      description,
+      ...(primaryImage
+        ? { image: images.length > 0 ? images.map((image) => image.url) : [primaryImage] }
+        : {}),
+      offers: {
+        "@type": "Offer",
+        priceCurrency: "BRL",
+        price: price.toFixed(2),
+        availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        url: canonicalUrl,
+      },
+    }),
+    [canonicalUrl, description, images, inStock, price, primaryImage, product.name],
+  );
+
   useEffect(() => {
     const cleanups: Array<() => void> = [];
     const previousTitle = document.title;
-    const context = [product.time, product.category, product.campeonato]
-      .filter(Boolean)
-      .join(" · ");
-    const description =
-      product.description?.trim().slice(0, 160) ||
-      `${product.name}${context ? ` — ${context}` : ""}. Confira fotos, opções e entrega na ${BRAND.officialName}.`.slice(
-        0,
-        160,
-      );
-    const canonicalUrl = `${window.location.origin}/product/${encodeURIComponent(product.slug)}`;
-    const primaryImage = images[0]?.url ?? product.image_url ?? undefined;
-    const productTitle = `${product.name} | ${BRAND.officialName}`;
 
     document.title = productTitle;
     cleanups.push(() => {
@@ -151,39 +179,15 @@ export default function ProductSeo({
       cleanups.push(() => canonical.remove());
     }
 
-    const jsonLd = {
-      "@context": "https://schema.org",
-      "@type": "Product",
-      name: product.name,
-      description,
-      ...(primaryImage
-        ? { image: images.length > 0 ? images.map((image) => image.url) : [primaryImage] }
-        : {}),
-      offers: {
-        "@type": "Offer",
-        priceCurrency: "BRL",
-        price: price.toFixed(2),
-        availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-        url: canonicalUrl,
-      },
-    };
-
-    const previousJsonLd = document.head.querySelector<HTMLScriptElement>(
-      "#storefront-product-jsonld",
-    );
-    const script = previousJsonLd ?? document.createElement("script");
-    const previousScriptText = previousJsonLd?.textContent ?? null;
-    script.id = "storefront-product-jsonld";
-    script.type = "application/ld+json";
-    script.textContent = JSON.stringify(jsonLd);
-    if (!previousJsonLd) document.head.appendChild(script);
-    cleanups.push(() => {
-      if (previousJsonLd) previousJsonLd.textContent = previousScriptText;
-      else script.remove();
-    });
-
     return () => cleanups.reverse().forEach((cleanup) => cleanup());
-  }, [images, inStock, price, product]);
+  }, [canonicalUrl, description, primaryImage, price, product.name, productTitle]);
 
-  return null;
+  return (
+    <script
+      id="storefront-product-jsonld"
+      type="application/ld+json"
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
 }
