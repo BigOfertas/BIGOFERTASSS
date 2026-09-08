@@ -7,12 +7,12 @@ const categories = [
   {
     name: "Conjunto infantil / Kids",
     slot: "category_kids" as const,
-    search: { category: "kids" },
+    search: { category: "infantil" },
   },
   {
     name: "Conjunto de treino / Kits",
     slot: "category_training" as const,
-    search: { category: "kits-de-treino" },
+    search: { category: "kit-treino" },
   },
   {
     name: "Short",
@@ -22,12 +22,12 @@ const categories = [
   {
     name: "Basquete / NBA",
     slot: "category_basketball" as const,
-    search: { category: "basquete-nba" },
+    search: { category: "basquete" },
   },
   {
     name: "Corta-vento / Windbreaker",
     slot: "category_windbreaker" as const,
-    search: { category: "corta-vento" },
+    search: { category: "corta-ventos" },
   },
   {
     name: "Mundo FIFA",
@@ -37,7 +37,7 @@ const categories = [
   {
     name: "Camisas retrô",
     slot: "category_retro" as const,
-    search: { category: "camisas-retro" },
+    search: { category: "retro" },
   },
 ] as const;
 
