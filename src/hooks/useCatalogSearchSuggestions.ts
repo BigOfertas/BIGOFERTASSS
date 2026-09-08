@@ -22,11 +22,11 @@ export function useCatalogSearchSuggestions(query: string) {
   }, [normalized]);
 
   return useQuery({
-    queryKey: ["catalog", "suggestions-v2", debounced.toLocaleLowerCase("pt-BR")],
+    queryKey: ["catalog", "suggestions-v3", debounced.toLocaleLowerCase("pt-BR")],
     enabled: debounced.length >= 2,
     staleTime: 30_000,
     queryFn: async () => {
-      const data = await callSupabaseRpc<Json>("catalog_products_page_v2", {
+      const data = await callSupabaseRpc<Json>("catalog_products_page_v3", {
         p_query: debounced,
         p_category: null,
         p_campeonato: null,
