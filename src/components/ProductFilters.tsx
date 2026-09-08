@@ -7,7 +7,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import type { CatalogFacetOption, CatalogFacets, CatalogQuery } from "@/lib/catalog";
 
-type FilterKey = "campeonato" | "liga" | "time" | "category";
+type FilterKey =
+  | "campeonato"
+  | "liga"
+  | "time"
+  | "category"
+  | "season"
+  | "brand"
+  | "audience"
+  | "commercialType";
 
 interface ProductFiltersProps {
   facets: CatalogFacets;
@@ -25,43 +33,26 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
   }, [search.minPrice, search.maxPrice]);
 
   const handleFilterChange = (key: FilterKey, value: string) => {
-    const newSearch: CatalogQuery = { ...search };
-    delete newSearch.page;
+    const next: CatalogQuery = { ...search };
+    delete next.page;
 
-    if (newSearch[key] === value) {
-      delete newSearch[key];
+    if (next[key] === value) delete next[key];
+    else next[key] = value;
 
-      if (key === "campeonato") {
-        delete newSearch.liga;
-        delete newSearch.time;
-      }
-
-      if (key === "liga") {
-        delete newSearch.time;
-      }
-    } else {
-      newSearch[key] = value;
-
-      if (key === "campeonato") {
-        delete newSearch.liga;
-        delete newSearch.time;
-      }
-
-      if (key === "liga") {
-        delete newSearch.time;
-      }
+    if (key === "campeonato") {
+      delete next.liga;
+      delete next.time;
     }
+    if (key === "liga") delete next.time;
 
-    void navigate({ to: "/products", search: newSearch });
+    void navigate({ to: "/products", search: next });
   };
 
   const clearFilters = () => {
     const next: CatalogQuery = {};
-
     if (search.q) next.q = search.q;
     if (search.sort) next.sort = search.sort;
     if (search.pageSize) next.pageSize = search.pageSize;
-
     void navigate({ to: "/products", search: next });
   };
 
@@ -108,8 +99,8 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
     filterKey: FilterKey;
     emptyMessage?: string;
   }) => (
-    <div className="mb-8">
-      <h3 className="mb-4 flex items-center justify-between text-sm font-black uppercase tracking-wider text-gray-900">
+    <div className="mb-7">
+      <h3 className="mb-3 flex items-center justify-between text-sm font-black uppercase tracking-wider text-gray-900">
         {title}
         {currentValue ? (
           <button
@@ -123,15 +114,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
       </h3>
 
       {!items.length && emptyMessage ? (
-        <p className="rounded-sm border border-dashed border-gray-200 bg-gray-50 p-3 text-xs italic text-gray-500">
+        <p className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-3 text-xs text-gray-500">
           {emptyMessage}
         </p>
       ) : (
-        <div className="max-h-56 space-y-2.5 overflow-y-auto pr-1">
+        <div className="max-h-52 space-y-2.5 overflow-y-auto pr-1">
           {items.map((item) => {
             const id = `${filterKey}-${item.value}`;
             const checked = currentValue === item.value;
-
             return (
               <div key={item.value} className="flex items-center space-x-3">
                 <Checkbox
@@ -159,11 +149,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
 
   const hasFilters = Boolean(
     search.campeonato ||
-    search.liga ||
-    search.time ||
-    search.category ||
-    search.minPrice !== undefined ||
-    search.maxPrice !== undefined,
+      search.liga ||
+      search.time ||
+      search.category ||
+      search.season ||
+      search.brand ||
+      search.audience ||
+      search.commercialType ||
+      search.minPrice !== undefined ||
+      search.maxPrice !== undefined,
   );
 
   return (
@@ -175,53 +169,28 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
             variant="ghost"
             size="sm"
             onClick={clearFilters}
-            className="flex h-7 items-center gap-1 px-2 text-[10px] font-bold uppercase text-red-600 transition-all hover:bg-red-600 hover:text-white"
+            className="flex h-7 items-center gap-1 px-2 text-[10px] font-bold uppercase text-red-600 hover:bg-red-600 hover:text-white"
           >
             <X className="h-3 w-3" />
-            Limpar Tudo
+            Limpar tudo
           </Button>
         ) : null}
       </div>
 
-      <FilterSection
-        title="Categoria"
-        items={facets.categories}
-        currentValue={search.category}
-        filterKey="category"
-      />
-
-      <FilterSection
-        title="Campeonato"
-        items={facets.campeonatos}
-        currentValue={search.campeonato}
-        filterKey="campeonato"
-      />
-
-      <FilterSection
-        title="Liga"
-        items={facets.ligas}
-        currentValue={search.liga}
-        filterKey="liga"
-        emptyMessage="Nenhuma liga disponível"
-      />
-
-      <FilterSection
-        title="Time"
-        items={facets.times}
-        currentValue={search.time}
-        filterKey="time"
-        emptyMessage="Nenhum time disponível"
-      />
+      <FilterSection title="Categoria" items={facets.categories} currentValue={search.category} filterKey="category" />
+      <FilterSection title="Campeonato" items={facets.campeonatos} currentValue={search.campeonato} filterKey="campeonato" />
+      <FilterSection title="Liga" items={facets.ligas} currentValue={search.liga} filterKey="liga" emptyMessage="Nenhuma liga disponível para esta seleção" />
+      <FilterSection title="Time / seleção" items={facets.times} currentValue={search.time} filterKey="time" emptyMessage="Nenhum time ou seleção disponível" />
+      <FilterSection title="Temporada" items={facets.seasons} currentValue={search.season} filterKey="season" emptyMessage="Nenhuma temporada disponível" />
+      <FilterSection title="Marca" items={facets.brands} currentValue={search.brand} filterKey="brand" emptyMessage="Nenhuma marca disponível" />
+      <FilterSection title="Modelo" items={facets.commercialTypes} currentValue={search.commercialType} filterKey="commercialType" emptyMessage="Nenhum modelo disponível" />
+      <FilterSection title="Público" items={facets.audiences} currentValue={search.audience} filterKey="audience" emptyMessage="Nenhuma opção de público disponível" />
 
       <div className="mb-8">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-sm font-black uppercase tracking-wider text-gray-900">Preço</h3>
           {search.minPrice !== undefined || search.maxPrice !== undefined ? (
-            <button
-              type="button"
-              onClick={clearPrice}
-              className="text-[10px] text-red-600 transition-colors hover:text-black"
-            >
+            <button type="button" onClick={clearPrice} className="text-[10px] text-red-600 hover:text-black">
               Limpar
             </button>
           ) : null}
@@ -244,13 +213,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
             className="h-9 text-xs"
           />
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={applyPrice}
-          className="mt-2 w-full text-[10px] font-bold uppercase"
-        >
+        <Button type="button" variant="outline" size="sm" onClick={applyPrice} className="mt-2 w-full text-[10px] font-bold uppercase">
           Aplicar preço
         </Button>
       </div>

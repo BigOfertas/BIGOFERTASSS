@@ -22,6 +22,10 @@ export interface CatalogQuery {
   liga?: string;
   time?: string;
   category?: string;
+  season?: string;
+  brand?: string;
+  audience?: string;
+  commercialType?: string;
   minPrice?: number;
   maxPrice?: number;
   sort?: CatalogSort;
@@ -69,6 +73,10 @@ export interface CatalogFacets {
   campeonatos: CatalogFacetOption[];
   ligas: CatalogFacetOption[];
   times: CatalogFacetOption[];
+  seasons: CatalogFacetOption[];
+  brands: CatalogFacetOption[];
+  audiences: CatalogFacetOption[];
+  commercialTypes: CatalogFacetOption[];
   priceMin: number;
   priceMax: number;
 }
@@ -112,6 +120,10 @@ const catalogFacetsSchema = z.object({
   campeonatos: z.array(facetOptionSchema),
   ligas: z.array(facetOptionSchema),
   times: z.array(facetOptionSchema),
+  seasons: z.array(facetOptionSchema),
+  brands: z.array(facetOptionSchema),
+  audiences: z.array(facetOptionSchema),
+  commercialTypes: z.array(facetOptionSchema),
   priceMin: z.coerce.number().nonnegative(),
   priceMax: z.coerce.number().nonnegative(),
 });
@@ -149,6 +161,22 @@ export function normalizeCatalogQuery(
     page: Math.max(1, query.page ?? 1),
     pageSize: pageSize ?? CATALOG_DEFAULT_PAGE_SIZE,
   };
+}
+
+export function countActiveCatalogFilters(query: CatalogQuery) {
+  const values = [
+    query.category,
+    query.campeonato,
+    query.liga,
+    query.time,
+    query.season,
+    query.brand,
+    query.audience,
+    query.commercialType,
+  ];
+  const discrete = values.filter(Boolean).length;
+  const price = query.minPrice !== undefined || query.maxPrice !== undefined ? 1 : 0;
+  return discrete + price;
 }
 
 export function withoutPage(query: CatalogQuery): CatalogQuery {
