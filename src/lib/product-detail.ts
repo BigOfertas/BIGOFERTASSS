@@ -30,6 +30,33 @@ export interface ProductDetailData {
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+const PUBLIC_PRODUCT_COLUMNS = [
+  "id",
+  "slug",
+  "name",
+  "description",
+  "price",
+  "promotional_price",
+  "status",
+  "primary_category_id",
+  "weight_grams",
+  "length_cm",
+  "width_cm",
+  "height_cm",
+  "image_url",
+  "stock",
+  "category",
+  "campeonato",
+  "liga",
+  "time",
+  "specifications",
+  "created_at",
+  "updated_at",
+  "campeonato_key",
+  "liga_key",
+  "time_key",
+].join(",");
+
 function sortByOrderAndName<T extends { sort_order: number }>(
   values: T[],
   getName: (value: T) => string,
@@ -46,7 +73,7 @@ function sortByOrderAndName<T extends { sort_order: number }>(
 async function fetchActiveProduct(identifier: string) {
   const normalizedIdentifier = decodeURIComponent(identifier).trim();
 
-  const query = supabase.from("products").select("*").eq("status", "active");
+  const query = supabase.from("products").select(PUBLIC_PRODUCT_COLUMNS).eq("status", "active");
 
   const { data, error } = UUID_PATTERN.test(normalizedIdentifier)
     ? await query.eq("id", normalizedIdentifier).maybeSingle()
@@ -56,11 +83,16 @@ async function fetchActiveProduct(identifier: string) {
     throw error;
   }
 
-  if (!data || !isUsableCatalogProduct(data)) {
+  if (!data) {
     throw new Error("Produto indisponível");
   }
 
-  return data;
+  const product = { ...(data as object), sku: "" } as Product;
+  if (!isUsableCatalogProduct(product)) {
+    throw new Error("Produto indisponível");
+  }
+
+  return product;
 }
 
 export async function fetchProductDetail(identifier: string): Promise<ProductDetailData> {
@@ -82,24 +114,31 @@ export async function fetchProductDetail(identifier: string): Promise<ProductDet
       .order("name", { ascending: true }),
     supabase
       .from("product_variants")
-      .select("*")
+      .select(
+        "id,product_id,name,status,is_default,sort_order,price_override,promotional_price_override,stock_quantity,created_at,updated_at",
+      )
       .eq("product_id", product.id)
       .eq("status", "active")
       .order("sort_order", { ascending: true })
-      .order("sku", { ascending: true }),
+      .order("created_at", { ascending: true }),
   ]);
 
   if (imagesResult.error) throw imagesResult.error;
   if (optionsResult.error) throw optionsResult.error;
   if (variantsResult.error) throw variantsResult.error;
 
+  const images = (imagesResult.data ?? []) as ProductImage[];
+  if (images.length === 0) {
+    throw new Error("Produto indisponível");
+  }
+
   const options = sortByOrderAndName(
     (optionsResult.data ?? []) as ProductOption[],
     (option) => option.name,
   );
   const variants = sortByOrderAndName(
-    (variantsResult.data ?? []) as ProductVariant[],
-    (variant) => variant.name ?? variant.sku,
+    (variantsResult.data ?? []).map((variant) => ({ ...variant, sku: "" })) as ProductVariant[],
+    (variant) => variant.name ?? "",
   );
 
   const optionIds = options.map((option) => option.id);
@@ -158,7 +197,7 @@ export async function fetchProductDetail(identifier: string): Promise<ProductDet
   }
 
   return {
-    product: attachProductImages(product, (imagesResult.data ?? []) as ProductImage[]),
+    product: attachProductImages(product, images),
     category,
     options: options.map((option) => ({
       ...option,
