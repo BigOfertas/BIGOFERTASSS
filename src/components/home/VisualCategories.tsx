@@ -57,7 +57,7 @@ export default function VisualCategories() {
             <div key={category.slot} className="aspect-[2/3] w-[164px] flex-shrink-0 md:w-auto">
               <CategoryCard
                 name={category.name}
-                imageUrl={data?.[category.slot]?.url ?? null}
+                image={data?.[category.slot]?.url ?? null}
                 search={category.search}
               />
             </div>
