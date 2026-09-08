@@ -1,0 +1,51 @@
+name: Format Storefront Stage 2
+
+on:
+  push:
+    branches:
+      - storefront-experience-stage-2-20260908
+
+permissions:
+  contents: write
+
+concurrency:
+  group: format-storefront-stage2
+  cancel-in-progress: true
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout stage branch
+        uses: actions/checkout@v7
+        with:
+          ref: storefront-experience-stage-2-20260908
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Format changed source
+        run: |
+          bunx prettier --write \
+            scripts/deploy-storefront-upgrade-migrations.mjs \
+            scripts/validate-admin-dashboard.mjs \
+            scripts/validate-storefront-upgrades.mjs \
+            src/components/home/VisualCategories.tsx \
+            src/lib/admin-dashboard.ts
+
+      - name: Commit formatting if needed
+        run: |
+          if git diff --quiet; then
+            echo "No formatting changes needed."
+            exit 0
+          fi
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add scripts src
+          git commit -m "style: format final stage two changes"
+          git push origin HEAD:storefront-experience-stage-2-20260908
