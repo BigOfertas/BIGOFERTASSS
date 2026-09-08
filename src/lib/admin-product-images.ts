@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { createProductImageDerivatives } from "@/lib/image-derivatives";
 import type { ProductImage } from "@/lib/products";
 import { getUserFacingError } from "@/lib/user-facing-error";
 
@@ -7,13 +8,20 @@ export const ADMIN_IMAGE_MAX_BYTES = 15 * 1024 * 1024;
 
 const ALLOWED_IMAGE_TYPES = new Set(["image/webp", "image/avif", "image/jpeg", "image/png"]);
 
-type PresignResponse = {
-  imageId: string;
+type UploadTarget = {
   objectKey: string;
   uploadUrl: string;
-  expiresIn: number;
-  method: "PUT";
   requiredHeaders: Record<string, string>;
+};
+
+type PresignResponse = {
+  imageId: string;
+  expiresIn: number;
+  uploads: {
+    full: UploadTarget;
+    card: UploadTarget;
+    thumb: UploadTarget;
+  };
 };
 
 type CompleteResponse = {
@@ -60,7 +68,19 @@ export async function fetchAdminProductImages(
     throw friendlyError(error, "Não foi possível carregar as imagens do produto.");
   }
 
-  return data ?? [];
+  return (data ?? []) as ProductImage[];
+}
+
+async function putRendition(target: UploadTarget, body: Blob) {
+  const response = await fetch(target.uploadUrl, {
+    method: "PUT",
+    headers: target.requiredHeaders,
+    body,
+  });
+
+  if (!response.ok) {
+    throw new Error("Não foi possível enviar uma das versões otimizadas da imagem.");
+  }
 }
 
 export async function uploadAdminProductImage(input: {
@@ -72,45 +92,61 @@ export async function uploadAdminProductImage(input: {
 }): Promise<ProductImage> {
   validateAdminImageFile(input.file);
 
+  let derivatives;
+  try {
+    derivatives = await createProductImageDerivatives(input.file);
+  } catch (error) {
+    throw friendlyError(error, "Não foi possível otimizar a imagem selecionada.");
+  }
+
   const { data: presignData, error: presignError } =
     await supabase.functions.invoke<PresignResponse>("r2-image-presign", {
       body: {
         productId: input.productId,
         variantId: input.variantId ?? null,
-        contentType: input.file.type.toLowerCase(),
         originalFilename: input.file.name,
         altText: input.productName,
-        byteSize: input.file.size,
         sortOrder: input.sortOrder,
+        full: {
+          byteSize: derivatives.full.blob.size,
+          widthPx: derivatives.full.width,
+          heightPx: derivatives.full.height,
+        },
+        card: {
+          byteSize: derivatives.card.blob.size,
+          widthPx: derivatives.card.width,
+          heightPx: derivatives.card.height,
+        },
+        thumb: {
+          byteSize: derivatives.thumb.blob.size,
+          widthPx: derivatives.thumb.width,
+          heightPx: derivatives.thumb.height,
+        },
       },
     });
 
-  if (presignError || !presignData?.imageId || !presignData.uploadUrl) {
+  if (
+    presignError ||
+    !presignData?.imageId ||
+    !presignData.uploads?.full?.uploadUrl ||
+    !presignData.uploads?.card?.uploadUrl ||
+    !presignData.uploads?.thumb?.uploadUrl
+  ) {
     throw friendlyError(presignError, "Não foi possível preparar o envio da imagem.");
   }
 
-  let uploadResponse: Response;
-
   try {
-    uploadResponse = await fetch(presignData.uploadUrl, {
-      method: "PUT",
-      headers: presignData.requiredHeaders,
-      body: input.file,
-    });
+    await Promise.all([
+      putRendition(presignData.uploads.full, derivatives.full.blob),
+      putRendition(presignData.uploads.card, derivatives.card.blob),
+      putRendition(presignData.uploads.thumb, derivatives.thumb.blob),
+    ]);
   } catch (error) {
     await supabase
       .from("product_images")
       .update({ status: "failed", is_primary: false })
       .eq("id", presignData.imageId);
     throw friendlyError(error, "Não foi possível enviar a imagem agora.");
-  }
-
-  if (!uploadResponse.ok) {
-    await supabase
-      .from("product_images")
-      .update({ status: "failed", is_primary: false })
-      .eq("id", presignData.imageId);
-    throw new Error("Não foi possível enviar a imagem agora.");
   }
 
   const { data: completeData, error: completeError } =
