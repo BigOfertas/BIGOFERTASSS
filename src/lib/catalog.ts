@@ -140,9 +140,7 @@ export function parseCatalogPage(value: Json): CatalogPage {
     items: parsed.items.map((item) => ({
       ...item,
       displayImageUrl:
-        (item.image_card_storage_key
-          ? buildR2PublicImageUrl(item.image_card_storage_key)
-          : null) ??
+        (item.image_card_storage_key ? buildR2PublicImageUrl(item.image_card_storage_key) : null) ??
         (item.image_storage_key ? buildR2PublicImageUrl(item.image_storage_key) : null) ??
         item.fallback_image_url,
     })),

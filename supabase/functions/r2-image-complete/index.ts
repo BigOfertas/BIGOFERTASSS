@@ -72,14 +72,28 @@ Deno.serve(async (request) => {
           .from("product_images")
           .update({ status: "failed", is_primary: false })
           .eq("id", image.id);
-        return errorResponse(request, 422, "Derivados da imagem sao invalidos", "invalid_remote_type");
+        return errorResponse(
+          request,
+          422,
+          "Derivados da imagem sao invalidos",
+          "invalid_remote_type",
+        );
       }
-      if (remote.byteSize === null || remote.byteSize <= 0 || remote.byteSize > getMaxImageBytes()) {
+      if (
+        remote.byteSize === null ||
+        remote.byteSize <= 0 ||
+        remote.byteSize > getMaxImageBytes()
+      ) {
         await supabase
           .from("product_images")
           .update({ status: "failed", is_primary: false })
           .eq("id", image.id);
-        return errorResponse(request, 422, "Derivados da imagem possuem tamanho invalido", "invalid_remote_size");
+        return errorResponse(
+          request,
+          422,
+          "Derivados da imagem possuem tamanho invalido",
+          "invalid_remote_size",
+        );
       }
     }
 

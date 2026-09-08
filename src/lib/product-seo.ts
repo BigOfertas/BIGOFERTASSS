@@ -6,7 +6,12 @@ export function buildProductSeoData(detail: ProductDetailData) {
   const { product } = detail;
   const gallery = getProductGalleryItems(product, product.images, null);
   const primaryImage = gallery[0]?.url ?? product.image_url ?? null;
-  const context = [product.time, product.season, product.brand, detail.category?.name ?? product.category]
+  const context = [
+    product.time,
+    product.season,
+    product.brand,
+    detail.category?.name ?? product.category,
+  ]
     .filter(Boolean)
     .join(" · ");
   const description =

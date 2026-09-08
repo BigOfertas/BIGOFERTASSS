@@ -48,15 +48,18 @@ function escapeAttribute(value: string) {
 }
 
 async function fetchProduct(slug: string, env: Env) {
-  const response = await fetch(`${cleanBase(env.SUPABASE_URL)}/rest/v1/rpc/storefront_product_detail_v1`, {
-    method: "POST",
-    headers: {
-      apikey: env.SUPABASE_PUBLISHABLE_KEY,
-      Authorization: `Bearer ${env.SUPABASE_PUBLISHABLE_KEY}`,
-      "Content-Type": "application/json",
+  const response = await fetch(
+    `${cleanBase(env.SUPABASE_URL)}/rest/v1/rpc/storefront_product_detail_v1`,
+    {
+      method: "POST",
+      headers: {
+        apikey: env.SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_PUBLISHABLE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ p_identifier: slug }),
     },
-    body: JSON.stringify({ p_identifier: slug }),
-  });
+  );
 
   if (!response.ok) return null;
   return (await response.json()) as ProductDetailPayload | null;
@@ -68,7 +71,12 @@ function productMeta(detail: ProductDetailPayload, env: Env) {
 
   const brandName = env.BRAND_NAME?.trim() || "BIGofertas";
   const siteUrl = cleanBase(env.BRAND_SITE_URL?.trim() || "https://bigofertas.net");
-  const context = [product.time, product.season, product.brand, detail.category?.name ?? product.category]
+  const context = [
+    product.time,
+    product.season,
+    product.brand,
+    detail.category?.name ?? product.category,
+  ]
     .filter(Boolean)
     .join(" · ");
   const description =
@@ -79,8 +87,7 @@ function productMeta(detail: ProductDetailPayload, env: Env) {
     );
   const title = `${product.name} | ${brandName}`;
   const canonical = `${siteUrl}/product/${encodeURIComponent(product.slug)}`;
-  const primary =
-    detail.images?.find((image) => image.is_primary) ?? detail.images?.[0] ?? null;
+  const primary = detail.images?.find((image) => image.is_primary) ?? detail.images?.[0] ?? null;
   const imageKey = primary?.storage_key ?? primary?.card_storage_key ?? null;
   const image = imageKey
     ? `${cleanBase(env.R2_PUBLIC_BASE_URL)}/${encodeObjectKey(imageKey)}`

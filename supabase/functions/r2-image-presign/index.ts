@@ -112,7 +112,9 @@ Deno.serve(async (request) => {
         sort_order: sortOrder,
         byte_size: byteSize,
       })
-      .select("id, product_id, variant_id, storage_key, card_storage_key, thumb_storage_key, status")
+      .select(
+        "id, product_id, variant_id, storage_key, card_storage_key, thumb_storage_key, status",
+      )
       .single();
 
     if (insertError) throw new Error(insertError.message);

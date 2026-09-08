@@ -115,10 +115,7 @@ function fittedSize(width: number, height: number, maxEdge: number) {
   };
 }
 
-async function renderDerivative(
-  source: Awaited<ReturnType<typeof decodeImage>>,
-  maxEdge: number,
-) {
+async function renderDerivative(source: Awaited<ReturnType<typeof decodeImage>>, maxEdge: number) {
   const size = fittedSize(source.width, source.height, maxEdge);
   const canvas = document.createElement("canvas");
   canvas.width = size.width;
