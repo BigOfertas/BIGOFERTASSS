@@ -1,5 +1,10 @@
 import type { CatalogProduct, Product, ProductImage } from "@/lib/products";
 
+type ProductImageWithDerivatives = ProductImage & {
+  card_storage_key?: string | null;
+  thumb_storage_key?: string | null;
+};
+
 function normalizedBaseUrl(rawValue: string | undefined) {
   const value = rawValue?.trim();
 
@@ -98,6 +103,8 @@ export function attachProductImages(product: Product, images: ProductImage[]): C
 export interface ProductGalleryItem {
   id: string;
   url: string;
+  cardUrl: string;
+  thumbUrl: string;
   alt: string;
   variantId: string | null;
   isPrimary: boolean;
@@ -123,17 +130,27 @@ export function getProductGalleryItems(
 
   const seen = new Set<string>();
   const gallery = orderedImages.flatMap((image) => {
+    const derivativeImage = image as ProductImageWithDerivatives;
     const url = buildR2PublicImageUrl(image.storage_key);
 
     if (!url || seen.has(url)) {
       return [];
     }
 
+    const cardUrl = derivativeImage.card_storage_key
+      ? buildR2PublicImageUrl(derivativeImage.card_storage_key)
+      : null;
+    const thumbUrl = derivativeImage.thumb_storage_key
+      ? buildR2PublicImageUrl(derivativeImage.thumb_storage_key)
+      : null;
+
     seen.add(url);
     return [
       {
         id: image.id,
         url,
+        cardUrl: cardUrl ?? url,
+        thumbUrl: thumbUrl ?? cardUrl ?? url,
         alt: image.alt_text?.trim() || product.name,
         variantId: image.variant_id,
         isPrimary: image.is_primary,
@@ -145,6 +162,8 @@ export function getProductGalleryItems(
     gallery.push({
       id: "legacy-image",
       url: product.image_url,
+      cardUrl: product.image_url,
+      thumbUrl: product.image_url,
       alt: product.name,
       variantId: null,
       isPrimary: gallery.length === 0,
