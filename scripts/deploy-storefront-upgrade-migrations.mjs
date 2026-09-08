@@ -39,6 +39,10 @@ const migrations = [
     "storefront_experience_stage_2",
     "supabase/migrations/20260908133000_storefront_experience_stage_2.sql",
   ],
+  [
+    "storefront_media_seo_stage_3",
+    "supabase/migrations/20260908152000_storefront_media_seo_stage_3.sql",
+  ],
 ];
 
 function migrationSql(file) {
@@ -108,6 +112,14 @@ select
   pg_catalog.to_regclass('public.site_personalization_assets') is not null as personalization_table,
   pg_catalog.to_regclass('public.catalog_taxonomy_items') is not null as catalog_taxonomy_table,
   exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'product_images' and column_name = 'card_storage_key'
+  ) as image_card_derivative_column,
+  exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'product_images' and column_name = 'thumb_storage_key'
+  ) as image_thumb_derivative_column,
+  exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'get_storefront_personalization'
@@ -125,8 +137,18 @@ select
   exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'catalog_products_page_v3'
+  ) as catalog_v3_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'catalog_filter_facets_v2'
   ) as catalog_facets_v2_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'storefront_product_detail_v1'
+  ) as product_detail_v1_rpc,
   exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
@@ -170,10 +192,14 @@ const required = [
   "site_asset_uploads_table",
   "personalization_table",
   "catalog_taxonomy_table",
+  "image_card_derivative_column",
+  "image_thumb_derivative_column",
   "personalization_rpc",
   "catalog_rpc",
   "catalog_v2_rpc",
+  "catalog_v3_rpc",
   "catalog_facets_v2_rpc",
+  "product_detail_v1_rpc",
   "scalable_catalog_admin_rpc",
   "catalog_variant_admin_rpc",
   "scalable_purchase_admin_rpc",
