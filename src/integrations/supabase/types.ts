@@ -376,6 +376,7 @@ export type Database = {
         Row: {
           alt_text: string | null;
           byte_size: number | null;
+          card_storage_key: string | null;
           checksum_sha256: string | null;
           created_at: string;
           etag: string | null;
@@ -388,6 +389,7 @@ export type Database = {
           sort_order: number;
           status: Database["public"]["Enums"]["product_image_status"];
           storage_key: string;
+          thumb_storage_key: string | null;
           updated_at: string;
           variant_id: string | null;
           width_px: number | null;
@@ -395,6 +397,7 @@ export type Database = {
         Insert: {
           alt_text?: string | null;
           byte_size?: number | null;
+          card_storage_key?: string | null;
           checksum_sha256?: string | null;
           created_at?: string;
           etag?: string | null;
@@ -426,6 +429,7 @@ export type Database = {
           sort_order?: number;
           status?: Database["public"]["Enums"]["product_image_status"];
           storage_key?: string;
+          thumb_storage_key?: string | null;
           updated_at?: string;
           variant_id?: string | null;
           width_px?: number | null;
