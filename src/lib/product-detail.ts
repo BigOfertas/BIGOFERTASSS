@@ -1,4 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
 import { parseCatalogPage, type CatalogListItem } from "@/lib/catalog";
 import { attachProductImages } from "@/lib/product-images";
 import type {
@@ -9,9 +8,9 @@ import type {
   ProductOption,
   ProductOptionValue,
   ProductVariant,
-  ProductVariantValue,
 } from "@/lib/products";
 import { isUsableCatalogProduct } from "@/lib/products";
+import { callSupabaseRpc } from "@/lib/supabase-rpc";
 
 export interface ProductOptionGroup extends ProductOption {
   values: ProductOptionValue[];
@@ -28,35 +27,15 @@ export interface ProductDetailData {
   variants: ProductVariantWithValues[];
 }
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const selectionByVariantList = new WeakMap<ProductVariantWithValues[], Record<string, string>>();
+type ProductDetailRpcPayload = {
+  product?: Record<string, unknown> | null;
+  category?: ProductCategory | null;
+  images?: ProductImage[];
+  options?: ProductOptionGroup[];
+  variants?: Array<Record<string, unknown> & { optionValueIds?: Record<string, string> }>;
+};
 
-const PUBLIC_PRODUCT_COLUMNS = [
-  "id",
-  "slug",
-  "name",
-  "description",
-  "price",
-  "promotional_price",
-  "status",
-  "primary_category_id",
-  "weight_grams",
-  "length_cm",
-  "width_cm",
-  "height_cm",
-  "image_url",
-  "stock",
-  "category",
-  "campeonato",
-  "liga",
-  "time",
-  "specifications",
-  "created_at",
-  "updated_at",
-  "campeonato_key",
-  "liga_key",
-  "time_key",
-].join(",");
+const selectionByVariantList = new WeakMap<ProductVariantWithValues[], Record<string, string>>();
 
 function sortByOrderAndName<T extends { sort_order: number }>(
   values: T[],
@@ -71,143 +50,53 @@ function sortByOrderAndName<T extends { sort_order: number }>(
   });
 }
 
-async function fetchActiveProduct(identifier: string) {
+export async function fetchProductDetail(identifier: string): Promise<ProductDetailData> {
   const normalizedIdentifier = decodeURIComponent(identifier).trim();
+  if (!normalizedIdentifier) throw new Error("Produto indisponível");
 
-  const query = supabase.from("products").select(PUBLIC_PRODUCT_COLUMNS).eq("status", "active");
+  const payload = await callSupabaseRpc<ProductDetailRpcPayload | null>(
+    "storefront_product_detail_v1",
+    { p_identifier: normalizedIdentifier },
+  );
 
-  const { data, error } = UUID_PATTERN.test(normalizedIdentifier)
-    ? await query.eq("id", normalizedIdentifier).maybeSingle()
-    : await query.eq("slug", normalizedIdentifier).maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  if (!data) {
+  if (!payload?.product) {
     throw new Error("Produto indisponível");
   }
 
-  const product = { ...(data as object), sku: "" } as Product;
+  const product = { ...payload.product, sku: "" } as Product;
   if (!isUsableCatalogProduct(product)) {
     throw new Error("Produto indisponível");
   }
 
-  return product;
-}
-
-export async function fetchProductDetail(identifier: string): Promise<ProductDetailData> {
-  const product = await fetchActiveProduct(identifier);
-
-  const [imagesResult, optionsResult, variantsResult] = await Promise.all([
-    supabase
-      .from("product_images")
-      .select("*")
-      .eq("product_id", product.id)
-      .eq("status", "ready")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("product_options")
-      .select("*")
-      .eq("product_id", product.id)
-      .order("sort_order", { ascending: true })
-      .order("name", { ascending: true }),
-    supabase
-      .from("product_variants")
-      .select(
-        "id,product_id,name,status,is_default,sort_order,price_override,promotional_price_override,stock_quantity,created_at,updated_at",
-      )
-      .eq("product_id", product.id)
-      .eq("status", "active")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true }),
-  ]);
-
-  if (imagesResult.error) throw imagesResult.error;
-  if (optionsResult.error) throw optionsResult.error;
-  if (variantsResult.error) throw variantsResult.error;
-
-  const images = (imagesResult.data ?? []) as ProductImage[];
+  const images = (payload.images ?? []) as ProductImage[];
   if (images.length === 0) {
     throw new Error("Produto indisponível");
   }
 
-  const options = sortByOrderAndName(
-    (optionsResult.data ?? []) as ProductOption[],
-    (option) => option.name,
+  const options = sortByOrderAndName(payload.options ?? [], (option) => option.name).map(
+    (option) => ({
+      ...option,
+      values: sortByOrderAndName(option.values ?? [], (value) => value.value),
+    }),
   );
+
   const variants = sortByOrderAndName(
-    (variantsResult.data ?? []).map((variant) => ({ ...variant, sku: "" })) as ProductVariant[],
+    (payload.variants ?? []).map(
+      (variant) =>
+        ({
+          ...variant,
+          sku: "",
+          optionValueIds: variant.optionValueIds ?? {},
+        }) as ProductVariantWithValues,
+    ),
     (variant) => variant.name ?? "",
   );
 
-  const optionIds = options.map((option) => option.id);
-  const variantIds = variants.map((variant) => variant.id);
-
-  let optionValues: ProductOptionValue[] = [];
-  if (optionIds.length > 0) {
-    const { data, error } = await supabase
-      .from("product_option_values")
-      .select("*")
-      .in("option_id", optionIds)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true })
-      .order("value", { ascending: true });
-
-    if (error) throw error;
-    optionValues = (data ?? []) as ProductOptionValue[];
-  }
-
-  let variantValues: ProductVariantValue[] = [];
-  if (variantIds.length > 0) {
-    const { data, error } = await supabase
-      .from("product_variant_values")
-      .select("*")
-      .in("variant_id", variantIds);
-
-    if (error) throw error;
-    variantValues = (data ?? []) as ProductVariantValue[];
-  }
-
-  let category: ProductCategory | null = null;
-  if (product.primary_category_id) {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("*")
-      .eq("id", product.primary_category_id)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (error) throw error;
-    category = (data as ProductCategory | null) ?? null;
-  }
-
-  const valuesByOption = new Map<string, ProductOptionValue[]>();
-  for (const value of optionValues) {
-    const values = valuesByOption.get(value.option_id) ?? [];
-    values.push(value);
-    valuesByOption.set(value.option_id, values);
-  }
-
-  const valuesByVariant = new Map<string, Record<string, string>>();
-  for (const relation of variantValues) {
-    const selection = valuesByVariant.get(relation.variant_id) ?? {};
-    selection[relation.option_id] = relation.option_value_id;
-    valuesByVariant.set(relation.variant_id, selection);
-  }
-
   return {
     product: attachProductImages(product, images),
-    category,
-    options: options.map((option) => ({
-      ...option,
-      values: sortByOrderAndName(valuesByOption.get(option.id) ?? [], (value) => value.value),
-    })),
-    variants: variants.map((variant) => ({
-      ...variant,
-      optionValueIds: valuesByVariant.get(variant.id) ?? {},
-    })),
+    category: payload.category ?? null,
+    options,
+    variants,
   };
 }
 
@@ -268,7 +157,6 @@ export function isValueCompatibleWithSelection(
   const sourceSelection = Object.keys(selection).length > 0 ? selection : rememberedSelection;
   const candidateSelection = { ...sourceSelection };
 
-  // Ao trocar o valor da própria opção, a escolha anterior dela não participa da compatibilidade.
   delete candidateSelection[optionId];
   candidateSelection[optionId] = valueId;
 
@@ -298,22 +186,25 @@ export async function fetchRelatedProducts(
     return [];
   }
 
-  const { data, error } = await supabase.rpc("catalog_products_page", {
-    p_query: null,
-    p_category: "category" in scope ? scope.category : null,
-    p_campeonato: "campeonato" in scope ? scope.campeonato : null,
-    p_liga: "liga" in scope ? scope.liga : null,
-    p_time: "time" in scope ? scope.time : null,
-    p_min_price: null,
-    p_max_price: null,
-    p_sort: "newest",
-    p_page: 1,
-    p_page_size: 12,
-  });
-
-  if (error) {
-    throw error;
-  }
+  const data = await callSupabaseRpc<Parameters<typeof parseCatalogPage>[0]>(
+    "catalog_products_page_v3",
+    {
+      p_query: null,
+      p_category: "category" in scope ? scope.category : null,
+      p_campeonato: "campeonato" in scope ? scope.campeonato : null,
+      p_liga: "liga" in scope ? scope.liga : null,
+      p_time: "time" in scope ? scope.time : null,
+      p_season: null,
+      p_brand: null,
+      p_audience: null,
+      p_commercial_type: null,
+      p_min_price: null,
+      p_max_price: null,
+      p_sort: "newest",
+      p_page: 1,
+      p_page_size: 12,
+    },
+  );
 
   return parseCatalogPage(data)
     .items.filter((item) => item.id !== product.id)
