@@ -29,6 +29,7 @@ export interface ProductDetailData {
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const selectionByVariantList = new WeakMap<ProductVariantWithValues[], Record<string, string>>();
 
 const PUBLIC_PRODUCT_COLUMNS = [
   "id",
@@ -228,6 +229,12 @@ export function getVariantEffectivePrice(product: Product, variant: ProductVaria
 }
 
 export function getDefaultProductVariant(variants: ProductVariantWithValues[]) {
+  if (variants.length === 0) return null;
+  if (variants.length === 1) return variants[0] ?? null;
+
+  const hasRealChoice = variants.some((variant) => Object.keys(variant.optionValueIds).length > 0);
+  if (hasRealChoice) return null;
+
   return variants.find((variant) => variant.is_default) ?? variants[0] ?? null;
 }
 
@@ -236,17 +243,19 @@ export function findVariantForSelection(
   selection: Record<string, string>,
   requiredOptionIds: string[],
 ) {
+  selectionByVariantList.set(variants, { ...selection });
+
+  const matchingVariant = variants.find((variant) =>
+    Object.entries(selection).every(
+      ([optionId, valueId]) => variant.optionValueIds[optionId] === valueId,
+    ),
+  );
+
   if (requiredOptionIds.some((optionId) => !selection[optionId])) {
-    return null;
+    return matchingVariant ?? null;
   }
 
-  return (
-    variants.find((variant) =>
-      Object.entries(selection).every(
-        ([optionId, valueId]) => variant.optionValueIds[optionId] === valueId,
-      ),
-    ) ?? null
-  );
+  return matchingVariant ?? null;
 }
 
 export function isValueCompatibleWithSelection(
@@ -255,7 +264,13 @@ export function isValueCompatibleWithSelection(
   valueId: string,
   selection: Record<string, string>,
 ) {
-  const candidateSelection = { ...selection, [optionId]: valueId };
+  const rememberedSelection = selectionByVariantList.get(variants) ?? {};
+  const sourceSelection = Object.keys(selection).length > 0 ? selection : rememberedSelection;
+  const candidateSelection = { ...sourceSelection };
+
+  // Ao trocar o valor da própria opção, a escolha anterior dela não participa da compatibilidade.
+  delete candidateSelection[optionId];
+  candidateSelection[optionId] = valueId;
 
   return variants.some((variant) =>
     Object.entries(candidateSelection).every(
