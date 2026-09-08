@@ -84,7 +84,9 @@ function parseArgs(argv) {
       );
     } else if (arg === "--report") options.report = argv[++i] ?? null;
     else if (arg === "--help" || arg === "-h") {
-      console.log(`\nUso:\n  node scripts/catalog-import-zip.mjs <catalogo.zip|pasta> [opcoes]\n\nPor padrao o comando SOMENTE valida e mostra a previa.\n\nOpcoes:\n  --apply                 grava no Supabase/R2\n  --activate              ativa os produtos depois das imagens (exige preco > 0)\n  --competition "MUNDO FIFA"  substitui campeonato/competicao do CSV\n  --league "PREMIER LEAGUE"   define liga\n  --default-price 149.90  preco usado quando o CSV nao possui preco\n  --default-stock 999      estoque usado quando o CSV nao possui estoque\n  --image-concurrency 4    uploads simultaneos por produto (1-8)\n  --report arquivo.json    caminho do relatorio JSON\n\nCredenciais para --apply:\n  VITE_SUPABASE_URL ou SUPABASE_URL\n  VITE_SUPABASE_PUBLISHABLE_KEY ou SUPABASE_PUBLISHABLE_KEY\n  e uma das opcoes:\n    CATALOG_IMPORT_OWNER_ACCESS_TOKEN\n    ou CATALOG_IMPORT_OWNER_EMAIL + CATALOG_IMPORT_OWNER_PASSWORD\n`);
+      console.log(
+        `\nUso:\n  node scripts/catalog-import-zip.mjs <catalogo.zip|pasta> [opcoes]\n\nPor padrao o comando SOMENTE valida e mostra a previa.\n\nOpcoes:\n  --apply                 grava no Supabase/R2\n  --activate              ativa os produtos depois das imagens (exige preco > 0)\n  --competition "MUNDO FIFA"  substitui campeonato/competicao do CSV\n  --league "PREMIER LEAGUE"   define liga\n  --default-price 149.90  preco usado quando o CSV nao possui preco\n  --default-stock 999      estoque usado quando o CSV nao possui estoque\n  --image-concurrency 4    uploads simultaneos por produto (1-8)\n  --report arquivo.json    caminho do relatorio JSON\n\nCredenciais para --apply:\n  VITE_SUPABASE_URL ou SUPABASE_URL\n  VITE_SUPABASE_PUBLISHABLE_KEY ou SUPABASE_PUBLISHABLE_KEY\n  e uma das opcoes:\n    CATALOG_IMPORT_OWNER_ACCESS_TOKEN\n    ou CATALOG_IMPORT_OWNER_EMAIL + CATALOG_IMPORT_OWNER_PASSWORD\n`,
+      );
       process.exit(0);
     } else {
       fail(`Opcao desconhecida: ${arg}`);
@@ -139,7 +141,9 @@ function parseCsv(content) {
   return rows
     .slice(1)
     .filter((values) => values.some((value) => text(value)))
-    .map((values) => Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""])));
+    .map((values) =>
+      Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""])),
+    );
 }
 
 function findFiles(root, predicate, results = []) {
@@ -219,7 +223,8 @@ function resolveCatalogImage(catalogRoot, relativePath) {
   const segments = normalized.split("/").filter(Boolean);
   if (segments.some((segment) => segment === "..")) return null;
   const direct = path.resolve(catalogRoot, ...segments);
-  if (direct.startsWith(path.resolve(catalogRoot) + path.sep) && fs.existsSync(direct)) return direct;
+  if (direct.startsWith(path.resolve(catalogRoot) + path.sep) && fs.existsSync(direct))
+    return direct;
 
   const suffix = segments.join(path.sep).toLowerCase();
   const matches = findFiles(catalogRoot, (file) => file.toLowerCase().endsWith(suffix));
@@ -456,7 +461,9 @@ function loadPlan(inputRoot, options) {
         errors.push(`${product.code}/${variant.code}: variacao sem imagens.`);
       }
       if (scoped.length > 0 && !scoped.some((image) => image.primary)) {
-        warnings.push(`${product.code}/${variant.code}: sem principal explicita; primeira imagem sera usada.`);
+        warnings.push(
+          `${product.code}/${variant.code}: sem principal explicita; primeira imagem sera usada.`,
+        );
         scoped.sort((a, b) => a.order - b.order)[0].primary = true;
       }
     }
@@ -612,7 +619,15 @@ function detectMagick() {
 }
 
 function buildDerivative(command, source, output, maxEdge) {
-  const args = [source, "-auto-orient", "-resize", `${maxEdge}x${maxEdge}>`, "-quality", "90", output];
+  const args = [
+    source,
+    "-auto-orient",
+    "-resize",
+    `${maxEdge}x${maxEdge}>`,
+    "-quality",
+    "90",
+    output,
+  ];
   const result = spawnSync(command, args, { encoding: "utf8" });
   if (result.status !== 0) {
     throw new Error(result.stderr || `Falha ao gerar derivado ${path.basename(output)}`);
@@ -672,9 +687,7 @@ async function mapLimit(items, concurrency, worker) {
       results[current] = await worker(items[current], current);
     }
   }
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, items.length) }, () => run()),
-  );
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => run()));
   return results;
 }
 
@@ -763,7 +776,9 @@ async function applyPlan(plan, options) {
   };
 
   for (const [productIndex, product] of plan.products.entries()) {
-    console.log(`\n[${productIndex + 1}/${plan.products.length}] ${product.code} — ${product.name}`);
+    console.log(
+      `\n[${productIndex + 1}/${plan.products.length}] ${product.code} — ${product.name}`,
+    );
     const categoryId = await client.rpc("owner_catalog_import_upsert_category", {
       p_name: product.category.name,
       p_slug: product.category.slug,
@@ -861,9 +876,7 @@ try {
   console.log("\nIMPORTACAO CONCLUIDA");
   console.log(JSON.stringify(stats, null, 2));
 } catch (error) {
-  console.error(
-    `\nFALHA NA IMPORTACAO: ${error instanceof Error ? error.message : String(error)}`,
-  );
+  console.error(`\nFALHA NA IMPORTACAO: ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 10;
 } finally {
   input.cleanup();

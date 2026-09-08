@@ -65,7 +65,8 @@ check(
 check(
   "package expoe comandos de importacao e validacao",
   packageJson.scripts?.["catalog:import"] === "node scripts/catalog-import-zip.mjs" &&
-    packageJson.scripts?.["validate:catalog-import"] === "node scripts/validate-catalog-import-bridge.mjs",
+    packageJson.scripts?.["validate:catalog-import"] ===
+      "node scripts/validate-catalog-import-bridge.mjs",
 );
 
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), "bigofertas-import-validation-"));
