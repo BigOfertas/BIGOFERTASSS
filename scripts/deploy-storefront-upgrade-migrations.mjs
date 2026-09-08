@@ -43,6 +43,10 @@ const migrations = [
     "storefront_media_seo_stage_3",
     "supabase/migrations/20260908152000_storefront_media_seo_stage_3.sql",
   ],
+  [
+    "catalog_bulk_import_bridge",
+    "supabase/migrations/20260908170000_catalog_bulk_import_bridge.sql",
+  ],
 ];
 
 function migrationSql(file) {
@@ -120,6 +124,18 @@ select
     where table_schema = 'public' and table_name = 'product_images' and column_name = 'thumb_storage_key'
   ) as image_thumb_derivative_column,
   exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'products' and column_name = 'catalog_code'
+  ) as catalog_code_column,
+  exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'product_variants' and column_name = 'catalog_variant_code'
+  ) as catalog_variant_code_column,
+  exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'product_images' and column_name = 'catalog_source_key'
+  ) as catalog_source_key_column,
+  exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'get_storefront_personalization'
@@ -162,6 +178,21 @@ select
   exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'owner_catalog_import_upsert_product'
+  ) as catalog_import_product_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'owner_catalog_import_upsert_variant'
+  ) as catalog_import_variant_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'owner_catalog_import_finalize_image'
+  ) as catalog_import_image_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'owner_purchase_products_page'
   ) as scalable_purchase_admin_rpc,
   exists (
@@ -194,6 +225,9 @@ const required = [
   "catalog_taxonomy_table",
   "image_card_derivative_column",
   "image_thumb_derivative_column",
+  "catalog_code_column",
+  "catalog_variant_code_column",
+  "catalog_source_key_column",
   "personalization_rpc",
   "catalog_rpc",
   "catalog_v2_rpc",
@@ -202,6 +236,9 @@ const required = [
   "product_detail_v1_rpc",
   "scalable_catalog_admin_rpc",
   "catalog_variant_admin_rpc",
+  "catalog_import_product_rpc",
+  "catalog_import_variant_rpc",
+  "catalog_import_image_rpc",
   "scalable_purchase_admin_rpc",
   "affiliate_activate_rpc",
   "affiliate_deactivate_rpc",
