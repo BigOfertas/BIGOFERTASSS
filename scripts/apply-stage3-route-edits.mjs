@@ -39,3 +39,5 @@ seo = seo.replace(
   'const canonicalUrl = `${BRAND.siteUrl}/product/${encodeURIComponent(product.slug)}`;',
 );
 fs.writeFileSync(seoPath, seo);
+
+// Temporary branch-only helper. Removed after the edit is committed.
