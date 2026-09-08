@@ -74,7 +74,7 @@ if (!types.includes("          thumb_storage_key: string | null;")) {
 
 const storageOptionalMarker = `          storage_key?: string;\n          updated_at?: string;`;
 if (!types.includes("          thumb_storage_key?: string | null;")) {
-  types = types.replaceAll(
+  types = types.replace(
     storageOptionalMarker,
     `          storage_key?: string;\n          thumb_storage_key?: string | null;\n          updated_at?: string;`,
   );
@@ -83,3 +83,4 @@ if (!types.includes("          thumb_storage_key?: string | null;")) {
 fs.writeFileSync(typesPath, types);
 
 // Temporary branch-only helper. Removed after the edit is committed.
+// Trigger 3: include generated product image derivative columns.
