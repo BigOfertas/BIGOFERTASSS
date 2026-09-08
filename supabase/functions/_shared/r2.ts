@@ -58,17 +58,32 @@ export function isAllowedImageMimeType(value: string): value is AllowedImageMime
   return (ALLOWED_IMAGE_MIME_TYPES as readonly string[]).includes(value);
 }
 
-export function buildProductImageObjectKey(
+function productImagePrefix(productId: string, variantId: string | null) {
+  return variantId ? `products/${productId}/variants/${variantId}` : `products/${productId}`;
+}
+
+export function buildProductImageObjectKeys(
   productId: string,
   variantId: string | null,
   mimeType: AllowedImageMimeType,
 ) {
   const extension = EXTENSION_BY_MIME[mimeType];
   const imageId = crypto.randomUUID();
+  const prefix = productImagePrefix(productId, variantId);
 
-  return variantId
-    ? `products/${productId}/variants/${variantId}/${imageId}.${extension}`
-    : `products/${productId}/${imageId}.${extension}`;
+  return {
+    main: `${prefix}/${imageId}.${extension}`,
+    card: `${prefix}/${imageId}-card.${extension}`,
+    thumb: `${prefix}/${imageId}-thumb.${extension}`,
+  };
+}
+
+export function buildProductImageObjectKey(
+  productId: string,
+  variantId: string | null,
+  mimeType: AllowedImageMimeType,
+) {
+  return buildProductImageObjectKeys(productId, variantId, mimeType).main;
 }
 
 export function buildSiteAssetObjectKey(slotKey: string, mimeType: AllowedImageMimeType) {
