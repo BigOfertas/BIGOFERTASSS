@@ -10,6 +10,7 @@ const purchaseMigration = read("supabase/migrations/20260908114500_scale_purchas
 const catalog = read("src/lib/catalog.ts");
 const products = read("src/lib/products.ts");
 const detail = read("src/lib/product-detail.ts");
+const stage3Migration = read("supabase/migrations/20260908152000_storefront_media_seo_stage_3.sql");
 const seo = read("src/components/product/ProductSeo.tsx");
 const adminRoute = read("src/routes/admin.tsx");
 const admin = read("src/components/admin/CatalogFoundationAdmin.tsx");
@@ -87,9 +88,9 @@ const checks = [
   ["sku nao participa mais da busca publica utilitaria", !/product\.sku/.test(products)],
   [
     "detalhe publico nao solicita sku de produto ou variante",
-    /PUBLIC_PRODUCT_COLUMNS/.test(detail) &&
-      !/"sku",/.test(detail.split("const PUBLIC_PRODUCT_COLUMNS")[1].split("].join")[0]) &&
-      /select\(\s*"id,product_id,name,status,is_default/.test(detail),
+    /storefront_product_detail_v1/.test(detail) &&
+      /CREATE OR REPLACE FUNCTION public\.storefront_product_detail_v1/.test(stage3Migration) &&
+      !/'sku'/.test(stage3Migration.split("CREATE OR REPLACE FUNCTION public.storefront_product_detail_v1")[1]),
   ],
   [
     "escolha real de variacao nao e preenchida automaticamente",
