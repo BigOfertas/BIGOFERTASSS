@@ -22,7 +22,7 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
       - run: node scripts/apply-stage3-route-edits.mjs
-      - run: bunx prettier --write 'src/routes/product/$id.tsx' src/components/product/ProductSeo.tsx
+      - run: bunx prettier --write 'src/routes/product/$id.tsx' src/components/product/ProductSeo.tsx src/integrations/supabase/types.ts
       - name: Commit edits
         run: |
           if git diff --quiet; then
@@ -31,6 +31,6 @@ jobs:
           fi
           git config user.name "BigOfertas"
           git config user.email "contato@bigofertas.net"
-          git add 'src/routes/product/$id.tsx' src/components/product/ProductSeo.tsx
-          git commit -m "feat: render product SEO from route data"
+          git add 'src/routes/product/$id.tsx' src/components/product/ProductSeo.tsx src/integrations/supabase/types.ts
+          git commit -m "feat: render product SEO and image derivative types"
           git push origin HEAD:storefront-media-seo-stage-3-20260908
