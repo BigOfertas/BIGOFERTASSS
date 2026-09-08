@@ -40,7 +40,7 @@ function setManagedMeta(
 
 export default function ProductSeo({
   product,
-  selectedVariant,
+  selectedVariant: _selectedVariant,
   price,
   inStock,
   images,
@@ -156,7 +156,6 @@ export default function ProductSeo({
       "@type": "Product",
       name: product.name,
       description,
-      sku: selectedVariant?.sku ?? product.sku,
       ...(primaryImage
         ? { image: images.length > 0 ? images.map((image) => image.url) : [primaryImage] }
         : {}),
@@ -184,7 +183,7 @@ export default function ProductSeo({
     });
 
     return () => cleanups.reverse().forEach((cleanup) => cleanup());
-  }, [images, inStock, price, product, selectedVariant]);
+  }, [images, inStock, price, product]);
 
   return null;
 }
