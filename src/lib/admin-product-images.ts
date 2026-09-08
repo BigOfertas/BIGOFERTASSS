@@ -38,16 +38,23 @@ export function validateAdminImageFile(file: File) {
   }
 }
 
-export async function fetchAdminProductImages(productId: string): Promise<ProductImage[]> {
-  const { data, error } = await supabase
+export async function fetchAdminProductImages(
+  productId: string,
+  variantId: string | null | "all" = null,
+): Promise<ProductImage[]> {
+  let query = supabase
     .from("product_images")
     .select("*")
     .eq("product_id", productId)
-    .is("variant_id", null)
     .eq("status", "ready")
     .order("is_primary", { ascending: false })
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
+
+  if (variantId === null) query = query.is("variant_id", null);
+  else if (variantId !== "all") query = query.eq("variant_id", variantId);
+
+  const { data, error } = await query;
 
   if (error) {
     throw friendlyError(error, "Não foi possível carregar as imagens do produto.");
@@ -61,6 +68,7 @@ export async function uploadAdminProductImage(input: {
   productName: string;
   file: File;
   sortOrder: number;
+  variantId?: string | null;
 }): Promise<ProductImage> {
   validateAdminImageFile(input.file);
 
@@ -68,7 +76,7 @@ export async function uploadAdminProductImage(input: {
     await supabase.functions.invoke<PresignResponse>("r2-image-presign", {
       body: {
         productId: input.productId,
-        variantId: null,
+        variantId: input.variantId ?? null,
         contentType: input.file.type.toLowerCase(),
         originalFilename: input.file.name,
         altText: input.productName,
@@ -152,11 +160,5 @@ export async function archiveAdminProductImage(imageId: string, productId: strin
 
   if (error) {
     throw friendlyError(error, "Não foi possível retirar a imagem do produto.");
-  }
-
-  const remaining = await fetchAdminProductImages(productId);
-
-  if (remaining.length > 0 && !remaining.some((image) => image.is_primary)) {
-    await setAdminProductPrimaryImage(remaining[0].id);
   }
 }
