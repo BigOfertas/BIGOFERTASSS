@@ -50,6 +50,8 @@ export interface CatalogListItem {
   commercial_type: string | null;
   created_at: string;
   image_storage_key: string | null;
+  image_card_storage_key: string | null;
+  image_thumb_storage_key: string | null;
   fallback_image_url: string | null;
   displayImageUrl: string | null;
 }
@@ -98,6 +100,8 @@ const catalogItemSchema = z.object({
   commercial_type: z.string().nullable().optional().default(null),
   created_at: z.string(),
   image_storage_key: z.string().nullable(),
+  image_card_storage_key: z.string().nullable().optional().default(null),
+  image_thumb_storage_key: z.string().nullable().optional().default(null),
   fallback_image_url: z.string().nullable(),
 });
 
@@ -136,6 +140,9 @@ export function parseCatalogPage(value: Json): CatalogPage {
     items: parsed.items.map((item) => ({
       ...item,
       displayImageUrl:
+        (item.image_card_storage_key
+          ? buildR2PublicImageUrl(item.image_card_storage_key)
+          : null) ??
         (item.image_storage_key ? buildR2PublicImageUrl(item.image_storage_key) : null) ??
         item.fallback_image_url,
     })),
