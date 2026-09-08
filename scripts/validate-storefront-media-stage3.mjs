@@ -119,7 +119,7 @@ check(
   hostingerSeoWorker.includes("storefront_product_detail_v1") &&
     hostingerSeoWorker.includes("HTMLRewriter") &&
     hostingerSeoWorker.includes("STOREFRONT_ORIGIN_BASE_URL") &&
-    hostingerSeoWorker.includes('meta property=\\"og:image\\"'),
+    hostingerSeoWorker.includes('meta property="og:image"'),
 );
 check(
   "deploy futuro inclui e verifica a etapa três",
