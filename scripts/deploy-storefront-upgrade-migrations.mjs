@@ -26,6 +26,11 @@ const migrations = [
     "supabase/migrations/20260905004500_affiliate_self_service_links.sql",
   ],
   ["require_phone_on_signup", "supabase/migrations/20260907124500_require_phone_on_signup.sql"],
+  [
+    "catalog_foundation_stage_1",
+    "supabase/migrations/20260908113000_catalog_foundation_stage_1.sql",
+  ],
+  ["scale_purchase_admin", "supabase/migrations/20260908114500_scale_purchase_admin.sql"],
 ];
 
 function migrationSql(file) {
@@ -93,6 +98,7 @@ const verification = await readOnly(`
 select
   pg_catalog.to_regclass('public.site_asset_uploads') is not null as site_asset_uploads_table,
   pg_catalog.to_regclass('public.site_personalization_assets') is not null as personalization_table,
+  pg_catalog.to_regclass('public.catalog_taxonomy_items') is not null as catalog_taxonomy_table,
   exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
@@ -103,6 +109,21 @@ select
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'catalog_products_page'
   ) as catalog_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'owner_catalog_products_page'
+  ) as scalable_catalog_admin_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'owner_save_catalog_variant'
+  ) as catalog_variant_admin_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'owner_purchase_products_page'
+  ) as scalable_purchase_admin_rpc,
   exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
@@ -130,8 +151,12 @@ console.log(JSON.stringify(verification, null, 2));
 const required = [
   "site_asset_uploads_table",
   "personalization_table",
+  "catalog_taxonomy_table",
   "personalization_rpc",
   "catalog_rpc",
+  "scalable_catalog_admin_rpc",
+  "catalog_variant_admin_rpc",
+  "scalable_purchase_admin_rpc",
   "affiliate_activate_rpc",
   "affiliate_deactivate_rpc",
   "signup_phone_trigger",
