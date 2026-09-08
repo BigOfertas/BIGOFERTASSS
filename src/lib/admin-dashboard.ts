@@ -1,4 +1,4 @@
-import { fetchAdminCatalog } from "@/lib/admin-products";
+import { fetchAdminCatalogPage } from "@/lib/admin-catalog-foundation";
 import { fetchAdminOrders, type AdminOrderRow, type OrderDisplayStatus } from "@/lib/orders";
 
 export type AdminDashboardStatusMetric = {
@@ -44,7 +44,8 @@ export async function fetchAdminDashboardSnapshot(): Promise<AdminDashboardSnaps
     delivered,
     refundRequested,
     refunded,
-    catalog,
+    activeCatalog,
+    draftCatalog,
   ] = await Promise.all([
     fetchAdminOrders({
       search: "",
@@ -60,11 +61,9 @@ export async function fetchAdminDashboardSnapshot(): Promise<AdminDashboardSnaps
     fetchStatusTotal("delivered"),
     fetchStatusTotal("refund_requested"),
     fetchStatusTotal("refunded"),
-    fetchAdminCatalog(),
+    fetchAdminCatalogPage({ status: "active", page: 1, pageSize: 10 }),
+    fetchAdminCatalogPage({ status: "draft", page: 1, pageSize: 10 }),
   ]);
-
-  const activeProducts = catalog.products.filter((product) => product.status === "active").length;
-  const draftProducts = catalog.products.filter((product) => product.status === "draft").length;
 
   return {
     totalOrders: recent.total,
@@ -75,8 +74,8 @@ export async function fetchAdminDashboardSnapshot(): Promise<AdminDashboardSnaps
     delivered,
     refundRequested,
     refunded,
-    activeProducts,
-    draftProducts,
+    activeProducts: activeCatalog.total,
+    draftProducts: draftCatalog.total,
     recentOrders: recent.rows,
     statusMetrics: [
       { status: "pending_payment", label: "Aguardando", total: pendingPayment },
