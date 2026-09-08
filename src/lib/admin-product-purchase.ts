@@ -18,7 +18,6 @@ export type PurchaseGlobalAdmin = {
 export type PurchaseProductAdmin = {
   productId: string;
   name: string;
-  sku: string;
   price: number;
   commercialType: ProductCommercialType;
   sizeEnabled: boolean;
@@ -27,17 +26,38 @@ export type PurchaseProductAdmin = {
   patches: Array<{ code: string; enabled?: boolean; price?: number | null }>;
 };
 
-export type PurchaseAdminSnapshot = {
-  global: PurchaseGlobalAdmin;
-  products: PurchaseProductAdmin[];
+export type PurchaseProductPage = {
+  items: PurchaseProductAdmin[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 };
 
-export function fetchPurchaseAdminSnapshot() {
-  return callSupabaseRpc<PurchaseAdminSnapshot>("owner_get_product_purchase_admin");
+export function fetchPurchaseGlobal() {
+  return callSupabaseRpc<PurchaseGlobalAdmin>("owner_get_store_purchase_settings");
+}
+
+export function fetchPurchaseProductsPage(input: {
+  query?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  return callSupabaseRpc<PurchaseProductPage>("owner_purchase_products_page", {
+    p_query: input.query?.trim() || null,
+    p_page: input.page ?? 1,
+    p_page_size: input.pageSize ?? 25,
+  });
+}
+
+export function fetchProductPurchaseAdmin(productId: string) {
+  return callSupabaseRpc<PurchaseProductAdmin>("owner_get_product_purchase_settings", {
+    p_product_id: productId,
+  });
 }
 
 export function savePurchaseGlobal(input: PurchaseGlobalAdmin) {
-  return callSupabaseRpc<PurchaseAdminSnapshot>("owner_save_store_purchase_settings", {
+  return callSupabaseRpc<PurchaseGlobalAdmin>("owner_save_store_purchase_settings_v2", {
     p_personalization_price: input.personalizationPrice,
     p_personalization_name_max: input.personalizationNameMax,
     p_phrase_price: input.phrasePrice,
@@ -51,7 +71,7 @@ export function savePurchaseGlobal(input: PurchaseGlobalAdmin) {
 }
 
 export function saveProductPurchaseSettings(input: PurchaseProductAdmin) {
-  return callSupabaseRpc<PurchaseAdminSnapshot>("owner_save_product_purchase_settings", {
+  return callSupabaseRpc<PurchaseProductAdmin>("owner_save_product_purchase_settings_v2", {
     p_product_id: input.productId,
     p_commercial_type: input.commercialType,
     p_size_enabled: input.sizeEnabled,
