@@ -33,10 +33,7 @@ export type ShippingQuoteResult = {
   quotedAt: string;
 };
 
-type ShippingErrorPayload = Partial<ShippingQuoteResult> & {
-  error?: unknown;
-};
-
+type ShippingErrorPayload = Partial<ShippingQuoteResult> & { error?: unknown };
 type ShippingItemInput = { productId: string; quantity: number };
 
 export function onlyPostalCodeDigits(value: string) {
@@ -52,18 +49,24 @@ function businessDaysLabel(days: number) {
   return days === 1 ? "1 dia útil" : `${days} dias úteis`;
 }
 
-export function formatTransitLabel(quote: ShippingQuote) {
-  if (
-    quote.transitRange &&
-    quote.transitRange.max >= quote.transitRange.min &&
-    quote.transitRange.max > 0
-  ) {
-    if (quote.transitRange.min === quote.transitRange.max) {
-      return businessDaysLabel(quote.transitRange.max);
-    }
-    return `${quote.transitRange.min}–${quote.transitRange.max} dias úteis`;
+function transitBounds(quote: ShippingQuote) {
+  if (quote.transitRange && quote.transitRange.max >= quote.transitRange.min && quote.transitRange.max > 0) {
+    return { min: quote.transitRange.min, max: quote.transitRange.max };
   }
-  return businessDaysLabel(quote.transitBusinessDays);
+  return { min: quote.transitBusinessDays, max: quote.transitBusinessDays };
+}
+
+export function formatTransitLabel(quote: ShippingQuote) {
+  const range = transitBounds(quote);
+  if (range.min === range.max) return businessDaysLabel(range.max);
+  return `${range.min}–${range.max} dias úteis`;
+}
+
+export function formatTotalDeliveryLabel(productionBusinessDays: number, quote: ShippingQuote) {
+  const range = transitBounds(quote);
+  const min = productionBusinessDays + range.min;
+  const max = productionBusinessDays + range.max;
+  return min === max ? businessDaysLabel(max) : `${min}–${max} dias úteis`;
 }
 
 function edgeShippingUrl() {
@@ -74,10 +77,7 @@ function edgeShippingUrl() {
 async function postShippingQuote(url: string, body: string) {
   return fetch(url, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json",
-    },
+    headers: { "content-type": "application/json", accept: "application/json" },
     body,
   });
 }
@@ -96,29 +96,17 @@ async function shippingResponse(body: string) {
   throw new Error("Não foi possível calcular o frete agora. Tente novamente em instantes.");
 }
 
-async function requestShippingQuoteItems(
-  postalCode: string,
-  items: ShippingItemInput[],
-): Promise<ShippingQuoteResult> {
+async function requestShippingQuoteItems(postalCode: string, items: ShippingItemInput[]): Promise<ShippingQuoteResult> {
   const normalizedPostalCode = onlyPostalCodeDigits(postalCode);
-  if (normalizedPostalCode.length !== 8) {
-    throw new Error("Informe um CEP válido com 8 dígitos.");
-  }
+  if (normalizedPostalCode.length !== 8) throw new Error("Informe um CEP válido com 8 dígitos.");
 
   const normalizedItems = items
-    .map((item) => ({
-      productId: item.productId.trim(),
-      quantity: Number.isFinite(item.quantity) ? Math.max(1, Math.trunc(item.quantity)) : 1,
-    }))
+    .map((item) => ({ productId: item.productId.trim(), quantity: Number.isFinite(item.quantity) ? Math.max(1, Math.trunc(item.quantity)) : 1 }))
     .filter((item) => item.productId);
 
-  if (normalizedItems.length === 0) {
-    throw new Error("Adicione um produto para calcular o frete.");
-  }
+  if (normalizedItems.length === 0) throw new Error("Adicione um produto para calcular o frete.");
 
-  const response = await shippingResponse(
-    JSON.stringify({ postalCode: normalizedPostalCode, items: normalizedItems }),
-  );
+  const response = await shippingResponse(JSON.stringify({ postalCode: normalizedPostalCode, items: normalizedItems }));
   const rawBody = await response.text();
   let payload: ShippingErrorPayload | null = null;
 
@@ -146,20 +134,10 @@ async function requestShippingQuoteItems(
   return payload as ShippingQuoteResult;
 }
 
-export async function requestShippingQuotes(
-  postalCode: string,
-  cart: CartItem[],
-): Promise<ShippingQuoteResult> {
-  return requestShippingQuoteItems(
-    postalCode,
-    cart.map((item) => ({ productId: item.productId, quantity: item.quantity })),
-  );
+export async function requestShippingQuotes(postalCode: string, cart: CartItem[]): Promise<ShippingQuoteResult> {
+  return requestShippingQuoteItems(postalCode, cart.map((item) => ({ productId: item.productId, quantity: item.quantity })));
 }
 
-export async function requestProductShippingQuotes(
-  postalCode: string,
-  productId: string,
-  quantity = 1,
-): Promise<ShippingQuoteResult> {
+export async function requestProductShippingQuotes(postalCode: string, productId: string, quantity = 1): Promise<ShippingQuoteResult> {
   return requestShippingQuoteItems(postalCode, [{ productId, quantity }]);
 }

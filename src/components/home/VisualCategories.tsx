@@ -1,56 +1,72 @@
 import React from "react";
 
+import CategoryCard from "@/components/home/CategoryCard";
 import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalization";
-import CategoryCard from "./CategoryCard";
 
 const categories = [
-  { name: "Conjunto infantil / Kids", search: { category: "infantil" }, slot: "category_kids" },
+  {
+    name: "Conjunto infantil / Kids",
+    slot: "category_kids" as const,
+    search: { category: "kids" },
+  },
   {
     name: "Conjunto de treino / Kits",
-    search: { category: "kit-treino" },
-    slot: "category_training",
+    slot: "category_training" as const,
+    search: { category: "kits-de-treino" },
   },
-  { name: "Short", search: { category: "shorts" }, slot: "category_shorts" },
-  { name: "Basquete / NBA", search: { category: "basquete" }, slot: "category_basketball" },
+  {
+    name: "Short",
+    slot: "category_shorts" as const,
+    search: { category: "shorts" },
+  },
+  {
+    name: "Basquete / NBA",
+    slot: "category_basketball" as const,
+    search: { category: "basquete-nba" },
+  },
   {
     name: "Corta-vento / Windbreaker",
-    search: { category: "corta-ventos" },
-    slot: "category_windbreaker",
+    slot: "category_windbreaker" as const,
+    search: { category: "corta-vento" },
   },
-  { name: "Mundo FIFA", search: { campeonato: "copa-do-mundo" }, slot: "category_fifa" },
-  { name: "Camisas retrô", search: { category: "retro" }, slot: "category_retro" },
+  {
+    name: "Mundo FIFA",
+    slot: "category_fifa" as const,
+    search: { campeonato: "copa-do-mundo" },
+  },
+  {
+    name: "Camisas retrô",
+    slot: "category_retro" as const,
+    search: { category: "camisas-retro" },
+  },
 ] as const;
 
-const VisualCategories: React.FC = () => {
-  const { data: personalization } = useStorefrontPersonalization();
+export default function VisualCategories() {
+  const { data } = useStorefrontPersonalization();
 
   return (
-    <section className="overflow-hidden bg-transparent py-8 md:py-10 lg:py-12">
+    <section className="bg-transparent py-9 sm:py-11 lg:py-14">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <div className="mb-6 text-center sm:mb-8">
-          <p className="display-kicker">Explore por estilo</p>
-          <h2 className="display-title-sm mt-2">Monte seu pedido</h2>
+        <div className="mb-7 text-center sm:mb-8">
+          <p className="display-kicker">Escolha seu estilo</p>
+          <h2 className="display-title mt-2">Monte seu pedido</h2>
         </div>
 
-        <div className="flex items-stretch gap-3 overflow-x-auto pb-4 no-scrollbar md:grid md:grid-cols-4 md:gap-4 md:overflow-x-visible md:pb-0 xl:grid-cols-7">
+        <div className="custom-scrollbar flex gap-4 overflow-x-auto pb-3 md:grid md:grid-cols-4 md:gap-5 md:overflow-visible md:pb-0 xl:grid-cols-7">
           {categories.map((category) => (
             <div
-              key={category.name}
-              className="h-[248px] w-[164px] flex-shrink-0 md:h-[330px] md:w-auto xl:h-[300px]"
+              key={category.slot}
+              className="aspect-[2/3] w-[164px] flex-shrink-0 md:w-auto"
             >
               <CategoryCard
                 name={category.name}
+                imageUrl={data?.[category.slot]?.url ?? null}
                 search={category.search}
-                image={personalization?.[category.slot]?.url}
               />
             </div>
           ))}
         </div>
-
-        <div className="mx-auto mt-7 h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent md:mt-8" />
       </div>
     </section>
   );
-};
-
-export default VisualCategories;
+}
