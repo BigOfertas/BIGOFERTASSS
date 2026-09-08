@@ -33,7 +33,10 @@ const BestSellers: React.FC = () => {
       ));
 
   return (
-    <section className="overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14">
+    <section
+      id="lancamentos"
+      className="scroll-mt-40 overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14"
+    >
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <div className="mb-7 text-center sm:mb-8">
           <p className="display-kicker">Novidades da loja</p>
