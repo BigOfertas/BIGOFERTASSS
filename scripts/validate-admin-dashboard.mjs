@@ -17,11 +17,14 @@ const checks = [];
 const check = (name, condition) => checks.push([name, Boolean(condition)]);
 
 check(
-  "admin possui visão geral, pedidos e produtos",
-  /"dashboard" \| "orders" \| "products"/.test(adminRoute) &&
+  "admin possui visão geral, pedidos, produtos, personalização e afiliados",
+  ["dashboard", "orders", "products", "personalization", "affiliates"].every((section) =>
+    adminRoute.includes(`id: "${section}"`),
+  ) &&
     /<AdminDashboard/.test(adminRoute) &&
     /<OrderAdmin\s*\/>/.test(adminRoute) &&
-    /<ProductAdmin\s*\/>/.test(adminRoute),
+    /<CatalogFoundationAdmin\s*\/>/.test(adminRoute) &&
+    /<ProductPurchaseAdmin\s*\/>/.test(adminRoute),
 );
 
 check(
@@ -35,15 +38,18 @@ check(
 );
 
 check(
-  "metricas vem apenas de dados reais existentes",
+  "métricas usam dados reais e contagem paginada do catálogo",
   /fetchAdminOrders/.test(dashboardLib) &&
-    /fetchAdminCatalog/.test(dashboardLib) &&
+    /fetchAdminCatalogPage/.test(dashboardLib) &&
+    /activeCatalog\.total/.test(dashboardLib) &&
+    /draftCatalog\.total/.test(dashboardLib) &&
+    !/fetchAdminCatalog\(/.test(dashboardLib) &&
     !/Math\.random|mock|fake|fixture/i.test(dashboardLib) &&
     !/Math\.random|mockOrders|fakeOrders/i.test(dashboard),
 );
 
 check(
-  "painel mostra operacao real sem inventar integracoes",
+  "painel mostra operação real sem inventar integrações",
   /aguardando pagamento/i.test(dashboard) &&
     /Em produção/.test(dashboard) &&
     /Reembolsos/.test(dashboard) &&
@@ -60,7 +66,7 @@ check(
 );
 
 check(
-  "animacoes respeitam reducao de movimento",
+  "animações respeitam redução de movimento",
   /motion-reduce:transition-none/.test(dashboard) &&
     /prefers-reduced-motion:\s*reduce/.test(liquidGlass) &&
     /transition:\s*none\s*!important/.test(liquidGlass) &&
@@ -98,7 +104,7 @@ for (const file of [
   }
 }
 
-check("arquivos do painel sem erro sintatico", syntaxErrors === 0);
+check("arquivos do painel sem erro sintático", syntaxErrors === 0);
 
 let failed = 0;
 for (const [name, ok] of checks) {
@@ -107,4 +113,4 @@ for (const [name, ok] of checks) {
 }
 
 if (failed) process.exit(1);
-console.log(`\n${checks.length}/${checks.length} validacoes do painel aprovadas.`);
+console.log(`\n${checks.length}/${checks.length} validações do painel aprovadas.`);
