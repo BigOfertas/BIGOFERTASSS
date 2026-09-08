@@ -35,6 +35,10 @@ const migrations = [
     "fix_catalog_variant_upsert",
     "supabase/migrations/20260908115000_fix_catalog_variant_upsert.sql",
   ],
+  [
+    "storefront_experience_stage_2",
+    "supabase/migrations/20260908133000_storefront_experience_stage_2.sql",
+  ],
 ];
 
 function migrationSql(file) {
@@ -116,6 +120,16 @@ select
   exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'catalog_products_page_v2'
+  ) as catalog_v2_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'catalog_filter_facets_v2'
+  ) as catalog_facets_v2_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'owner_catalog_products_page'
   ) as scalable_catalog_admin_rpc,
   exists (
@@ -158,6 +172,8 @@ const required = [
   "catalog_taxonomy_table",
   "personalization_rpc",
   "catalog_rpc",
+  "catalog_v2_rpc",
+  "catalog_facets_v2_rpc",
   "scalable_catalog_admin_rpc",
   "catalog_variant_admin_rpc",
   "scalable_purchase_admin_rpc",
