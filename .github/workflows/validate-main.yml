@@ -31,8 +31,17 @@ jobs:
       - name: Validate centralized storefront brand
         run: node scripts/validate-brand-identity.mjs
 
+      - name: Validate catalog foundation
+        run: node scripts/validate-catalog-foundation-stage1.mjs
+
+      - name: Validate storefront customer experience
+        run: node scripts/validate-storefront-upgrades.mjs
+
       - name: Validate affiliate referral backend
         run: bun run validate:affiliate
+
+      - name: Lint storefront
+        run: bun run lint
 
       - name: Validate TypeScript and production build
         run: bun run build
