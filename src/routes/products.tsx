@@ -24,7 +24,11 @@ import {
   type CatalogSort,
 } from "@/lib/catalog";
 
-const filterKeySchema = z.string().trim().max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+const filterKeySchema = z
+  .string()
+  .trim()
+  .max(100)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 
 const productSearchSchema = z
   .object({
@@ -45,7 +49,9 @@ const productSearchSchema = z
   })
   .refine(
     (value) =>
-      value.minPrice === undefined || value.maxPrice === undefined || value.minPrice <= value.maxPrice,
+      value.minPrice === undefined ||
+      value.maxPrice === undefined ||
+      value.minPrice <= value.maxPrice,
     { message: "Faixa de preço inválida" },
   );
 
@@ -111,7 +117,9 @@ function ProductsPage() {
         <main className="flex flex-grow items-center justify-center p-8">
           <div className="text-center">
             <h2 className="mb-2 text-2xl font-bold text-red-600">Erro ao carregar produtos</h2>
-            <p className="text-gray-600">Não foi possível consultar o catálogo agora. Tente novamente mais tarde.</p>
+            <p className="text-gray-600">
+              Não foi possível consultar o catálogo agora. Tente novamente mais tarde.
+            </p>
           </div>
         </main>
       </div>
@@ -124,9 +132,19 @@ function ProductsPage() {
       <main className="mx-auto w-full max-w-7xl flex-grow px-4 py-8 md:py-12 lg:px-8">
         <div className="mb-6 flex flex-col gap-4 md:mb-8 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-2xl font-black uppercase tracking-tight text-gray-900 md:text-3xl">Produtos</h1>
-            {search.q ? <p className="mt-2 text-sm text-gray-500">Resultados para <strong>“{search.q}”</strong></p> : null}
-            {!isLoading && catalog ? <p className="mt-1 text-xs text-gray-400">{catalog.total.toLocaleString("pt-BR")} produto(s) encontrado(s)</p> : null}
+            <h1 className="text-2xl font-black uppercase tracking-tight text-gray-900 md:text-3xl">
+              Produtos
+            </h1>
+            {search.q ? (
+              <p className="mt-2 text-sm text-gray-500">
+                Resultados para <strong>“{search.q}”</strong>
+              </p>
+            ) : null}
+            {!isLoading && catalog ? (
+              <p className="mt-1 text-xs text-gray-400">
+                {catalog.total.toLocaleString("pt-BR")} produto(s) encontrado(s)
+              </p>
+            ) : null}
           </div>
 
           <label className="hidden items-center gap-2 text-xs font-bold uppercase text-gray-500 md:flex">
@@ -158,13 +176,22 @@ function ProductsPage() {
                 ) : null}
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="flex h-[90vh] flex-col rounded-t-2xl bg-white p-0">
+            <SheetContent
+              side="bottom"
+              className="flex h-[90vh] flex-col rounded-t-2xl bg-white p-0"
+            >
               <SheetHeader className="border-b border-gray-100 px-5 py-4 text-left">
                 <SheetTitle>Filtrar produtos</SheetTitle>
                 <SheetDescription>As opções se ajustam ao que você já selecionou.</SheetDescription>
               </SheetHeader>
               <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-                {facets ? <ProductFilters facets={facets} search={search} /> : facetsLoading ? <FilterSkeleton /> : <p className="text-sm text-gray-500">Filtros temporariamente indisponíveis.</p>}
+                {facets ? (
+                  <ProductFilters facets={facets} search={search} />
+                ) : facetsLoading ? (
+                  <FilterSkeleton />
+                ) : (
+                  <p className="text-sm text-gray-500">Filtros temporariamente indisponíveis.</p>
+                )}
               </div>
               <div className="border-t border-gray-100 bg-white p-4">
                 <SheetClose asChild>
@@ -195,13 +222,22 @@ function ProductsPage() {
         <div className="flex gap-8">
           <aside className="hidden w-64 flex-shrink-0 md:block">
             <div className="sticky top-24">
-              {facets ? <ProductFilters facets={facets} search={search} /> : facetsLoading ? <FilterSkeleton /> : facetsError ? <p className="text-sm text-gray-500">Filtros temporariamente indisponíveis.</p> : null}
+              {facets ? (
+                <ProductFilters facets={facets} search={search} />
+              ) : facetsLoading ? (
+                <FilterSkeleton />
+              ) : facetsError ? (
+                <p className="text-sm text-gray-500">Filtros temporariamente indisponíveis.</p>
+              ) : null}
             </div>
           </aside>
 
           <div className="min-w-0 flex-1">
             {isFetching && !isLoading ? (
-              <div className="mb-4 h-1 w-full overflow-hidden rounded-full bg-gray-100" aria-label="Atualizando catálogo">
+              <div
+                className="mb-4 h-1 w-full overflow-hidden rounded-full bg-gray-100"
+                aria-label="Atualizando catálogo"
+              >
                 <div className="h-full w-1/3 animate-pulse bg-red-600" />
               </div>
             ) : null}
@@ -212,8 +248,18 @@ function ProductsPage() {
               <>
                 <CatalogProductGrid products={products} isLoading={false} />
                 {totalPages > 1 ? (
-                  <nav className="mt-12 flex flex-wrap items-center justify-center gap-2" aria-label="Paginação do catálogo">
-                    <Button type="button" variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => goToPage(currentPage - 1)} aria-label="Página anterior">
+                  <nav
+                    className="mt-12 flex flex-wrap items-center justify-center gap-2"
+                    aria-label="Paginação do catálogo"
+                  >
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage <= 1}
+                      onClick={() => goToPage(currentPage - 1)}
+                      aria-label="Página anterior"
+                    >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     {getVisiblePages(currentPage, totalPages).map((page, index, visiblePages) => {
@@ -228,14 +274,25 @@ function ProductsPage() {
                             size="sm"
                             onClick={() => goToPage(page)}
                             aria-current={page === currentPage ? "page" : undefined}
-                            className={page === currentPage ? "bg-red-600 text-white hover:bg-red-700" : undefined}
+                            className={
+                              page === currentPage
+                                ? "bg-red-600 text-white hover:bg-red-700"
+                                : undefined
+                            }
                           >
                             {page}
                           </Button>
                         </React.Fragment>
                       );
                     })}
-                    <Button type="button" variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => goToPage(currentPage + 1)} aria-label="Próxima página">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => goToPage(currentPage + 1)}
+                      aria-label="Próxima página"
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </nav>
@@ -243,8 +300,12 @@ function ProductsPage() {
               </>
             ) : (
               <div className="py-20 text-center">
-                <h2 className="text-xl font-bold uppercase text-gray-400">Nenhum produto encontrado</h2>
-                <p className="mt-2 text-gray-500">Ajuste a busca ou os filtros para tentar novamente.</p>
+                <h2 className="text-xl font-bold uppercase text-gray-400">
+                  Nenhum produto encontrado
+                </h2>
+                <p className="mt-2 text-gray-500">
+                  Ajuste a busca ou os filtros para tentar novamente.
+                </p>
               </div>
             )}
           </div>

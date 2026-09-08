@@ -89,14 +89,7 @@ export type AdminCatalogProductDetail = {
   brand: string | null;
   audience: string | null;
   commercialType:
-    | "torcedor"
-    | "feminino"
-    | "jogador"
-    | "retro"
-    | "infantil"
-    | "calcao"
-    | "basquete"
-    | "other";
+    "torcedor" | "feminino" | "jogador" | "retro" | "infantil" | "calcao" | "basquete" | "other";
   weightGrams: number | null;
   lengthCm: number | null;
   widthCm: number | null;

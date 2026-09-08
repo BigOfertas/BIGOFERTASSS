@@ -19,8 +19,12 @@ export function InstitutionalPage({
       <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
         <header className="border-b border-gray-200 pb-7">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-red-600">{eyebrow}</p>
-          <h1 className="mt-2 text-3xl font-black tracking-[-0.04em] text-gray-950 sm:text-4xl">{title}</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-600 sm:text-base">{description}</p>
+          <h1 className="mt-2 text-3xl font-black tracking-[-0.04em] text-gray-950 sm:text-4xl">
+            {title}
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-600 sm:text-base">
+            {description}
+          </p>
         </header>
         <div className="prose-store mt-8 space-y-8 text-sm leading-7 text-gray-600">{children}</div>
       </main>

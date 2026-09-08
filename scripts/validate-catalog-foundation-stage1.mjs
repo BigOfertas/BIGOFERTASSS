@@ -84,10 +84,7 @@ const checks = [
       !/'sku',\s*pr\.sku/.test(migration) &&
       !/product\.sku/.test(seo),
   ],
-  [
-    "sku nao participa mais da busca publica utilitaria",
-    !/product\.sku/.test(products),
-  ],
+  ["sku nao participa mais da busca publica utilitaria", !/product\.sku/.test(products)],
   [
     "detalhe publico nao solicita sku de produto ou variante",
     /PUBLIC_PRODUCT_COLUMNS/.test(detail) &&

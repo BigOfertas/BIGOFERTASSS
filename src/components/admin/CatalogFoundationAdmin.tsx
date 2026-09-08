@@ -227,7 +227,9 @@ export function CatalogFoundationAdmin() {
 
   const visibleTeams = useMemo(() => {
     const competition = taxonomyByKind.competitions.find(
-      (item) => item.name.toLocaleLowerCase("pt-BR") === productDraft.competition.toLocaleLowerCase("pt-BR"),
+      (item) =>
+        item.name.toLocaleLowerCase("pt-BR") ===
+        productDraft.competition.toLocaleLowerCase("pt-BR"),
     );
     if (!competition) return taxonomyByKind.teams;
     const linked = taxonomyByKind.teams.filter((team) =>
@@ -387,7 +389,9 @@ export function CatalogFoundationAdmin() {
       await loadDetail(detail.id);
       setMessage("Imagem principal atualizada.");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Não foi possível atualizar a imagem principal.");
+      setError(
+        cause instanceof Error ? cause.message : "Não foi possível atualizar a imagem principal.",
+      );
     } finally {
       setBusyImageId(null);
     }
@@ -411,10 +415,13 @@ export function CatalogFoundationAdmin() {
     <section className="space-y-6">
       <div className="flex flex-col gap-4 border-b border-gray-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-red-600">Catálogo definitivo</p>
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-red-600">
+            Catálogo definitivo
+          </p>
           <h1 className="mt-1 text-3xl font-black tracking-tight text-gray-950">Produtos</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">
-            Busca e paginação no banco, taxonomia aberta, variações reais e imagens gerais ou por versão.
+            Busca e paginação no banco, taxonomia aberta, variações reais e imagens gerais ou por
+            versão.
           </p>
         </div>
         <button
@@ -426,8 +433,19 @@ export function CatalogFoundationAdmin() {
         </button>
       </div>
 
-      {message ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">{message}</p> : null}
-      {error ? <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p> : null}
+      {message ? (
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+        >
+          {error}
+        </p>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
         <aside className="h-fit rounded-xl border border-gray-200 bg-white p-4 xl:sticky xl:top-24">
@@ -473,7 +491,9 @@ export function CatalogFoundationAdmin() {
 
           <div className="mt-4 min-h-40 space-y-2">
             {loadingList ? (
-              <div className="flex items-center gap-2 py-8 text-sm text-gray-500"><LoaderCircle className="h-4 w-4 animate-spin" /> Carregando...</div>
+              <div className="flex items-center gap-2 py-8 text-sm text-gray-500">
+                <LoaderCircle className="h-4 w-4 animate-spin" /> Carregando...
+              </div>
             ) : catalog?.items.length ? (
               catalog.items.map((product) => (
                 <button
@@ -484,7 +504,8 @@ export function CatalogFoundationAdmin() {
                 >
                   <p className="line-clamp-2 text-sm font-bold text-gray-950">{product.name}</p>
                   <p className="mt-1 text-[11px] text-gray-500">
-                    {product.variantCount} var. · {product.readyImageCount} imagens · {product.status}
+                    {product.variantCount} var. · {product.readyImageCount} imagens ·{" "}
+                    {product.status}
                   </p>
                 </button>
               ))
@@ -494,69 +515,661 @@ export function CatalogFoundationAdmin() {
           </div>
 
           <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500">
-            <button type="button" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="inline-flex h-8 items-center rounded border px-2 disabled:opacity-40"><ChevronLeft className="h-4 w-4" /></button>
-            <span>{catalog?.total ?? 0} produtos · pág. {catalog?.page ?? page}/{Math.max(1, catalog?.totalPages ?? 1)}</span>
-            <button type="button" disabled={!catalog || page >= catalog.totalPages} onClick={() => setPage((value) => value + 1)} className="inline-flex h-8 items-center rounded border px-2 disabled:opacity-40"><ChevronRight className="h-4 w-4" /></button>
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((value) => Math.max(1, value - 1))}
+              className="inline-flex h-8 items-center rounded border px-2 disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span>
+              {catalog?.total ?? 0} produtos · pág. {catalog?.page ?? page}/
+              {Math.max(1, catalog?.totalPages ?? 1)}
+            </span>
+            <button
+              type="button"
+              disabled={!catalog || page >= catalog.totalPages}
+              onClick={() => setPage((value) => value + 1)}
+              className="inline-flex h-8 items-center rounded border px-2 disabled:opacity-40"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
         </aside>
 
         <div className="min-w-0 space-y-6">
           {loadingDetail ? (
-            <div className="flex min-h-60 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500"><LoaderCircle className="mr-2 h-5 w-5 animate-spin" /> Carregando produto...</div>
+            <div className="flex min-h-60 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500">
+              <LoaderCircle className="mr-2 h-5 w-5 animate-spin" /> Carregando produto...
+            </div>
           ) : detail || selectedId === null ? (
             <>
               <div className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-xl font-black text-gray-950">{detail ? "Editar produto" : "Novo produto"}</h2>
-                    <p className="mt-1 text-xs text-gray-500">Novas seleções, clubes, marcas e temporadas podem ser digitados livremente; passam a fazer parte da taxonomia após salvar.</p>
+                    <h2 className="text-xl font-black text-gray-950">
+                      {detail ? "Editar produto" : "Novo produto"}
+                    </h2>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Novas seleções, clubes, marcas e temporadas podem ser digitados livremente;
+                      passam a fazer parte da taxonomia após salvar.
+                    </p>
                   </div>
-                  <button type="button" disabled={saving} onClick={() => void saveProduct()} className="inline-flex h-10 items-center rounded-lg bg-gray-950 px-4 text-sm font-bold text-white hover:bg-red-600 disabled:opacity-50"><Save className="mr-2 h-4 w-4" /> Salvar</button>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => void saveProduct()}
+                    className="inline-flex h-10 items-center rounded-lg bg-gray-950 px-4 text-sm font-bold text-white hover:bg-red-600 disabled:opacity-50"
+                  >
+                    <Save className="mr-2 h-4 w-4" /> Salvar
+                  </button>
                 </div>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <label className="text-sm font-semibold md:col-span-2">Nome<input value={productDraft.name} onChange={(event) => setProductDraft({ ...productDraft, name: event.target.value })} className={fieldClassName()} /></label>
-                  <label className="text-sm font-semibold md:col-span-2">Descrição<textarea value={productDraft.description} onChange={(event) => setProductDraft({ ...productDraft, description: event.target.value })} className="mt-1 min-h-24 w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-500" /></label>
-                  <label className="text-sm font-semibold">Preço<input inputMode="decimal" value={productDraft.price} onChange={(event) => setProductDraft({ ...productDraft, price: event.target.value })} className={fieldClassName()} /></label>
-                  <label className="text-sm font-semibold">Preço promocional<input inputMode="decimal" value={productDraft.promotionalPrice} onChange={(event) => setProductDraft({ ...productDraft, promotionalPrice: event.target.value })} className={fieldClassName()} /></label>
-                  <label className="text-sm font-semibold">Status<select value={productDraft.status} onChange={(event) => setProductDraft({ ...productDraft, status: event.target.value as AdminCatalogStatus })} className={fieldClassName()}><option value="draft">Rascunho</option><option value="active">Ativo</option><option value="inactive">Inativo</option><option value="archived">Arquivado</option></select></label>
-                  <label className="text-sm font-semibold">Categoria<select value={productDraft.primaryCategoryId} onChange={(event) => setProductDraft({ ...productDraft, primaryCategoryId: event.target.value })} className={fieldClassName()}><option value="">Sem categoria</option>{(taxonomy?.categories ?? []).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+                  <label className="text-sm font-semibold md:col-span-2">
+                    Nome
+                    <input
+                      value={productDraft.name}
+                      onChange={(event) =>
+                        setProductDraft({ ...productDraft, name: event.target.value })
+                      }
+                      className={fieldClassName()}
+                    />
+                  </label>
+                  <label className="text-sm font-semibold md:col-span-2">
+                    Descrição
+                    <textarea
+                      value={productDraft.description}
+                      onChange={(event) =>
+                        setProductDraft({ ...productDraft, description: event.target.value })
+                      }
+                      className="mt-1 min-h-24 w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-500"
+                    />
+                  </label>
+                  <label className="text-sm font-semibold">
+                    Preço
+                    <input
+                      inputMode="decimal"
+                      value={productDraft.price}
+                      onChange={(event) =>
+                        setProductDraft({ ...productDraft, price: event.target.value })
+                      }
+                      className={fieldClassName()}
+                    />
+                  </label>
+                  <label className="text-sm font-semibold">
+                    Preço promocional
+                    <input
+                      inputMode="decimal"
+                      value={productDraft.promotionalPrice}
+                      onChange={(event) =>
+                        setProductDraft({ ...productDraft, promotionalPrice: event.target.value })
+                      }
+                      className={fieldClassName()}
+                    />
+                  </label>
+                  <label className="text-sm font-semibold">
+                    Status
+                    <select
+                      value={productDraft.status}
+                      onChange={(event) =>
+                        setProductDraft({
+                          ...productDraft,
+                          status: event.target.value as AdminCatalogStatus,
+                        })
+                      }
+                      className={fieldClassName()}
+                    >
+                      <option value="draft">Rascunho</option>
+                      <option value="active">Ativo</option>
+                      <option value="inactive">Inativo</option>
+                      <option value="archived">Arquivado</option>
+                    </select>
+                  </label>
+                  <label className="text-sm font-semibold">
+                    Categoria
+                    <select
+                      value={productDraft.primaryCategoryId}
+                      onChange={(event) =>
+                        setProductDraft({ ...productDraft, primaryCategoryId: event.target.value })
+                      }
+                      className={fieldClassName()}
+                    >
+                      <option value="">Sem categoria</option>
+                      {(taxonomy?.categories ?? []).map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-                  <label className="text-sm font-semibold">Tipo de competição<select value={productDraft.competitionField} onChange={(event) => setProductDraft({ ...productDraft, competitionField: event.target.value as "campeonato" | "liga" })} className={fieldClassName()}><option value="campeonato">Campeonato / seleção</option><option value="liga">Liga</option></select></label>
-                  <label className="text-sm font-semibold">Competição<input list="catalog-competitions" value={productDraft.competition} onChange={(event) => setProductDraft({ ...productDraft, competition: event.target.value })} className={fieldClassName()} /><datalist id="catalog-competitions">{taxonomyByKind.competitions.map((item) => <option key={item.id} value={item.name} />)}</datalist></label>
-                  <label className="text-sm font-semibold">Time / seleção<input list="catalog-teams" value={productDraft.time} onChange={(event) => setProductDraft({ ...productDraft, time: event.target.value })} className={fieldClassName()} /><datalist id="catalog-teams">{visibleTeams.map((item) => <option key={item.id} value={item.name} />)}</datalist></label>
-                  <label className="text-sm font-semibold">Temporada<input list="catalog-seasons" value={productDraft.season} onChange={(event) => setProductDraft({ ...productDraft, season: event.target.value })} className={fieldClassName()} /><datalist id="catalog-seasons">{taxonomyByKind.seasons.map((item) => <option key={item.id} value={item.name} />)}</datalist></label>
-                  <label className="text-sm font-semibold">Marca<input list="catalog-brands" value={productDraft.brand} onChange={(event) => setProductDraft({ ...productDraft, brand: event.target.value })} className={fieldClassName()} /><datalist id="catalog-brands">{taxonomyByKind.brands.map((item) => <option key={item.id} value={item.name} />)}</datalist></label>
-                  <label className="text-sm font-semibold">Público<input list="catalog-audiences" value={productDraft.audience} onChange={(event) => setProductDraft({ ...productDraft, audience: event.target.value })} className={fieldClassName()} placeholder="Masculino, Feminino, Kids..." /><datalist id="catalog-audiences">{taxonomyByKind.audiences.map((item) => <option key={item.id} value={item.name} />)}</datalist></label>
-                  <label className="text-sm font-semibold">Modelo comercial<select value={productDraft.commercialType} onChange={(event) => setProductDraft({ ...productDraft, commercialType: event.target.value as AdminCatalogProductDetail["commercialType"] })} className={fieldClassName()}>{COMMERCIAL_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                  <label className="text-sm font-semibold">
+                    Tipo de competição
+                    <select
+                      value={productDraft.competitionField}
+                      onChange={(event) =>
+                        setProductDraft({
+                          ...productDraft,
+                          competitionField: event.target.value as "campeonato" | "liga",
+                        })
+                      }
+                      className={fieldClassName()}
+                    >
+                      <option value="campeonato">Campeonato / seleção</option>
+                      <option value="liga">Liga</option>
+                    </select>
+                  </label>
+                  <label className="text-sm font-semibold">
+                    Competição
+                    <input
+                      list="catalog-competitions"
+                      value={productDraft.competition}
+                      onChange={(event) =>
+                        setProductDraft({ ...productDraft, competition: event.target.value })
+                      }
+                      className={fieldClassName()}
+                    />
+                    <datalist id="catalog-competitions">
+                      {taxonomyByKind.competitions.map((item) => (
+                        <option key={item.id} value={item.name} />
+                      ))}
+                    </datalist>
+                  </label>
+                  <label className="text-sm font-semibold">
+                    Time / seleção
+                    <input
+                      list="catalog-teams"
+                      value={productDraft.time}
+                      onChange={(event) =>
+                        setProductDraft({ ...productDraft, time: event.target.value })
+                      }
+                      className={fieldClassName()}
+                    />
+                    <datalist id="catalog-teams">
+                      {visibleTeams.map((item) => (
+                        <option key={item.id} value={item.name} />
+                      ))}
+                    </datalist>
+                  </label>
+                  <label className="text-sm font-semibold">
+                    Temporada
+                    <input
+                      list="catalog-seasons"
+                      value={productDraft.season}
+                      onChange={(event) =>
+                        setProductDraft({ ...productDraft, season: event.target.value })
+                      }
+                      className={fieldClassName()}
+                    />
+                    <datalist id="catalog-seasons">
+                      {taxonomyByKind.seasons.map((item) => (
+                        <option key={item.id} value={item.name} />
+                      ))}
+                    </datalist>
+                  </label>
+                  <label className="text-sm font-semibold">
+                    Marca
+                    <input
+                      list="catalog-brands"
+                      value={productDraft.brand}
+                      onChange={(event) =>
+                        setProductDraft({ ...productDraft, brand: event.target.value })
+                      }
+                      className={fieldClassName()}
+                    />
+                    <datalist id="catalog-brands">
+                      {taxonomyByKind.brands.map((item) => (
+                        <option key={item.id} value={item.name} />
+                      ))}
+                    </datalist>
+                  </label>
+                  <label className="text-sm font-semibold">
+                    Público
+                    <input
+                      list="catalog-audiences"
+                      value={productDraft.audience}
+                      onChange={(event) =>
+                        setProductDraft({ ...productDraft, audience: event.target.value })
+                      }
+                      className={fieldClassName()}
+                      placeholder="Masculino, Feminino, Kids..."
+                    />
+                    <datalist id="catalog-audiences">
+                      {taxonomyByKind.audiences.map((item) => (
+                        <option key={item.id} value={item.name} />
+                      ))}
+                    </datalist>
+                  </label>
+                  <label className="text-sm font-semibold">
+                    Modelo comercial
+                    <select
+                      value={productDraft.commercialType}
+                      onChange={(event) =>
+                        setProductDraft({
+                          ...productDraft,
+                          commercialType: event.target
+                            .value as AdminCatalogProductDetail["commercialType"],
+                        })
+                      }
+                      className={fieldClassName()}
+                    >
+                      {COMMERCIAL_TYPES.map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-                  <label className="text-sm font-semibold">Peso (g)<input inputMode="numeric" value={productDraft.weightGrams} onChange={(event) => setProductDraft({ ...productDraft, weightGrams: event.target.value })} className={fieldClassName()} /></label>
-                  <div className="grid grid-cols-3 gap-2 md:col-span-2"><label className="text-xs font-semibold">Comprimento (cm)<input value={productDraft.lengthCm} onChange={(event) => setProductDraft({ ...productDraft, lengthCm: event.target.value })} className={fieldClassName()} /></label><label className="text-xs font-semibold">Largura (cm)<input value={productDraft.widthCm} onChange={(event) => setProductDraft({ ...productDraft, widthCm: event.target.value })} className={fieldClassName()} /></label><label className="text-xs font-semibold">Altura (cm)<input value={productDraft.heightCm} onChange={(event) => setProductDraft({ ...productDraft, heightCm: event.target.value })} className={fieldClassName()} /></label></div>
+                  <label className="text-sm font-semibold">
+                    Peso (g)
+                    <input
+                      inputMode="numeric"
+                      value={productDraft.weightGrams}
+                      onChange={(event) =>
+                        setProductDraft({ ...productDraft, weightGrams: event.target.value })
+                      }
+                      className={fieldClassName()}
+                    />
+                  </label>
+                  <div className="grid grid-cols-3 gap-2 md:col-span-2">
+                    <label className="text-xs font-semibold">
+                      Comprimento (cm)
+                      <input
+                        value={productDraft.lengthCm}
+                        onChange={(event) =>
+                          setProductDraft({ ...productDraft, lengthCm: event.target.value })
+                        }
+                        className={fieldClassName()}
+                      />
+                    </label>
+                    <label className="text-xs font-semibold">
+                      Largura (cm)
+                      <input
+                        value={productDraft.widthCm}
+                        onChange={(event) =>
+                          setProductDraft({ ...productDraft, widthCm: event.target.value })
+                        }
+                        className={fieldClassName()}
+                      />
+                    </label>
+                    <label className="text-xs font-semibold">
+                      Altura (cm)
+                      <input
+                        value={productDraft.heightCm}
+                        onChange={(event) =>
+                          setProductDraft({ ...productDraft, heightCm: event.target.value })
+                        }
+                        className={fieldClassName()}
+                      />
+                    </label>
+                  </div>
                 </div>
-                {productDraft.status === "active" && (detail?.images.length ?? 0) === 0 ? <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">Pode salvar como ativo, mas ele não será exibido publicamente até possuir ao menos uma imagem pronta.</p> : null}
+                {productDraft.status === "active" && (detail?.images.length ?? 0) === 0 ? (
+                  <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                    Pode salvar como ativo, mas ele não será exibido publicamente até possuir ao
+                    menos uma imagem pronta.
+                  </p>
+                ) : null}
               </div>
 
               {detail ? (
                 <>
                   <div className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6">
-                    <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black text-gray-950">Variações</h2><p className="mt-1 text-sm text-gray-500">Um produto-base pode ter várias versões sem ganhar outro código comercial.</p></div><button type="button" onClick={() => setVariantDraft(variantToDraft())} className="inline-flex h-9 items-center rounded-lg border border-gray-300 px-3 text-xs font-bold"><Plus className="mr-1.5 h-4 w-4" /> Nova variação</button></div>
-                    <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{detail.variants.map((variant) => <button key={variant.id} type="button" onClick={() => setVariantDraft(variantToDraft(variant))} className="rounded-lg border border-gray-200 p-3 text-left hover:border-red-300"><p className="font-bold text-gray-950">{variant.name || "Sem nome"}{variant.isDefault ? " · padrão" : ""}</p><p className="mt-1 text-xs text-gray-500">{variant.options.map((option) => `${option.name}: ${option.value}`).join(" · ") || "Sem opções"}</p><p className="mt-1 text-[11px] text-gray-400">{variant.status} · estoque {variant.stockQuantity}</p></button>)}</div>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-xl font-black text-gray-950">Variações</h2>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Um produto-base pode ter várias versões sem ganhar outro código comercial.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setVariantDraft(variantToDraft())}
+                        className="inline-flex h-9 items-center rounded-lg border border-gray-300 px-3 text-xs font-bold"
+                      >
+                        <Plus className="mr-1.5 h-4 w-4" /> Nova variação
+                      </button>
+                    </div>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      {detail.variants.map((variant) => (
+                        <button
+                          key={variant.id}
+                          type="button"
+                          onClick={() => setVariantDraft(variantToDraft(variant))}
+                          className="rounded-lg border border-gray-200 p-3 text-left hover:border-red-300"
+                        >
+                          <p className="font-bold text-gray-950">
+                            {variant.name || "Sem nome"}
+                            {variant.isDefault ? " · padrão" : ""}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {variant.options
+                              .map((option) => `${option.name}: ${option.value}`)
+                              .join(" · ") || "Sem opções"}
+                          </p>
+                          <p className="mt-1 text-[11px] text-gray-400">
+                            {variant.status} · estoque {variant.stockQuantity}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
 
-                    {variantDraft ? <div className="mt-5 border-t border-gray-100 pt-5"><div className="grid gap-4 md:grid-cols-2"><label className="text-sm font-semibold">Nome da variação<input value={variantDraft.name} onChange={(event) => setVariantDraft({ ...variantDraft, name: event.target.value })} className={fieldClassName()} /></label><label className="text-sm font-semibold">Status<select value={variantDraft.status} onChange={(event) => setVariantDraft({ ...variantDraft, status: event.target.value as AdminCatalogVariant["status"] })} className={fieldClassName()}><option value="active">Ativa</option><option value="inactive">Inativa</option><option value="archived">Arquivada</option></select></label><label className="text-sm font-semibold">Preço próprio (opcional)<input value={variantDraft.priceOverride} onChange={(event) => setVariantDraft({ ...variantDraft, priceOverride: event.target.value })} className={fieldClassName()} /></label><label className="text-sm font-semibold">Promocional próprio<input value={variantDraft.promotionalPriceOverride} onChange={(event) => setVariantDraft({ ...variantDraft, promotionalPriceOverride: event.target.value })} className={fieldClassName()} /></label><label className="text-sm font-semibold">Estoque<input inputMode="numeric" value={variantDraft.stockQuantity} onChange={(event) => setVariantDraft({ ...variantDraft, stockQuantity: event.target.value })} className={fieldClassName()} /></label><label className="mt-6 flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={variantDraft.isDefault} onChange={(event) => setVariantDraft({ ...variantDraft, isDefault: event.target.checked })} /> Variação padrão</label></div>
-                    <div className="mt-5"><div className="flex items-center justify-between"><h3 className="font-black text-gray-950">Opções desta versão</h3><button type="button" onClick={() => setVariantDraft({ ...variantDraft, options: [...variantDraft.options, { name: "", kind: "other", value: "" }] })} className="text-xs font-bold text-red-600">+ opção</button></div><div className="mt-3 space-y-2">{variantDraft.options.map((option, index) => <div key={`${option.optionId ?? "new"}-${index}`} className="grid gap-2 sm:grid-cols-[1fr_130px_1fr_auto]"><input placeholder="Ex.: Versão" value={option.name} onChange={(event) => { const options = [...variantDraft.options]; options[index] = { ...option, name: event.target.value }; setVariantDraft({ ...variantDraft, options }); }} className="h-9 rounded-md border border-gray-300 px-2 text-sm" /><select value={option.kind} onChange={(event) => { const options = [...variantDraft.options]; options[index] = { ...option, kind: event.target.value as AdminVariantOption["kind"] }; setVariantDraft({ ...variantDraft, options }); }} className="h-9 rounded-md border border-gray-300 bg-white px-2 text-sm">{OPTION_KINDS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><input placeholder="Ex.: Regata + short" value={option.value} onChange={(event) => { const options = [...variantDraft.options]; options[index] = { ...option, value: event.target.value }; setVariantDraft({ ...variantDraft, options }); }} className="h-9 rounded-md border border-gray-300 px-2 text-sm" /><button type="button" aria-label="Remover opção" onClick={() => setVariantDraft({ ...variantDraft, options: variantDraft.options.filter((_, optionIndex) => optionIndex !== index) })} className="h-9 rounded-md border border-gray-200 px-2 text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button></div>)}</div></div>
-                    <div className="mt-5 flex gap-2"><button type="button" disabled={saving} onClick={() => void saveVariant()} className="h-10 rounded-lg bg-red-600 px-4 text-sm font-bold text-white disabled:opacity-50">Salvar variação</button><button type="button" onClick={() => setVariantDraft(null)} className="h-10 rounded-lg border border-gray-300 px-4 text-sm font-bold">Cancelar</button></div></div> : null}
+                    {variantDraft ? (
+                      <div className="mt-5 border-t border-gray-100 pt-5">
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <label className="text-sm font-semibold">
+                            Nome da variação
+                            <input
+                              value={variantDraft.name}
+                              onChange={(event) =>
+                                setVariantDraft({ ...variantDraft, name: event.target.value })
+                              }
+                              className={fieldClassName()}
+                            />
+                          </label>
+                          <label className="text-sm font-semibold">
+                            Status
+                            <select
+                              value={variantDraft.status}
+                              onChange={(event) =>
+                                setVariantDraft({
+                                  ...variantDraft,
+                                  status: event.target.value as AdminCatalogVariant["status"],
+                                })
+                              }
+                              className={fieldClassName()}
+                            >
+                              <option value="active">Ativa</option>
+                              <option value="inactive">Inativa</option>
+                              <option value="archived">Arquivada</option>
+                            </select>
+                          </label>
+                          <label className="text-sm font-semibold">
+                            Preço próprio (opcional)
+                            <input
+                              value={variantDraft.priceOverride}
+                              onChange={(event) =>
+                                setVariantDraft({
+                                  ...variantDraft,
+                                  priceOverride: event.target.value,
+                                })
+                              }
+                              className={fieldClassName()}
+                            />
+                          </label>
+                          <label className="text-sm font-semibold">
+                            Promocional próprio
+                            <input
+                              value={variantDraft.promotionalPriceOverride}
+                              onChange={(event) =>
+                                setVariantDraft({
+                                  ...variantDraft,
+                                  promotionalPriceOverride: event.target.value,
+                                })
+                              }
+                              className={fieldClassName()}
+                            />
+                          </label>
+                          <label className="text-sm font-semibold">
+                            Estoque
+                            <input
+                              inputMode="numeric"
+                              value={variantDraft.stockQuantity}
+                              onChange={(event) =>
+                                setVariantDraft({
+                                  ...variantDraft,
+                                  stockQuantity: event.target.value,
+                                })
+                              }
+                              className={fieldClassName()}
+                            />
+                          </label>
+                          <label className="mt-6 flex items-center gap-2 text-sm font-semibold">
+                            <input
+                              type="checkbox"
+                              checked={variantDraft.isDefault}
+                              onChange={(event) =>
+                                setVariantDraft({
+                                  ...variantDraft,
+                                  isDefault: event.target.checked,
+                                })
+                              }
+                            />{" "}
+                            Variação padrão
+                          </label>
+                        </div>
+                        <div className="mt-5">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-black text-gray-950">Opções desta versão</h3>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setVariantDraft({
+                                  ...variantDraft,
+                                  options: [
+                                    ...variantDraft.options,
+                                    { name: "", kind: "other", value: "" },
+                                  ],
+                                })
+                              }
+                              className="text-xs font-bold text-red-600"
+                            >
+                              + opção
+                            </button>
+                          </div>
+                          <div className="mt-3 space-y-2">
+                            {variantDraft.options.map((option, index) => (
+                              <div
+                                key={`${option.optionId ?? "new"}-${index}`}
+                                className="grid gap-2 sm:grid-cols-[1fr_130px_1fr_auto]"
+                              >
+                                <input
+                                  placeholder="Ex.: Versão"
+                                  value={option.name}
+                                  onChange={(event) => {
+                                    const options = [...variantDraft.options];
+                                    options[index] = { ...option, name: event.target.value };
+                                    setVariantDraft({ ...variantDraft, options });
+                                  }}
+                                  className="h-9 rounded-md border border-gray-300 px-2 text-sm"
+                                />
+                                <select
+                                  value={option.kind}
+                                  onChange={(event) => {
+                                    const options = [...variantDraft.options];
+                                    options[index] = {
+                                      ...option,
+                                      kind: event.target.value as AdminVariantOption["kind"],
+                                    };
+                                    setVariantDraft({ ...variantDraft, options });
+                                  }}
+                                  className="h-9 rounded-md border border-gray-300 bg-white px-2 text-sm"
+                                >
+                                  {OPTION_KINDS.map(([value, label]) => (
+                                    <option key={value} value={value}>
+                                      {label}
+                                    </option>
+                                  ))}
+                                </select>
+                                <input
+                                  placeholder="Ex.: Regata + short"
+                                  value={option.value}
+                                  onChange={(event) => {
+                                    const options = [...variantDraft.options];
+                                    options[index] = { ...option, value: event.target.value };
+                                    setVariantDraft({ ...variantDraft, options });
+                                  }}
+                                  className="h-9 rounded-md border border-gray-300 px-2 text-sm"
+                                />
+                                <button
+                                  type="button"
+                                  aria-label="Remover opção"
+                                  onClick={() =>
+                                    setVariantDraft({
+                                      ...variantDraft,
+                                      options: variantDraft.options.filter(
+                                        (_, optionIndex) => optionIndex !== index,
+                                      ),
+                                    })
+                                  }
+                                  className="h-9 rounded-md border border-gray-200 px-2 text-gray-400 hover:text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="mt-5 flex gap-2">
+                          <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => void saveVariant()}
+                            className="h-10 rounded-lg bg-red-600 px-4 text-sm font-bold text-white disabled:opacity-50"
+                          >
+                            Salvar variação
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setVariantDraft(null)}
+                            className="h-10 rounded-lg border border-gray-300 px-4 text-sm font-bold"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="text-xl font-black text-gray-950">Imagens gerais e por variação</h2><p className="mt-1 text-sm text-gray-500">Envie para a galeria geral ou diretamente para uma versão específica.</p></div><div className="flex flex-wrap gap-2"><select value={uploadVariantId} onChange={(event) => setUploadVariantId(event.target.value)} className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm"><option value="">Galeria geral</option>{detail.variants.filter((variant) => variant.status !== "archived").map((variant) => <option key={variant.id} value={variant.id}>{variant.name || "Variação"}</option>)}</select><label className={`inline-flex h-10 items-center rounded-lg px-4 text-sm font-bold ${uploading ? "bg-gray-200 text-gray-500" : "cursor-pointer bg-red-600 text-white hover:bg-red-700"}`}>{uploading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <ImagePlus className="mr-2 h-4 w-4" />}{uploading ? "Enviando" : "Adicionar imagens"}<input type="file" multiple accept={ADMIN_IMAGE_ACCEPT} disabled={uploading} onChange={(event) => void handleImages(event)} className="sr-only" /></label></div></div>
-                    <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{detail.images.map((image) => { const url = buildR2PublicImageUrl(image.storageKey); const variant = detail.variants.find((item) => item.id === image.variantId); return <article key={image.id} className="overflow-hidden rounded-lg border border-gray-200"><div className="flex aspect-[4/5] items-center justify-center bg-gray-50">{url ? <img src={url} alt={image.altText ?? detail.name} loading="lazy" className="h-full w-full object-contain p-2" /> : <span className="text-xs text-gray-400">Imagem</span>}</div><div className="space-y-2 p-3"><p className="truncate text-xs font-bold text-gray-900">{variant?.name ?? "Galeria geral"}{image.isPrimary ? " · principal" : ""}</p><select value={image.variantId ?? ""} disabled={busyImageId === image.id} onChange={(event) => void assignImage(image.id, event.target.value || null)} className="h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs"><option value="">Galeria geral</option>{detail.variants.map((item) => <option key={item.id} value={item.id}>{item.name || "Variação"}</option>)}</select><div className="flex gap-2"><button type="button" disabled={busyImageId === image.id} onClick={() => void makePrimary(image.id)} className="inline-flex h-8 flex-1 items-center justify-center rounded border border-gray-200 text-[11px] font-bold hover:text-red-600"><Star className="mr-1 h-3.5 w-3.5" /> Principal</button><button type="button" disabled={busyImageId === image.id} onClick={() => void removeImage(image.id)} className="inline-flex h-8 w-9 items-center justify-center rounded border border-gray-200 text-gray-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button></div></div></article>; })}</div>
-                    {detail.images.length === 0 ? <p className="mt-5 rounded-lg border border-dashed border-gray-300 py-10 text-center text-sm text-gray-500">Nenhuma imagem pronta ainda.</p> : null}
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <h2 className="text-xl font-black text-gray-950">
+                          Imagens gerais e por variação
+                        </h2>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Envie para a galeria geral ou diretamente para uma versão específica.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <select
+                          value={uploadVariantId}
+                          onChange={(event) => setUploadVariantId(event.target.value)}
+                          className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm"
+                        >
+                          <option value="">Galeria geral</option>
+                          {detail.variants
+                            .filter((variant) => variant.status !== "archived")
+                            .map((variant) => (
+                              <option key={variant.id} value={variant.id}>
+                                {variant.name || "Variação"}
+                              </option>
+                            ))}
+                        </select>
+                        <label
+                          className={`inline-flex h-10 items-center rounded-lg px-4 text-sm font-bold ${uploading ? "bg-gray-200 text-gray-500" : "cursor-pointer bg-red-600 text-white hover:bg-red-700"}`}
+                        >
+                          {uploading ? (
+                            <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <ImagePlus className="mr-2 h-4 w-4" />
+                          )}
+                          {uploading ? "Enviando" : "Adicionar imagens"}
+                          <input
+                            type="file"
+                            multiple
+                            accept={ADMIN_IMAGE_ACCEPT}
+                            disabled={uploading}
+                            onChange={(event) => void handleImages(event)}
+                            className="sr-only"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {detail.images.map((image) => {
+                        const url = buildR2PublicImageUrl(image.storageKey);
+                        const variant = detail.variants.find((item) => item.id === image.variantId);
+                        return (
+                          <article
+                            key={image.id}
+                            className="overflow-hidden rounded-lg border border-gray-200"
+                          >
+                            <div className="flex aspect-[4/5] items-center justify-center bg-gray-50">
+                              {url ? (
+                                <img
+                                  src={url}
+                                  alt={image.altText ?? detail.name}
+                                  loading="lazy"
+                                  className="h-full w-full object-contain p-2"
+                                />
+                              ) : (
+                                <span className="text-xs text-gray-400">Imagem</span>
+                              )}
+                            </div>
+                            <div className="space-y-2 p-3">
+                              <p className="truncate text-xs font-bold text-gray-900">
+                                {variant?.name ?? "Galeria geral"}
+                                {image.isPrimary ? " · principal" : ""}
+                              </p>
+                              <select
+                                value={image.variantId ?? ""}
+                                disabled={busyImageId === image.id}
+                                onChange={(event) =>
+                                  void assignImage(image.id, event.target.value || null)
+                                }
+                                className="h-8 w-full rounded border border-gray-300 bg-white px-2 text-xs"
+                              >
+                                <option value="">Galeria geral</option>
+                                {detail.variants.map((item) => (
+                                  <option key={item.id} value={item.id}>
+                                    {item.name || "Variação"}
+                                  </option>
+                                ))}
+                              </select>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  disabled={busyImageId === image.id}
+                                  onClick={() => void makePrimary(image.id)}
+                                  className="inline-flex h-8 flex-1 items-center justify-center rounded border border-gray-200 text-[11px] font-bold hover:text-red-600"
+                                >
+                                  <Star className="mr-1 h-3.5 w-3.5" /> Principal
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={busyImageId === image.id}
+                                  onClick={() => void removeImage(image.id)}
+                                  className="inline-flex h-8 w-9 items-center justify-center rounded border border-gray-200 text-gray-400 hover:text-red-600"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                    {detail.images.length === 0 ? (
+                      <p className="mt-5 rounded-lg border border-dashed border-gray-300 py-10 text-center text-sm text-gray-500">
+                        Nenhuma imagem pronta ainda.
+                      </p>
+                    ) : null}
                   </div>
                 </>
               ) : null}
             </>
           ) : (
-            <div className="flex min-h-72 flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center"><RefreshCw className="h-6 w-6 text-gray-300" /><p className="mt-3 font-bold text-gray-900">Selecione um produto</p><p className="mt-1 text-sm text-gray-500">Use a lista paginada ao lado para editar.</p></div>
+            <div className="flex min-h-72 flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
+              <RefreshCw className="h-6 w-6 text-gray-300" />
+              <p className="mt-3 font-bold text-gray-900">Selecione um produto</p>
+              <p className="mt-1 text-sm text-gray-500">
+                Use a lista paginada ao lado para editar.
+              </p>
+            </div>
           )}
         </div>
       </div>

@@ -63,7 +63,10 @@ export function ProductPurchaseAdmin() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    Promise.all([fetchPurchaseGlobal(), fetchPurchaseProductsPage({ query, page, pageSize: PAGE_SIZE })])
+    Promise.all([
+      fetchPurchaseGlobal(),
+      fetchPurchaseProductsPage({ query, page, pageSize: PAGE_SIZE }),
+    ])
       .then(([global, products]) => {
         if (!active) return;
         setGlobalDraft(global);
@@ -159,7 +162,8 @@ export function ProductPurchaseAdmin() {
           Tamanhos, personalização e patches
         </h2>
         <p className="mt-2 text-sm leading-6 text-gray-500">
-          As regras continuam globais, mas a seleção de produtos agora é buscada e paginada no banco.
+          As regras continuam globais, mas a seleção de produtos agora é buscada e paginada no
+          banco.
         </p>
       </div>
 

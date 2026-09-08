@@ -8,14 +8,7 @@ import { Input } from "@/components/ui/input";
 import type { CatalogFacetOption, CatalogFacets, CatalogQuery } from "@/lib/catalog";
 
 type FilterKey =
-  | "campeonato"
-  | "liga"
-  | "time"
-  | "category"
-  | "season"
-  | "brand"
-  | "audience"
-  | "commercialType";
+  "campeonato" | "liga" | "time" | "category" | "season" | "brand" | "audience" | "commercialType";
 
 interface ProductFiltersProps {
   facets: CatalogFacets;
@@ -149,15 +142,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
 
   const hasFilters = Boolean(
     search.campeonato ||
-      search.liga ||
-      search.time ||
-      search.category ||
-      search.season ||
-      search.brand ||
-      search.audience ||
-      search.commercialType ||
-      search.minPrice !== undefined ||
-      search.maxPrice !== undefined,
+    search.liga ||
+    search.time ||
+    search.category ||
+    search.season ||
+    search.brand ||
+    search.audience ||
+    search.commercialType ||
+    search.minPrice !== undefined ||
+    search.maxPrice !== undefined,
   );
 
   return (
@@ -177,20 +170,70 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
         ) : null}
       </div>
 
-      <FilterSection title="Categoria" items={facets.categories} currentValue={search.category} filterKey="category" />
-      <FilterSection title="Campeonato" items={facets.campeonatos} currentValue={search.campeonato} filterKey="campeonato" />
-      <FilterSection title="Liga" items={facets.ligas} currentValue={search.liga} filterKey="liga" emptyMessage="Nenhuma liga disponível para esta seleção" />
-      <FilterSection title="Time / seleção" items={facets.times} currentValue={search.time} filterKey="time" emptyMessage="Nenhum time ou seleção disponível" />
-      <FilterSection title="Temporada" items={facets.seasons} currentValue={search.season} filterKey="season" emptyMessage="Nenhuma temporada disponível" />
-      <FilterSection title="Marca" items={facets.brands} currentValue={search.brand} filterKey="brand" emptyMessage="Nenhuma marca disponível" />
-      <FilterSection title="Modelo" items={facets.commercialTypes} currentValue={search.commercialType} filterKey="commercialType" emptyMessage="Nenhum modelo disponível" />
-      <FilterSection title="Público" items={facets.audiences} currentValue={search.audience} filterKey="audience" emptyMessage="Nenhuma opção de público disponível" />
+      <FilterSection
+        title="Categoria"
+        items={facets.categories}
+        currentValue={search.category}
+        filterKey="category"
+      />
+      <FilterSection
+        title="Campeonato"
+        items={facets.campeonatos}
+        currentValue={search.campeonato}
+        filterKey="campeonato"
+      />
+      <FilterSection
+        title="Liga"
+        items={facets.ligas}
+        currentValue={search.liga}
+        filterKey="liga"
+        emptyMessage="Nenhuma liga disponível para esta seleção"
+      />
+      <FilterSection
+        title="Time / seleção"
+        items={facets.times}
+        currentValue={search.time}
+        filterKey="time"
+        emptyMessage="Nenhum time ou seleção disponível"
+      />
+      <FilterSection
+        title="Temporada"
+        items={facets.seasons}
+        currentValue={search.season}
+        filterKey="season"
+        emptyMessage="Nenhuma temporada disponível"
+      />
+      <FilterSection
+        title="Marca"
+        items={facets.brands}
+        currentValue={search.brand}
+        filterKey="brand"
+        emptyMessage="Nenhuma marca disponível"
+      />
+      <FilterSection
+        title="Modelo"
+        items={facets.commercialTypes}
+        currentValue={search.commercialType}
+        filterKey="commercialType"
+        emptyMessage="Nenhum modelo disponível"
+      />
+      <FilterSection
+        title="Público"
+        items={facets.audiences}
+        currentValue={search.audience}
+        filterKey="audience"
+        emptyMessage="Nenhuma opção de público disponível"
+      />
 
       <div className="mb-8">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-sm font-black uppercase tracking-wider text-gray-900">Preço</h3>
           {search.minPrice !== undefined || search.maxPrice !== undefined ? (
-            <button type="button" onClick={clearPrice} className="text-[10px] text-red-600 hover:text-black">
+            <button
+              type="button"
+              onClick={clearPrice}
+              className="text-[10px] text-red-600 hover:text-black"
+            >
               Limpar
             </button>
           ) : null}
@@ -213,7 +256,13 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
             className="h-9 text-xs"
           />
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={applyPrice} className="mt-2 w-full text-[10px] font-bold uppercase">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={applyPrice}
+          className="mt-2 w-full text-[10px] font-bold uppercase"
+        >
           Aplicar preço
         </Button>
       </div>

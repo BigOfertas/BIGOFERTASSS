@@ -78,7 +78,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center font-bold italic uppercase text-gray-300">
-              <span className="text-lg font-black tracking-[-0.06em] text-red-500/20">{BRAND.shortMark}</span>
+              <span className="text-lg font-black tracking-[-0.06em] text-red-500/20">
+                {BRAND.shortMark}
+              </span>
             </div>
           )}
         </div>
@@ -100,7 +102,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 {formattedOriginalPrice}
               </span>
             ) : null}
-            <span className="text-base font-black tracking-[-0.04em] text-gray-950 sm:text-xl">{formattedPrice}</span>
+            <span className="text-base font-black tracking-[-0.04em] text-gray-950 sm:text-xl">
+              {formattedPrice}
+            </span>
           </div>
         </div>
       </article>

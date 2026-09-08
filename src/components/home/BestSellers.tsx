@@ -40,7 +40,9 @@ const BestSellers: React.FC = () => {
           <h2 className="display-title mt-2">Lançamentos</h2>
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
-          <ProductCarousel itemCount={isLoading ? LOADING_SIZE : newestProducts.length}>{content}</ProductCarousel>
+          <ProductCarousel itemCount={isLoading ? LOADING_SIZE : newestProducts.length}>
+            {content}
+          </ProductCarousel>
         </div>
         {error ? <span className="sr-only">Não foi possível carregar os lançamentos.</span> : null}
       </div>

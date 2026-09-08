@@ -12,16 +12,31 @@ function PurchaseTermsPage() {
       description={`Estas condições resumem como funcionam os pedidos realizados na ${BRAND.officialName}.`}
     >
       <InstitutionalSection title="Produtos e escolhas">
-        <p>Confira modelo, tamanho, variação, personalização, patch, quantidade e endereço antes de finalizar. As opções disponíveis na página do produto fazem parte do pedido confirmado.</p>
+        <p>
+          Confira modelo, tamanho, variação, personalização, patch, quantidade e endereço antes de
+          finalizar. As opções disponíveis na página do produto fazem parte do pedido confirmado.
+        </p>
       </InstitutionalSection>
       <InstitutionalSection title="Preço e pagamento">
-        <p>O valor final é mostrado antes do pagamento e considera os itens, adicionais selecionados, descontos aplicáveis e entrega. O pedido segue para processamento após a confirmação do pagamento pelo meio disponibilizado no checkout.</p>
+        <p>
+          O valor final é mostrado antes do pagamento e considera os itens, adicionais selecionados,
+          descontos aplicáveis e entrega. O pedido segue para processamento após a confirmação do
+          pagamento pelo meio disponibilizado no checkout.
+        </p>
       </InstitutionalSection>
       <InstitutionalSection title="Produção e entrega">
-        <p>Algumas peças possuem período de preparação antes do envio. O site informa a previsão total durante a compra, separando preparação e transporte sempre que houver cotação para o CEP.</p>
+        <p>
+          Algumas peças possuem período de preparação antes do envio. O site informa a previsão
+          total durante a compra, separando preparação e transporte sempre que houver cotação para o
+          CEP.
+        </p>
       </InstitutionalSection>
       <InstitutionalSection title="Alterações e atendimento">
-        <p>Se perceber algum dado incorreto depois de concluir o pedido, entre em contato o quanto antes. Uma alteração só poderá ser feita enquanto for operacionalmente possível e sem contrariar direitos aplicáveis.</p>
+        <p>
+          Se perceber algum dado incorreto depois de concluir o pedido, entre em contato o quanto
+          antes. Uma alteração só poderá ser feita enquanto for operacionalmente possível e sem
+          contrariar direitos aplicáveis.
+        </p>
       </InstitutionalSection>
     </InstitutionalPage>
   );

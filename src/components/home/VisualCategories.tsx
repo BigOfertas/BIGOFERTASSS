@@ -54,10 +54,7 @@ export default function VisualCategories() {
 
         <div className="custom-scrollbar flex gap-4 overflow-x-auto pb-3 md:grid md:grid-cols-4 md:gap-5 md:overflow-visible md:pb-0 xl:grid-cols-7">
           {categories.map((category) => (
-            <div
-              key={category.slot}
-              className="aspect-[2/3] w-[164px] flex-shrink-0 md:w-auto"
-            >
+            <div key={category.slot} className="aspect-[2/3] w-[164px] flex-shrink-0 md:w-auto">
               <CategoryCard
                 name={category.name}
                 imageUrl={data?.[category.slot]?.url ?? null}
