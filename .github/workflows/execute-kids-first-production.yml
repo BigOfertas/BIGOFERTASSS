@@ -38,8 +38,8 @@ jobs:
       - name: Snapshot production invariants
         run: |
           mkdir -p .artifacts/kids-production
-          node <<'NODE'
-          const fs = require('node:fs');
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
           const ref = process.env.SUPABASE_PROJECT_ID;
           const token = process.env.SUPABASE_ACCESS_TOKEN;
           async function query(sql) {
@@ -89,8 +89,8 @@ jobs:
 
       - name: Guard validated release candidate
         run: |
-          node <<'NODE'
-          const fs = require('node:fs');
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
           const plan = JSON.parse(fs.readFileSync('.artifacts/kids-validated/catalog-pipeline-plan.json','utf8'));
           const fail = (code, detail='') => { throw new Error(`${code}${detail ? ': '+detail : ''}`); };
           if (plan.summary?.products !== 91 || plan.summary?.variants !== 91 || plan.summary?.images !== 455) fail('KIDS_RELEASE_COUNTS', JSON.stringify(plan.summary));
@@ -143,8 +143,8 @@ jobs:
 
       - name: Verify production catalog and preserved data
         run: |
-          node <<'NODE'
-          const fs = require('node:fs');
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
           const before = JSON.parse(fs.readFileSync('.artifacts/kids-production/before.json','utf8'));
           const ref = process.env.SUPABASE_PROJECT_ID;
           const token = process.env.SUPABASE_ACCESS_TOKEN;
