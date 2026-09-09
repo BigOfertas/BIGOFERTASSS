@@ -155,7 +155,14 @@ function parseTitle(title) {
   if (!version.inferred) confidence += 0.05;
   confidence = Math.min(0.99, Number(confidence.toFixed(2)));
 
-  const baseKey = [type, normalizeKey(entity || ""), season || "", model || "", audience.value]
+  const baseKey = [
+    type,
+    normalizeKey(entity || ""),
+    season || "",
+    model || "",
+    brand || "",
+    audience.value,
+  ]
     .filter(Boolean)
     .join("|");
 
