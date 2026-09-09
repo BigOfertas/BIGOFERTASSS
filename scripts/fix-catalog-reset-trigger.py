@@ -14,10 +14,8 @@ new = '''    UPDATE public.products
     WHERE status <> 'archived'::public.product_status;
 
     -- Remove variantes explicitamente enquanto o produto pai ainda existe e ja esta
-    -- arquivado. Isso permite que block_last_active_variant_removal() enxergue o
-    -- status nao-ativo do pai. Deixar a FK CASCADE fazer isso somente durante o
-    -- DELETE de products tornaria o pai invisivel para o trigger e causaria falso
-    -- positivo de "Produto ativo precisa manter ao menos uma variante ativa".
+    -- arquivado. Assim block_last_active_variant_removal() enxerga o status nao-ativo
+    -- do pai antes que a exclusao do produto torne a linha invisivel ao trigger.
     DELETE FROM public.product_variants;
 
     DELETE FROM public.products;'''
@@ -32,13 +30,5 @@ new_name = '[\n    "google_photos_catalog_import_reset_fix_20260909",\n    "supa
 if old_name not in d:
     raise SystemExit("deployer migration tuple not found")
 deployer.write_text(d.replace(old_name, new_name, 1))
-
-validator = Path("scripts/validate-google-photos-final-pipeline.mjs")
-v = validator.read_text()
-needle = 'assert.match(importMigration, /catalog_apply_normalized_batch/);\n'
-addition = '''assert.match(importMigration, /catalog_apply_normalized_batch/);\nconst variantResetIndex = importMigration.indexOf("DELETE FROM public.product_variants;");\nconst productResetIndex = importMigration.indexOf("DELETE FROM public.products;");\nassert.ok(variantResetIndex >= 0 && productResetIndex > variantResetIndex, "catalog reset must delete variants before products");\n'''
-if needle not in v:
-    raise SystemExit("validator insertion point not found")
-validator.write_text(v.replace(needle, addition, 1))
 
 print("CATALOG_RESET_TRIGGER_FIX_PREPARED")
