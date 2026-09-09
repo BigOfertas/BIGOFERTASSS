@@ -25,39 +25,45 @@ jobs:
           npx playwright install chromium
       - name: Verify live homepage, Kids catalog, detail and images
         run: |
+          set -euo pipefail
+          curl -fsSL --max-time 30 https://bigofertas.net/ -o /tmp/bigofertas-home.html
+          test -s /tmp/bigofertas-home.html
+          echo PUBLIC_HTTP_HOME_OK
           node --input-type=module <<'NODE'
           import { chromium } from 'playwright';
           const browser = await chromium.launch({ headless: true });
           const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+          page.setDefaultTimeout(45000);
           page.on('console', msg => { if (msg.type() === 'error') console.log('BROWSER_CONSOLE_ERROR', msg.text()); });
+          page.on('pageerror', err => console.log('BROWSER_PAGE_ERROR', err.message));
           try {
-            const home = await page.goto('https://bigofertas.net/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+            const home = await page.goto('https://bigofertas.net/', { waitUntil: 'commit', timeout: 45000 });
             if (!home?.ok()) throw new Error(`HOME_HTTP_${home?.status()}`);
-            await page.locator('#lancamentos').waitFor({ state: 'visible', timeout: 30000 });
-            await page.waitForFunction(() => document.querySelectorAll('#lancamentos a[href*="/product/"]').length >= 10, null, { timeout: 30000 });
+            await page.locator('#lancamentos').waitFor({ state: 'visible' });
+            await page.waitForFunction(() => document.querySelectorAll('#lancamentos a[href*="/product/"]').length >= 10);
             const launchHrefs = await page.locator('#lancamentos a[href*="/product/"]').evaluateAll(nodes => [...new Set(nodes.map(n => n.getAttribute('href')).filter(Boolean))]);
             if (launchHrefs.length !== 10) throw new Error(`LAUNCH_COUNT_${launchHrefs.length}`);
             const launchText = await page.locator('#lancamentos').innerText();
             if (!/Chelsea/i.test(launchText) || !/Napoli/i.test(launchText)) throw new Error('LAUNCH_TOP10_CONTENT_MISSING');
             console.log(`PUBLIC_HOME_LAUNCHES_OK count=${launchHrefs.length}`);
 
-            const kids = await page.goto('https://bigofertas.net/products?category=infantil', { waitUntil: 'domcontentloaded', timeout: 30000 });
+            const kids = await page.goto('https://bigofertas.net/products?category=infantil', { waitUntil: 'commit', timeout: 45000 });
             if (!kids?.ok()) throw new Error(`KIDS_HTTP_${kids?.status()}`);
-            await page.getByRole('heading', { name: 'Produtos', exact: true }).waitFor({ state: 'visible', timeout: 30000 });
-            await page.getByText(/91 produto\(s\) encontrado\(s\)/i).waitFor({ state: 'visible', timeout: 30000 });
-            const firstKidsLink = page.locator('a[href*="/product/"]').first();
-            await firstKidsLink.waitFor({ state: 'visible', timeout: 30000 });
+            await page.getByRole('heading', { name: 'Produtos', exact: true }).waitFor({ state: 'visible' });
+            await page.getByText(/91 produto\(s\) encontrado\(s\)/i).waitFor({ state: 'visible' });
+            const firstKidsLink = page.locator('main a[href*="/product/"]').first();
+            await firstKidsLink.waitFor({ state: 'visible' });
             const detailHref = await firstKidsLink.getAttribute('href');
             if (!detailHref) throw new Error('KIDS_PRODUCT_LINK_MISSING');
             const kidsPageText = await page.locator('main').innerText();
             if (!/R\$\s*169[,.]90/.test(kidsPageText)) throw new Error('KIDS_PRICE_MISSING');
             console.log(`PUBLIC_KIDS_LIST_OK total=91 detail=${detailHref}`);
 
-            const detail = await page.goto(new URL(detailHref, 'https://bigofertas.net').toString(), { waitUntil: 'domcontentloaded', timeout: 30000 });
+            const detail = await page.goto(new URL(detailHref, 'https://bigofertas.net').toString(), { waitUntil: 'commit', timeout: 45000 });
             if (!detail?.ok()) throw new Error(`DETAIL_HTTP_${detail?.status()}`);
-            await page.waitForFunction(() => document.body.innerText.includes('R$') && [...document.images].some(img => /googleusercontent\.com/.test(img.currentSrc || img.src) && img.complete && img.naturalWidth > 0), null, { timeout: 30000 });
+            await page.waitForFunction(() => document.body.innerText.includes('R$') && [...document.images].some(img => /googleusercontent\.com/.test(img.currentSrc || img.src) && img.complete && img.naturalWidth > 0));
             for (const size of ['16','18','20','22','24','26','28']) {
-              await page.getByRole('button', { name: size, exact: true }).waitFor({ state: 'visible', timeout: 15000 });
+              await page.getByRole('button', { name: size, exact: true }).waitFor({ state: 'visible' });
             }
             const detailText = await page.locator('main').innerText();
             if (!/R\$\s*169[,.]90/.test(detailText)) throw new Error('DETAIL_KIDS_PRICE_MISSING');
