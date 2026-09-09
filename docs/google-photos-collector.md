@@ -27,7 +27,7 @@ Saidas adicionais em `assimilation/`:
 
 O parser estrutural propoe automaticamente tipo, time/selecao, temporada, marca, modelo I/II/III, versao Torcedor/Jogador e publico. Inferencias sao marcadas explicitamente e nao substituem revisao visual quando houver ambiguidade.
 
-A regra continua conservadora: se alguma imagem de produto ficar sem titulo, a coleta falha. Se alguma imagem nao carregar no contact sheet, a assimilacao visual tambem falha.
+A regra continua conservadora: se alguma imagem de produto ficar sem titulo, a coleta falha. Se alguma imagem nao carregar no contact sheet, a assimilacao visual tambem falha. `scripts/google-photos-assimilator-runner.mjs` repete a assimilacao ate tres vezes para absorver falhas transitorias de carregamento do Google; so considera o lote valido quando a tentativa final tem zero imagens quebradas.
 
 ## Operacao sem prints do usuario
 
@@ -58,7 +58,9 @@ O workflow tambem continua disponivel por `workflow_dispatch` para execucao manu
 
 A coleta base foi validada no album real `[26/27] TOP 10 LANÇAMENTOS DO ANO`: 55 midias Google observadas, 5 midias de interface/capa descartadas, 50 imagens de produto mantidas, 10 titulos consolidados, 10 grupos, 5 imagens em cada grupo e 0 imagens sem titulo.
 
-A camada de assimilacao visual foi validada no workflow run `34370379605`: 10 contact sheets gerados, `overview.png` com as 50 imagens, 50/50 imagens carregadas, 0 falhas visuais e 10 produtos-base propostos. A revisao visual do overview confirmou Chelsea I, Chelsea II, Manchester City II, Bayern I, Bayern II, Barcelona II, PSG I, Lyon II, Milan II e Napoli I, todos com cinco imagens.
+A camada de assimilacao visual foi validada inicialmente no workflow run `34370379605`: 10 contact sheets gerados, `overview.png` com as 50 imagens, 50/50 imagens carregadas, 0 falhas visuais e 10 produtos-base propostos. A revisao visual do overview confirmou Chelsea I, Chelsea II, Manchester City II, Bayern I, Bayern II, Barcelona II, PSG I, Lyon II, Milan II e Napoli I, todos com cinco imagens.
+
+O fluxo autonomo por branch/job foi validado novamente no workflow run `34371627604`: a branch `catalog-google-photos-top10-smoke-2` disparou a coleta apenas pela criacao de `job.json`; o resultado final teve 50 imagens de produto, 10 grupos, 10 contact sheets, 50/50 imagens no overview, 0 falhas visuais e workflow concluido com sucesso.
 
 ## Execucao local
 
@@ -70,7 +72,7 @@ node scripts/google-photos-collector.mjs \
   --label "TOP 10 LANCAMENTOS" \
   --expected-min-images 50
 
-node scripts/google-photos-assimilator.mjs \
+node scripts/google-photos-assimilator-runner.mjs \
   --input .artifacts/google-photos-collector/collector.json \
   --out .artifacts/google-photos-collector/assimilation
 ```
