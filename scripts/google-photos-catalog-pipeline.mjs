@@ -176,9 +176,10 @@ function buildPlan(collector, assimilation, options) {
     const firstProposal = proposalByGroup.get(firstGroupRef?.groupIndex) ?? proposed;
     const effectiveAudience = kidsSource ? "infantil" : proposed.audience;
     const catalogProposal = kidsSource ? { ...proposed, audience: "infantil" } : proposed;
+    const canonicalTeam = titleCaseEntity(proposed.entity);
     const business = buildCatalogBusinessProfile({
-      name: firstGroupRef?.title ?? productName(proposed),
-      team: proposed.entity,
+      name: firstGroupRef?.title ?? productName(catalogProposal),
+      team: canonicalTeam,
       season: proposed.season,
       audience: effectiveAudience,
     });
@@ -199,7 +200,7 @@ function buildPlan(collector, assimilation, options) {
       }
       const variantBusiness = buildCatalogBusinessProfile({
         name: group.title,
-        team: proposed.entity,
+        team: canonicalTeam,
         season: proposed.season,
         audience: effectiveAudience,
       });
@@ -261,7 +262,7 @@ function buildPlan(collector, assimilation, options) {
       category: kidsSource ? { name: "Kids", slug: "infantil" } : categoryForType(proposed.type),
       competition: null,
       league: leagueFromPatchCodes(patchCodes),
-      team: titleCaseEntity(proposed.entity),
+      team: canonicalTeam,
       season: proposed.season ?? null,
       brand: proposed.brand ?? null,
       audience:
