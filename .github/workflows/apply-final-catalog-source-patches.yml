@@ -26,7 +26,6 @@ jobs:
           path = Path('scripts/apply-final-catalog-source-patches.mjs')
           value = path.read_text()
           value = value.replace('${cleanBase(', '\\${cleanBase(')
-          value = value.replace('${encodeObjectKey(', '\\${encodeObjectKey(')
           path.write_text(value)
           PY
           node --check scripts/apply-final-catalog-source-patches.mjs
