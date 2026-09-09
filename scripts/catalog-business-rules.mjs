@@ -41,6 +41,10 @@ export const PATCH_CATALOG = Object.freeze([
   Object.freeze({ code: "mundial-de-clubes", label: "Mundial de Clubes" }),
   Object.freeze({ code: "premier-league", label: "Premier League" }),
   Object.freeze({ code: "premier-league-champions", label: "Premier League — Campeão" }),
+  Object.freeze({ code: "laliga-champions", label: "LaLiga — Campeão" }),
+  Object.freeze({ code: "ligue-1-champions", label: "Ligue 1 — Campeão" }),
+  Object.freeze({ code: "scudetto", label: "Scudetto" }),
+  Object.freeze({ code: "mls-cup-champions", label: "MLS — Campeão" }),
   Object.freeze({ code: "fa-cup", label: "FA Cup" }),
   Object.freeze({ code: "laliga", label: "LaLiga" }),
   Object.freeze({ code: "copa-del-rey", label: "Copa del Rey" }),
@@ -69,6 +73,11 @@ export const PATCH_CATALOG = Object.freeze([
   Object.freeze({ code: "caf-confederation-cup", label: "CAF Confederation Cup" }),
   Object.freeze({ code: "champions-league", label: "Champions League" }),
   Object.freeze({ code: "champions-league-titleholder", label: "Champions League — Campeão" }),
+  Object.freeze({
+    code: "champions-league-multiple-winner",
+    label: "Champions League — Múltiplos vencedores",
+  }),
+  Object.freeze({ code: "uefa-campaign", label: "UEFA — Campanha oficial" }),
   Object.freeze({ code: "europa-league", label: "Europa League" }),
   Object.freeze({ code: "europa-league-titleholder", label: "Europa League — Campeão" }),
   Object.freeze({ code: "conference-league", label: "Conference League" }),
@@ -324,6 +333,15 @@ const UEFA_2627 = Object.freeze({
     "RIGA",
   ]),
 });
+
+const UCL_MULTIPLE_WINNERS = Object.freeze([
+  "REAL MADRID",
+  "MILAN",
+  "AC MILAN",
+  "BAYERN",
+  "LIVERPOOL",
+  "BARCELONA",
+]);
 
 const CONMEBOL_2026 = Object.freeze({
   libertadores: Object.freeze([
@@ -701,7 +719,12 @@ function inferContinentalClubPatches(source) {
   if (anyAlias(source, CONMEBOL_2026["sul-americana"])) addPatch(codes, "sul-americana");
 
   const uefaPatch = inferUefa2627Patch(source);
-  if (uefaPatch) addPatch(codes, uefaPatch);
+  if (uefaPatch) {
+    addPatch(codes, uefaPatch);
+    addPatch(codes, "uefa-campaign");
+    if (uefaPatch === "champions-league" && anyAlias(source, UCL_MULTIPLE_WINNERS))
+      addPatch(codes, "champions-league-multiple-winner");
+  }
   return codes;
 }
 
@@ -724,13 +747,14 @@ function inferNationalPatches(source, national) {
     addPatch(codes, "ofc-nations-cup");
   }
   if (national.key === "ESPANHA" && currentSeason2627(source)) {
-    addPatch(codes, "fifa-world-champions");
     addPatch(codes, "euro-titleholder");
   }
   if (national.key === "PORTUGAL" && currentSeason2627(source))
     addPatch(codes, "nations-league-titleholder");
-  if (national.key === "ARGENTINA" && currentSeason2627(source))
+  if (national.key === "ARGENTINA" && currentSeason2627(source)) {
+    addPatch(codes, "fifa-world-champions");
     addPatch(codes, "copa-america-titleholder");
+  }
   return codes;
 }
 
@@ -744,12 +768,19 @@ function inferUefa2627Patch(source) {
 
 function inferSpecialClubPatches(source) {
   const codes = new Set();
-  if (currentSeason2627(source) && aliasInSource(source, "CHELSEA"))
-    addPatch(codes, "fifa-club-world-champions");
-  if (currentSeason2627(source) && aliasInSource(source, "ARSENAL"))
-    addPatch(codes, "premier-league-champions");
-  if (currentSeason2627(source) && anyAlias(source, ["PSG", "PARIS SAINT GERMAIN"]))
+  if (!currentSeason2627(source)) return codes;
+  if (aliasInSource(source, "CHELSEA")) addPatch(codes, "fifa-club-world-champions");
+  if (aliasInSource(source, "ARSENAL")) addPatch(codes, "premier-league-champions");
+  if (aliasInSource(source, "BARCELONA")) addPatch(codes, "laliga-champions");
+  if (anyAlias(source, ["PSG", "PARIS SAINT GERMAIN"])) {
+    addPatch(codes, "ligue-1-champions");
     addPatch(codes, "champions-league-titleholder");
+  }
+  if (anyAlias(source, ["INTER DE MILAO", "INTER MILAN", "INTERNAZIONALE"]))
+    addPatch(codes, "scudetto");
+  if (aliasInSource(source, "INTER MIAMI")) addPatch(codes, "mls-cup-champions");
+  if (aliasInSource(source, "ASTON VILLA")) addPatch(codes, "europa-league-titleholder");
+  if (aliasInSource(source, "CRYSTAL PALACE")) addPatch(codes, "conference-league-titleholder");
   return codes;
 }
 
@@ -757,6 +788,9 @@ function replaceCompetitionBadgeWithTitleholder(codes) {
   if (codes.has("champions-league-titleholder")) codes.delete("champions-league");
   if (codes.has("europa-league-titleholder")) codes.delete("europa-league");
   if (codes.has("conference-league-titleholder")) codes.delete("conference-league");
+  if (codes.has("laliga-champions")) codes.delete("laliga");
+  if (codes.has("ligue-1-champions")) codes.delete("ligue-1");
+  if (codes.has("mls-cup-champions")) codes.delete("mls");
 }
 
 export function inferCommercialType(product) {
@@ -807,6 +841,15 @@ export function inferPurchasePatches(product) {
   const explicit = explicitPatches(source);
   if (/\bRETRO\b/.test(source)) return finalizePatches(explicit);
 
+  const clubCodes = inferDomesticClubPatches(source);
+  if (clubCodes.size > 0) {
+    for (const code of inferContinentalClubPatches(source)) clubCodes.add(code);
+    for (const code of inferSpecialClubPatches(source)) clubCodes.add(code);
+    for (const code of explicit) clubCodes.add(code);
+    replaceCompetitionBadgeWithTitleholder(clubCodes);
+    return finalizePatches(clubCodes);
+  }
+
   const national = identifyNationalTeam(source, product);
   if (national) {
     const codes = inferNationalPatches(source, national);
@@ -815,8 +858,7 @@ export function inferPurchasePatches(product) {
     return finalizePatches(codes);
   }
 
-  const codes = inferDomesticClubPatches(source);
-  for (const code of inferContinentalClubPatches(source)) codes.add(code);
+  const codes = inferContinentalClubPatches(source);
   for (const code of inferSpecialClubPatches(source)) codes.add(code);
   for (const code of explicit) codes.add(code);
   replaceCompetitionBadgeWithTitleholder(codes);

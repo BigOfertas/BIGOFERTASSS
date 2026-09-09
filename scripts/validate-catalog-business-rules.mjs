@@ -70,36 +70,55 @@ const hasNone = (actual, forbidden, label) => {
 };
 
 const vasco = patchCodes({ name: "CAMISA I VASCO 26/27 ADIDAS", team: "VASCO" });
-hasAll(
-  vasco,
-  ["brasileirao", "libertadores", "sul-americana", "copa-do-brasil", "mundial-de-clubes"],
-  "Vasco",
-);
+hasAll(vasco, ["brasileirao", "copa-do-brasil", "sul-americana"], "Vasco");
+hasNone(vasco, ["libertadores", "mundial-de-clubes"], "Vasco");
+
+const flamengo = patchCodes({ name: "CAMISA I FLAMENGO 26/27 ADIDAS", team: "FLAMENGO" });
+hasAll(flamengo, ["brasileirao", "copa-do-brasil", "libertadores"], "Flamengo");
+hasNone(flamengo, ["sul-americana", "mundial-de-clubes"], "Flamengo");
 
 const manCity = patchCodes({
   name: "CAMISA II MANCHESTER CITY 26/27 PUMA",
   league: "Premier League",
 });
-hasAll(manCity, ["premier-league", "fa-cup", "champions-league", "mundial-de-clubes"], "Man City");
-hasNone(manCity, ["europa-league", "conference-league", "brasileirao"], "Man City");
+hasAll(manCity, ["premier-league", "fa-cup", "champions-league", "uefa-campaign"], "Man City");
+hasNone(manCity, ["europa-league", "conference-league", "mundial-de-clubes"], "Man City");
 
 const chelsea = patchCodes({ name: "CAMISA I CHELSEA 26/27 NIKE", league: "Premier League" });
-hasAll(
+hasAll(chelsea, ["premier-league", "fa-cup", "fifa-club-world-champions"], "Chelsea");
+hasNone(
   chelsea,
-  ["premier-league", "fa-cup", "mundial-de-clubes", "fifa-club-world-champions"],
+  ["mundial-de-clubes", "champions-league", "europa-league", "conference-league"],
   "Chelsea",
 );
-hasNone(chelsea, ["champions-league", "europa-league", "conference-league"], "Chelsea");
 
 const arsenal = patchCodes({ name: "CAMISA I ARSENAL 26/27 ADIDAS", league: "Premier League" });
 hasAll(
   arsenal,
-  ["premier-league", "premier-league-champions", "fa-cup", "champions-league"],
+  ["premier-league", "premier-league-champions", "fa-cup", "champions-league", "uefa-campaign"],
   "Arsenal",
 );
 
+const bayern = patchCodes({ name: "CAMISA I BAYERN 26/27 ADIDAS", league: "Bundesliga" });
+hasAll(
+  bayern,
+  [
+    "bundesliga",
+    "dfb-pokal",
+    "champions-league",
+    "champions-league-multiple-winner",
+    "uefa-campaign",
+  ],
+  "Bayern",
+);
+
 const psg = patchCodes({ name: "CAMISA I PSG 26/27 NIKE", league: "Ligue 1" });
-hasAll(psg, ["ligue-1", "champions-league", "champions-league-titleholder"], "PSG");
+hasAll(
+  psg,
+  ["ligue-1-champions", "coupe-de-france", "champions-league-titleholder", "uefa-campaign"],
+  "PSG",
+);
+hasNone(psg, ["ligue-1", "champions-league"], "PSG");
 
 const astonVilla = patchCodes({
   name: "CAMISA I ASTON VILLA 26/27 ADIDAS",
@@ -107,7 +126,7 @@ const astonVilla = patchCodes({
 });
 hasAll(
   astonVilla,
-  ["premier-league", "champions-league", "europa-league-titleholder"],
+  ["premier-league", "fa-cup", "champions-league", "europa-league-titleholder", "uefa-campaign"],
   "Aston Villa",
 );
 
@@ -117,46 +136,46 @@ const crystalPalace = patchCodes({
 });
 hasAll(
   crystalPalace,
-  ["premier-league", "europa-league", "conference-league-titleholder"],
+  ["premier-league", "fa-cup", "europa-league", "conference-league-titleholder", "uefa-campaign"],
   "Crystal Palace",
 );
 
 const barcelona = patchCodes({ name: "CAMISA II BARCELONA 26/27 NIKE", league: "LaLiga" });
-hasAll(barcelona, ["laliga", "copa-del-rey", "champions-league"], "Barcelona");
+hasAll(
+  barcelona,
+  [
+    "laliga-champions",
+    "copa-del-rey",
+    "champions-league",
+    "champions-league-multiple-winner",
+    "uefa-campaign",
+  ],
+  "Barcelona",
+);
+hasNone(barcelona, ["laliga"], "Barcelona");
 
 const milan = patchCodes({ name: "CAMISA II MILAN 26/27 PUMA", league: "Serie A Italia" });
-hasAll(milan, ["serie-a", "coppa-italia", "europa-league"], "Milan");
-hasNone(milan, ["champions-league", "mundial-de-clubes"], "Milan");
+hasAll(milan, ["serie-a", "coppa-italia", "europa-league", "uefa-campaign"], "Milan");
+hasNone(
+  milan,
+  ["champions-league", "mundial-de-clubes", "champions-league-multiple-winner"],
+  "Milan",
+);
 
 const lyon = patchCodes({ name: "CAMISA II LYON 26/27 ADIDAS", league: "Ligue 1" });
-hasAll(lyon, ["ligue-1", "coupe-de-france", "europa-league"], "Lyon");
+hasAll(lyon, ["ligue-1", "coupe-de-france", "europa-league", "uefa-campaign"], "Lyon");
 
 const benfica = patchCodes({ name: "CAMISA I BENFICA 26/27 ADIDAS", league: "Liga Portugal" });
-hasAll(
-  benfica,
-  ["liga-portugal", "taca-de-portugal", "europa-league", "mundial-de-clubes"],
-  "Benfica",
-);
+hasAll(benfica, ["liga-portugal", "taca-de-portugal", "europa-league", "uefa-campaign"], "Benfica");
+hasNone(benfica, ["mundial-de-clubes"], "Benfica");
 
 const argentinaClub = patchCodes({ name: "CAMISA I RIVER PLATE 26/27 ADIDAS" });
-hasAll(
-  argentinaClub,
-  [
-    "liga-profesional-argentina",
-    "copa-argentina",
-    "libertadores",
-    "sul-americana",
-    "mundial-de-clubes",
-  ],
-  "River Plate",
-);
+hasAll(argentinaClub, ["liga-profesional-argentina", "copa-argentina"], "River Plate");
+hasNone(argentinaClub, ["libertadores", "sul-americana", "mundial-de-clubes"], "River Plate");
 
 const interMiami = patchCodes({ name: "CAMISA I INTER MIAMI 26/27 ADIDAS", league: "MLS" });
-hasAll(
-  interMiami,
-  ["mls", "leagues-cup", "concacaf-champions-cup", "mundial-de-clubes"],
-  "Inter Miami",
-);
+hasAll(interMiami, ["leagues-cup", "mls-cup-champions"], "Inter Miami");
+hasNone(interMiami, ["mls", "concacaf-champions-cup", "mundial-de-clubes"], "Inter Miami");
 
 const nationalCases = [
   [
@@ -166,13 +185,7 @@ const nationalCases = [
   ],
   [
     { name: "CAMISA I ESPANHA 26/27 ADIDAS", selecao: "Espanha" },
-    [
-      "fifa-world-cup-2026",
-      "fifa-world-champions",
-      "euro",
-      "euro-titleholder",
-      "uefa-nations-league",
-    ],
+    ["fifa-world-cup-2026", "euro", "euro-titleholder", "uefa-nations-league"],
     [],
   ],
   [
@@ -208,7 +221,7 @@ hasAll(
 );
 hasAll(
   patchCodes({ name: "CAMISA I ARGENTINA 26/27 ADIDAS", selecao: "Argentina" }),
-  ["copa-america-titleholder"],
+  ["fifa-world-champions", "copa-america-titleholder"],
   "Argentina",
 );
 
@@ -279,6 +292,6 @@ for (const code of [
 ]) {
   assert.ok(patchMigration.includes(`\"code\":\"${code}\"`), `patch migration missing ${code}`);
 }
-assert.ok(PATCH_CATALOG.length >= 50, "global patch catalog unexpectedly small");
+assert.ok(PATCH_CATALOG.length >= 56, "global patch catalog unexpectedly small");
 
 console.log("CATALOG_BUSINESS_RULES_VALIDATION_OK");
