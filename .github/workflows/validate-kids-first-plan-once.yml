@@ -1,0 +1,115 @@
+name: Validate Kids First Plan Once
+
+on:
+  push:
+    branches:
+      - catalog-kids-first-deploy-20260909
+    paths:
+      - catalog-jobs/validate-kids-first-plan.json
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout latest branch
+        uses: actions/checkout@v7
+        with:
+          ref: catalog-kids-first-deploy-20260909
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Download original Kids collector evidence
+        run: |
+          mkdir -p .artifacts/kids-source
+          gh run download 34415522920 \
+            --repo BigOfertas/BIGOFERTASSS \
+            --name kids-first-batch-34415522920 \
+            --dir .artifacts/kids-source
+          test -f .artifacts/kids-source/collector.json
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install chromium
+
+      - name: Regenerate assimilation with corrected normalizer
+        run: |
+          rm -rf .artifacts/kids-corrected
+          node scripts/google-photos-assimilator-runner.mjs \
+            --input .artifacts/kids-source/collector.json \
+            --out .artifacts/kids-corrected/assimilation
+
+      - name: Build corrected plan and validate all image URLs
+        run: |
+          node scripts/google-photos-catalog-pipeline.mjs \
+            --collector .artifacts/kids-source/collector.json \
+            --assimilation .artifacts/kids-corrected/assimilation/assimilation.json \
+            --report .artifacts/kids-corrected/catalog-pipeline-plan.json \
+            --validate-urls \
+            --stock 999
+
+      - name: Guard corrected Kids plan
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const collector = JSON.parse(fs.readFileSync('.artifacts/kids-source/collector.json', 'utf8'));
+          const plan = JSON.parse(fs.readFileSync('.artifacts/kids-corrected/catalog-pipeline-plan.json', 'utf8'));
+          const fail = (code, detail = '') => { throw new Error(`${code}${detail ? `: ${detail}` : ''}`); };
+          if (collector.ungrouped?.length) fail('KIDS_UNGROUPED_MEDIA', String(collector.ungrouped.length));
+          if (plan.summary?.products !== 91) fail('KIDS_PRODUCT_COUNT', String(plan.summary?.products));
+          if (plan.summary?.variants !== 91) fail('KIDS_VARIANT_COUNT', String(plan.summary?.variants));
+          if (plan.summary?.images !== 455) fail('KIDS_IMAGE_COUNT', String(plan.summary?.images));
+          if (!Array.isArray(plan.products) || plan.products.length !== 91) fail('KIDS_PRODUCTS_ARRAY');
+          const forbiddenTeam = /^(I|II|III|IV|V)\b|\bINFATIL\b|\bINFANTIL\b/i;
+          for (const [index, product] of plan.products.entries()) {
+            if (product.category?.slug !== 'infantil') fail('KIDS_CATEGORY', `${index + 1}:${product.category?.slug}`);
+            if (product.commercialType !== 'infantil') fail('KIDS_COMMERCIAL_TYPE', `${index + 1}:${product.commercialType}`);
+            if (Math.abs(Number(product.price) - 169.9) > 0.001) fail('KIDS_PRICE', `${index + 1}:${product.price}`);
+            if (String(product.audience).toUpperCase() !== 'INFANTIL') fail('KIDS_AUDIENCE', `${index + 1}:${product.audience}`);
+            if (!String(product.name).includes('Infantil')) fail('KIDS_PUBLIC_NAME', `${index + 1}:${product.name}`);
+            if (!product.team || forbiddenTeam.test(product.team)) fail('KIDS_TEAM', `${index + 1}:${product.team}`);
+            if (!Array.isArray(product.variants) || product.variants.length !== 1) fail('KIDS_PRODUCT_VARIANTS', `${index + 1}`);
+            const images = product.variants[0].images ?? [];
+            if (images.length !== 5) fail('KIDS_PRODUCT_IMAGES', `${index + 1}:${images.length}`);
+            if (images.some((image) => !/^https:\/\/lh\d+\.googleusercontent\.com\//.test(image.url))) fail('KIDS_IMAGE_SOURCE', `${index + 1}`);
+          }
+          const first = plan.products[0];
+          if (first.sourceTitle !== 'CONJUNTO INFATIL I CORINTHIAS 26/27 NIKE') fail('KIDS_SOURCE_TITLE_NOT_PRESERVED', first.sourceTitle);
+          if (first.team !== 'Corinthians') fail('KIDS_FIRST_TEAM_CANONICAL', first.team);
+          if (first.name !== 'Corinthians — Conjunto Infantil I 26/27 Nike') fail('KIDS_FIRST_NAME_CANONICAL', first.name);
+          if (!plan.products.some((p) => p.team === 'Grêmio')) fail('KIDS_GREMIO_CANONICAL');
+          if (!plan.products.some((p) => p.team === 'Internazionale')) fail('KIDS_INTER_CANONICAL');
+          if (!plan.products.some((p) => p.team === 'Dortmund')) fail('KIDS_DORTMUND_CANONICAL');
+          const training = plan.products.find((p) => p.sourceTitle === 'CONJUNTO INFANTIL TREINO FLAMENGO 26/27 ADIDAS');
+          if (!training) fail('KIDS_TRAINING_MISSING');
+          if (!training.name.includes('Treino Infantil') || training.category.slug !== 'infantil' || training.commercialType !== 'infantil') fail('KIDS_TRAINING_CLASSIFICATION', training.name);
+          const missingInfant = plan.products.find((p) => p.sourceTitle === 'CONJUNTO I LIVERPOOL 25/26 ADIDAS');
+          if (!missingInfant || !missingInfant.name.includes('Infantil') || missingInfant.commercialType !== 'infantil') fail('KIDS_MISSING_INFANT_RECOVERY', missingInfant?.name);
+          const kobe = plan.products.find((p) => p.sourceTitle === 'CONJUNTO INFANTIL II BARCELONA 25/26 KOBE');
+          if (!kobe || kobe.team !== 'Barcelona' || kobe.brand !== 'KOBE') fail('KIDS_KOBE_CLASSIFICATION', JSON.stringify(kobe && {team:kobe.team,brand:kobe.brand}));
+          console.log(`KIDS_VALIDATED_PLAN_OK products=${plan.summary.products} variants=${plan.summary.variants} images=${plan.summary.images}`);
+          console.log(`KIDS_FIRST ${first.name} | ${first.sourceTitle}`);
+          console.log(`KIDS_TRAINING ${training.name}`);
+          console.log(`KIDS_LAST ${plan.products.at(-1).name}`);
+          NODE
+
+      - name: Upload corrected evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: kids-validated-plan-${{ github.run_id }}
+          path: |
+            .artifacts/kids-source/collector.json
+            .artifacts/kids-corrected/assimilation/assimilation.json
+            .artifacts/kids-corrected/catalog-pipeline-plan.json
+          if-no-files-found: error
+          retention-days: 30
