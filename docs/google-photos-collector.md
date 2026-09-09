@@ -1,22 +1,26 @@
 # Coletor Google Photos - BIGofertas
 
-O coletor percorre um album publico do Google Photos em navegador real (Chromium/Playwright), rola a pagina ate estabilizar, captura as imagens do catalogo em ordem visual e registra os URLs diretos `googleusercontent.com`.
+O coletor percorre um album publico do Google Photos em navegador real (Chromium/Playwright), identifica o container interno de rolagem, percorre o album ate estabilizar, captura as imagens do catalogo em ordem visual e registra os URLs diretos servidos pelo Google.
 
 ## Saidas
 
-- `collector.json`: relatorio completo, ordem das imagens, candidatos de titulo e agrupamento automatico.
-- `direct-image-urls.txt`: URLs diretos exatamente observados no navegador.
-- `high-quality-image-urls.txt`: mesmas imagens com parametro de alta resolucao para uso no catalogo.
-- `page-text-observations.json`: textos observados durante a rolagem, usados para auditoria e associacao com os prints.
-- `page-final.html` e `page-final.png`: diagnostico da ultima tela carregada.
+- `collector.json`: relatorio completo com imagens, titulos, grupos, ordem visual e dados de auditoria.
+- `groups.json`: grupos `titulo -> imagens` prontos para o normalizador do catalogo.
+- `direct-image-urls.txt`: URLs exatamente observadas no Google Photos.
+- `high-quality-image-urls.txt`: os mesmos arquivos solicitados em alta resolucao (`w4096-h4096-s-no-gm`).
+- `page-final.png`: captura de diagnostico da ultima tela carregada.
+
+O coletor separa midias de interface/capa das imagens reais do catalogo usando posicao no album e dimensoes visuais. Titulos duplicados pelo DOM do Google Photos sao consolidados antes do agrupamento.
 
 ## Regra de operacao
 
-Os prints enviados pelo usuario continuam sendo o gabarito humano para produto-base e variacoes. O coletor nao inventa agrupamentos quando os titulos do Google Photos estiverem ambiguos. O JSON preserva a ordem e permite associar os URLs capturados aos grupos dos prints.
+Os prints enviados pelo usuario continuam sendo o gabarito humano para interpretar produto-base, versoes e variacoes. O coletor automatiza a parte mecanica: abrir album, rolar, identificar titulos, capturar URLs e associar as imagens ao titulo anterior.
+
+Se alguma imagem ficar sem titulo, a execucao falha em vez de cadastrar silenciosamente um produto incorreto.
 
 ## GitHub Actions
 
-O workflow `Google Photos Catalog Collector` pode ser disparado manualmente informando:
+O workflow `Google Photos Catalog Collector` e disparado manualmente informando:
 
 - URL publica do album;
 - rotulo do lote;
@@ -30,9 +34,25 @@ O resultado e publicado como artifact da execucao. Nenhum login do Google e nece
 ```bash
 npm install --no-save playwright
 npx playwright install chromium
-node scripts/google-photos-collector.mjs --url "https://photos.google.com/share/..." --label "TOP 10 LANCAMENTOS" --expected-min-images 40
+node scripts/google-photos-collector.mjs \
+  --url "https://photos.google.com/share/..." \
+  --label "TOP 10 LANCAMENTOS" \
+  --expected-min-images 50
 ```
+
+## Prova real - Top 10 Lançamentos
+
+A versao final foi validada contra o album real `[26/27] TOP 10 LANÇAMENTOS DO ANO`:
+
+- 55 midias Google observadas no total;
+- 5 midias de interface/capa descartadas;
+- 50 imagens de produto mantidas;
+- 10 titulos consolidados;
+- 10 grupos;
+- 5 imagens em cada grupo;
+- 0 imagens sem titulo;
+- workflow concluido com sucesso.
 
 ## Seguranca
 
-O coletor aceita apenas URLs HTTPS de `photos.google.com` ou `photos.app.goo.gl`. URLs de imagens sao aceitas somente de hosts `googleusercontent.com`. O processo e somente leitura: ele nao apaga, altera ou envia arquivos ao Google Photos.
+O coletor aceita apenas URLs HTTPS de `photos.google.com` ou `photos.app.goo.gl`. A coleta e somente leitura: nao apaga, altera ou envia arquivos ao Google Photos.
