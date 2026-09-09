@@ -79,6 +79,7 @@ jobs:
         run: |
           node --check scripts/google-photos-collector.mjs
           node --check scripts/google-photos-assimilator.mjs
+          node --check scripts/google-photos-assimilator-runner.mjs
 
       - name: Install Playwright
         shell: bash
@@ -102,7 +103,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/google-photos-assimilator.mjs \
+          node scripts/google-photos-assimilator-runner.mjs \
             --input .artifacts/google-photos-collector/collector.json \
             --out .artifacts/google-photos-collector/assimilation
 
