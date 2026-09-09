@@ -138,101 +138,38 @@ const NATIONAL_TEAMS = Object.freeze([
 ]);
 
 const WORLD_CUP_2026_TEAMS = new Set([
-  "ALEMANHA",
-  "ARGENTINA",
-  "AUSTRALIA",
-  "ARGELIA",
-  "AFRICA DO SUL",
-  "AUSTRIA",
-  "BELGICA",
-  "BRASIL",
-  "CANADA",
-  "COLOMBIA",
-  "COSTA DO MARFIM",
-  "COREIA",
-  "CROACIA",
-  "EQUADOR",
-  "EGITO",
-  "ESCOCIA",
-  "ESTADOS UNIDOS",
-  "ESPANHA",
-  "FRANCA",
-  "GHANA",
-  "HOLANDA",
-  "INGLATERRA",
-  "JAPAO",
-  "MARROCOS",
-  "MEXICO",
-  "NORUEGA",
-  "NOVA ZELANDIA",
-  "PARAGUAI",
-  "PORTUGAL",
-  "SUECIA",
-  "SUICA",
-  "SENEGAL",
-  "TURQUIA",
-  "URUGUAI",
+  "ALEMANHA", "ARGENTINA", "AUSTRALIA", "ARGELIA", "AFRICA DO SUL", "AUSTRIA", "BELGICA", "BRASIL", "CANADA",
+  "COLOMBIA", "COSTA DO MARFIM", "COREIA", "CROACIA", "EQUADOR", "EGITO", "ESCOCIA", "ESTADOS UNIDOS", "ESPANHA",
+  "FRANCA", "GHANA", "HOLANDA", "INGLATERRA", "JAPAO", "MARROCOS", "MEXICO", "NORUEGA", "NOVA ZELANDIA", "PARAGUAI",
+  "PORTUGAL", "SUECIA", "SUICA", "SENEGAL", "TURQUIA", "URUGUAI",
 ]);
 
 const CLUB_WORLD_CUP_2025 = Object.freeze([
-  "PALMEIRAS",
-  "PORTO",
-  "AL AHLY",
-  "INTER MIAMI",
-  "PSG",
-  "PARIS SAINT GERMAIN",
-  "ATLETICO MADRID",
-  "BOTAFOGO",
-  "SEATTLE SOUNDERS",
-  "BAYERN",
-  "AUCKLAND CITY",
-  "BOCA JUNIORS",
-  "BENFICA",
-  "FLAMENGO",
-  "ESPERANCE",
-  "CHELSEA",
-  "LAFC",
-  "LOS ANGELES FC",
-  "RIVER PLATE",
-  "URAWA",
-  "MONTERREY",
-  "INTER DE MILAO",
-  "INTER MILAN",
-  "INTERNAZIONALE",
-  "FLUMINENSE",
-  "DORTMUND",
-  "BORUSSIA DORTMUND",
-  "ULSAN",
-  "MAMELODI SUNDOWNS",
-  "MANCHESTER CITY",
-  "MAN CITY",
-  "WYDAD",
-  "AL AIN",
-  "JUVENTUS",
-  "REAL MADRID",
-  "AL HILAL",
-  "PACHUCA",
-  "SALZBURG",
+  "PALMEIRAS", "PORTO", "AL AHLY", "INTER MIAMI", "PSG", "PARIS SAINT GERMAIN", "ATLETICO MADRID", "BOTAFOGO",
+  "SEATTLE SOUNDERS", "BAYERN", "AUCKLAND CITY", "BOCA JUNIORS", "BENFICA", "FLAMENGO", "ESPERANCE", "CHELSEA",
+  "LAFC", "LOS ANGELES FC", "RIVER PLATE", "URAWA", "MONTERREY", "INTER DE MILAO", "INTER MILAN", "INTERNAZIONALE",
+  "FLUMINENSE", "DORTMUND", "BORUSSIA DORTMUND", "ULSAN", "MAMELODI SUNDOWNS", "MANCHESTER CITY", "MAN CITY", "WYDAD",
+  "AL AIN", "JUVENTUS", "REAL MADRID", "AL HILAL", "PACHUCA", "SALZBURG",
 ]);
 
 const UEFA_2627 = Object.freeze({
   "champions-league": Object.freeze([
-    "ARSENAL", "ASTON VILLA", "LIVERPOOL", "MANCHESTER CITY", "MAN CITY", "MANCHESTER UNITED", "MAN UNITED",
-    "LENS", "LILLE", "PSG", "PARIS SAINT GERMAIN", "BAYERN", "DORTMUND", "BORUSSIA DORTMUND", "LEIPZIG", "STUTTGART",
-    "COMO", "INTER DE MILAO", "INTER MILAN", "INTERNAZIONALE", "NAPOLI", "ROMA", "FEYENOORD", "PSV", "PORTO", "SPORTING CP",
-    "ATLETICO MADRID", "BARCELONA", "REAL BETIS", "REAL MADRID", "VILLARREAL", "FENERBAHCE", "GALATASARAY", "CLUB BRUGGE",
-    "SLAVIA PRAHA", "AEK ATHENS", "BODO GLIMT", "VIKING", "SLOVAN BRATISLAVA", "SABAH", "LASK",
+    "ARSENAL", "ASTON VILLA", "LIVERPOOL", "MANCHESTER CITY", "MAN CITY", "MANCHESTER UNITED", "MAN UNITED", "LENS", "LILLE",
+    "PSG", "PARIS SAINT GERMAIN", "BAYERN", "DORTMUND", "BORUSSIA DORTMUND", "LEIPZIG", "STUTTGART", "COMO", "INTER DE MILAO",
+    "INTER MILAN", "INTERNAZIONALE", "NAPOLI", "ROMA", "FEYENOORD", "PSV", "PORTO", "SPORTING CP", "ATLETICO MADRID",
+    "BARCELONA", "REAL BETIS", "REAL MADRID", "VILLARREAL", "FENERBAHCE", "GALATASARAY", "CLUB BRUGGE", "SLAVIA PRAHA",
+    "AEK ATHENS", "BODO GLIMT", "VIKING", "SLOVAN BRATISLAVA", "SABAH", "LASK",
   ]),
   "europa-league": Object.freeze([
-    "CRYSTAL PALACE", "BOURNEMOUTH", "SUNDERLAND", "MILAN", "AC MILAN", "JUVENTUS", "REAL SOCIEDAD", "CELTA",
-    "HOFFENHEIM", "LEVERKUSEN", "BAYER LEVERKUSEN", "MARSEILLE", "RENNES", "AZ ALKMAAR", "CELTIC", "LYON",
-    "OLYMPIQUE LYON", "OLYMPIACOS", "SPARTA PRAHA", "STURM GRAZ", "UNION SG", "ANDERLECHT", "BENFICA", "BESIKTAS",
-    "FERENCVAROS", "SALZBURG", "VIKTORIA PLZEN", "GNK DINAMO", "LECH POZNAN", "OMONIA",
+    "CRYSTAL PALACE", "BOURNEMOUTH", "SUNDERLAND", "MILAN", "AC MILAN", "JUVENTUS", "REAL SOCIEDAD", "CELTA", "HOFFENHEIM",
+    "LEVERKUSEN", "BAYER LEVERKUSEN", "MARSEILLE", "RENNES", "AZ ALKMAAR", "CELTIC", "LYON", "OLYMPIQUE LYON", "OLYMPIACOS",
+    "SPARTA PRAHA", "STURM GRAZ", "UNION SG", "ANDERLECHT", "BENFICA", "BESIKTAS", "FERENCVAROS", "SALZBURG", "VIKTORIA PLZEN",
+    "GNK DINAMO", "LECH POZNAN", "OMONIA",
   ]),
   "conference-league": Object.freeze([
-    "BRIGHTON", "ATALANTA", "GETAFE", "FREIBURG", "MONACO", "BRAGA", "AJAX", "TWENTE", "GENT", "TRABZONSPOR",
-    "PANATHINAIKOS", "COPENHAGEN", "MIDTJYLLAND", "BRANN", "PAFOS", "LUGANO", "HEARTS", "HAJDUK SPLIT",
-    "CRVENA ZVEZDA", "RED STAR", "KAIRAT", "CSKA SOFIA", "KUOPIO", "BORAC", "RIGA",
+    "BRIGHTON", "ATALANTA", "GETAFE", "FREIBURG", "MONACO", "BRAGA", "AJAX", "TWENTE", "GENT", "TRABZONSPOR", "PANATHINAIKOS",
+    "COPENHAGEN", "MIDTJYLLAND", "BRANN", "PAFOS", "LUGANO", "HEARTS", "HAJDUK SPLIT", "CRVENA ZVEZDA", "RED STAR", "KAIRAT",
+    "CSKA SOFIA", "KUOPIO", "BORAC", "RIGA",
   ]),
 });
 
@@ -333,25 +270,9 @@ const EXPLICIT_PATCH_PATTERNS = Object.freeze([
 
 function sourceText(product) {
   return normalizeCatalogText(
-    [
-      product?.name,
-      product?.nome,
-      product?.tipo_produto,
-      product?.type,
-      product?.audience,
-      product?.publico,
-      product?.competition,
-      product?.campeonato,
-      product?.league,
-      product?.liga,
-      product?.team,
-      product?.time,
-      product?.selecao,
-      product?.season,
-      product?.temporada,
-      product?.category,
-      product?.categoria,
-    ]
+    [product?.name, product?.nome, product?.tipo_produto, product?.type, product?.audience, product?.publico,
+      product?.competition, product?.campeonato, product?.league, product?.liga, product?.team, product?.time,
+      product?.selecao, product?.season, product?.temporada, product?.category, product?.categoria]
       .filter(Boolean)
       .join(" "),
   );
@@ -391,12 +312,10 @@ function explicitPatches(source) {
 
 function identifyNationalTeam(source, product) {
   const explicitSelection = normalizeCatalogText(product?.selecao ?? "");
-  const explicitNational = /\b(SELECAO|NATIONAL TEAM|MUNDO FIFA|COPA DO MUNDO)\b/.test(source);
-
   for (const [confed, key, aliases] of NATIONAL_TEAMS) {
-    const selected = explicitSelection && anyAlias(explicitSelection, aliases);
-    const matched = anyAlias(source, aliases);
-    if (selected || (explicitNational && matched)) return { confed, key };
+    if ((explicitSelection && anyAlias(explicitSelection, aliases)) || anyAlias(source, aliases)) {
+      return { confed, key };
+    }
   }
   return null;
 }
@@ -413,7 +332,6 @@ function inferDomesticClubPatches(source) {
 function inferNationalPatches(source, national) {
   const codes = new Set();
   if (WORLD_CUP_2026_TEAMS.has(national.key)) addPatch(codes, "fifa-world-cup-2026");
-
   if (national.confed === "UEFA") {
     addPatch(codes, "euro");
     addPatch(codes, "uefa-nations-league");
@@ -429,10 +347,7 @@ function inferNationalPatches(source, national) {
   } else if (national.confed === "OFC") {
     addPatch(codes, "ofc-nations-cup");
   }
-
-  if (national.key === "ESPANHA" && currentSeason2627(source)) {
-    addPatch(codes, "fifa-world-champions");
-  }
+  if (national.key === "ESPANHA" && currentSeason2627(source)) addPatch(codes, "fifa-world-champions");
   return codes;
 }
 
@@ -447,14 +362,8 @@ function inferUefa2627Patch(source) {
 function inferSpecialClubPatches(source) {
   const codes = new Set();
   if (anyAlias(source, CLUB_WORLD_CUP_2025)) addPatch(codes, "mundial-de-clubes");
-
-  if (currentSeason2627(source) && aliasInSource(source, "CHELSEA")) {
-    addPatch(codes, "fifa-club-world-champions");
-  }
-  if (currentSeason2627(source) && aliasInSource(source, "ARSENAL")) {
-    addPatch(codes, "premier-league-champions");
-  }
-
+  if (currentSeason2627(source) && aliasInSource(source, "CHELSEA")) addPatch(codes, "fifa-club-world-champions");
+  if (currentSeason2627(source) && aliasInSource(source, "ARSENAL")) addPatch(codes, "premier-league-champions");
   const uefaPatch = inferUefa2627Patch(source);
   if (uefaPatch) addPatch(codes, uefaPatch);
   return codes;
@@ -462,7 +371,6 @@ function inferSpecialClubPatches(source) {
 
 export function inferCommercialType(product) {
   const source = sourceText(product);
-
   if (/\b(BASQUETE|BASKET|NBA)\b/.test(source)) return "basquete";
   if (/\b(SHORT|SHORTS|CALCAO)\b/.test(source)) return "calcao";
   if (/\b(INFANTIL|KIDS?|CRIANCA)\b/.test(source)) return "infantil";
@@ -480,16 +388,10 @@ export function resolveCommercialPrice(commercialType, explicitPrice = null, fal
   return Number.isFinite(fallbackPrice) ? Number(fallbackPrice) : null;
 }
 
-const UNIFORM_LABELS = Object.freeze({
-  I: "Primeiro uniforme",
-  II: "Segundo uniforme",
-  III: "Terceiro uniforme",
-});
+const UNIFORM_LABELS = Object.freeze({ I: "Primeiro uniforme", II: "Segundo uniforme", III: "Terceiro uniforme" });
 
 export function inferUniform(productOrTitle) {
-  const source = normalizeCatalogText(
-    typeof productOrTitle === "string" ? productOrTitle : sourceText(productOrTitle),
-  );
+  const source = normalizeCatalogText(typeof productOrTitle === "string" ? productOrTitle : sourceText(productOrTitle));
   const match = source.match(/\b(?:CAMISA|REGATA)\s+(III|II|I)\b/);
   if (!match) return { model: null, label: null };
   return { model: match[1], label: UNIFORM_LABELS[match[1]] ?? null };
@@ -506,7 +408,6 @@ export function appendUniformSpecification(existingSpecifications, productOrTitl
 export function inferPurchasePatches(product) {
   const source = sourceText(product);
   if (NO_PATCH_PRODUCT.test(source)) return [];
-
   const explicit = explicitPatches(source);
   if (/\bRETRO\b/.test(source)) return finalizePatches(explicit);
 
@@ -532,11 +433,7 @@ export function inferPurchasePatches(product) {
 export function buildCatalogBusinessProfile(product, options = {}) {
   const commercialType = inferCommercialType(product);
   const uniform = inferUniform(product);
-  const price = resolveCommercialPrice(
-    commercialType,
-    options.explicitPrice ?? null,
-    options.fallbackPrice ?? null,
-  );
+  const price = resolveCommercialPrice(commercialType, options.explicitPrice ?? null, options.fallbackPrice ?? null);
   return {
     commercialType,
     price,
