@@ -1,0 +1,62 @@
+name: Diagnose BIGofertas Live Catalog Once
+
+on:
+  push:
+    branches:
+      - hostinger-dispatch-once-20260909
+    paths:
+      - .verify/diagnose-live-catalog-20260909
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - name: Diagnose production database RPCs
+        run: |
+          cat > ./diagnose-db.mjs <<'NODE'
+          const ref = process.env.SUPABASE_PROJECT_ID;
+          const token = process.env.SUPABASE_ACCESS_TOKEN;
+          if (!ref || !token) throw new Error('missing Supabase management credentials');
+          const url = `https://api.supabase.com/v1/projects/${ref}/database/query/read-only`;
+          async function q(query) {
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+              body: JSON.stringify({ query }),
+            });
+            const text = await response.text();
+            console.log(`QUERY_HTTP_${response.status}`);
+            console.log(text.slice(0, 12000));
+            if (!response.ok) process.exitCode = 1;
+          }
+          await q(`select
+            count(*)::int as products,
+            count(*) filter (where status='active'::public.product_status)::int as active,
+            (select count(*)::int from public.product_images where status='ready'::public.product_image_status) as ready_images,
+            (select count(*)::int from public.product_images where external_url is not null) as external_images
+            from public.products;`);
+          await q(`select
+            jsonb_array_length((public.catalog_products_page_v3(p_page=>1,p_page_size=>24))->'items')::int as page_items,
+            (public.catalog_products_page_v3(p_page=>1,p_page_size=>24)->>'total')::int as page_total,
+            (public.catalog_products_page_v3(p_page=>1,p_page_size=>24)->'items'->0->>'name') as first_name,
+            (public.catalog_products_page_v3(p_page=>1,p_page_size=>24)->'items'->0->>'image_external_url') as first_external_url;`);
+          await q(`select
+            jsonb_array_length((public.catalog_filter_facets_v2())->'times')::int as team_facets,
+            (public.catalog_filter_facets_v2()->>'priceMin') as price_min,
+            (public.catalog_filter_facets_v2()->>'priceMax') as price_max;`);
+          NODE
+          node ./diagnose-db.mjs
+
+      - name: Diagnose live HTML and assets
+        run: |
+          set -euo pipefail
+          curl -fsSIL https://bigofertas.net/products | sed -n '1,40p'
+          curl -fsSL https://bigofertas.net/products -o /tmp/products.html
+          echo HTML_BYTES=$(wc -c < /tmp/products.html)
+          sed -n '1,80p' /tmp/products.html
