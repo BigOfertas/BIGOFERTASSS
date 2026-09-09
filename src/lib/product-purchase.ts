@@ -149,6 +149,9 @@ export function validatePurchaseCustomization(
     }
   }
   if (customization.phrase) {
+    if (!customization.phrase.trim()) {
+      return "Informe a frase personalizada.";
+    }
     if (customization.phrase.length > config.phraseMax) {
       return `A frase pode ter no máximo ${config.phraseMax} caracteres.`;
     }
