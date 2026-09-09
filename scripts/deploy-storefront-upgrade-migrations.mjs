@@ -47,10 +47,7 @@ const migrations = [
     "catalog_bulk_import_bridge",
     "supabase/migrations/20260908170000_catalog_bulk_import_bridge.sql",
   ],
-  [
-    "conversion_ux_stage_4",
-    "supabase/migrations/20260908210500_conversion_ux_stage_4.sql",
-  ],
+  ["conversion_ux_stage_4", "supabase/migrations/20260908210500_conversion_ux_stage_4.sql"],
 ];
 
 function migrationSql(file) {

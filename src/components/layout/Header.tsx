@@ -42,8 +42,12 @@ function SearchBox({
   const suggestionsQuery = useCatalogSearchSuggestions(query);
   const suggestions = suggestionsQuery.data ?? [];
   const showSuggestions = focused && query.trim().length >= 2;
-  const teams = Array.from(new Set(suggestions.map((product) => product.time).filter(Boolean))).slice(0, 4) as string[];
-  const brands = Array.from(new Set(suggestions.map((product) => product.brand).filter(Boolean))).slice(0, 3) as string[];
+  const teams = Array.from(
+    new Set(suggestions.map((product) => product.time).filter(Boolean)),
+  ).slice(0, 4) as string[];
+  const brands = Array.from(
+    new Set(suggestions.map((product) => product.brand).filter(Boolean)),
+  ).slice(0, 3) as string[];
 
   return (
     <div className="relative">
@@ -91,8 +95,12 @@ function SearchBox({
             <div className={mobile ? "" : "grid grid-cols-[minmax(0,1fr)_190px]"}>
               <div className={mobile ? "" : "border-r border-gray-100"}>
                 <div className="flex items-center justify-between px-4 pb-1 pt-3">
-                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">Produtos</span>
-                  <span className="text-[10px] font-semibold text-gray-400">Resultados rápidos</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
+                    Produtos
+                  </span>
+                  <span className="text-[10px] font-semibold text-gray-400">
+                    Resultados rápidos
+                  </span>
                 </div>
                 <div className="max-h-[390px] overflow-y-auto py-1">
                   {suggestions.slice(0, mobile ? 5 : 6).map((product) => {
@@ -125,7 +133,9 @@ function SearchBox({
                             {product.name}
                           </p>
                           <p className="mt-0.5 truncate text-[10px] font-semibold text-gray-400">
-                            {[product.time, product.brand, product.season].filter(Boolean).join(" · ")}
+                            {[product.time, product.brand, product.season]
+                              .filter(Boolean)
+                              .join(" · ")}
                           </p>
                         </div>
                         <strong className="flex-none text-xs text-gray-950">
@@ -149,7 +159,9 @@ function SearchBox({
                 <div className="p-4">
                   {teams.length > 0 ? (
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">Times e seleções</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
+                        Times e seleções
+                      </p>
                       <div className="mt-2 space-y-1">
                         {teams.map((team) => (
                           <Link
@@ -167,7 +179,9 @@ function SearchBox({
                   ) : null}
                   {brands.length > 0 ? (
                     <div className="mt-5">
-                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">Marcas</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
+                        Marcas
+                      </p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {brands.map((brand) => (
                           <Link
@@ -192,7 +206,9 @@ function SearchBox({
           ) : (
             <div className="px-4 py-5">
               <p className="text-sm font-bold text-gray-900">Nenhum produto encontrado</p>
-              <p className="mt-1 text-xs leading-5 text-gray-500">Tente o nome do time, seleção, marca ou uma palavra mais curta.</p>
+              <p className="mt-1 text-xs leading-5 text-gray-500">
+                Tente o nome do time, seleção, marca ou uma palavra mais curta.
+              </p>
               <Link
                 to="/products"
                 search={{ q: query.trim() }}
@@ -261,8 +277,12 @@ const Header: React.FC = () => {
               >
                 <User className="h-5.5 w-5.5 text-gray-900 transition-colors group-hover:text-red-600" />
                 <div className="hidden flex-col items-start leading-tight lg:flex">
-                  <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-gray-400">{accountTopLabel}</span>
-                  <span className="text-sm font-extrabold tracking-[-0.02em] text-gray-900 transition-colors group-hover:text-red-600">{accountBottomLabel}</span>
+                  <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+                    {accountTopLabel}
+                  </span>
+                  <span className="text-sm font-extrabold tracking-[-0.02em] text-gray-900 transition-colors group-hover:text-red-600">
+                    {accountBottomLabel}
+                  </span>
                 </div>
               </Link>
 
@@ -273,7 +293,9 @@ const Header: React.FC = () => {
               >
                 <Heart className="h-5.5 w-5.5 text-gray-900 transition-colors group-hover:text-red-600" />
                 {favoriteCount > 0 ? (
-                  <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-black text-white">{favoriteCount}</span>
+                  <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-black text-white">
+                    {favoriteCount}
+                  </span>
                 ) : null}
               </Link>
 
@@ -284,7 +306,9 @@ const Header: React.FC = () => {
               >
                 <ShoppingCart className="h-5.5 w-5.5 text-gray-900 transition-colors group-hover:text-red-600" />
                 {totalItems > 0 ? (
-                  <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-black text-white">{totalItems}</span>
+                  <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[8px] font-black text-white">
+                    {totalItems}
+                  </span>
                 ) : null}
               </Link>
             </div>
@@ -311,13 +335,23 @@ const Header: React.FC = () => {
             aria-label={`${BRAND.officialName} - Início`}
             onClick={closeNavigation}
           >
-            <div className="brand-lockup h-10 w-36 px-3 text-lg"><BrandWordmark /></div>
+            <div className="brand-lockup h-10 w-36 px-3 text-lg">
+              <BrandWordmark />
+            </div>
           </Link>
 
           <div className="-mr-1 flex items-center gap-1">
-            <Link to="/favoritos" aria-label="Favoritos" className="relative flex h-10 w-10 items-center justify-center rounded-lg text-gray-900 active:text-red-600">
+            <Link
+              to="/favoritos"
+              aria-label="Favoritos"
+              className="relative flex h-10 w-10 items-center justify-center rounded-lg text-gray-900 active:text-red-600"
+            >
               <Heart className="h-5.5 w-5.5" />
-              {favoriteCount > 0 ? <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-0.5 text-[8px] font-black text-white">{favoriteCount}</span> : null}
+              {favoriteCount > 0 ? (
+                <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-0.5 text-[8px] font-black text-white">
+                  {favoriteCount}
+                </span>
+              ) : null}
             </Link>
             <Link
               to="/cart"
@@ -325,13 +359,23 @@ const Header: React.FC = () => {
               className="relative flex h-10 w-10 items-center justify-center rounded-lg text-gray-900 active:text-red-600"
             >
               <ShoppingCart className="h-5.5 w-5.5" />
-              {totalItems > 0 ? <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-0.5 text-[8px] font-black text-white">{totalItems}</span> : null}
+              {totalItems > 0 ? (
+                <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-0.5 text-[8px] font-black text-white">
+                  {totalItems}
+                </span>
+              ) : null}
             </Link>
           </div>
         </div>
 
         <div className="px-4 pb-3">
-          <SearchBox query={searchQuery} onQueryChange={setSearchQuery} onSubmit={handleSearch} onNavigate={closeNavigation} mobile />
+          <SearchBox
+            query={searchQuery}
+            onQueryChange={setSearchQuery}
+            onSubmit={handleSearch}
+            onNavigate={closeNavigation}
+            mobile
+          />
         </div>
 
         {mobileMenuOpen ? <CategoryNav mobile onNavigate={closeNavigation} /> : null}

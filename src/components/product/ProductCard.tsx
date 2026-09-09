@@ -96,7 +96,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
             })
           }
           className="absolute right-2.5 top-2.5 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-sm transition hover:scale-105 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 motion-reduce:transform-none motion-reduce:transition-none"
-          aria-label={favorite ? `Remover ${name} dos favoritos` : `Adicionar ${name} aos favoritos`}
+          aria-label={
+            favorite ? `Remover ${name} dos favoritos` : `Adicionar ${name} aos favoritos`
+          }
           aria-pressed={favorite}
         >
           <Heart className={`h-4.5 w-4.5 ${favorite ? "fill-red-600 text-red-600" : ""}`} />
@@ -159,7 +161,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <span className="text-base font-black tracking-[-0.035em] text-gray-950 sm:text-xl">
             {formattedPrice}
           </span>
-          <p className="mt-1 text-[10px] font-medium text-gray-500 sm:text-[11px]">Preço por peça</p>
+          <p className="mt-1 text-[10px] font-medium text-gray-500 sm:text-[11px]">
+            Preço por peça
+          </p>
         </div>
       </div>
     </article>

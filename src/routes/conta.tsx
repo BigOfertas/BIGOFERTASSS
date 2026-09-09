@@ -105,7 +105,10 @@ function AccountPage() {
       <EmailTwoFactorPrompt />
 
       {lastCheckout ? (
-        <section className="mx-auto mt-6 w-full max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Confirmação do pedido">
+        <section
+          className="mx-auto mt-6 w-full max-w-7xl px-4 sm:px-6 lg:px-8"
+          aria-label="Confirmação do pedido"
+        >
           <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 sm:p-6">
             <button
               type="button"
@@ -120,12 +123,15 @@ function AccountPage() {
                 <CheckCircle2 className="h-6 w-6" aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1 pr-8 sm:pr-0">
-                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">Pedido recebido</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">
+                  Pedido recebido
+                </p>
                 <h1 className="mt-1 text-xl font-black tracking-tight text-gray-950 sm:text-2xl">
                   Pedido {lastCheckout.orderNumber}
                 </h1>
                 <p className="mt-1 text-sm leading-6 text-gray-600">
-                  Total {currency.format(lastCheckout.totalAmount)}. Se você acabou de pagar, a confirmação pode levar alguns instantes para aparecer no status do pedido.
+                  Total {currency.format(lastCheckout.totalAmount)}. Se você acabou de pagar, a
+                  confirmação pode levar alguns instantes para aparecer no status do pedido.
                 </p>
               </div>
               <div className="flex flex-none flex-col gap-2 sm:items-end">
@@ -137,7 +143,11 @@ function AccountPage() {
                   <PackageCheck className="h-4 w-4" />
                   Acompanhar pedido
                 </Link>
-                <button type="button" onClick={dismissCheckoutConfirmation} className="text-xs font-bold text-gray-500 hover:text-gray-900">
+                <button
+                  type="button"
+                  onClick={dismissCheckoutConfirmation}
+                  className="text-xs font-bold text-gray-500 hover:text-gray-900"
+                >
                   Entendi
                 </button>
               </div>

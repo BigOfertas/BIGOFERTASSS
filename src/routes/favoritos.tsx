@@ -17,10 +17,17 @@ function FavoritesPage() {
     <div className="min-h-screen bg-white">
       <Header />
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:py-12 lg:px-8">
-        <nav className="mb-6 flex items-center gap-2 text-xs font-medium text-gray-500" aria-label="Breadcrumb">
-          <Link to="/" className="hover:text-red-600">Início</Link>
+        <nav
+          className="mb-6 flex items-center gap-2 text-xs font-medium text-gray-500"
+          aria-label="Breadcrumb"
+        >
+          <Link to="/" className="hover:text-red-600">
+            Início
+          </Link>
           <span aria-hidden="true">/</span>
-          <span className="text-gray-900" aria-current="page">Favoritos</span>
+          <span className="text-gray-900" aria-current="page">
+            Favoritos
+          </span>
         </nav>
 
         <div className="mb-8">
@@ -54,10 +61,13 @@ function FavoritesPage() {
             </div>
             <h2 className="text-2xl font-black text-gray-950">Nenhum favorito ainda</h2>
             <p className="mt-2 max-w-md text-sm leading-6 text-gray-500">
-              Toque no coração dos produtos que você quer guardar. Eles ficarão reunidos aqui neste aparelho.
+              Toque no coração dos produtos que você quer guardar. Eles ficarão reunidos aqui neste
+              aparelho.
             </p>
             <Button asChild className="mt-6 bg-red-600 px-6 font-black text-white hover:bg-black">
-              <Link to="/products" search={{}}>Explorar produtos</Link>
+              <Link to="/products" search={{}}>
+                Explorar produtos
+              </Link>
             </Button>
           </section>
         )}

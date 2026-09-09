@@ -103,7 +103,10 @@ export function ProductShippingCalculator({
                 className="rounded-lg border border-gray-200 bg-gray-50/70 px-3.5 py-3.5"
               >
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-emerald-600" aria-hidden="true" />
+                  <CheckCircle2
+                    className="mt-0.5 h-4 w-4 flex-none text-emerald-600"
+                    aria-hidden="true"
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
@@ -117,14 +120,16 @@ export function ProductShippingCalculator({
                       </strong>
                     </div>
                     <p className="mt-2 text-[11px] font-bold text-gray-800">
-                      Previsão total: {formatTotalDeliveryLabel(result.productionBusinessDays, quote)}
+                      Previsão total:{" "}
+                      {formatTotalDeliveryLabel(result.productionBusinessDays, quote)}
                     </p>
                   </div>
                 </div>
               </div>
             ))}
             <p className="pt-1 text-[11px] leading-5 text-gray-500">
-              A previsão soma até {result.productionBusinessDays} dias úteis de preparação ao prazo informado pela transportadora.
+              A previsão soma até {result.productionBusinessDays} dias úteis de preparação ao prazo
+              informado pela transportadora.
             </p>
           </div>
         ) : null}

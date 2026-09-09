@@ -11,7 +11,10 @@ export type CheckoutStartResult = {
   totalAmount: number;
 };
 
-export type LastCheckoutSnapshot = Pick<CheckoutStartResult, "orderId" | "orderNumber" | "totalAmount"> & {
+export type LastCheckoutSnapshot = Pick<
+  CheckoutStartResult,
+  "orderId" | "orderNumber" | "totalAmount"
+> & {
   createdAt: string;
 };
 
