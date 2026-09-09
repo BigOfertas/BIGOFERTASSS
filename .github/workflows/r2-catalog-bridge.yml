@@ -42,12 +42,6 @@ on:
         required: false
         default: false
         type: boolean
-  push:
-    branches:
-      - r2-catalog-bridge-20260909
-    paths:
-      - ".github/workflows/r2-catalog-bridge.yml"
-      - "scripts/r2-catalog-bridge.mjs"
 
 permissions:
   contents: read
@@ -70,14 +64,14 @@ jobs:
       CATALOG_IMPORT_OWNER_EMAIL: ${{ secrets.CATALOG_IMPORT_OWNER_EMAIL }}
       CATALOG_IMPORT_OWNER_PASSWORD: ${{ secrets.CATALOG_IMPORT_OWNER_PASSWORD }}
       R2_BRIDGE_ARTIFACT_DIR: .artifacts/r2-catalog-bridge
-      INPUT_ACTION: ${{ github.event_name == 'workflow_dispatch' && inputs.action || 'analyze' }}
-      INPUT_OBJECT_KEY: ${{ github.event_name == 'workflow_dispatch' && inputs.object_key || 'incoming/catalogo/BIGOFERTAS_CATALOGO_SHORTS_FINAL.zip' }}
-      INPUT_COMPETITION: ${{ github.event_name == 'workflow_dispatch' && inputs.competition || '' }}
-      INPUT_LEAGUE: ${{ github.event_name == 'workflow_dispatch' && inputs.league || '' }}
-      INPUT_DEFAULT_PRICE: ${{ github.event_name == 'workflow_dispatch' && inputs.default_price || '' }}
-      INPUT_DEFAULT_STOCK: ${{ github.event_name == 'workflow_dispatch' && inputs.default_stock || '' }}
-      INPUT_IMAGE_CONCURRENCY: ${{ github.event_name == 'workflow_dispatch' && inputs.image_concurrency || '4' }}
-      INPUT_ACTIVATE: ${{ github.event_name == 'workflow_dispatch' && inputs.activate || false }}
+      INPUT_ACTION: ${{ inputs.action }}
+      INPUT_OBJECT_KEY: ${{ inputs.object_key }}
+      INPUT_COMPETITION: ${{ inputs.competition }}
+      INPUT_LEAGUE: ${{ inputs.league }}
+      INPUT_DEFAULT_PRICE: ${{ inputs.default_price }}
+      INPUT_DEFAULT_STOCK: ${{ inputs.default_stock }}
+      INPUT_IMAGE_CONCURRENCY: ${{ inputs.image_concurrency }}
+      INPUT_ACTIVATE: ${{ inputs.activate }}
 
     steps:
       - name: Checkout repository
