@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "Operacao: listar, analisar, importar ou limpar o bucket"
+        description: "Operacao: listar, analisar (dry-run) ou importar (apply)"
         required: true
         default: "list"
         type: choice
@@ -12,7 +12,6 @@ on:
           - list
           - analyze
           - import
-          - purge
       object_key:
         description: "Chave do ZIP no R2, ex.: incoming/catalogo/ARQUIVO.zip"
         required: false
@@ -94,24 +93,19 @@ jobs:
           unzip -q /tmp/awscliv2.zip -d /tmp/awscliv2
           sudo /tmp/awscliv2/aws/install --update
           aws --version
+          unzip -v | head -n 2
 
       - name: Validate bridge code
         shell: bash
         run: |
           set -euo pipefail
           node --check scripts/r2-catalog-bridge.mjs
-          node --check scripts/r2-purge-bucket.mjs
           npm run validate:catalog-import
 
       - name: Execute R2 catalog bridge
         shell: bash
         run: |
           set -euo pipefail
-
-          if [[ "$INPUT_ACTION" == "purge" ]]; then
-            node scripts/r2-purge-bucket.mjs
-            exit 0
-          fi
 
           args=(--action "$INPUT_ACTION")
 
