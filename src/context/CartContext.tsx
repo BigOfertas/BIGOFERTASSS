@@ -34,6 +34,8 @@ interface CartContextType {
   hasBlockingIssues: boolean;
   totalItems: number;
   totalPrice: number;
+  cartDrawerOpen: boolean;
+  setCartDrawerOpen: (open: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -48,6 +50,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const cartRef = useRef(cart);
   const [isValidating, setIsValidating] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
 
   useEffect(() => {
     cartRef.current = cart;
@@ -85,6 +88,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           : item,
       );
     });
+
+    setCartDrawerOpen(true);
   }, []);
 
   const removeFromCart = useCallback((lineId: string) => {
@@ -207,6 +212,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hasBlockingIssues,
         totalItems,
         totalPrice,
+        cartDrawerOpen,
+        setCartDrawerOpen,
       }}
     >
       {children}
