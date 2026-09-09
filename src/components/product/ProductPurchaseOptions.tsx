@@ -182,30 +182,32 @@ export function ProductPurchaseOptions({
         </div>
       ) : null}
 
-      <div>
-        <label
-          className="text-xs font-black uppercase tracking-widest text-gray-800"
-          htmlFor="patch"
-        >
-          Patch
-        </label>
-        <select
-          id="patch"
-          className="mt-2 h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-800 outline-none focus:border-red-500"
-          value={value.patchCode ?? ""}
-          onChange={(event) => onChange({ ...value, patchCode: event.target.value || null })}
-        >
-          <option value="">Sem patch</option>
-          {config.patches.map((patch) => (
-            <option key={patch.code} value={patch.code}>
-              {patch.label} (+{currency.format(patch.price)})
-            </option>
-          ))}
-        </select>
-        <p className="mt-2 text-xs text-amber-700">
-          Escolha com atenção: os patches disponíveis variam conforme o produto.
-        </p>
-      </div>
+      {config.patches.length > 0 ? (
+        <div>
+          <label
+            className="text-xs font-black uppercase tracking-widest text-gray-800"
+            htmlFor="patch"
+          >
+            Patch
+          </label>
+          <select
+            id="patch"
+            className="mt-2 h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-800 outline-none focus:border-red-500"
+            value={value.patchCode ?? ""}
+            onChange={(event) => onChange({ ...value, patchCode: event.target.value || null })}
+          >
+            <option value="">Sem patch</option>
+            {config.patches.map((patch) => (
+              <option key={patch.code} value={patch.code}>
+                {patch.label} (+{currency.format(patch.price)})
+              </option>
+            ))}
+          </select>
+          <p className="mt-2 text-xs text-amber-700">
+            Escolha com atenção: os patches disponíveis variam conforme o produto.
+          </p>
+        </div>
+      ) : null}
 
       {config.phraseEnabled && !normalEnabled ? (
         <div>
