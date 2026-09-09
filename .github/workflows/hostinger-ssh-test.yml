@@ -1,0 +1,61 @@
+name: Test Hostinger SSH Connection
+
+on:
+  push:
+    branches:
+      - hostinger-ssh-test-20260909
+    paths:
+      - ".github/workflows/hostinger-ssh-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ssh-test:
+    name: Verify Hostinger SSH and locate public_html
+    runs-on: ubuntu-latest
+    env:
+      HOSTINGER_SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+      HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+      HOSTINGER_SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+      SSHPASS: ${{ secrets.HOSTINGER_SSH_PASSWORD }}
+    steps:
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in HOSTINGER_SSH_HOST HOSTINGER_SSH_PORT HOSTINGER_SSH_USER SSHPASS; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Missing required secret: $name" >&2
+              exit 1
+            fi
+          done
+
+      - name: Install SSH client
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y openssh-client sshpass
+
+      - name: Trust Hostinger host key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          ssh-keyscan -p "$HOSTINGER_SSH_PORT" -H "$HOSTINGER_SSH_HOST" >> "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Connect read-only and locate site root
+        shell: bash
+        run: |
+          set -euo pipefail
+          sshpass -e ssh \
+            -p "$HOSTINGER_SSH_PORT" \
+            -o BatchMode=no \
+            -o PreferredAuthentications=password \
+            -o PubkeyAuthentication=no \
+            "$HOSTINGER_SSH_USER@$HOSTINGER_SSH_HOST" \
+            'set -eu; echo "SSH_CONNECTION_OK"; printf "HOME=%s\n" "$HOME"; printf "PWD=%s\n" "$PWD"; echo "PUBLIC_HTML_CANDIDATES"; find "$HOME" -maxdepth 5 -type d -name public_html -print 2>/dev/null | sort | head -50'
