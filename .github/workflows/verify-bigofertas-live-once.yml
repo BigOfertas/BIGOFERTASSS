@@ -27,7 +27,7 @@ jobs:
 
       - name: Verify live catalog and product purchase UI
         run: |
-          cat > /tmp/verify-live.cjs <<'NODE'
+          cat > ./verify-live.cjs <<'NODE'
           const { chromium } = require('playwright');
 
           (async () => {
@@ -121,4 +121,4 @@ jobs:
             process.exit(1);
           });
           NODE
-          node /tmp/verify-live.cjs
+          node ./verify-live.cjs
