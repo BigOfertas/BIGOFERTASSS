@@ -260,7 +260,7 @@ function inferAudience(product) {
   return "MASCULINO";
 }
 
-function inferCommercialType(product) {
+function inferLegacyCommercialType(product) {
   const source = normalize(`${product.nome} ${product.tipo_produto}`);
   if (/\b(RETRO|RETRÔ)\b/.test(source)) return "retro";
   if (/\b(INFANTIL|KIDS?)\b/.test(source)) return "infantil";
