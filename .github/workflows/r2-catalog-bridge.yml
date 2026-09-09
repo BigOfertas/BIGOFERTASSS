@@ -93,7 +93,11 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y awscli unzip imagemagick
+          sudo apt-get install -y unzip imagemagick curl
+          curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+          rm -rf /tmp/aws /tmp/awscliv2
+          unzip -q /tmp/awscliv2.zip -d /tmp/awscliv2
+          sudo /tmp/awscliv2/aws/install --update
           aws --version
           unzip -v | head -n 2
 
