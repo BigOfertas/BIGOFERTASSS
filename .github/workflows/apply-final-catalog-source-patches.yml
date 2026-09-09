@@ -1,0 +1,47 @@
+name: Apply Final Catalog Source Patches
+
+on:
+  push:
+    branches:
+      - catalog-final-pipeline-20260909-prod
+    paths:
+      - catalog-jobs/apply-final-catalog-source-patches.json
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: catalog-final-pipeline-20260909-prod
+
+      - name: Apply source patches
+        run: |
+          node --check scripts/apply-final-catalog-source-patches.mjs
+          node scripts/apply-final-catalog-source-patches.mjs
+
+      - name: Format touched source files
+        run: |
+          npx --yes prettier@3.7.3 --write \
+            scripts/catalog-business-rules.mjs \
+            scripts/google-photos-catalog-pipeline.mjs \
+            scripts/deploy-storefront-upgrade-migrations.mjs \
+            src/lib/product-detail.ts \
+            src/components/admin/ProductImageAdmin.tsx \
+            cloudflare/hostinger-product-seo-worker.ts \
+            .github/workflows/validate-main.yml
+
+      - name: Remove one-shot files and commit
+        run: |
+          rm -f scripts/apply-final-catalog-source-patches.mjs
+          rm -f .github/workflows/apply-final-catalog-source-patches.yml
+          rm -f catalog-jobs/apply-final-catalog-source-patches.json
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add -A
+          git commit -m "feat: finalize catalog patches and external image consumers"
+          git push origin HEAD:catalog-final-pipeline-20260909-prod
