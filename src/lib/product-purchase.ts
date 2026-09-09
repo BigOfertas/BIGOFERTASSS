@@ -1,14 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type ProductCommercialType =
-  | "torcedor"
-  | "feminino"
-  | "jogador"
-  | "retro"
-  | "infantil"
-  | "calcao"
-  | "basquete"
-  | "other";
+  "torcedor" | "feminino" | "jogador" | "retro" | "infantil" | "calcao" | "basquete" | "other";
 
 export type PurchaseCustomization = {
   size: string | null;
@@ -65,7 +58,8 @@ function normalizePatchCodes(row: Record<string, unknown>) {
   const fromArray = Array.isArray(row.patchCodes)
     ? row.patchCodes.filter((item): item is string => typeof item === "string")
     : [];
-  const legacy = typeof row.patchCode === "string" && row.patchCode.trim() ? row.patchCode.trim() : null;
+  const legacy =
+    typeof row.patchCode === "string" && row.patchCode.trim() ? row.patchCode.trim() : null;
   const source = fromArray.length > 0 ? fromArray : legacy ? [legacy] : [];
   return [...new Set(source.map((code) => code.trim()).filter(Boolean))].slice(0, 8);
 }
@@ -178,7 +172,9 @@ export function validatePurchaseCustomization(
     }
   }
   if (customization.patchCodes.length > 8) return "Escolha no máximo 8 patches.";
-  if (customization.patchCodes.some((code) => !config.patches.some((patch) => patch.code === code))) {
+  if (
+    customization.patchCodes.some((code) => !config.patches.some((patch) => patch.code === code))
+  ) {
     return "Escolha apenas patches disponíveis para este produto.";
   }
   return null;

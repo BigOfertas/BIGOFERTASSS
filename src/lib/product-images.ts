@@ -92,7 +92,9 @@ export function getPrimaryProductImageUrl(
   images: ProductImage[],
 ) {
   const preferredImage = getPreferredProductImage(images);
-  return (preferredImage ? getProductImageSourceUrl(preferredImage) : null) ?? product.image_url ?? null;
+  return (
+    (preferredImage ? getProductImageSourceUrl(preferredImage) : null) ?? product.image_url ?? null
+  );
 }
 
 export function attachProductImages(product: Product, images: ProductImage[]): CatalogProduct {

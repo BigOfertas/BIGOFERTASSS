@@ -15,7 +15,10 @@ function SizeGuide({ sizes }: { sizes: string[] }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button type="button" className="text-xs font-bold text-red-600 underline-offset-4 hover:underline">
+        <button
+          type="button"
+          className="text-xs font-bold text-red-600 underline-offset-4 hover:underline"
+        >
           Ver guia de tamanhos
         </button>
       </DialogTrigger>
@@ -30,11 +33,15 @@ function SizeGuide({ sizes }: { sizes: string[] }) {
           <div className="grid grid-cols-2 gap-3 rounded-xl bg-gray-50 p-4">
             <div>
               <strong className="block text-gray-950">Largura</strong>
-              <span className="text-xs leading-5">Meça de uma axila à outra com a peça esticada.</span>
+              <span className="text-xs leading-5">
+                Meça de uma axila à outra com a peça esticada.
+              </span>
             </div>
             <div>
               <strong className="block text-gray-950">Comprimento</strong>
-              <span className="text-xs leading-5">Meça do ponto mais alto do ombro até a barra.</span>
+              <span className="text-xs leading-5">
+                Meça do ponto mais alto do ombro até a barra.
+              </span>
             </div>
           </div>
           <div>
@@ -102,13 +109,18 @@ export function ProductPurchaseOptions({
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs font-medium text-gray-500">O tamanho não altera o preço do produto.</p>
+          <p className="mt-2 text-xs font-medium text-gray-500">
+            O tamanho não altera o preço do produto.
+          </p>
         </fieldset>
       ) : null}
 
       {config.personalizationEnabled ? (
         <div>
-          <label className="text-xs font-black uppercase tracking-widest text-gray-800" htmlFor="personalizar">
+          <label
+            className="text-xs font-black uppercase tracking-widest text-gray-800"
+            htmlFor="personalizar"
+          >
             Personalizar
           </label>
           <select
@@ -174,9 +186,12 @@ export function ProductPurchaseOptions({
 
       {config.patches.length > 0 ? (
         <fieldset>
-          <legend className="text-xs font-black uppercase tracking-widest text-gray-800">Patches</legend>
+          <legend className="text-xs font-black uppercase tracking-widest text-gray-800">
+            Patches
+          </legend>
           <p className="mt-1 text-xs text-gray-500">
-            Você pode escolher mais de um. Cada patch custa {currency.format(config.patchDefaultPrice)}.
+            Você pode escolher mais de um. Cada patch custa{" "}
+            {currency.format(config.patchDefaultPrice)}.
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {config.patches.map((patch) => {
@@ -198,7 +213,9 @@ export function ProductPurchaseOptions({
                     className="h-4 w-4 rounded border-gray-300 accent-red-600"
                   />
                   <span className="min-w-0 flex-1">{patch.label}</span>
-                  <span className="shrink-0 text-xs text-gray-500">+{currency.format(patch.price)}</span>
+                  <span className="shrink-0 text-xs text-gray-500">
+                    +{currency.format(patch.price)}
+                  </span>
                 </label>
               );
             })}
@@ -211,7 +228,10 @@ export function ProductPurchaseOptions({
 
       {config.phraseEnabled && !normalEnabled ? (
         <div>
-          <label className="text-xs font-black uppercase tracking-widest text-gray-800" htmlFor="frase-personalizada">
+          <label
+            className="text-xs font-black uppercase tracking-widest text-gray-800"
+            htmlFor="frase-personalizada"
+          >
             Frase personalizada
           </label>
           <select
@@ -256,10 +276,14 @@ export function ProductPurchaseOptions({
       <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-xs leading-5 text-gray-600">
         <strong className="block text-gray-900">
           Prazo total estimado:{" "}
-          {totalMin === totalMax ? `${totalMax} dias úteis` : `${totalMin} a ${totalMax} dias úteis`}.
+          {totalMin === totalMax
+            ? `${totalMax} dias úteis`
+            : `${totalMin} a ${totalMax} dias úteis`}
+          .
         </strong>
-        Inclui até {config.productionBusinessDays} dias úteis de preparação e {config.deliveryMinBusinessDays} a{" "}
-        {config.deliveryMaxBusinessDays} dias úteis de transporte. O prazo pode variar conforme a localidade.
+        Inclui até {config.productionBusinessDays} dias úteis de preparação e{" "}
+        {config.deliveryMinBusinessDays} a {config.deliveryMaxBusinessDays} dias úteis de
+        transporte. O prazo pode variar conforme a localidade.
       </div>
     </div>
   );

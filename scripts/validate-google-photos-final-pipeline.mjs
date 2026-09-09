@@ -8,10 +8,13 @@ const includesAll = (actual, expected, label) => {
   for (const code of expected) assert.ok(actual.includes(code), `${label} missing ${code}`);
 };
 const excludesAll = (actual, forbidden, label) => {
-  for (const code of forbidden) assert.ok(!actual.includes(code), `${label} must not include ${code}`);
+  for (const code of forbidden)
+    assert.ok(!actual.includes(code), `${label} must not include ${code}`);
 };
 
-const externalMigration = read("supabase/migrations/20260909150000_google_photos_external_images.sql");
+const externalMigration = read(
+  "supabase/migrations/20260909150000_google_photos_external_images.sql",
+);
 for (const token of [
   "external_url text",
   "image_source text",
@@ -91,7 +94,13 @@ excludesAll(chelsea, ["mundial-de-clubes", "champions-league"], "Chelsea");
 const bayern = codes({ name: "CAMISA I BAYERN 26/27 ADIDAS", team: "Bayern", season: "26/27" });
 includesAll(
   bayern,
-  ["bundesliga", "dfb-pokal", "champions-league", "champions-league-multiple-winner", "uefa-campaign"],
+  [
+    "bundesliga",
+    "dfb-pokal",
+    "champions-league",
+    "champions-league-multiple-winner",
+    "uefa-campaign",
+  ],
   "Bayern",
 );
 
@@ -102,7 +111,13 @@ const barcelona = codes({
 });
 includesAll(
   barcelona,
-  ["laliga-champions", "copa-del-rey", "champions-league", "champions-league-multiple-winner", "uefa-campaign"],
+  [
+    "laliga-champions",
+    "copa-del-rey",
+    "champions-league",
+    "champions-league-multiple-winner",
+    "uefa-campaign",
+  ],
   "Barcelona",
 );
 excludesAll(barcelona, ["laliga"], "Barcelona champion");
