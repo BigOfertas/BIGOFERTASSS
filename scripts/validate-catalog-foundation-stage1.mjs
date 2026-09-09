@@ -11,6 +11,9 @@ const catalog = read("src/lib/catalog.ts");
 const products = read("src/lib/products.ts");
 const detail = read("src/lib/product-detail.ts");
 const stage3Migration = read("supabase/migrations/20260908152000_storefront_media_seo_stage_3.sql");
+const externalImagesMigration = read(
+  "supabase/migrations/20260909150000_google_photos_external_images.sql",
+);
 const seo = read("src/components/product/ProductSeo.tsx");
 const adminRoute = read("src/routes/admin.tsx");
 const admin = read("src/components/admin/CatalogFoundationAdmin.tsx");
@@ -20,6 +23,13 @@ const purchaseAdmin = read("src/components/admin/ProductPurchaseAdmin.tsx");
 const purchaseClient = read("src/lib/admin-product-purchase.ts");
 const deploy = read("scripts/deploy-storefront-upgrade-migrations.mjs");
 const deployWorkflow = read(".github/workflows/deploy-storefront-upgrades-backend.yml");
+
+const v1DetailBody = stage3Migration.split(
+  "CREATE OR REPLACE FUNCTION public.storefront_product_detail_v1",
+)[1];
+const v2DetailBody = externalImagesMigration.split(
+  "CREATE OR REPLACE FUNCTION public.storefront_product_detail_v2",
+)[1];
 
 const checks = [
   [
@@ -88,11 +98,16 @@ const checks = [
   ["sku nao participa mais da busca publica utilitaria", !/product\.sku/.test(products)],
   [
     "detalhe publico nao solicita sku de produto ou variante",
-    /storefront_product_detail_v1/.test(detail) &&
-      /CREATE OR REPLACE FUNCTION public\.storefront_product_detail_v1/.test(stage3Migration) &&
-      !/'sku'/.test(
-        stage3Migration.split("CREATE OR REPLACE FUNCTION public.storefront_product_detail_v1")[1],
-      ),
+    /CREATE OR REPLACE FUNCTION public\.storefront_product_detail_v1/.test(stage3Migration) &&
+      Boolean(v1DetailBody) &&
+      !/'sku'/.test(v1DetailBody) &&
+      (/storefront_product_detail_v1/.test(detail) ||
+        (/storefront_product_detail_v2/.test(detail) &&
+          /CREATE OR REPLACE FUNCTION public\.storefront_product_detail_v2/.test(
+            externalImagesMigration,
+          ) &&
+          /storefront_product_detail_v1\(p_identifier\)/.test(v2DetailBody ?? "") &&
+          !/'sku'/.test(v2DetailBody ?? ""))),
   ],
   [
     "escolha real de variacao nao e preenchida automaticamente",
