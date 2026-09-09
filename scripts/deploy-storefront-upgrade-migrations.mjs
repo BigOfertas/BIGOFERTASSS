@@ -48,7 +48,10 @@ const migrations = [
     "supabase/migrations/20260908170000_catalog_bulk_import_bridge.sql",
   ],
   ["catalog_business_rules", "supabase/migrations/20260909130000_catalog_business_rules.sql"],
-  ["global_patch_matrix", "supabase/migrations/20260909143000_global_patch_matrix.sql"],
+  [
+    "global_patch_matrix_refined_2026",
+    "supabase/migrations/20260909143000_global_patch_matrix.sql",
+  ],
   [
     "google_photos_external_images",
     "supabase/migrations/20260909150000_google_photos_external_images.sql",
@@ -136,6 +139,10 @@ select
   ) as image_thumb_derivative_column,
   exists (
     select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'product_images' and column_name = 'external_url'
+  ) as image_external_url_column,
+  exists (
+    select 1 from information_schema.columns
     where table_schema = 'public' and table_name = 'products' and column_name = 'catalog_code'
   ) as catalog_code_column,
   exists (
@@ -179,6 +186,11 @@ select
   exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'storefront_product_detail_v2'
+  ) as product_detail_v2_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'owner_catalog_products_page'
   ) as scalable_catalog_admin_rpc,
   exists (
@@ -201,6 +213,11 @@ select
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'owner_catalog_import_finalize_image'
   ) as catalog_import_image_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'catalog_apply_normalized_batch'
+  ) as catalog_apply_normalized_batch_rpc,
   exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
@@ -230,22 +247,8 @@ select
     from public.store_purchase_settings s
     cross join lateral jsonb_array_elements(s.patch_catalog) p(value)
     where s.singleton = true
-      and p.value->>'code' = 'champions-league'
-  ) as global_patch_matrix,
-  exists (
-    select 1 from information_schema.columns
-    where table_schema = 'public' and table_name = 'product_images' and column_name = 'external_url'
-  ) as external_image_url_column,
-  exists (
-    select 1 from pg_catalog.pg_proc p
-    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and p.proname = 'storefront_product_detail_v2'
-  ) as product_detail_v2_rpc,
-  exists (
-    select 1 from pg_catalog.pg_proc p
-    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and p.proname = 'catalog_apply_normalized_batch'
-  ) as catalog_normalized_batch_rpc;
+      and p.value->>'code' = 'champions-league-multiple-winner'
+  ) as global_patch_matrix;
 `);
 
 console.log("STOREFRONT_UPGRADE_BACKEND_VERIFICATION");
@@ -257,6 +260,7 @@ const required = [
   "catalog_taxonomy_table",
   "image_card_derivative_column",
   "image_thumb_derivative_column",
+  "image_external_url_column",
   "catalog_code_column",
   "catalog_variant_code_column",
   "catalog_source_key_column",
@@ -266,19 +270,18 @@ const required = [
   "catalog_v3_rpc",
   "catalog_facets_v2_rpc",
   "product_detail_v1_rpc",
+  "product_detail_v2_rpc",
   "scalable_catalog_admin_rpc",
   "catalog_variant_admin_rpc",
   "catalog_import_product_rpc",
   "catalog_import_variant_rpc",
   "catalog_import_image_rpc",
+  "catalog_apply_normalized_batch_rpc",
   "scalable_purchase_admin_rpc",
   "affiliate_activate_rpc",
   "affiliate_deactivate_rpc",
   "signup_phone_trigger",
   "global_patch_matrix",
-  "external_image_url_column",
-  "product_detail_v2_rpc",
-  "catalog_normalized_batch_rpc",
 ];
 
 if (!required.every((key) => verification?.[key] === true)) {
