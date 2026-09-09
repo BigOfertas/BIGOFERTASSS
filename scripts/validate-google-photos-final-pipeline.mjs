@@ -77,18 +77,56 @@ const manCity = codes({
   team: "Manchester City",
   season: "26/27",
 });
-includesAll(manCity, ["premier-league", "fa-cup", "champions-league"], "Manchester City");
+includesAll(
+  manCity,
+  ["premier-league", "fa-cup", "champions-league", "uefa-campaign"],
+  "Manchester City",
+);
 excludesAll(manCity, ["mundial-de-clubes", "fifa-club-world-champions"], "Manchester City");
 
 const chelsea = codes({ name: "CAMISA I CHELSEA 26/27 NIKE", team: "Chelsea", season: "26/27" });
 includesAll(chelsea, ["premier-league", "fa-cup", "fifa-club-world-champions"], "Chelsea");
 excludesAll(chelsea, ["mundial-de-clubes", "champions-league"], "Chelsea");
 
+const bayern = codes({ name: "CAMISA I BAYERN 26/27 ADIDAS", team: "Bayern", season: "26/27" });
+includesAll(
+  bayern,
+  ["bundesliga", "dfb-pokal", "champions-league", "champions-league-multiple-winner", "uefa-campaign"],
+  "Bayern",
+);
+
+const barcelona = codes({
+  name: "CAMISA II BARCELONA 26/27 NIKE",
+  team: "Barcelona",
+  season: "26/27",
+});
+includesAll(
+  barcelona,
+  ["laliga-champions", "copa-del-rey", "champions-league", "champions-league-multiple-winner", "uefa-campaign"],
+  "Barcelona",
+);
+excludesAll(barcelona, ["laliga"], "Barcelona champion");
+
 const psg = codes({ name: "CAMISA I PSG 26/27 NIKE", team: "PSG", season: "26/27" });
-includesAll(psg, ["ligue-1", "coupe-de-france", "champions-league-titleholder"], "PSG");
-excludesAll(psg, ["champions-league"], "PSG titleholder");
+includesAll(
+  psg,
+  ["ligue-1-champions", "coupe-de-france", "champions-league-titleholder", "uefa-campaign"],
+  "PSG",
+);
+excludesAll(psg, ["ligue-1", "champions-league"], "PSG titleholder");
+
+const lyon = codes({ name: "CAMISA II LYON 26/27 ADIDAS", team: "Lyon", season: "26/27" });
+includesAll(lyon, ["ligue-1", "coupe-de-france", "europa-league", "uefa-campaign"], "Lyon");
+
+const milan = codes({ name: "CAMISA II MILAN 26/27 PUMA", team: "Milan", season: "26/27" });
+includesAll(milan, ["serie-a", "coppa-italia", "europa-league", "uefa-campaign"], "Milan");
+excludesAll(milan, ["champions-league-multiple-winner"], "Milan outside UCL");
 
 const napoli = codes({ name: "CAMISA I NAPOLI 26/26 EA7", team: "Napoli", season: "26/26" });
-includesAll(napoli, ["serie-a", "coppa-italia", "champions-league"], "Napoli 26/26 source title");
+includesAll(
+  napoli,
+  ["serie-a", "coppa-italia", "champions-league", "uefa-campaign"],
+  "Napoli 26/26 source title",
+);
 
 console.log("GOOGLE_PHOTOS_FINAL_CATALOG_PIPELINE_OK");
