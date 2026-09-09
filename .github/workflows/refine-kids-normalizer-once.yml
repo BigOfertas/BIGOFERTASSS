@@ -1,0 +1,132 @@
+name: Refine Kids Normalizer Once
+
+on:
+  push:
+    branches:
+      - catalog-kids-first-deploy-20260909
+    paths:
+      - catalog-jobs/refine-kids-normalizer.json
+
+permissions:
+  contents: write
+
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: catalog-kids-first-deploy-20260909
+
+      - name: Refine Kids normalization
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          assimilator = Path('scripts/google-photos-assimilator.mjs')
+          text = assimilator.read_text()
+          text = text.replace(
+              '|MACRON|MIZUNO|JOMA|UNDER ARMOUR|REEBOK)\\b/i;',
+              '|MACRON|MIZUNO|JOMA|UNDER ARMOUR|REEBOK|KOBE)\\b/i;',
+          )
+          old_model = 'const MODEL_RE = /\\b(?:CAMISA|REGATA)\\s+(I{1,3}|IV|V)\\b/i;'
+          new_model = '''const MODEL_RE =\n  /\\b(?:CAMISA|REGATA)\\s+(I{1,3}|IV|V)\\b|\\bCONJUNTO(?:\\s+(?:INFANTIL|INFATIL))?\\s+(I{1,3}|IV|V)\\b|\\bCONJUNTO\\s+(I{1,3}|IV|V)\\s+(?:INFANTIL|INFATIL)\\b/i;\n\nfunction extractModel(title) {\n  const match = title.match(MODEL_RE);\n  return (match?.[1] || match?.[2] || match?.[3])?.toUpperCase() ?? null;\n}'''
+          if old_model not in text:
+              raise SystemExit('MODEL_RE target not found')
+          text = text.replace(old_model, new_model)
+          old_type = '''  if (/CORTA[ -]?VENTO|WINDBREAKER/.test(upper)) return "corta-vento";\n  if (/\\bSHORTS?\\b/.test(upper)) return "shorts";\n  if (/\\bCONJUNTO\\b/.test(upper)) return "conjunto";\n  if (/\\bKIT\\b/.test(upper)) return "kit";\n  if (/\\bREGATA\\b/.test(upper)) return "regata";\n  if (/\\bTREINO\\b/.test(upper)) return "treino";\n  if (/\\bVIAGEM\\b/.test(upper)) return "viagem";'''
+          new_type = '''  if (/CORTA[ -]?VENTO|WINDBREAKER/.test(upper)) return "corta-vento";\n  if (/\\bSHORTS?\\b/.test(upper)) return "shorts";\n  if (/\\bCONJUNTO\\b/.test(upper) && /\\b(?:INFANTIL|INFATIL|KIDS?)\\b/.test(upper))\n    return "conjunto";\n  if (/\\bTREINO\\b/.test(upper)) return "treino";\n  if (/\\bVIAGEM\\b/.test(upper)) return "viagem";\n  if (/\\bCONJUNTO\\b/.test(upper)) return "conjunto";\n  if (/\\bKIT\\b/.test(upper)) return "kit";\n  if (/\\bREGATA\\b/.test(upper)) return "regata";'''
+          if old_type not in text:
+              raise SystemExit('classifyType target not found')
+          text = text.replace(old_type, new_type)
+          text = text.replace('if (/KIDS?|INFANTIL/.test(upper))', 'if (/KIDS?|INFANTIL|INFATIL/.test(upper))')
+          text = text.replace('/\\bINFANTIL\\b/gi,', '/\\bINFANTIL\\b/gi,\n    /\\bINFATIL\\b/gi,')
+          text = text.replace(
+              'const model = normalizedTitle.match(MODEL_RE)?.[1]?.toUpperCase() ?? null;',
+              'const model = extractModel(normalizedTitle);',
+          )
+          assimilator.write_text(text)
+
+          rules = Path('scripts/catalog-business-rules.mjs')
+          text = rules.read_text()
+          text = text.replace(
+              'if (/\\b(INFANTIL|KIDS?|CRIANCA)\\b/.test(source)) return "infantil";',
+              'if (/\\b(INFANTIL|INFATIL|KIDS?|CRIANCA)\\b/.test(source)) return "infantil";',
+          )
+          old_uniform = '''  const match = source.match(/\\b(?:CAMISA|REGATA)\\s+(III|II|I)\\b/);\n  if (!match) return { model: null, label: null };\n  return { model: match[1], label: UNIFORM_LABELS[match[1]] ?? null };'''
+          new_uniform = '''  let match = source.match(/\\b(?:CAMISA|REGATA)\\s+(III|II|I)\\b/);\n  if (!match && /\\bCONJUNTO\\b/.test(source)) match = source.match(/\\b(III|II|I)\\b/);\n  if (!match) return { model: null, label: null };\n  return { model: match[1], label: UNIFORM_LABELS[match[1]] ?? null };'''
+          if old_uniform not in text:
+              raise SystemExit('inferUniform target not found')
+          rules.write_text(text.replace(old_uniform, new_uniform))
+
+          pipeline = Path('scripts/google-photos-catalog-pipeline.mjs')
+          text = pipeline.read_text()
+          old_alias = '''  if (["MAN. CITY", "MAN CITY"].includes(normalized)) return "Manchester City";\n  if (["PSG", "PARIS SAINT GERMAIN"].includes(normalized)) return "PSG";'''
+          new_alias = '''  const aliases = new Map([\n    ["MAN. CITY", "Manchester City"],\n    ["MAN CITY", "Manchester City"],\n    ["MAN. UNITED", "Manchester United"],\n    ["MAN UNITED", "Manchester United"],\n    ["CORINTHIAS", "Corinthians"],\n    ["CREMIO", "Grêmio"],\n    ["INTERZIONALE", "Internazionale"],\n    ["DORTMOUND", "Dortmund"],\n    ["O. MARSEILLE", "Olympique Marseille"],\n    ["PSG", "PSG"],\n    ["PARIS SAINT GERMAIN", "PSG"],\n  ]);\n  if (aliases.has(normalized)) return aliases.get(normalized);'''
+          if old_alias not in text:
+              raise SystemExit('titleCase alias target not found')
+          text = text.replace(old_alias, new_alias)
+          old_name = '''  const model = proposal.model ? ` ${proposal.model}` : "";\n  const season = proposal.season ? ` ${proposal.season}` : "";\n  const brand = proposal.brand ? ` ${titleCaseEntity(proposal.brand)}` : "";\n  return `${entity} — ${type}${model}${season}${brand}`.trim();'''
+          new_name = '''  const audience = normalizeCatalogText(proposal.audience) === "INFANTIL" ? " Infantil" : "";\n  const model = proposal.model ? ` ${proposal.model}` : "";\n  const season = proposal.season ? ` ${proposal.season}` : "";\n  const brand = proposal.brand ? ` ${titleCaseEntity(proposal.brand)}` : "";\n  return `${entity} — ${type}${audience}${model}${season}${brand}`.trim();'''
+          if old_name not in text:
+              raise SystemExit('productName target not found')
+          text = text.replace(old_name, new_name)
+          text = text.replace(
+              'const albumIdentity = clean(collector.resolvedUrl || collector.sourceUrl);\n  const products = [];',
+              'const albumIdentity = clean(collector.resolvedUrl || collector.sourceUrl);\n  const kidsSource = /\\b(KIDS?|INFANTIL|INFANTIS)\\b/.test(normalizeCatalogText(collector.label ?? ""));\n  const products = [];',
+          )
+          text = text.replace(
+              'const firstProposal = proposalByGroup.get(firstGroupRef?.groupIndex) ?? proposed;\n    const business = buildCatalogBusinessProfile({',
+              'const firstProposal = proposalByGroup.get(firstGroupRef?.groupIndex) ?? proposed;\n    const effectiveAudience = kidsSource ? "infantil" : proposed.audience;\n    const catalogProposal = kidsSource ? { ...proposed, audience: "infantil" } : proposed;\n    const business = buildCatalogBusinessProfile({',
+          )
+          text = text.replace('audience: proposed.audience,\n    });\n    const patchCodes', 'audience: effectiveAudience,\n    });\n    const patchCodes', 1)
+          text = text.replace('const name = productName(proposed);', 'const name = productName(catalogProposal);')
+          text = text.replace('audience: proposed.audience,\n      });\n      const commercialType', 'audience: effectiveAudience,\n      });\n      const commercialType', 1)
+          text = text.replace(
+              'description: descriptionFor(name, proposed, productCommercialType, business.uniform?.label),\n      category: categoryForType(proposed.type),',
+              'description: descriptionFor(name, catalogProposal, productCommercialType, business.uniform?.label),\n      category: kidsSource ? { name: "Kids", slug: "infantil" } : categoryForType(proposed.type),',
+          )
+          old_audience = '''      audience:\n        normalizeCatalogText(proposed.audience) === "ADULTO"\n          ? "MASCULINO"\n          : normalizeCatalogText(proposed.audience || "MASCULINO"),'''
+          new_audience = '''      audience:\n        normalizeCatalogText(effectiveAudience) === "ADULTO"\n          ? "MASCULINO"\n          : normalizeCatalogText(effectiveAudience || "MASCULINO"),'''
+          if old_audience not in text:
+              raise SystemExit('record audience target not found')
+          pipeline.write_text(text.replace(old_audience, new_audience))
+
+          validator = Path('scripts/validate-catalog-business-rules.mjs')
+          text = validator.read_text()
+          needle = '  ["KIT INFANTIL VASCO 26/27", "infantil", 169.9],\n'
+          replacement = needle + '  ["CONJUNTO INFATIL I CORINTHIAS 26/27 NIKE", "infantil", 169.9],\n'
+          if needle not in text:
+              raise SystemExit('validator commercial case target not found')
+          text = text.replace(needle, replacement, 1)
+          insertion = '''\nassert.deepEqual(inferUniform("CONJUNTO INFATIL I CORINTHIAS 26/27 NIKE"), {\n  model: "I",\n  label: "Primeiro uniforme",\n});\nassert.deepEqual(inferUniform("CONJUNTO II INFANTIL INGLATERRA 26/27 NIKE"), {\n  model: "II",\n  label: "Segundo uniforme",\n});\n'''
+          anchor = 'for (const [name, expectedType, expectedPrice] of cases) {\n'
+          if anchor not in text:
+              raise SystemExit('validator insertion target not found')
+          validator.write_text(text.replace(anchor, insertion + '\n' + anchor, 1))
+          PY
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Format and validate
+        run: |
+          bunx prettier --write scripts/google-photos-assimilator.mjs scripts/google-photos-catalog-pipeline.mjs scripts/catalog-business-rules.mjs scripts/validate-catalog-business-rules.mjs scripts/deploy-kids-purchase-sizes.mjs
+          node scripts/validate-catalog-business-rules.mjs
+          node scripts/validate-google-photos-final-pipeline.mjs
+          bun run lint
+          bun run build
+
+      - name: Commit refinement
+        run: |
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add scripts/google-photos-assimilator.mjs scripts/google-photos-catalog-pipeline.mjs scripts/catalog-business-rules.mjs scripts/validate-catalog-business-rules.mjs scripts/deploy-kids-purchase-sizes.mjs
+          git commit -m "fix: normalize Kids catalog titles and sizes"
+          git push origin HEAD:catalog-kids-first-deploy-20260909
