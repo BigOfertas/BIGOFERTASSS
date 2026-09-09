@@ -185,7 +185,13 @@ const nationalCases = [
   ],
   [
     { name: "CAMISA I ESPANHA 26/27 ADIDAS", selecao: "Espanha" },
-    ["fifa-world-cup-2026", "euro", "euro-titleholder", "uefa-nations-league"],
+    [
+      "fifa-world-cup-2026",
+      "fifa-world-champions",
+      "euro",
+      "euro-titleholder",
+      "uefa-nations-league",
+    ],
     [],
   ],
   [
@@ -221,7 +227,7 @@ hasAll(
 );
 hasAll(
   patchCodes({ name: "CAMISA I ARGENTINA 26/27 ADIDAS", selecao: "Argentina" }),
-  ["fifa-world-champions", "copa-america-titleholder"],
+  ["copa-america-titleholder"],
   "Argentina",
 );
 

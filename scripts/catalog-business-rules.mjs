@@ -747,12 +747,12 @@ function inferNationalPatches(source, national) {
     addPatch(codes, "ofc-nations-cup");
   }
   if (national.key === "ESPANHA" && currentSeason2627(source)) {
+    addPatch(codes, "fifa-world-champions");
     addPatch(codes, "euro-titleholder");
   }
   if (national.key === "PORTUGAL" && currentSeason2627(source))
     addPatch(codes, "nations-league-titleholder");
   if (national.key === "ARGENTINA" && currentSeason2627(source)) {
-    addPatch(codes, "fifa-world-champions");
     addPatch(codes, "copa-america-titleholder");
   }
   return codes;
