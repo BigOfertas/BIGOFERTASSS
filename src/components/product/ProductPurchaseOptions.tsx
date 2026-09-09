@@ -134,7 +134,9 @@ export function ProductPurchaseOptions({
             }
           >
             <option value="no">Não</option>
-            <option value="yes">Sim — nome e número (+{currency.format(config.personalizationPrice)})</option>
+            <option value="yes">
+              Sim — nome e número (+{currency.format(config.personalizationPrice)})
+            </option>
           </select>
           {normalEnabled ? (
             <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_120px]">

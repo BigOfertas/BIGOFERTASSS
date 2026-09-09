@@ -3,7 +3,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
-import { buildCatalogBusinessProfile, inferCommercialType, resolveCommercialPrice } from "./catalog-business-rules.mjs";
+import {
+  buildCatalogBusinessProfile,
+  inferCommercialType,
+  resolveCommercialPrice,
+} from "./catalog-business-rules.mjs";
 
 const PRODUCT_CODE_RE = /^P\d{6}$/;
 const DEFAULT_IMAGE_CONCURRENCY = 4;
@@ -402,10 +406,12 @@ function loadPlan(inputRoot, options) {
       continue;
     }
     const variantName = variationLabel(variantCode, row.nome_descricao);
-    const explicitVariantType = inferCommercialType({ name: variantName, tipo_produto: row.tipo_produto });
-    const variantCommercialType = explicitVariantType === "other"
-      ? product.commercialType
-      : explicitVariantType;
+    const explicitVariantType = inferCommercialType({
+      name: variantName,
+      tipo_produto: row.tipo_produto,
+    });
+    const variantCommercialType =
+      explicitVariantType === "other" ? product.commercialType : explicitVariantType;
     const variantPrice = resolveCommercialPrice(
       variantCommercialType,
       parseNumber(row.preco ?? row.price),

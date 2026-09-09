@@ -1,4 +1,7 @@
-const clean = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
+const clean = (value) =>
+  String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
 
 export function normalizeCatalogText(value) {
   return clean(value)
@@ -122,7 +125,10 @@ export function appendUniformSpecification(existingSpecifications, productOrTitl
 
 export function inferPurchasePatches(product) {
   const source = sourceText(product);
-  const competitionSaysBrazil = /\b(BRASILEIRAO|CAMPEONATO BRASILEIRO|COPA DO BRASIL|LIBERTADORES|SUL AMERICANA)\b/.test(source);
+  const competitionSaysBrazil =
+    /\b(BRASILEIRAO|CAMPEONATO BRASILEIRO|COPA DO BRASIL|LIBERTADORES|SUL AMERICANA)\b/.test(
+      source,
+    );
   const teamSaysBrazil = BRAZILIAN_CLUB_KEYS.some((club) => source.includes(club));
   if (!competitionSaysBrazil && !teamSaysBrazil) return [];
   return BRAZIL_CLUB_PATCHES.map(({ code, enabled }) => ({ code, enabled }));

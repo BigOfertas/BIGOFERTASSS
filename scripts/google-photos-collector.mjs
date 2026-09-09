@@ -1,39 +1,45 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const clean = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
-const titleRe = /\b(CAMISA|CONJUNTO|KIT|SHORTS?|CORTA[ -]?VENTO|WINDBREAKER|REGATA|PLAYER|JOGADOR|TORCEDOR|FEMININ[AO]|KIDS?|INFANTIL|RET[RÔO]|TREINO|VIAGEM|GOLEIRO|BASQUETE|NBA)\b/i;
+const clean = (value) =>
+  String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+const titleRe =
+  /\b(CAMISA|CONJUNTO|KIT|SHORTS?|CORTA[ -]?VENTO|WINDBREAKER|REGATA|PLAYER|JOGADOR|TORCEDOR|FEMININ[AO]|KIDS?|INFANTIL|RET[RÔO]|TREINO|VIAGEM|GOLEIRO|BASQUETE|NBA)\b/i;
 const mediaHostRe = /(^|\.)(googleusercontent\.com|usercontent\.google\.com|ggpht\.com)$/i;
 
 function parseArgs() {
   const out = {
-    url: '',
-    label: '',
-    out: '.artifacts/google-photos-collector',
+    url: "",
+    label: "",
+    out: ".artifacts/google-photos-collector",
     expected: 1,
     maxScrolls: 350,
   };
   const args = process.argv.slice(2);
   for (let index = 0; index < args.length; index += 1) {
-    if (args[index] === '--url') out.url = args[++index];
-    else if (args[index] === '--label') out.label = args[++index];
-    else if (args[index] === '--out') out.out = args[++index];
-    else if (args[index] === '--expected-min-images') out.expected = Number(args[++index] || 1);
-    else if (args[index] === '--max-scrolls') out.maxScrolls = Number(args[++index] || 350);
+    if (args[index] === "--url") out.url = args[++index];
+    else if (args[index] === "--label") out.label = args[++index];
+    else if (args[index] === "--out") out.out = args[++index];
+    else if (args[index] === "--expected-min-images") out.expected = Number(args[++index] || 1);
+    else if (args[index] === "--max-scrolls") out.maxScrolls = Number(args[++index] || 350);
   }
   if (!/^https:\/\/(photos\.google\.com|photos\.app\.goo\.gl)\//i.test(out.url)) {
-    throw new Error('URL publica do Google Photos invalida.');
+    throw new Error("URL publica do Google Photos invalida.");
   }
-  if (!Number.isFinite(out.expected) || out.expected < 1) throw new Error('expected-min-images invalido.');
-  if (!Number.isFinite(out.maxScrolls) || out.maxScrolls < 1) throw new Error('max-scrolls invalido.');
+  if (!Number.isFinite(out.expected) || out.expected < 1)
+    throw new Error("expected-min-images invalido.");
+  if (!Number.isFinite(out.maxScrolls) || out.maxScrolls < 1)
+    throw new Error("max-scrolls invalido.");
   return out;
 }
 
 function isMediaUrl(raw) {
   try {
     const url = new URL(raw);
-    return url.protocol === 'https:' && mediaHostRe.test(url.hostname);
+    return url.protocol === "https:" && mediaHostRe.test(url.hostname);
   } catch {
     return false;
   }
@@ -42,18 +48,14 @@ function isMediaUrl(raw) {
 function mediaKey(raw) {
   if (!isMediaUrl(raw)) return null;
   const url = new URL(raw);
-  const pathname = url.pathname
-    .replace(/=w\d+(?:-h\d+)?[^/?#]*/i, '')
-    .replace(/=s\d+[^/?#]*/i, '');
+  const pathname = url.pathname.replace(/=w\d+(?:-h\d+)?[^/?#]*/i, "").replace(/=s\d+[^/?#]*/i, "");
   return `${url.hostname.toLowerCase()}${pathname}`;
 }
 
 function highQualityUrl(raw, size = 4096) {
   if (!isMediaUrl(raw)) return raw;
   const url = new URL(raw);
-  const pathname = url.pathname
-    .replace(/=w\d+(?:-h\d+)?[^/?#]*/i, '')
-    .replace(/=s\d+[^/?#]*/i, '');
+  const pathname = url.pathname.replace(/=w\d+(?:-h\d+)?[^/?#]*/i, "").replace(/=s\d+[^/?#]*/i, "");
   url.pathname = `${pathname}=w${size}-h${size}-s-no-gm`;
   return url.toString();
 }
@@ -73,7 +75,8 @@ function dedupeTitles(titles) {
   const result = [];
   for (const title of sorted) {
     const previous = result.at(-1);
-    if (previous && previous.text === title.text && Math.abs(previous.top - title.top) <= 96) continue;
+    if (previous && previous.text === title.text && Math.abs(previous.top - title.top) <= 96)
+      continue;
     result.push(title);
   }
   return result;
@@ -81,7 +84,12 @@ function dedupeTitles(titles) {
 
 function groupProductImages(images, titles) {
   const sortedImages = [...images].sort((a, b) => a.top - b.top || a.left - b.left);
-  const groups = titles.map((title, index) => ({ index: index + 1, title: title.text, top: title.top, images: [] }));
+  const groups = titles.map((title, index) => ({
+    index: index + 1,
+    title: title.text,
+    top: title.top,
+    images: [],
+  }));
   const ungrouped = [];
   for (const image of sortedImages) {
     let chosen = -1;
@@ -97,25 +105,29 @@ function groupProductImages(images, titles) {
 
 async function findScrollRoot(page) {
   return page.evaluate(() => {
-    const candidates = [document.scrollingElement, ...document.querySelectorAll('*')].filter(Boolean);
+    const candidates = [document.scrollingElement, ...document.querySelectorAll("*")].filter(
+      Boolean,
+    );
     let best = document.scrollingElement;
     let bestScore = -1;
     for (const element of candidates) {
       const style = getComputedStyle(element);
       const delta = element.scrollHeight - element.clientHeight;
       if (delta < 300) continue;
-      if (element !== document.scrollingElement && !/(auto|scroll|overlay)/.test(style.overflowY)) continue;
+      if (element !== document.scrollingElement && !/(auto|scroll|overlay)/.test(style.overflowY))
+        continue;
       const score = delta * Math.max(1, element.clientWidth);
       if (score > bestScore) {
         best = element;
         bestScore = score;
       }
     }
-    if (!best.dataset.bigCollectorId) best.dataset.bigCollectorId = `big-${Math.random().toString(36).slice(2)}`;
+    if (!best.dataset.bigCollectorId)
+      best.dataset.bigCollectorId = `big-${Math.random().toString(36).slice(2)}`;
     return {
       id: best.dataset.bigCollectorId,
       tag: best.tagName,
-      className: best.className || '',
+      className: best.className || "",
       scrollHeight: best.scrollHeight,
       clientHeight: best.clientHeight,
     };
@@ -124,8 +136,10 @@ async function findScrollRoot(page) {
 
 async function scan(page, rootId) {
   return page.evaluate((id) => {
-    const root = document.querySelector(`[data-big-collector-id="${id}"]`) || document.scrollingElement;
-    const rootRect = root === document.scrollingElement ? { top: 0, left: 0 } : root.getBoundingClientRect();
+    const root =
+      document.querySelector(`[data-big-collector-id="${id}"]`) || document.scrollingElement;
+    const rootRect =
+      root === document.scrollingElement ? { top: 0, left: 0 } : root.getBoundingClientRect();
     const scrollTop = root.scrollTop || window.scrollY || 0;
     const position = (rect) => ({
       top: Math.round(rect.top - rootRect.top + scrollTop),
@@ -144,22 +158,24 @@ async function scan(page, rootId) {
       urls.push({ url, source, ...position(rect) });
     };
 
-    for (const element of document.querySelectorAll('*')) {
+    for (const element of document.querySelectorAll("*")) {
       const rect = element.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) continue;
       for (const attribute of element.attributes || []) {
         if (!mediaRe.test(attribute.value)) continue;
-        for (const match of attribute.value.match(urlRe) || []) addUrl(match.replace(/&amp;/g, '&'), `attr:${attribute.name}`, element);
+        for (const match of attribute.value.match(urlRe) || [])
+          addUrl(match.replace(/&amp;/g, "&"), `attr:${attribute.name}`, element);
       }
-      for (const pseudo of [null, '::before', '::after']) {
-        let background = '';
+      for (const pseudo of [null, "::before", "::after"]) {
+        let background = "";
         try {
-          background = getComputedStyle(element, pseudo).backgroundImage || '';
+          background = getComputedStyle(element, pseudo).backgroundImage || "";
         } catch {
-          background = '';
+          background = "";
         }
         if (!mediaRe.test(background)) continue;
-        for (const match of background.match(urlRe) || []) addUrl(match.replace(/["')]+$/, ''), `css${pseudo || ''}`, element);
+        for (const match of background.match(urlRe) || [])
+          addUrl(match.replace(/["')]+$/, ""), `css${pseudo || ""}`, element);
       }
     }
 
@@ -167,7 +183,7 @@ async function scan(page, rootId) {
     const seenTexts = new Set();
     for (const element of document.querySelectorAll('h1,h2,h3,h4,[role="heading"],div,span,p')) {
       if (element.children.length > 5) continue;
-      const text = (element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim();
+      const text = (element.innerText || element.textContent || "").replace(/\s+/g, " ").trim();
       if (text.length < 5 || text.length > 180) continue;
       const rect = element.getBoundingClientRect();
       if (rect.width < 20 || rect.height < 10 || rect.height > 240) continue;
@@ -179,7 +195,7 @@ async function scan(page, rootId) {
     }
 
     const performanceUrls = performance
-      .getEntriesByType('resource')
+      .getEntriesByType("resource")
       .map((entry) => entry.name)
       .filter((url) => mediaRe.test(url));
 
@@ -197,9 +213,12 @@ async function scan(page, rootId) {
 async function run() {
   const options = parseArgs();
   fs.mkdirSync(options.out, { recursive: true });
-  const { chromium } = await import('playwright');
+  const { chromium } = await import("playwright");
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1200 }, locale: 'pt-BR' });
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1200 },
+    locale: "pt-BR",
+  });
   const page = await context.newPage();
 
   const networkUrls = [];
@@ -209,13 +228,20 @@ async function run() {
     seenNetworkUrls.add(url);
     networkUrls.push({ url, resourceType, order: networkUrls.length });
   };
-  page.on('request', (request) => addNetworkUrl(request.url(), request.resourceType()));
+  page.on("request", (request) => addNetworkUrl(request.url(), request.resourceType()));
 
-  await page.goto(options.url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await page.goto(options.url, { waitUntil: "domcontentloaded", timeout: 90000 });
   await page.waitForTimeout(2500);
-  for (const label of ['Aceitar tudo', 'Aceitar', 'I agree', 'Accept all', 'Entendi', 'Continuar']) {
+  for (const label of [
+    "Aceitar tudo",
+    "Aceitar",
+    "I agree",
+    "Accept all",
+    "Entendi",
+    "Continuar",
+  ]) {
     try {
-      const button = page.getByRole('button', { name: label, exact: false }).first();
+      const button = page.getByRole("button", { name: label, exact: false }).first();
       if (await button.isVisible({ timeout: 150 })) await button.click();
     } catch {
       // Overlay ausente.
@@ -227,7 +253,7 @@ async function run() {
   const titleObservations = new Map();
   const performanceUrls = new Set();
   let idleRounds = 0;
-  let previousSignature = '';
+  let previousSignature = "";
   let rounds = 0;
 
   for (let index = 0; index < options.maxScrolls; index += 1) {
@@ -248,32 +274,51 @@ async function run() {
     const signature = `${observation.scrollTop}|${observation.scrollHeight}|${domUrls.size}|${networkUrls.length}|${titleObservations.size}|${performanceUrls.size}`;
     idleRounds = signature === previousSignature ? idleRounds + 1 : 0;
     previousSignature = signature;
-    console.log(`round=${rounds} y=${observation.scrollTop}/${observation.scrollHeight} dom=${domUrls.size} net=${networkUrls.length} perf=${performanceUrls.size} titles=${titleObservations.size} idle=${idleRounds}`);
+    console.log(
+      `round=${rounds} y=${observation.scrollTop}/${observation.scrollHeight} dom=${domUrls.size} net=${networkUrls.length} perf=${performanceUrls.size} titles=${titleObservations.size} idle=${idleRounds}`,
+    );
 
-    const atBottom = observation.scrollTop + observation.clientHeight >= observation.scrollHeight - 16;
+    const atBottom =
+      observation.scrollTop + observation.clientHeight >= observation.scrollHeight - 16;
     if (atBottom && idleRounds >= 6) break;
-    await page.evaluate(({ id }) => {
-      const root = document.querySelector(`[data-big-collector-id="${id}"]`) || document.scrollingElement;
-      const step = Math.max(350, Math.floor(root.clientHeight * 0.72));
-      root.scrollTop = Math.min(root.scrollHeight - root.clientHeight, root.scrollTop + step);
-      root.dispatchEvent(new Event('scroll', { bubbles: true }));
-    }, { id: scrollRoot.id });
+    await page.evaluate(
+      ({ id }) => {
+        const root =
+          document.querySelector(`[data-big-collector-id="${id}"]`) || document.scrollingElement;
+        const step = Math.max(350, Math.floor(root.clientHeight * 0.72));
+        root.scrollTop = Math.min(root.scrollHeight - root.clientHeight, root.scrollTop + step);
+        root.dispatchEvent(new Event("scroll", { bubbles: true }));
+      },
+      { id: scrollRoot.id },
+    );
     await page.waitForTimeout(850);
   }
 
-  await page.screenshot({ path: path.join(options.out, 'page-final.png'), fullPage: false });
+  await page.screenshot({ path: path.join(options.out, "page-final.png"), fullPage: false });
 
   const allMedia = new Map();
   for (const item of networkUrls) {
     const key = mediaKey(item.url);
     if (key && !allMedia.has(key)) {
-      allMedia.set(key, { mediaKey: key, directUrl: item.url, highQualityUrl: highQualityUrl(item.url), source: 'network', order: item.order });
+      allMedia.set(key, {
+        mediaKey: key,
+        directUrl: item.url,
+        highQualityUrl: highQualityUrl(item.url),
+        source: "network",
+        order: item.order,
+      });
     }
   }
   for (const url of performanceUrls) {
     const key = mediaKey(url);
     if (key && !allMedia.has(key)) {
-      allMedia.set(key, { mediaKey: key, directUrl: url, highQualityUrl: highQualityUrl(url), source: 'performance', order: allMedia.size });
+      allMedia.set(key, {
+        mediaKey: key,
+        directUrl: url,
+        highQualityUrl: highQualityUrl(url),
+        source: "performance",
+        order: allMedia.size,
+      });
     }
   }
   for (const item of domUrls.values()) {
@@ -298,14 +343,20 @@ async function run() {
   const titles = dedupeTitles([...titleObservations.values()]);
   const firstTitleTop = titles[0]?.top ?? Number.POSITIVE_INFINITY;
   const productImages = [...allMedia.values()]
-    .filter((item) => Number.isFinite(item.top) && item.top >= firstTitleTop && item.width >= 120 && item.height >= 120)
+    .filter(
+      (item) =>
+        Number.isFinite(item.top) &&
+        item.top >= firstTitleTop &&
+        item.width >= 120 &&
+        item.height >= 120,
+    )
     .sort((a, b) => a.top - b.top || a.left - b.left)
     .map((item, index) => ({ ...item, index: index + 1 }));
 
   const { groups, ungrouped } = groupProductImages(productImages, titles);
   const report = {
     schemaVersion: 4,
-    collector: 'BIGofertas Google Photos Catalog Collector',
+    collector: "BIGofertas Google Photos Catalog Collector",
     label: options.label || null,
     sourceUrl: options.url,
     resolvedUrl: page.url(),
@@ -330,22 +381,41 @@ async function run() {
     allMedia: [...allMedia.values()],
   };
 
-  fs.writeFileSync(path.join(options.out, 'collector.json'), JSON.stringify(report, null, 2));
-  fs.writeFileSync(path.join(options.out, 'direct-image-urls.txt'), `${productImages.map((item) => item.directUrl).join('\n')}\n`);
-  fs.writeFileSync(path.join(options.out, 'high-quality-image-urls.txt'), `${productImages.map((item) => item.highQualityUrl).join('\n')}\n`);
+  fs.writeFileSync(path.join(options.out, "collector.json"), JSON.stringify(report, null, 2));
   fs.writeFileSync(
-    path.join(options.out, 'groups.json'),
-    JSON.stringify(groups.map((group) => ({ title: group.title, images: group.images.map((image) => image.highQualityUrl) })), null, 2),
+    path.join(options.out, "direct-image-urls.txt"),
+    `${productImages.map((item) => item.directUrl).join("\n")}\n`,
+  );
+  fs.writeFileSync(
+    path.join(options.out, "high-quality-image-urls.txt"),
+    `${productImages.map((item) => item.highQualityUrl).join("\n")}\n`,
+  );
+  fs.writeFileSync(
+    path.join(options.out, "groups.json"),
+    JSON.stringify(
+      groups.map((group) => ({
+        title: group.title,
+        images: group.images.map((image) => image.highQualityUrl),
+      })),
+      null,
+      2,
+    ),
   );
 
   await browser.close();
-  console.log(`COLLECTOR_FINAL productImages=${productImages.length} titles=${titles.length} groups=${groups.length} ungrouped=${ungrouped.length} mediaObserved=${allMedia.size}`);
-  for (const group of groups) console.log(`GROUP ${group.index}: ${group.title} -> ${group.images.length} imagens`);
+  console.log(
+    `COLLECTOR_FINAL productImages=${productImages.length} titles=${titles.length} groups=${groups.length} ungrouped=${ungrouped.length} mediaObserved=${allMedia.size}`,
+  );
+  for (const group of groups)
+    console.log(`GROUP ${group.index}: ${group.title} -> ${group.images.length} imagens`);
 
   if (productImages.length < options.expected) {
-    throw new Error(`Coleta incompleta: ${productImages.length} imagens de produto; minimo esperado ${options.expected}.`);
+    throw new Error(
+      `Coleta incompleta: ${productImages.length} imagens de produto; minimo esperado ${options.expected}.`,
+    );
   }
-  if (ungrouped.length > 0) throw new Error(`Coleta ambigua: ${ungrouped.length} imagens ficaram sem titulo.`);
+  if (ungrouped.length > 0)
+    throw new Error(`Coleta ambigua: ${ungrouped.length} imagens ficaram sem titulo.`);
 }
 
 run().catch((error) => {

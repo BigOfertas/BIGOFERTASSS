@@ -42,9 +42,18 @@ for (const [name, expectedType, expectedPrice] of cases) {
   assert.equal(buildCatalogBusinessProfile({ name }).price, expectedPrice, name);
 }
 
-assert.deepEqual(inferUniform("CAMISA I VASCO 26/27 ADIDAS"), { model: "I", label: "Primeiro uniforme" });
-assert.deepEqual(inferUniform("CAMISA II VASCO 26/27 ADIDAS"), { model: "II", label: "Segundo uniforme" });
-assert.deepEqual(inferUniform("CAMISA III VASCO 26/27 ADIDAS"), { model: "III", label: "Terceiro uniforme" });
+assert.deepEqual(inferUniform("CAMISA I VASCO 26/27 ADIDAS"), {
+  model: "I",
+  label: "Primeiro uniforme",
+});
+assert.deepEqual(inferUniform("CAMISA II VASCO 26/27 ADIDAS"), {
+  model: "II",
+  label: "Segundo uniforme",
+});
+assert.deepEqual(inferUniform("CAMISA III VASCO 26/27 ADIDAS"), {
+  model: "III",
+  label: "Terceiro uniforme",
+});
 assert.equal(
   buildCatalogBusinessProfile({ name: "CAMISA II VASCO 26/27 ADIDAS" }).specifications,
   "Uniforme: Segundo uniforme",
@@ -79,7 +88,10 @@ assert.match(assimilator, /commercialType/);
 assert.match(assimilator, /proposal\.price/);
 assert.match(assimilator, /uniform/);
 
-const migration = fs.readFileSync("supabase/migrations/20260909130000_catalog_business_rules.sql", "utf8");
+const migration = fs.readFileSync(
+  "supabase/migrations/20260909130000_catalog_business_rules.sql",
+  "utf8",
+);
 for (const value of ["184.90", "219.90", "169.90", "159.90", "229.90", "25.00", "45.00", "15.00"]) {
   assert.ok(migration.includes(value), `migration missing ${value}`);
 }
