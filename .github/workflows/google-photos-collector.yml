@@ -23,10 +23,9 @@ on:
         type: string
   push:
     branches:
-      - google-photos-visual-assimilation-20260909
+      - "catalog-google-photos-*"
     paths:
-      - ".github/workflows/google-photos-collector.yml"
-      - "scripts/google-photos-assimilator.mjs"
+      - "catalog-jobs/google-photos/job.json"
 
 permissions:
   contents: read
@@ -64,10 +63,11 @@ jobs:
             EXPECTED_MIN_IMAGES="${INPUT_EXPECTED_MIN_IMAGES:-1}"
             MAX_SCROLLS="${INPUT_MAX_SCROLLS:-350}"
           else
-            ALBUM_URL="https://photos.google.com/share/AF1QipMB9TskKUor2S7eVlJL0wnAqKc2QT8Tb3qNuzwbQuEOQVMfDzQTlk9sakc2K_Mb_w?key=cE9zZTcyYWtQYmFVdGlGaTFBazllR0JucDRQN3N3"
-            LABEL="TOP 10 LANCAMENTOS"
-            EXPECTED_MIN_IMAGES="50"
-            MAX_SCROLLS="220"
+            test -f catalog-jobs/google-photos/job.json
+            ALBUM_URL=$(node -e 'const x=require("./catalog-jobs/google-photos/job.json"); process.stdout.write(String(x.album_url||""))')
+            LABEL=$(node -e 'const x=require("./catalog-jobs/google-photos/job.json"); process.stdout.write(String(x.label||""))')
+            EXPECTED_MIN_IMAGES=$(node -e 'const x=require("./catalog-jobs/google-photos/job.json"); process.stdout.write(String(x.expected_min_images||1))')
+            MAX_SCROLLS=$(node -e 'const x=require("./catalog-jobs/google-photos/job.json"); process.stdout.write(String(x.max_scrolls||350))')
           fi
           test -n "$ALBUM_URL"
           echo "ALBUM_URL=$ALBUM_URL" >> "$GITHUB_ENV"
