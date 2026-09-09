@@ -22,11 +22,11 @@ export function useCatalogSearchSuggestions(query: string) {
   }, [normalized]);
 
   return useQuery({
-    queryKey: ["catalog", "suggestions-v3", debounced.toLocaleLowerCase("pt-BR")],
+    queryKey: ["catalog", "suggestions-v4", debounced.toLocaleLowerCase("pt-BR")],
     enabled: debounced.length >= 2,
     staleTime: 30_000,
     queryFn: async () => {
-      const data = await callSupabaseRpc<Json>("catalog_products_page_v3", {
+      const data = await callSupabaseRpc<Json>("catalog_products_page_v4", {
         p_query: debounced,
         p_category: null,
         p_campeonato: null,
@@ -43,7 +43,7 @@ export function useCatalogSearchSuggestions(query: string) {
         p_page_size: 12,
       });
 
-      return parseCatalogPage(data).items.slice(0, 6);
+      return parseCatalogPage(data).items.slice(0, 8);
     },
   });
 }
