@@ -48,6 +48,7 @@ const migrations = [
     "supabase/migrations/20260908170000_catalog_bulk_import_bridge.sql",
   ],
   ["catalog_business_rules", "supabase/migrations/20260909130000_catalog_business_rules.sql"],
+  ["global_patch_matrix", "supabase/migrations/20260909143000_global_patch_matrix.sql"],
 ];
 
 function migrationSql(file) {
@@ -214,7 +215,14 @@ select
       and c.relname = 'users'
       and t.tgname = 'require_phone_on_signup'
       and not t.tgisinternal
-  ) as signup_phone_trigger;
+  ) as signup_phone_trigger,
+  exists (
+    select 1
+    from public.store_purchase_settings s
+    cross join lateral jsonb_array_elements(s.patch_catalog) p(value)
+    where s.singleton = true
+      and p.value->>'code' = 'champions-league'
+  ) as global_patch_matrix;
 `);
 
 console.log("STOREFRONT_UPGRADE_BACKEND_VERIFICATION");
@@ -244,6 +252,7 @@ const required = [
   "affiliate_activate_rpc",
   "affiliate_deactivate_rpc",
   "signup_phone_trigger",
+  "global_patch_matrix",
 ];
 
 if (!required.every((key) => verification?.[key] === true)) {
