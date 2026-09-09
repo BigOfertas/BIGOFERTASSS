@@ -119,12 +119,9 @@ $$;
 REVOKE ALL ON FUNCTION public.owner_catalog_import_set_variant_price(uuid,uuid,numeric) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.owner_catalog_import_set_variant_price(uuid,uuid,numeric) TO authenticated, service_role;
 
--- A frase estendida é texto puro: até 50 caracteres e sem número.
-ALTER FUNCTION public.resolve_product_purchase_customization(uuid,jsonb)
-  RENAME TO resolve_product_purchase_customization_base_20260909;
-
-REVOKE ALL ON FUNCTION public.resolve_product_purchase_customization_base_20260909(uuid,jsonb) FROM PUBLIC;
-
+-- A frase estendida é texto puro: até 50 caracteres e não aceita números.
+-- Mantemos a função canônica no mesmo OID para que validação do carrinho/pedido
+-- continue passando obrigatoriamente por esta regra no servidor.
 CREATE OR REPLACE FUNCTION public.resolve_product_purchase_customization(
   p_product_id uuid,
   p_customization jsonb DEFAULT '{}'::jsonb
@@ -136,19 +133,151 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
+  config jsonb := public.get_product_purchase_config(p_product_id);
   raw jsonb := COALESCE(p_customization, '{}'::jsonb);
+  normalized jsonb := '{}'::jsonb;
+  selected_options jsonb := '[]'::jsonb;
+  surcharge numeric(12,2) := 0;
+  size_value text;
+  personalization jsonb;
+  personalization_name text;
+  personalization_number text;
   phrase_value text;
+  patch_code text;
+  patch_row jsonb;
+  patch_price numeric(12,2);
+  name_limit integer := (config->>'personalizationNameMax')::integer;
+  phrase_limit integer := (config->>'phraseMax')::integer;
 BEGIN
-  IF jsonb_typeof(raw) = 'object' THEN
-    phrase_value := NULLIF(btrim(COALESCE(raw->>'phrase', '')), '');
-    IF phrase_value IS NOT NULL AND phrase_value ~ '[0-9]' THEN
-      RAISE EXCEPTION 'A frase personalizada não pode conter números';
-    END IF;
+  IF jsonb_typeof(raw) <> 'object' OR length(raw::text) > 3000 THEN
+    RAISE EXCEPTION 'Personalização inválida';
   END IF;
 
-  RETURN public.resolve_product_purchase_customization_base_20260909(
-    p_product_id,
-    p_customization
+  IF COALESCE((config->>'sizeEnabled')::boolean, false) THEN
+    size_value := upper(btrim(COALESCE(raw->>'size', '')));
+    IF size_value = '' OR NOT EXISTS (
+      SELECT 1 FROM jsonb_array_elements_text(config->'sizes') s(value)
+      WHERE upper(value) = size_value
+    ) THEN
+      RAISE EXCEPTION 'Escolha um tamanho válido';
+    END IF;
+    normalized := normalized || jsonb_build_object('size', size_value);
+    selected_options := selected_options || jsonb_build_array(jsonb_build_object(
+      'option_id', 'purchase-size',
+      'option_name', 'Tamanho',
+      'option_kind', 'size',
+      'value_id', lower(size_value),
+      'value_label', size_value,
+      'price_addition', 0
+    ));
+  ELSE
+    normalized := normalized || jsonb_build_object('size', NULL);
+  END IF;
+
+  personalization := raw->'personalization';
+  phrase_value := NULLIF(btrim(COALESCE(raw->>'phrase', '')), '');
+
+  IF personalization IS NOT NULL AND personalization <> 'null'::jsonb THEN
+    IF NOT COALESCE((config->>'personalizationEnabled')::boolean, false) THEN
+      RAISE EXCEPTION 'Personalização comum não disponível';
+    END IF;
+    IF jsonb_typeof(personalization) <> 'object' THEN
+      RAISE EXCEPTION 'Personalização inválida';
+    END IF;
+    IF phrase_value IS NOT NULL THEN
+      RAISE EXCEPTION 'Escolha personalização comum ou frase personalizada';
+    END IF;
+
+    personalization_name := NULLIF(btrim(COALESCE(personalization->>'name', '')), '');
+    personalization_number := NULLIF(btrim(COALESCE(personalization->>'number', '')), '');
+
+    IF personalization_name IS NULL OR char_length(personalization_name) > name_limit THEN
+      RAISE EXCEPTION 'Nome personalizado inválido';
+    END IF;
+    IF personalization_number IS NULL OR personalization_number !~ '^[0-9]{1,3}$' THEN
+      RAISE EXCEPTION 'Número personalizado inválido';
+    END IF;
+
+    surcharge := surcharge + (config->>'personalizationPrice')::numeric;
+    normalized := normalized || jsonb_build_object(
+      'personalization', jsonb_build_object('name', personalization_name, 'number', personalization_number),
+      'phrase', NULL
+    );
+    selected_options := selected_options || jsonb_build_array(
+      jsonb_build_object(
+        'option_id', 'purchase-personalization-name',
+        'option_name', 'Nome personalizado',
+        'option_kind', 'other',
+        'value_id', 'custom-name',
+        'value_label', personalization_name,
+        'price_addition', (config->>'personalizationPrice')::numeric
+      ),
+      jsonb_build_object(
+        'option_id', 'purchase-personalization-number',
+        'option_name', 'Número',
+        'option_kind', 'other',
+        'value_id', 'custom-number',
+        'value_label', personalization_number,
+        'price_addition', 0
+      )
+    );
+  ELSE
+    normalized := normalized || jsonb_build_object('personalization', NULL);
+  END IF;
+
+  IF phrase_value IS NOT NULL THEN
+    IF NOT COALESCE((config->>'phraseEnabled')::boolean, false) THEN
+      RAISE EXCEPTION 'Frase personalizada não disponível';
+    END IF;
+    IF char_length(phrase_value) > phrase_limit THEN
+      RAISE EXCEPTION 'Frase personalizada muito longa';
+    END IF;
+    IF phrase_value ~ '[0-9]' THEN
+      RAISE EXCEPTION 'A frase personalizada não pode conter números';
+    END IF;
+    surcharge := surcharge + (config->>'phrasePrice')::numeric;
+    normalized := normalized || jsonb_build_object('phrase', phrase_value, 'personalization', NULL);
+    selected_options := selected_options || jsonb_build_array(jsonb_build_object(
+      'option_id', 'purchase-phrase',
+      'option_name', 'Frase personalizada',
+      'option_kind', 'other',
+      'value_id', 'custom-phrase',
+      'value_label', phrase_value,
+      'price_addition', (config->>'phrasePrice')::numeric
+    ));
+  ELSIF NOT (normalized ? 'phrase') THEN
+    normalized := normalized || jsonb_build_object('phrase', NULL);
+  END IF;
+
+  patch_code := NULLIF(btrim(COALESCE(raw->>'patchCode', '')), '');
+  IF patch_code IS NOT NULL THEN
+    SELECT value INTO patch_row
+    FROM jsonb_array_elements(config->'patches')
+    WHERE value->>'code' = patch_code
+    LIMIT 1;
+
+    IF patch_row IS NULL THEN
+      RAISE EXCEPTION 'Patch indisponível para este produto';
+    END IF;
+    patch_price := (patch_row->>'price')::numeric;
+    surcharge := surcharge + patch_price;
+    normalized := normalized || jsonb_build_object('patchCode', patch_code);
+    selected_options := selected_options || jsonb_build_array(jsonb_build_object(
+      'option_id', 'purchase-patch',
+      'option_name', 'Patch',
+      'option_kind', 'other',
+      'value_id', patch_code,
+      'value_label', patch_row->>'label',
+      'price_addition', patch_price
+    ));
+  ELSE
+    normalized := normalized || jsonb_build_object('patchCode', NULL);
+  END IF;
+
+  RETURN jsonb_build_object(
+    'normalized', normalized,
+    'surcharge', round(surcharge, 2),
+    'selectedOptions', selected_options
   );
 END;
 $$;
