@@ -1,0 +1,28 @@
+name: Format Top10 Production Guard
+
+on:
+  push:
+    branches:
+      - catalog-final-pipeline-20260909-prod
+    paths:
+      - catalog-jobs/format-top10-production-guard.json
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: catalog-final-pipeline-20260909-prod
+      - name: Format guard
+        run: npx --yes prettier@3.9.6 --write scripts/top10-production-guard.mjs
+      - name: Commit formatting
+        run: |
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add scripts/top10-production-guard.mjs
+          git commit -m "style: format Top 10 production guard"
+          git push origin HEAD:catalog-final-pipeline-20260909-prod
