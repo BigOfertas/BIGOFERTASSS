@@ -1,0 +1,149 @@
+name: R2 Catalog Bridge
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Operacao: listar, analisar (dry-run) ou importar (apply)"
+        required: true
+        default: "list"
+        type: choice
+        options:
+          - list
+          - analyze
+          - import
+      object_key:
+        description: "Chave do ZIP no R2, ex.: incoming/catalogo/ARQUIVO.zip"
+        required: false
+        type: string
+      competition:
+        description: "Competicao/campeonato opcional, ex.: MUNDO FIFA"
+        required: false
+        type: string
+      league:
+        description: "Liga opcional"
+        required: false
+        type: string
+      default_price:
+        description: "Preco padrao opcional"
+        required: false
+        type: string
+      default_stock:
+        description: "Estoque padrao opcional"
+        required: false
+        type: string
+      image_concurrency:
+        description: "Uploads simultaneos por produto (1-8)"
+        required: false
+        default: "4"
+        type: string
+      activate:
+        description: "Ativar produtos depois da importacao"
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches:
+      - r2-catalog-bridge-20260909
+    paths:
+      - ".github/workflows/r2-catalog-bridge.yml"
+      - "scripts/r2-catalog-bridge.mjs"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r2-catalog-bridge-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bridge:
+    name: R2 catalog bridge
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      CATALOG_IMPORT_OWNER_ACCESS_TOKEN: ${{ secrets.CATALOG_IMPORT_OWNER_ACCESS_TOKEN }}
+      CATALOG_IMPORT_OWNER_EMAIL: ${{ secrets.CATALOG_IMPORT_OWNER_EMAIL }}
+      CATALOG_IMPORT_OWNER_PASSWORD: ${{ secrets.CATALOG_IMPORT_OWNER_PASSWORD }}
+      R2_BRIDGE_ARTIFACT_DIR: .artifacts/r2-catalog-bridge
+      INPUT_ACTION: ${{ github.event_name == 'workflow_dispatch' && inputs.action || 'list' }}
+      INPUT_OBJECT_KEY: ${{ github.event_name == 'workflow_dispatch' && inputs.object_key || '' }}
+      INPUT_COMPETITION: ${{ github.event_name == 'workflow_dispatch' && inputs.competition || '' }}
+      INPUT_LEAGUE: ${{ github.event_name == 'workflow_dispatch' && inputs.league || '' }}
+      INPUT_DEFAULT_PRICE: ${{ github.event_name == 'workflow_dispatch' && inputs.default_price || '' }}
+      INPUT_DEFAULT_STOCK: ${{ github.event_name == 'workflow_dispatch' && inputs.default_stock || '' }}
+      INPUT_IMAGE_CONCURRENCY: ${{ github.event_name == 'workflow_dispatch' && inputs.image_concurrency || '4' }}
+      INPUT_ACTIVATE: ${{ github.event_name == 'workflow_dispatch' && inputs.activate || false }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install R2 and image tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y awscli unzip imagemagick
+          aws --version
+          unzip -v | head -n 2
+
+      - name: Validate bridge code
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check scripts/r2-catalog-bridge.mjs
+          npm run validate:catalog-import
+
+      - name: Execute R2 catalog bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          args=(--action "$INPUT_ACTION")
+
+          if [[ -n "$INPUT_OBJECT_KEY" ]]; then
+            args+=(--key "$INPUT_OBJECT_KEY")
+          fi
+          if [[ -n "$INPUT_COMPETITION" ]]; then
+            args+=(--competition "$INPUT_COMPETITION")
+          fi
+          if [[ -n "$INPUT_LEAGUE" ]]; then
+            args+=(--league "$INPUT_LEAGUE")
+          fi
+          if [[ -n "$INPUT_DEFAULT_PRICE" ]]; then
+            args+=(--default-price "$INPUT_DEFAULT_PRICE")
+          fi
+          if [[ -n "$INPUT_DEFAULT_STOCK" ]]; then
+            args+=(--default-stock "$INPUT_DEFAULT_STOCK")
+          fi
+          if [[ -n "$INPUT_IMAGE_CONCURRENCY" ]]; then
+            args+=(--image-concurrency "$INPUT_IMAGE_CONCURRENCY")
+          fi
+          if [[ "$INPUT_ACTIVATE" == "true" ]]; then
+            args+=(--activate)
+          fi
+
+          node scripts/r2-catalog-bridge.mjs "${args[@]}"
+
+      - name: Upload bridge reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-catalog-bridge-${{ github.run_id }}
+          path: .artifacts/r2-catalog-bridge/
+          if-no-files-found: warn
+          retention-days: 30
