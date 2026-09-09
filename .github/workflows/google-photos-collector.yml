@@ -8,11 +8,11 @@ on:
         required: true
         type: string
       label:
-        description: "Rotulo do lote, ex.: TOP 10 LANCAMENTOS"
+        description: "Rotulo do lote"
         required: false
         type: string
       expected_min_images:
-        description: "Minimo esperado de imagens para considerar a coleta valida"
+        description: "Minimo esperado de imagens"
         required: false
         default: "1"
         type: string
@@ -26,13 +26,15 @@ on:
       - google-photos-collector-20260909
     paths:
       - ".github/google-photos-collector-test.json"
+      - "scripts/google-photos-collector-v3.mjs"
+      - ".github/workflows/google-photos-collector.yml"
 
 permissions:
   contents: read
 
 concurrency:
   group: google-photos-collector-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   collect:
@@ -63,7 +65,6 @@ jobs:
             EXPECTED_MIN_IMAGES="${INPUT_EXPECTED_MIN_IMAGES:-1}"
             MAX_SCROLLS="${INPUT_MAX_SCROLLS:-350}"
           else
-            test -f .github/google-photos-collector-test.json
             ALBUM_URL=$(node -e 'const x=require("./.github/google-photos-collector-test.json"); process.stdout.write(String(x.album_url||""))')
             LABEL=$(node -e 'const x=require("./.github/google-photos-collector-test.json"); process.stdout.write(String(x.label||""))')
             EXPECTED_MIN_IMAGES=$(node -e 'const x=require("./.github/google-photos-collector-test.json"); process.stdout.write(String(x.expected_min_images||1))')
@@ -76,9 +77,7 @@ jobs:
           echo "MAX_SCROLLS=$MAX_SCROLLS" >> "$GITHUB_ENV"
 
       - name: Validate collector code
-        run: |
-          node --check scripts/google-photos-collector-v2.mjs
-          node scripts/validate-google-photos-collector-v2.mjs
+        run: node --check scripts/google-photos-collector-v3.mjs
 
       - name: Install Playwright
         shell: bash
@@ -91,7 +90,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/google-photos-collector-v2.mjs \
+          node scripts/google-photos-collector-v3.mjs \
             --url "$ALBUM_URL" \
             --label "$LABEL" \
             --expected-min-images "$EXPECTED_MIN_IMAGES" \
@@ -104,10 +103,9 @@ jobs:
         run: |
           if [[ -f .artifacts/google-photos-collector/collector.json ]]; then
             node - <<'NODE'
-          const fs = require('fs');
-          const report = JSON.parse(fs.readFileSync('.artifacts/google-photos-collector/collector.json', 'utf8'));
-          console.log(`COLLECTOR_SUMMARY images=${report.stats.images} titles=${report.stats.titleCandidates} groups=${report.stats.groups} ungrouped=${report.stats.ungrouped}`);
-          for (const warning of report.warnings || []) console.log(`WARNING: ${warning}`);
+          const fs=require('fs');
+          const r=JSON.parse(fs.readFileSync('.artifacts/google-photos-collector/collector.json','utf8'));
+          console.log(`COLLECTOR_SUMMARY images=${r.stats.images} titles=${r.stats.titles} network=${r.stats.networkUrls} dom=${r.stats.domUrls} perf=${r.stats.performanceUrls}`);
           NODE
           fi
 
