@@ -41,7 +41,7 @@ jobs:
               timeout: 60000,
             });
             await page.waitForSelector('a[aria-label^="Ver "]', { timeout: 45000 });
-            await page.waitForTimeout(2500);
+            await page.waitForTimeout(1500);
 
             const cards = await page.locator('a[aria-label^="Ver "]').evaluateAll((nodes) =>
               nodes.map((node) => ({
@@ -69,11 +69,25 @@ jobs:
               }
             }
 
-            const cardImages = await page.locator('a[aria-label^="Ver "] img').evaluateAll((nodes) =>
+            const imageLocators = page.locator('a[aria-label^="Ver "] img');
+            const imageCount = await imageLocators.count();
+            if (imageCount !== 10) throw new Error(`LIVE_CARD_IMAGE_COUNT_${imageCount}`);
+            for (let index = 0; index < imageCount; index += 1) {
+              const image = imageLocators.nth(index);
+              await image.scrollIntoViewIfNeeded();
+              await image.evaluate((node) => { node.loading = 'eager'; });
+              const handle = await image.elementHandle();
+              await page.waitForFunction(
+                (node) => Boolean(node && node.complete && node.naturalWidth > 0),
+                handle,
+                { timeout: 15000 },
+              );
+            }
+            const cardImages = await imageLocators.evaluateAll((nodes) =>
               nodes.map((img) => ({ src: img.currentSrc || img.src, width: img.naturalWidth })),
             );
-            if (cardImages.length !== 10) throw new Error(`LIVE_CARD_IMAGE_COUNT_${cardImages.length}`);
             if (cardImages.some((image) => !image.src.includes('googleusercontent.com') || image.width <= 0)) {
+              console.log(JSON.stringify(cardImages, null, 2));
               throw new Error('LIVE_CARD_IMAGE_SOURCE_OR_LOAD_FAILURE');
             }
 
@@ -102,17 +116,25 @@ jobs:
               throw new Error('LIVE_MULTIPATCH_SELECTION_FAILED');
             }
 
-            const detailGoogleImages = await page.locator('img').evaluateAll((nodes) =>
-              [...new Set(nodes.map((img) => img.currentSrc || img.src).filter((src) => src.includes('googleusercontent.com')))],
-            );
-            if (detailGoogleImages.length < 5) {
-              throw new Error(`LIVE_DETAIL_GOOGLE_IMAGE_COUNT_${detailGoogleImages.length}`);
+            const detailImages = page.locator('img[src*="googleusercontent.com"]');
+            const detailImageCount = await detailImages.count();
+            if (detailImageCount < 5) throw new Error(`LIVE_DETAIL_GOOGLE_IMAGE_COUNT_${detailImageCount}`);
+            for (let index = 0; index < Math.min(detailImageCount, 5); index += 1) {
+              const image = detailImages.nth(index);
+              await image.scrollIntoViewIfNeeded();
+              await image.evaluate((node) => { node.loading = 'eager'; });
+              const handle = await image.elementHandle();
+              await page.waitForFunction(
+                (node) => Boolean(node && node.complete && node.naturalWidth > 0),
+                handle,
+                { timeout: 15000 },
+              );
             }
 
             if (failures.length) throw new Error(`LIVE_PAGE_ERRORS_${failures.join('|')}`);
 
             console.log(`LIVE_CATALOG_OK products=${cards.length} cardGoogleImages=${cardImages.length}`);
-            console.log(`LIVE_PRODUCT_DETAIL_OK googleImages=${detailGoogleImages.length} patches=${patchCount}`);
+            console.log(`LIVE_PRODUCT_DETAIL_OK googleImages=${detailImageCount} patches=${patchCount}`);
             console.log('LIVE_MULTIPATCH_OK selected=2');
             console.log('BIGOFERTAS_LIVE_VERIFICATION_OK');
             await browser.close();
