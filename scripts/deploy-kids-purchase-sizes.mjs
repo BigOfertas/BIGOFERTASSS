@@ -79,7 +79,9 @@ const verificationPayload = await request("/database/query/read-only", {
   }),
 });
 
-const verification = Array.isArray(verificationPayload) ? verificationPayload[0] : verificationPayload;
+const verification = Array.isArray(verificationPayload)
+  ? verificationPayload[0]
+  : verificationPayload;
 console.log("KIDS_PURCHASE_SIZES_BACKEND_VERIFICATION");
 console.log(JSON.stringify(verification, null, 2));
 if (

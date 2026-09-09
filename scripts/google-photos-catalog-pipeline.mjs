@@ -47,8 +47,20 @@ function parseArgs(argv) {
 
 function titleCaseEntity(value) {
   const normalized = normalizeCatalogText(value);
-  if (["MAN. CITY", "MAN CITY"].includes(normalized)) return "Manchester City";
-  if (["PSG", "PARIS SAINT GERMAIN"].includes(normalized)) return "PSG";
+  const aliases = new Map([
+    ["MAN. CITY", "Manchester City"],
+    ["MAN CITY", "Manchester City"],
+    ["MAN. UNITED", "Manchester United"],
+    ["MAN UNITED", "Manchester United"],
+    ["CORINTHIAS", "Corinthians"],
+    ["CREMIO", "Grêmio"],
+    ["INTERZIONALE", "Internazionale"],
+    ["DORTMOUND", "Dortmund"],
+    ["O. MARSEILLE", "Olympique Marseille"],
+    ["PSG", "PSG"],
+    ["PARIS SAINT GERMAIN", "PSG"],
+  ]);
+  if (aliases.has(normalized)) return aliases.get(normalized);
   const upperWords = new Set(["PSG", "AC", "FC", "NBA", "EA7"]);
   return clean(value)
     .toLowerCase()
@@ -112,10 +124,11 @@ function productName(proposal) {
       : proposal.type === "camisa"
         ? "Camisa"
         : titleCaseEntity(proposal.type);
+  const audience = normalizeCatalogText(proposal.audience) === "INFANTIL" ? " Infantil" : "";
   const model = proposal.model ? ` ${proposal.model}` : "";
   const season = proposal.season ? ` ${proposal.season}` : "";
   const brand = proposal.brand ? ` ${titleCaseEntity(proposal.brand)}` : "";
-  return `${entity} — ${type}${model}${season}${brand}`.trim();
+  return `${entity} — ${type}${audience}${model}${season}${brand}`.trim();
 }
 
 function descriptionFor(name, proposal, commercialType, uniformLabel) {
@@ -148,6 +161,9 @@ function buildPlan(collector, assimilation, options) {
     (assimilation.groups ?? []).map((group) => [group.groupIndex, group.proposal]),
   );
   const albumIdentity = clean(collector.resolvedUrl || collector.sourceUrl);
+  const kidsSource = /\b(KIDS?|INFANTIL|INFANTIS)\b/.test(
+    normalizeCatalogText(collector.label ?? ""),
+  );
   const products = [];
   const warnings = [];
 
@@ -158,14 +174,16 @@ function buildPlan(collector, assimilation, options) {
 
     const firstGroupRef = proposed.groups?.[0];
     const firstProposal = proposalByGroup.get(firstGroupRef?.groupIndex) ?? proposed;
+    const effectiveAudience = kidsSource ? "infantil" : proposed.audience;
+    const catalogProposal = kidsSource ? { ...proposed, audience: "infantil" } : proposed;
     const business = buildCatalogBusinessProfile({
       name: firstGroupRef?.title ?? productName(proposed),
       team: proposed.entity,
       season: proposed.season,
-      audience: proposed.audience,
+      audience: effectiveAudience,
     });
     const patchCodes = business.patches.map((patch) => patch.code);
-    const name = productName(proposed);
+    const name = productName(catalogProposal);
     const sourceKey = `gphotos:${crypto
       .createHash("sha256")
       .update(`${albumIdentity}|${proposed.baseKey}`)
@@ -183,7 +201,7 @@ function buildPlan(collector, assimilation, options) {
         name: group.title,
         team: proposed.entity,
         season: proposed.season,
-        audience: proposed.audience,
+        audience: effectiveAudience,
       });
       const commercialType =
         variantBusiness.commercialType === "other"
@@ -234,17 +252,22 @@ function buildPlan(collector, assimilation, options) {
       sourceKey,
       sourceTitle: firstGroupRef?.title ?? null,
       name,
-      description: descriptionFor(name, proposed, productCommercialType, business.uniform?.label),
-      category: categoryForType(proposed.type),
+      description: descriptionFor(
+        name,
+        catalogProposal,
+        productCommercialType,
+        business.uniform?.label,
+      ),
+      category: kidsSource ? { name: "Kids", slug: "infantil" } : categoryForType(proposed.type),
       competition: null,
       league: leagueFromPatchCodes(patchCodes),
       team: titleCaseEntity(proposed.entity),
       season: proposed.season ?? null,
       brand: proposed.brand ?? null,
       audience:
-        normalizeCatalogText(proposed.audience) === "ADULTO"
+        normalizeCatalogText(effectiveAudience) === "ADULTO"
           ? "MASCULINO"
-          : normalizeCatalogText(proposed.audience || "MASCULINO"),
+          : normalizeCatalogText(effectiveAudience || "MASCULINO"),
       commercialType: productCommercialType,
       price,
       specifications: specs,

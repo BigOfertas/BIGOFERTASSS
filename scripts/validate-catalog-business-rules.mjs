@@ -35,9 +35,20 @@ const cases = [
   ["CAMISA I PLAYER VASCO 26/27 ADIDAS", "jogador", 219.9],
   ["CAMISA RETRO VASCO 1998", "retro", 219.9],
   ["KIT INFANTIL VASCO 26/27", "infantil", 169.9],
+  ["CONJUNTO INFATIL I CORINTHIAS 26/27 NIKE", "infantil", 169.9],
   ["CALCAO VASCO 26/27", "calcao", 159.9],
   ["CAMISA BASQUETE LAKERS NBA", "basquete", 229.9],
 ];
+
+assert.deepEqual(inferUniform("CONJUNTO INFATIL I CORINTHIAS 26/27 NIKE"), {
+  model: "I",
+  label: "Primeiro uniforme",
+});
+assert.deepEqual(inferUniform("CONJUNTO II INFANTIL INGLATERRA 26/27 NIKE"), {
+  model: "II",
+  label: "Segundo uniforme",
+});
+
 for (const [name, expectedType, expectedPrice] of cases) {
   assert.equal(inferCommercialType({ name }), expectedType, name);
   assert.equal(buildCatalogBusinessProfile({ name }).price, expectedPrice, name);

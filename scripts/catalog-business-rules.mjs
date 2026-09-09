@@ -797,7 +797,7 @@ export function inferCommercialType(product) {
   const source = sourceText(product);
   if (/\b(BASQUETE|BASKET|NBA)\b/.test(source)) return "basquete";
   if (/\b(SHORT|SHORTS|CALCAO)\b/.test(source)) return "calcao";
-  if (/\b(INFANTIL|KIDS?|CRIANCA)\b/.test(source)) return "infantil";
+  if (/\b(INFANTIL|INFATIL|KIDS?|CRIANCA)\b/.test(source)) return "infantil";
   if (/\bRETRO\b/.test(source)) return "retro";
   if (/\b(PLAYER|JOGADOR)\b/.test(source)) return "jogador";
   if (/\bFEMININ[AO]\b/.test(source)) return "feminino";
@@ -822,7 +822,8 @@ export function inferUniform(productOrTitle) {
   const source = normalizeCatalogText(
     typeof productOrTitle === "string" ? productOrTitle : sourceText(productOrTitle),
   );
-  const match = source.match(/\b(?:CAMISA|REGATA)\s+(III|II|I)\b/);
+  let match = source.match(/\b(?:CAMISA|REGATA)\s+(III|II|I)\b/);
+  if (!match && /\bCONJUNTO\b/.test(source)) match = source.match(/\b(III|II|I)\b/);
   if (!match) return { model: null, label: null };
   return { model: match[1], label: UNIFORM_LABELS[match[1]] ?? null };
 }

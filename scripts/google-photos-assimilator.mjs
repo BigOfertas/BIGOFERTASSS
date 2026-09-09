@@ -15,9 +15,15 @@ const escapeHtml = (value) =>
     .replace(/'/g, "&#039;");
 
 const BRAND_RE =
-  /\b(ADIDAS|NIKE|PUMA|EA7|UMBRO|KAPPA|JORDAN|CASTORE|NEW BALANCE|LE COQ(?: SPORTIF)?|MACRON|MIZUNO|JOMA|UNDER ARMOUR|REEBOK)\b/i;
+  /\b(ADIDAS|NIKE|PUMA|EA7|UMBRO|KAPPA|JORDAN|CASTORE|NEW BALANCE|LE COQ(?: SPORTIF)?|MACRON|MIZUNO|JOMA|UNDER ARMOUR|REEBOK|KOBE)\b/i;
 const SEASON_RE = /\b(\d{2}\s*\/\s*\d{2})\b/;
-const MODEL_RE = /\b(?:CAMISA|REGATA)\s+(I{1,3}|IV|V)\b/i;
+const MODEL_RE =
+  /\b(?:CAMISA|REGATA)\s+(I{1,3}|IV|V)\b|\bCONJUNTO(?:\s+(?:INFANTIL|INFATIL))?\s+(I{1,3}|IV|V)\b|\bCONJUNTO\s+(I{1,3}|IV|V)\s+(?:INFANTIL|INFATIL)\b/i;
+
+function extractModel(title) {
+  const match = title.match(MODEL_RE);
+  return (match?.[1] || match?.[2] || match?.[3])?.toUpperCase() ?? null;
+}
 
 function parseArgs() {
   const out = {
@@ -48,11 +54,12 @@ function classifyType(title) {
   const upper = title.toUpperCase();
   if (/CORTA[ -]?VENTO|WINDBREAKER/.test(upper)) return "corta-vento";
   if (/\bSHORTS?\b/.test(upper)) return "shorts";
+  if (/\bCONJUNTO\b/.test(upper) && /\b(?:INFANTIL|INFATIL|KIDS?)\b/.test(upper)) return "conjunto";
+  if (/\bTREINO\b/.test(upper)) return "treino";
+  if (/\bVIAGEM\b/.test(upper)) return "viagem";
   if (/\bCONJUNTO\b/.test(upper)) return "conjunto";
   if (/\bKIT\b/.test(upper)) return "kit";
   if (/\bREGATA\b/.test(upper)) return "regata";
-  if (/\bTREINO\b/.test(upper)) return "treino";
-  if (/\bVIAGEM\b/.test(upper)) return "viagem";
   if (/\bCAMISA\b/.test(upper)) return "camisa";
   return "outro";
 }
@@ -60,7 +67,7 @@ function classifyType(title) {
 function classifyAudience(title) {
   const upper = title.toUpperCase();
   if (/FEMININ[AO]/.test(upper)) return { value: "feminino", inferred: false };
-  if (/KIDS?|INFANTIL/.test(upper)) return { value: "infantil", inferred: false };
+  if (/KIDS?|INFANTIL|INFATIL/.test(upper)) return { value: "infantil", inferred: false };
   return { value: "adulto", inferred: true };
 }
 
@@ -91,6 +98,7 @@ function extractEntity(title, { brand, season, model, type }) {
     /\bFEMININ[AO]\b/gi,
     /\bKIDS?\b/gi,
     /\bINFANTIL\b/gi,
+    /\bINFATIL\b/gi,
     /\bRET[RÔO]\b/gi,
     /\bGOLEIRO\b/gi,
     /\bBASQUETE\b/gi,
@@ -119,7 +127,7 @@ function parseTitle(title) {
   const type = classifyType(normalizedTitle);
   const brand = normalizedTitle.match(BRAND_RE)?.[1]?.toUpperCase() ?? null;
   const season = normalizedTitle.match(SEASON_RE)?.[1]?.replace(/\s+/g, "") ?? null;
-  const model = normalizedTitle.match(MODEL_RE)?.[1]?.toUpperCase() ?? null;
+  const model = extractModel(normalizedTitle);
   const audience = classifyAudience(normalizedTitle);
   const version = classifyVersion(normalizedTitle, type);
   const entity = extractEntity(normalizedTitle, { brand, season, model, type }) || null;
