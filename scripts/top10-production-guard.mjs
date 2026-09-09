@@ -5,8 +5,10 @@ const accessToken = process.env.SUPABASE_ACCESS_TOKEN?.trim();
 const mode = process.argv[2];
 const snapshotPath = process.argv[3] || ".artifacts/top10-reset-before.json";
 
-if (!projectRef || !accessToken) throw new Error("SUPABASE_PROJECT_ID/SUPABASE_ACCESS_TOKEN ausentes.");
-if (!['snapshot', 'validate', 'activate', 'verify-active'].includes(mode)) throw new Error(`Modo inválido: ${mode}`);
+if (!projectRef || !accessToken)
+  throw new Error("SUPABASE_PROJECT_ID/SUPABASE_ACCESS_TOKEN ausentes.");
+if (!["snapshot", "validate", "activate", "verify-active"].includes(mode))
+  throw new Error(`Modo inválido: ${mode}`);
 
 const apiBase = `https://api.supabase.com/v1/projects/${encodeURIComponent(projectRef)}`;
 const headers = {
@@ -105,7 +107,11 @@ async function catalogState() {
 }
 
 function sameArray(actual, expected, label) {
-  if (!Array.isArray(actual) || actual.length !== expected.length || actual.some((v, i) => v !== expected[i])) {
+  if (
+    !Array.isArray(actual) ||
+    actual.length !== expected.length ||
+    actual.some((v, i) => v !== expected[i])
+  ) {
     throw new Error(`${label} divergente: ${JSON.stringify(actual)}`);
   }
 }
@@ -119,24 +125,36 @@ function validateInvariants(before, after) {
 }
 
 function validateDraftState(state) {
-  if (state.all_products !== 10 || state.products !== 10) throw new Error(`Esperados 10 produtos após reset: ${JSON.stringify(state)}`);
+  if (state.all_products !== 10 || state.products !== 10)
+    throw new Error(`Esperados 10 produtos após reset: ${JSON.stringify(state)}`);
   sameArray(state.codes, expectedCodes, "Códigos P");
   sameArray(state.names, expectedNames, "Nomes Top 10");
-  if (state.drafts !== 10 || state.active !== 0) throw new Error(`Estado draft inválido: ${JSON.stringify(state)}`);
+  if (state.drafts !== 10 || state.active !== 0)
+    throw new Error(`Estado draft inválido: ${JSON.stringify(state)}`);
   if (state.positive_prices !== 10) throw new Error("Há produto sem preço positivo.");
   if (state.products_with_active_variant !== 10) throw new Error("Há produto sem variante ativa.");
-  if (state.google_images !== 50 || state.min_images_per_product !== 5 || state.max_images_per_product !== 5) {
+  if (
+    state.google_images !== 50 ||
+    state.min_images_per_product !== 5 ||
+    state.max_images_per_product !== 5
+  ) {
     throw new Error(`Imagens Top 10 inválidas: ${JSON.stringify(state)}`);
   }
   if (state.napoli_2626_preserved !== 1) throw new Error("Napoli 26/26 não foi preservado.");
 }
 
 function validateActiveState(state) {
-  if (state.all_products !== 10 || state.products !== 10) throw new Error("Catálogo ativo não contém exatamente 10 produtos.");
+  if (state.all_products !== 10 || state.products !== 10)
+    throw new Error("Catálogo ativo não contém exatamente 10 produtos.");
   sameArray(state.codes, expectedCodes, "Códigos P ativos");
   sameArray(state.names, expectedNames, "Nomes Top 10 ativos");
-  if (state.drafts !== 0 || state.active !== 10) throw new Error(`Ativação incompleta: ${JSON.stringify(state)}`);
-  if (state.google_images !== 50 || state.min_images_per_product !== 5 || state.max_images_per_product !== 5) {
+  if (state.drafts !== 0 || state.active !== 10)
+    throw new Error(`Ativação incompleta: ${JSON.stringify(state)}`);
+  if (
+    state.google_images !== 50 ||
+    state.min_images_per_product !== 5 ||
+    state.max_images_per_product !== 5
+  ) {
     throw new Error("Imagens mudaram durante ativação.");
   }
   if (state.napoli_2626_preserved !== 1) throw new Error("Napoli 26/26 mudou durante ativação.");
@@ -144,7 +162,9 @@ function validateActiveState(state) {
 
 if (mode === "snapshot") {
   const snapshot = await readOnly(invariantSql);
-  fs.mkdirSync(new URL(".", `file://${process.cwd()}/${snapshotPath}`).pathname, { recursive: true });
+  fs.mkdirSync(new URL(".", `file://${process.cwd()}/${snapshotPath}`).pathname, {
+    recursive: true,
+  });
   fs.writeFileSync(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`);
   console.log("TOP10_RESET_INVARIANTS_SNAPSHOTTED");
   console.log(JSON.stringify(snapshot));
