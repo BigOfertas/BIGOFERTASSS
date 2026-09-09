@@ -1,0 +1,39 @@
+name: Fix Kids Production Node Once
+
+on:
+  push:
+    branches:
+      - catalog-kids-first-deploy-20260909
+    paths:
+      - "catalog-jobs/fix-kids-production-node.json"
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: catalog-kids-first-deploy-20260909
+      - name: Fix inline Node module mode
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/execute-kids-first-production.yml')
+          s = p.read_text()
+          if "node <<'NODE'" not in s or "const fs = require('node:fs');" not in s:
+              raise SystemExit('expected inline node blocks not found')
+          s = s.replace("node <<'NODE'", "node --input-type=module <<'NODE'")
+          s = s.replace("const fs = require('node:fs');", "import fs from 'node:fs';")
+          p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add .github/workflows/execute-kids-first-production.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: run Kids production guards as ESM"
+          git push origin HEAD:catalog-kids-first-deploy-20260909
