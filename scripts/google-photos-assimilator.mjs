@@ -54,9 +54,9 @@ function classifyType(title) {
   const upper = title.toUpperCase();
   if (/CORTA[ -]?VENTO|WINDBREAKER/.test(upper)) return "corta-vento";
   if (/\bSHORTS?\b/.test(upper)) return "shorts";
-  if (/\bCONJUNTO\b/.test(upper) && /\b(?:INFANTIL|INFATIL|KIDS?)\b/.test(upper)) return "conjunto";
   if (/\bTREINO\b/.test(upper)) return "treino";
   if (/\bVIAGEM\b/.test(upper)) return "viagem";
+  if (/\bCONJUNTO\b/.test(upper) && /\b(?:INFANTIL|INFATIL|KIDS?)\b/.test(upper)) return "conjunto";
   if (/\bCONJUNTO\b/.test(upper)) return "conjunto";
   if (/\bKIT\b/.test(upper)) return "kit";
   if (/\bREGATA\b/.test(upper)) return "regata";
