@@ -1,9 +1,9 @@
 BEGIN;
 
 -- BIGofertas — Etapa 4: refinamento comercial do catálogo.
--- Mantém o contrato v3 e adiciona uma segunda imagem pronta para hover em cards desktop.
+-- Preserva a RPC pública v3 e acrescenta apenas a segunda imagem de card.
 
-CREATE OR REPLACE FUNCTION public.catalog_products_page_v4(
+CREATE OR REPLACE FUNCTION public.catalog_products_page_v3(
   p_query text DEFAULT NULL,
   p_category text DEFAULT NULL,
   p_campeonato text DEFAULT NULL,
@@ -25,7 +25,7 @@ STABLE
 SET search_path = ''
 AS $$
   WITH base AS (
-    SELECT public.catalog_products_page_v3(
+    SELECT public.catalog_products_page_v2(
       p_query,
       p_category,
       p_campeonato,
@@ -46,6 +46,8 @@ AS $$
     SELECT COALESCE(
       jsonb_agg(
         item || jsonb_build_object(
+          'image_card_storage_key', main_image.card_storage_key,
+          'image_thumb_storage_key', main_image.thumb_storage_key,
           'image_hover_storage_key', hover_image.hover_storage_key
         )
         ORDER BY ordinal
@@ -54,6 +56,8 @@ AS $$
     ) AS items
     FROM base
     CROSS JOIN LATERAL jsonb_array_elements(base.payload->'items') WITH ORDINALITY AS rows(item, ordinal)
+    LEFT JOIN public.product_images main_image
+      ON main_image.storage_key = rows.item->>'image_storage_key'
     LEFT JOIN LATERAL (
       SELECT COALESCE(i.card_storage_key, i.storage_key) AS hover_storage_key
       FROM public.product_images i
@@ -76,10 +80,10 @@ AS $$
   CROSS JOIN enriched_items;
 $$;
 
-REVOKE ALL ON FUNCTION public.catalog_products_page_v4(text,text,text,text,text,text,text,text,text,numeric,numeric,text,integer,integer) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.catalog_products_page_v4(text,text,text,text,text,text,text,text,text,numeric,numeric,text,integer,integer) TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.catalog_products_page_v3(text,text,text,text,text,text,text,text,text,numeric,numeric,text,integer,integer) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.catalog_products_page_v3(text,text,text,text,text,text,text,text,text,numeric,numeric,text,integer,integer) TO anon, authenticated;
 
-COMMENT ON FUNCTION public.catalog_products_page_v4(text,text,text,text,text,text,text,text,text,numeric,numeric,text,integer,integer)
-IS 'Catálogo público da etapa 4 com segunda imagem pronta para hover comercial nos cards.';
+COMMENT ON FUNCTION public.catalog_products_page_v3(text,text,text,text,text,text,text,text,text,numeric,numeric,text,integer,integer)
+IS 'Catálogo público com derivados card/thumb e segunda imagem para hover comercial no desktop.';
 
 COMMIT;
