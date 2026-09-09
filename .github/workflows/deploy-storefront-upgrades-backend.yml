@@ -17,6 +17,7 @@ on:
       - "supabase/migrations/20260908133000_storefront_experience_stage_2.sql"
       - "supabase/migrations/20260908152000_storefront_media_seo_stage_3.sql"
       - "supabase/migrations/20260908170000_catalog_bulk_import_bridge.sql"
+      - "supabase/migrations/20260909220000_catalog_public_rpc_security_fix.sql"
   workflow_dispatch:
 
 permissions:
