@@ -80,6 +80,45 @@ $$;
 REVOKE ALL ON FUNCTION public.owner_catalog_import_set_specifications(uuid,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.owner_catalog_import_set_specifications(uuid,text) TO authenticated, service_role;
 
+-- Preço por variação: permite que um mesmo produto-base tenha, por exemplo,
+-- Torcedor a R$ 184,90 e Jogador a R$ 219,90 sem duplicar o produto-base.
+CREATE OR REPLACE FUNCTION public.owner_catalog_import_set_variant_price(
+  p_product_id uuid,
+  p_variant_id uuid,
+  p_price_override numeric
+)
+RETURNS numeric
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.has_role('owner'::public.app_role) THEN
+    RAISE EXCEPTION 'Acesso restrito ao administrador';
+  END IF;
+  IF p_price_override IS NULL OR p_price_override < 0 THEN
+    RAISE EXCEPTION 'Preço da variação inválido';
+  END IF;
+
+  UPDATE public.product_variants
+  SET price_override = p_price_override,
+      promotional_price_override = NULL,
+      updated_at = now()
+  WHERE id = p_variant_id
+    AND product_id = p_product_id
+    AND status <> 'archived'::public.product_variant_status;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Variação não encontrada';
+  END IF;
+
+  RETURN p_price_override;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.owner_catalog_import_set_variant_price(uuid,uuid,numeric) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.owner_catalog_import_set_variant_price(uuid,uuid,numeric) TO authenticated, service_role;
+
 -- A frase estendida é texto puro: até 50 caracteres e sem número.
 ALTER FUNCTION public.resolve_product_purchase_customization(uuid,jsonb)
   RENAME TO resolve_product_purchase_customization_base_20260909;
