@@ -1,0 +1,31 @@
+name: Fix Final Patch Matrix V2
+
+on:
+  push:
+    branches:
+      - catalog-final-pipeline-20260909-prod
+    paths:
+      - catalog-jobs/fix-final-patch-matrix-v2.json
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: catalog-final-pipeline-20260909-prod
+      - name: Refine matrix
+        run: |
+          python scripts/refine-final-patch-matrix.py
+          npx --yes prettier@3.9.6 --write scripts/catalog-business-rules.mjs scripts/validate-catalog-business-rules.mjs
+          node scripts/validate-catalog-business-rules.mjs
+      - name: Commit source changes
+        run: |
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add scripts/catalog-business-rules.mjs scripts/validate-catalog-business-rules.mjs supabase/migrations/20260909143000_global_patch_matrix.sql
+          git commit -m "fix: align final patch matrix with verified 2026 badges"
+          git push origin HEAD:catalog-final-pipeline-20260909-prod
