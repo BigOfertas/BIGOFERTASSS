@@ -148,8 +148,13 @@ export function validatePurchaseCustomization(
       return "Informe um número válido para a personalização.";
     }
   }
-  if (customization.phrase && customization.phrase.length > config.phraseMax) {
-    return `A frase pode ter no máximo ${config.phraseMax} caracteres.`;
+  if (customization.phrase) {
+    if (customization.phrase.length > config.phraseMax) {
+      return `A frase pode ter no máximo ${config.phraseMax} caracteres.`;
+    }
+    if (/\d/.test(customization.phrase)) {
+      return "A frase personalizada não pode conter números.";
+    }
   }
   if (
     customization.patchCode &&

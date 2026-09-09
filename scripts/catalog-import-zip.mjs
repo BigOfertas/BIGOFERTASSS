@@ -3,6 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
+import { buildCatalogBusinessProfile, inferCommercialType, resolveCommercialPrice } from "./catalog-business-rules.mjs";
 
 const PRODUCT_CODE_RE = /^P\d{6}$/;
 const DEFAULT_IMAGE_CONCURRENCY = 4;
@@ -348,22 +349,35 @@ function loadPlan(inputRoot, options) {
     }
 
     const explicitPrice = parseNumber(row.preco ?? row.price);
-    const price = explicitPrice ?? options.defaultPrice;
     const explicitStock = parseInteger(row.estoque ?? row.stock);
     const stock = explicitStock ?? options.defaultStock ?? 0;
     const category = inferCategory(row);
+    const resolvedLeague = text(options.league) || text(row.liga);
+    const resolvedTeam = text(row.time ?? row.selecao);
+    const audience = inferAudience(row);
+    const businessProfile = buildCatalogBusinessProfile(
+      { ...row, name, competition, league: resolvedLeague, team: resolvedTeam, audience },
+      {
+        explicitPrice,
+        fallbackPrice: options.defaultPrice,
+        specifications: row.especificacoes ?? row.specifications,
+      },
+    );
+    const price = businessProfile.price;
 
     products.set(code, {
       code,
       name,
       competition,
-      league: text(options.league) || text(row.liga),
-      team: text(row.time ?? row.selecao),
+      league: resolvedLeague,
+      team: resolvedTeam,
       season: text(row.temporada ?? row.season),
       brand: inferBrand(name, row.marca ?? row.brand),
-      audience: inferAudience(row),
-      commercialType: inferCommercialType(row),
+      audience,
+      commercialType: businessProfile.commercialType,
       category,
+      specifications: businessProfile.specifications,
+      patches: businessProfile.patches,
       description: text(row.descricao),
       observations: text(row.observacoes),
       confidence: text(row.confianca),
@@ -387,9 +401,21 @@ function loadPlan(inputRoot, options) {
       errors.push(`${code}: variacao repetida ${variantCode}.`);
       continue;
     }
+    const variantName = variationLabel(variantCode, row.nome_descricao);
+    const explicitVariantType = inferCommercialType({ name: variantName, tipo_produto: row.tipo_produto });
+    const variantCommercialType = explicitVariantType === "other"
+      ? product.commercialType
+      : explicitVariantType;
+    const variantPrice = resolveCommercialPrice(
+      variantCommercialType,
+      parseNumber(row.preco ?? row.price),
+      product.price,
+    );
     product.variations.set(variantCode, {
       code: variantCode,
-      name: variationLabel(variantCode, row.nome_descricao),
+      name: variantName,
+      commercialType: variantCommercialType,
+      price: variantPrice,
       sortOrder: Math.max(
         0,
         (parseInteger(variantCode.match(/\d+$/)?.[0]) ?? product.variations.size + 1) - 1,
@@ -403,6 +429,8 @@ function loadPlan(inputRoot, options) {
       product.variations.set("versao-01", {
         code: "versao-01",
         name: "Versão 01",
+        commercialType: product.commercialType,
+        price: product.price,
         sortOrder: 0,
         stock: product.stock,
       });
@@ -802,6 +830,29 @@ async function applyPlan(plan, options) {
     if (saved.created) stats.productsCreated += 1;
     else stats.productsUpdated += 1;
 
+    const personalizationEnabled = [
+      "torcedor",
+      "feminino",
+      "jogador",
+      "retro",
+      "infantil",
+      "basquete",
+    ].includes(product.commercialType);
+    await client.rpc("owner_save_product_purchase_settings_v2", {
+      p_product_id: product.remoteId,
+      p_commercial_type: product.commercialType,
+      p_size_enabled: true,
+      p_personalization_enabled: personalizationEnabled,
+      p_phrase_enabled: personalizationEnabled,
+      p_patches: product.patches,
+    });
+    if (product.specifications) {
+      await client.rpc("owner_catalog_import_set_specifications", {
+        p_product_id: product.remoteId,
+        p_specifications: product.specifications,
+      });
+    }
+
     const variantIds = new Map();
     const variants = [...product.variations.values()].sort((a, b) => a.sortOrder - b.sortOrder);
     for (const [variantIndex, variant] of variants.entries()) {
@@ -819,6 +870,13 @@ async function applyPlan(plan, options) {
         p_options: optionsPayload,
       });
       variantIds.set(variant.code, savedVariant.id);
+      if (Number.isFinite(variant.price)) {
+        await client.rpc("owner_catalog_import_set_variant_price", {
+          p_product_id: product.remoteId,
+          p_variant_id: savedVariant.id,
+          p_price_override: variant.price,
+        });
+      }
       if (savedVariant.created) stats.variantsCreated += 1;
       else stats.variantsUpdated += 1;
     }

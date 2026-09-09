@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { buildCatalogBusinessProfile } from './catalog-business-rules.mjs';
 
 const clean = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
 const escapeHtml = (value) => clean(value)
@@ -114,6 +115,7 @@ function parseTitle(title) {
   const audience = classifyAudience(normalizedTitle);
   const version = classifyVersion(normalizedTitle, type);
   const entity = extractEntity(normalizedTitle, { brand, season, model, type }) || null;
+  const businessProfile = buildCatalogBusinessProfile({ name: normalizedTitle, tipo_produto: type, audience: audience.value });
   const warnings = [];
   if (!entity) warnings.push('time/seleção não identificado automaticamente');
   if (!season) warnings.push('temporada ausente ou não reconhecida');
@@ -146,6 +148,11 @@ function parseTitle(title) {
     versionInferred: version.inferred,
     audience: audience.value,
     audienceInferred: audience.inferred,
+    commercialType: businessProfile.commercialType,
+    price: businessProfile.price,
+    uniform: businessProfile.uniform,
+    specifications: businessProfile.specifications,
+    patches: businessProfile.patches,
     baseKey,
     confidence,
     warnings,
@@ -162,6 +169,11 @@ function mediumUrl(raw, size = 1000) {
   } catch {
     return raw;
   }
+}
+
+function formatPrice(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? `R$ ${numeric.toFixed(2).replace('.', ',')}` : '—';
 }
 
 function buildGroupHtml(group, proposal) {
@@ -181,7 +193,7 @@ function buildGroupHtml(group, proposal) {
   .imgwrap{height:360px;display:flex;align-items:center;justify-content:center;background:#fff}.imgwrap img{max-width:100%;max-height:100%;object-fit:contain}
   figcaption{padding:10px 12px;font-size:12px;color:#555;border-top:1px solid #eee}
   </style></head><body><h1>${escapeHtml(group.title)}</h1>
-  <div class="meta"><div><b>Entidade</b>${escapeHtml(proposal.entity || '—')}</div><div><b>Tipo</b>${escapeHtml(proposal.type)}</div><div><b>Modelo</b>${escapeHtml(proposal.model || '—')}</div><div><b>Versão</b>${escapeHtml(proposal.version || '—')}</div><div><b>Temporada</b>${escapeHtml(proposal.season || '—')}</div><div><b>Marca</b>${escapeHtml(proposal.brand || '—')}</div><div><b>Público</b>${escapeHtml(proposal.audience || '—')}</div><div><b>Confiança</b>${proposal.confidence}</div></div>
+  <div class="meta"><div><b>Entidade</b>${escapeHtml(proposal.entity || '—')}</div><div><b>Tipo</b>${escapeHtml(proposal.type)}</div><div><b>Modelo</b>${escapeHtml(proposal.model || '—')}</div><div><b>Versão</b>${escapeHtml(proposal.version || '—')}</div><div><b>Temporada</b>${escapeHtml(proposal.season || '—')}</div><div><b>Marca</b>${escapeHtml(proposal.brand || '—')}</div><div><b>Público</b>${escapeHtml(proposal.audience || '—')}</div><div><b>Comercial</b>${escapeHtml(proposal.commercialType || '—')}</div><div><b>Preço</b>${escapeHtml(formatPrice(proposal.price))}</div><div><b>Uniforme</b>${escapeHtml(proposal.uniform?.label || '—')}</div><div><b>Confiança</b>${proposal.confidence}</div></div>
   ${warningHtml}<div class="grid">${cards}</div></body></html>`;
 }
 
@@ -191,7 +203,7 @@ function buildOverviewHtml(items) {
       const url = mediumUrl(image.directUrl || image.highQualityUrl || image.url || '', 700);
       return `<img src="${escapeHtml(url)}" alt="${index + 1}" loading="eager">`;
     }).join('');
-    return `<section><h2>${escapeHtml(group.title)}</h2><p>${escapeHtml(proposal.entity || '—')} · ${escapeHtml(proposal.type)} · ${escapeHtml(proposal.model || '—')} · ${escapeHtml(proposal.version || '—')} · ${escapeHtml(proposal.season || '—')} · ${escapeHtml(proposal.brand || '—')}</p><div class="thumbs">${images}</div><small>${escapeHtml(screenshot)}</small></section>`;
+    return `<section><h2>${escapeHtml(group.title)}</h2><p>${escapeHtml(proposal.entity || '—')} · ${escapeHtml(proposal.type)} · ${escapeHtml(proposal.model || '—')} · ${escapeHtml(proposal.version || '—')} · ${escapeHtml(proposal.season || '—')} · ${escapeHtml(proposal.brand || '—')} · ${escapeHtml(proposal.commercialType || '—')} · ${escapeHtml(formatPrice(proposal.price))} · ${escapeHtml(proposal.uniform?.label || '—')}</p><div class="thumbs">${images}</div><small>${escapeHtml(screenshot)}</small></section>`;
   }).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><style>
   *{box-sizing:border-box}body{margin:0;padding:28px;font-family:Arial,sans-serif;background:#f0f0f0;color:#111}h1{margin:0 0 22px}

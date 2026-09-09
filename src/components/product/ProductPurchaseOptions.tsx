@@ -134,7 +134,7 @@ export function ProductPurchaseOptions({
             }
           >
             <option value="no">Não</option>
-            <option value="yes">Sim (+{currency.format(config.personalizationPrice)})</option>
+            <option value="yes">Sim — nome e número (+{currency.format(config.personalizationPrice)})</option>
           </select>
           {normalEnabled ? (
             <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_120px]">
@@ -205,7 +205,7 @@ export function ProductPurchaseOptions({
         </p>
       </div>
 
-      {config.phraseEnabled ? (
+      {config.phraseEnabled && !normalEnabled ? (
         <div>
           <label
             className="text-xs font-black uppercase tracking-widest text-gray-800"
@@ -226,7 +226,7 @@ export function ProductPurchaseOptions({
             }
           >
             <option value="no">Não</option>
-            <option value="yes">Sim (+{currency.format(config.phrasePrice)})</option>
+            <option value="yes">Sim — frase (+{currency.format(config.phrasePrice)})</option>
           </select>
           {phraseEnabled ? (
             <label className="mt-3 block text-sm font-semibold text-gray-700">
@@ -236,7 +236,7 @@ export function ProductPurchaseOptions({
                 value={value.phrase?.trimStart() ?? ""}
                 onChange={(event) => onChange({ ...value, phrase: event.target.value })}
                 className="mt-1 min-h-24 w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-red-500"
-                placeholder={`Até ${config.phraseMax} caracteres, sem número separado`}
+                placeholder={`Até ${config.phraseMax} caracteres, sem números`}
               />
               <span className="mt-1 block text-right text-xs font-medium text-gray-400">
                 {value.phrase?.trimStart().length ?? 0}/{config.phraseMax}
