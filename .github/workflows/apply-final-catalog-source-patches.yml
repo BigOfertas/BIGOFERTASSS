@@ -39,13 +39,12 @@ jobs:
             scripts/deploy-storefront-upgrade-migrations.mjs \
             src/lib/product-detail.ts \
             src/components/admin/ProductImageAdmin.tsx \
-            cloudflare/hostinger-product-seo-worker.ts \
-            .github/workflows/validate-main.yml
+            cloudflare/hostinger-product-seo-worker.ts
 
-      - name: Remove one-shot files and commit
+      - name: Commit source changes only
         run: |
+          git checkout HEAD -- .github/workflows/validate-main.yml .github/workflows/apply-final-catalog-source-patches.yml
           rm -f scripts/apply-final-catalog-source-patches.mjs
-          rm -f .github/workflows/apply-final-catalog-source-patches.yml
           rm -f catalog-jobs/apply-final-catalog-source-patches.json
           git config user.name "BigOfertas"
           git config user.email "contato@bigofertas.net"
