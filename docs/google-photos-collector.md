@@ -57,7 +57,7 @@ Os grupos validados foram Chelsea I, Chelsea II, Manchester City II, Bayern I, B
 
 ## Estado
 
-Coletor pronto para uso nos lotes do catalogo. A proxima camada do fluxo e o normalizador/cadastro: receber o gabarito dos prints, consumir `groups.json`, gerar produto-base/variacoes/descricao/P000XXX e gravar os produtos no Supabase.
+Coletor concluido e pronto para uso nos lotes do catalogo. A proxima camada do fluxo e o normalizador/cadastro: receber o gabarito dos prints, consumir `groups.json`, gerar produto-base/variacoes/descricao/P000XXX e gravar os produtos no Supabase.
 
 ## Seguranca
 
