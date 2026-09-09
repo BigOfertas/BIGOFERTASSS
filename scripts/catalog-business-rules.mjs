@@ -38,7 +38,6 @@ export const PATCH_CATALOG = Object.freeze([
   Object.freeze({ code: "liga-profesional-argentina", label: "Liga Profissional Argentina" }),
   Object.freeze({ code: "copa-argentina", label: "Copa Argentina" }),
   Object.freeze({ code: "liga-mx", label: "Liga MX" }),
-  Object.freeze({ code: "copa-mx", label: "Copa do México" }),
   Object.freeze({ code: "mundial-de-clubes", label: "Mundial de Clubes" }),
   Object.freeze({ code: "premier-league", label: "Premier League" }),
   Object.freeze({ code: "premier-league-champions", label: "Premier League — Campeão" }),
@@ -69,14 +68,20 @@ export const PATCH_CATALOG = Object.freeze([
   Object.freeze({ code: "caf-champions-league", label: "CAF Champions League" }),
   Object.freeze({ code: "caf-confederation-cup", label: "CAF Confederation Cup" }),
   Object.freeze({ code: "champions-league", label: "Champions League" }),
+  Object.freeze({ code: "champions-league-titleholder", label: "Champions League — Campeão" }),
   Object.freeze({ code: "europa-league", label: "Europa League" }),
+  Object.freeze({ code: "europa-league-titleholder", label: "Europa League — Campeão" }),
   Object.freeze({ code: "conference-league", label: "Conference League" }),
+  Object.freeze({ code: "conference-league-titleholder", label: "Conference League — Campeão" }),
   Object.freeze({ code: "fifa-club-world-champions", label: "FIFA — Campeão Mundial de Clubes" }),
   Object.freeze({ code: "fifa-world-cup-2026", label: "Copa do Mundo FIFA 2026" }),
   Object.freeze({ code: "fifa-world-champions", label: "FIFA — Campeão Mundial" }),
   Object.freeze({ code: "euro", label: "UEFA EURO" }),
+  Object.freeze({ code: "euro-titleholder", label: "UEFA EURO — Campeão" }),
   Object.freeze({ code: "uefa-nations-league", label: "UEFA Nations League" }),
+  Object.freeze({ code: "nations-league-titleholder", label: "UEFA Nations League — Campeão" }),
   Object.freeze({ code: "copa-america", label: "Copa América" }),
+  Object.freeze({ code: "copa-america-titleholder", label: "Copa América — Campeão" }),
   Object.freeze({ code: "afcon", label: "Copa Africana de Nações" }),
   Object.freeze({ code: "afc-asian-cup", label: "Copa da Ásia AFC" }),
   Object.freeze({ code: "concacaf-gold-cup", label: "Concacaf Gold Cup" }),
@@ -690,8 +695,14 @@ function inferNationalPatches(source, national) {
   } else if (national.confed === "OFC") {
     addPatch(codes, "ofc-nations-cup");
   }
-  if (national.key === "ESPANHA" && currentSeason2627(source))
+  if (national.key === "ESPANHA" && currentSeason2627(source)) {
     addPatch(codes, "fifa-world-champions");
+    addPatch(codes, "euro-titleholder");
+  }
+  if (national.key === "PORTUGAL" && currentSeason2627(source))
+    addPatch(codes, "nations-league-titleholder");
+  if (national.key === "ARGENTINA" && currentSeason2627(source))
+    addPatch(codes, "copa-america-titleholder");
   return codes;
 }
 
@@ -712,6 +723,12 @@ function inferSpecialClubPatches(source) {
     addPatch(codes, "premier-league-champions");
   const uefaPatch = inferUefa2627Patch(source);
   if (uefaPatch) addPatch(codes, uefaPatch);
+  if (currentSeason2627(source) && anyAlias(source, ["PSG", "PARIS SAINT GERMAIN"]))
+    addPatch(codes, "champions-league-titleholder");
+  if (currentSeason2627(source) && aliasInSource(source, "ASTON VILLA"))
+    addPatch(codes, "europa-league-titleholder");
+  if (currentSeason2627(source) && aliasInSource(source, "CRYSTAL PALACE"))
+    addPatch(codes, "conference-league-titleholder");
   return codes;
 }
 

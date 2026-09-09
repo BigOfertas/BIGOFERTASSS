@@ -98,6 +98,29 @@ hasAll(
   "Arsenal",
 );
 
+const psg = patchCodes({ name: "CAMISA I PSG 26/27 NIKE", league: "Ligue 1" });
+hasAll(psg, ["ligue-1", "champions-league", "champions-league-titleholder"], "PSG");
+
+const astonVilla = patchCodes({
+  name: "CAMISA I ASTON VILLA 26/27 ADIDAS",
+  league: "Premier League",
+});
+hasAll(
+  astonVilla,
+  ["premier-league", "champions-league", "europa-league-titleholder"],
+  "Aston Villa",
+);
+
+const crystalPalace = patchCodes({
+  name: "CAMISA I CRYSTAL PALACE 26/27 MACRON",
+  league: "Premier League",
+});
+hasAll(
+  crystalPalace,
+  ["premier-league", "europa-league", "conference-league-titleholder"],
+  "Crystal Palace",
+);
+
 const barcelona = patchCodes({ name: "CAMISA II BARCELONA 26/27 NIKE", league: "LaLiga" });
 hasAll(barcelona, ["laliga", "copa-del-rey", "champions-league"], "Barcelona");
 
@@ -143,7 +166,13 @@ const nationalCases = [
   ],
   [
     { name: "CAMISA I ESPANHA 26/27 ADIDAS", selecao: "Espanha" },
-    ["fifa-world-cup-2026", "fifa-world-champions", "euro", "uefa-nations-league"],
+    [
+      "fifa-world-cup-2026",
+      "fifa-world-champions",
+      "euro",
+      "euro-titleholder",
+      "uefa-nations-league",
+    ],
     [],
   ],
   [
@@ -172,6 +201,17 @@ const nationalCases = [
     ["fifa-world-cup-2026"],
   ],
 ];
+hasAll(
+  patchCodes({ name: "CAMISA I PORTUGAL 26/27 PUMA", selecao: "Portugal" }),
+  ["nations-league-titleholder"],
+  "Portugal",
+);
+hasAll(
+  patchCodes({ name: "CAMISA I ARGENTINA 26/27 ADIDAS", selecao: "Argentina" }),
+  ["copa-america-titleholder"],
+  "Argentina",
+);
+
 for (const [product, expected, forbidden] of nationalCases) {
   const actual = patchCodes(product);
   hasAll(actual, expected, product.name);
@@ -239,6 +279,6 @@ for (const code of [
 ]) {
   assert.ok(patchMigration.includes(`\"code\":\"${code}\"`), `patch migration missing ${code}`);
 }
-assert.ok(PATCH_CATALOG.length >= 45, "global patch catalog unexpectedly small");
+assert.ok(PATCH_CATALOG.length >= 50, "global patch catalog unexpectedly small");
 
 console.log("CATALOG_BUSINESS_RULES_VALIDATION_OK");
