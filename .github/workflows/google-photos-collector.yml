@@ -26,7 +26,7 @@ on:
       - google-photos-collector-20260909
     paths:
       - ".github/google-photos-collector-test.json"
-      - "scripts/google-photos-collector-v3.mjs"
+      - "scripts/google-photos-collector.mjs"
       - ".github/workflows/google-photos-collector.yml"
 
 permissions:
@@ -77,7 +77,7 @@ jobs:
           echo "MAX_SCROLLS=$MAX_SCROLLS" >> "$GITHUB_ENV"
 
       - name: Validate collector code
-        run: node --check scripts/google-photos-collector-v3.mjs
+        run: node --check scripts/google-photos-collector.mjs
 
       - name: Install Playwright
         shell: bash
@@ -90,7 +90,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/google-photos-collector-v3.mjs \
+          node scripts/google-photos-collector.mjs \
             --url "$ALBUM_URL" \
             --label "$LABEL" \
             --expected-min-images "$EXPECTED_MIN_IMAGES" \
@@ -105,7 +105,8 @@ jobs:
             node - <<'NODE'
           const fs=require('fs');
           const r=JSON.parse(fs.readFileSync('.artifacts/google-photos-collector/collector.json','utf8'));
-          console.log(`COLLECTOR_SUMMARY images=${r.stats.images} titles=${r.stats.titles} network=${r.stats.networkUrls} dom=${r.stats.domUrls} perf=${r.stats.performanceUrls}`);
+          console.log(`COLLECTOR_SUMMARY productImages=${r.stats.productImages} titles=${r.stats.titles} groups=${r.stats.groups} ungrouped=${r.stats.ungrouped} mediaObserved=${r.stats.mediaObserved}`);
+          for (const g of r.groups || []) console.log(`GROUP: ${g.title} -> ${g.images.length}`);
           NODE
           fi
 
