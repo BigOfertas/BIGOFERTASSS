@@ -20,6 +20,7 @@ jobs:
       - name: Refine matrix
         run: |
           python scripts/refine-final-patch-matrix.py
+          python scripts/fix-club-national-priority.py
           npx --yes prettier@3.9.6 --write scripts/catalog-business-rules.mjs scripts/validate-catalog-business-rules.mjs
           node scripts/validate-catalog-business-rules.mjs
       - name: Commit source changes
