@@ -55,6 +55,10 @@ A versao final foi validada contra o album real `[26/27] TOP 10 LANÇAMENTOS DO 
 
 Os grupos validados foram Chelsea I, Chelsea II, Manchester City II, Bayern I, Bayern II, Barcelona II, PSG I, Lyon II, Milan II e Napoli I, todos com cinco imagens.
 
+## Estado
+
+Coletor pronto para uso nos lotes do catalogo. A proxima camada do fluxo e o normalizador/cadastro: receber o gabarito dos prints, consumir `groups.json`, gerar produto-base/variacoes/descricao/P000XXX e gravar os produtos no Supabase.
+
 ## Seguranca
 
 O coletor aceita apenas URLs HTTPS de `photos.google.com` ou `photos.app.goo.gl`. A coleta e somente leitura: nao apaga, altera ou envia arquivos ao Google Photos.
