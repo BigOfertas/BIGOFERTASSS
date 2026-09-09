@@ -52,6 +52,8 @@ export interface CatalogListItem {
   image_storage_key: string | null;
   image_card_storage_key: string | null;
   image_thumb_storage_key: string | null;
+  image_external_url: string | null;
+  image_source: string | null;
   fallback_image_url: string | null;
   displayImageUrl: string | null;
 }
@@ -102,6 +104,8 @@ const catalogItemSchema = z.object({
   image_storage_key: z.string().nullable(),
   image_card_storage_key: z.string().nullable().optional().default(null),
   image_thumb_storage_key: z.string().nullable().optional().default(null),
+  image_external_url: z.string().url().nullable().optional().default(null),
+  image_source: z.string().nullable().optional().default(null),
   fallback_image_url: z.string().nullable(),
 });
 
@@ -134,7 +138,6 @@ const catalogFacetsSchema = z.object({
 
 export function parseCatalogPage(value: Json): CatalogPage {
   const parsed = catalogPageSchema.parse(value);
-
   return {
     ...parsed,
     items: parsed.items.map((item) => ({
@@ -142,6 +145,7 @@ export function parseCatalogPage(value: Json): CatalogPage {
       displayImageUrl:
         (item.image_card_storage_key ? buildR2PublicImageUrl(item.image_card_storage_key) : null) ??
         (item.image_storage_key ? buildR2PublicImageUrl(item.image_storage_key) : null) ??
+        item.image_external_url ??
         item.fallback_image_url,
     })),
   };
