@@ -40,6 +40,9 @@ jobs:
       - name: Validate storefront customer experience
         run: node scripts/validate-storefront-upgrades.mjs
 
+      - name: Validate conversion UX polish
+        run: node scripts/validate-conversion-ux-stage4.mjs
+
       - name: Validate affiliate referral backend
         run: bun run validate:affiliate
 
