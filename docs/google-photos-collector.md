@@ -20,14 +20,7 @@ Se alguma imagem ficar sem titulo, a execucao falha em vez de cadastrar silencio
 
 ## GitHub Actions
 
-O workflow `Google Photos Catalog Collector` e disparado manualmente informando:
-
-- URL publica do album;
-- rotulo do lote;
-- minimo esperado de imagens;
-- limite de rolagens.
-
-O resultado e publicado como artifact da execucao. Nenhum login do Google e necessario para albuns publicos e nenhuma credencial do Google e armazenada no repositorio.
+O workflow `Google Photos Catalog Collector` e disparado manualmente informando URL publica do album, rotulo do lote, minimo esperado de imagens e limite de rolagens. O resultado e publicado como artifact da execucao. Nenhum login do Google e necessario para albuns publicos e nenhuma credencial do Google e armazenada no repositorio.
 
 ## Execucao local
 
@@ -42,22 +35,13 @@ node scripts/google-photos-collector.mjs \
 
 ## Prova real - Top 10 Lançamentos
 
-A versao final foi validada contra o album real `[26/27] TOP 10 LANÇAMENTOS DO ANO` no workflow run `34368646867`:
-
-- 55 midias Google observadas no total;
-- 5 midias de interface/capa descartadas;
-- 50 imagens de produto mantidas;
-- 10 titulos consolidados;
-- 10 grupos;
-- 5 imagens em cada grupo;
-- 0 imagens sem titulo;
-- workflow concluido com sucesso.
+A versao final foi validada contra o album real `[26/27] TOP 10 LANÇAMENTOS DO ANO` no workflow run `34368646867`: 55 midias Google observadas, 5 midias de interface/capa descartadas, 50 imagens de produto mantidas, 10 titulos consolidados, 10 grupos, 5 imagens em cada grupo, 0 imagens sem titulo e workflow concluido com sucesso.
 
 Os grupos validados foram Chelsea I, Chelsea II, Manchester City II, Bayern I, Bayern II, Barcelona II, PSG I, Lyon II, Milan II e Napoli I, todos com cinco imagens.
 
 ## Estado
 
-Coletor concluido e pronto para uso nos lotes do catalogo. A proxima camada do fluxo e o normalizador/cadastro: receber o gabarito dos prints, consumir `groups.json`, gerar produto-base/variacoes/descricao/P000XXX e gravar os produtos no Supabase.
+Coletor concluido e pronto para uso nos lotes do catalogo. A proxima camada e o normalizador/cadastro: receber o gabarito dos prints, consumir `groups.json`, gerar produto-base/variacoes/descricao/P000XXX e gravar os produtos no Supabase.
 
 ## Seguranca
 
