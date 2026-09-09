@@ -117,7 +117,7 @@ export function ProductShippingCalculator({
                       </strong>
                     </div>
                     <p className="mt-2 text-[11px] font-bold text-gray-800">
-                      Receba em aproximadamente {formatTotalDeliveryLabel(result.productionBusinessDays, quote)}
+                      Previsão total: {formatTotalDeliveryLabel(result.productionBusinessDays, quote)}
                     </p>
                   </div>
                 </div>
