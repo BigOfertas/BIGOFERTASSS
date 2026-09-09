@@ -1,0 +1,33 @@
+name: Format Final Catalog Sources
+
+on:
+  push:
+    branches:
+      - catalog-final-pipeline-20260909-prod
+    paths:
+      - catalog-jobs/format-final-catalog.json
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: catalog-final-pipeline-20260909-prod
+      - name: Format changed sources
+        run: |
+          npx --yes prettier@3.9.6 --write \
+            scripts/validate-google-photos-final-pipeline.mjs \
+            src/components/product/ProductPurchaseOptions.tsx \
+            src/lib/product-images.ts \
+            src/lib/product-purchase.ts
+      - name: Commit formatting
+        run: |
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add scripts/validate-google-photos-final-pipeline.mjs src/components/product/ProductPurchaseOptions.tsx src/lib/product-images.ts src/lib/product-purchase.ts
+          git commit -m "style: format final catalog sources"
+          git push origin HEAD:catalog-final-pipeline-20260909-prod
