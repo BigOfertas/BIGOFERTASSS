@@ -1,13 +1,22 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type ProductCommercialType =
-  "torcedor" | "feminino" | "jogador" | "retro" | "infantil" | "calcao" | "basquete" | "other";
+  | "torcedor"
+  | "feminino"
+  | "jogador"
+  | "retro"
+  | "infantil"
+  | "calcao"
+  | "basquete"
+  | "other";
 
 export type PurchaseCustomization = {
   size: string | null;
   personalization: { name: string; number: string } | null;
   phrase: string | null;
+  /** Legado: preservado para carrinhos/pedidos antigos. */
   patchCode: string | null;
+  patchCodes: string[];
 };
 
 export type PurchasePatch = {
@@ -38,6 +47,7 @@ export const EMPTY_PURCHASE_CUSTOMIZATION: PurchaseCustomization = {
   personalization: null,
   phrase: null,
   patchCode: null,
+  patchCodes: [],
 };
 
 function record(value: unknown): Record<string, unknown> {
@@ -51,18 +61,28 @@ function numberValue(value: unknown, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function normalizePatchCodes(row: Record<string, unknown>) {
+  const fromArray = Array.isArray(row.patchCodes)
+    ? row.patchCodes.filter((item): item is string => typeof item === "string")
+    : [];
+  const legacy = typeof row.patchCode === "string" && row.patchCode.trim() ? row.patchCode.trim() : null;
+  const source = fromArray.length > 0 ? fromArray : legacy ? [legacy] : [];
+  return [...new Set(source.map((code) => code.trim()).filter(Boolean))].slice(0, 8);
+}
+
 export function normalizePurchaseCustomization(value: unknown): PurchaseCustomization {
   const row = record(value);
   const personalizationRow = record(row.personalization);
   const name = typeof personalizationRow.name === "string" ? personalizationRow.name.trim() : "";
   const number =
     typeof personalizationRow.number === "string" ? personalizationRow.number.trim() : "";
+  const patchCodes = normalizePatchCodes(row);
   return {
     size: typeof row.size === "string" && row.size.trim() ? row.size.trim().toUpperCase() : null,
     personalization: name || number ? { name, number } : null,
     phrase: typeof row.phrase === "string" && row.phrase.trim() ? row.phrase.trim() : null,
-    patchCode:
-      typeof row.patchCode === "string" && row.patchCode.trim() ? row.patchCode.trim() : null,
+    patchCode: patchCodes[0] ?? null,
+    patchCodes,
   };
 }
 
@@ -123,8 +143,8 @@ export function calculatePurchaseSurcharge(
   let total = 0;
   if (customization.personalization) total += config.personalizationPrice;
   if (customization.phrase) total += config.phrasePrice;
-  if (customization.patchCode) {
-    total += config.patches.find((patch) => patch.code === customization.patchCode)?.price ?? 0;
+  for (const code of customization.patchCodes) {
+    total += config.patches.find((patch) => patch.code === code)?.price ?? 0;
   }
   return total;
 }
@@ -149,9 +169,7 @@ export function validatePurchaseCustomization(
     }
   }
   if (customization.phrase) {
-    if (!customization.phrase.trim()) {
-      return "Informe a frase personalizada.";
-    }
+    if (!customization.phrase.trim()) return "Informe a frase personalizada.";
     if (customization.phrase.length > config.phraseMax) {
       return `A frase pode ter no máximo ${config.phraseMax} caracteres.`;
     }
@@ -159,11 +177,9 @@ export function validatePurchaseCustomization(
       return "A frase personalizada não pode conter números.";
     }
   }
-  if (
-    customization.patchCode &&
-    !config.patches.some((patch) => patch.code === customization.patchCode)
-  ) {
-    return "Escolha um patch disponível para este produto.";
+  if (customization.patchCodes.length > 8) return "Escolha no máximo 8 patches.";
+  if (customization.patchCodes.some((code) => !config.patches.some((patch) => patch.code === code))) {
+    return "Escolha apenas patches disponíveis para este produto.";
   }
   return null;
 }
@@ -213,16 +229,16 @@ export function customizationToCartOptions(
       valueLabel: customization.phrase,
     });
   }
-  if (customization.patchCode) {
-    const patch = config.patches.find((item) => item.code === customization.patchCode);
-    if (patch)
-      options.push({
-        optionId: "purchase-patch",
-        optionName: "Patch",
-        optionKind: "other",
-        valueId: patch.code,
-        valueLabel: patch.label,
-      });
+  for (const code of customization.patchCodes) {
+    const patch = config.patches.find((item) => item.code === code);
+    if (!patch) continue;
+    options.push({
+      optionId: `purchase-patch-${patch.code}`,
+      optionName: "Patch",
+      optionKind: "other",
+      valueId: patch.code,
+      valueLabel: patch.label,
+    });
   }
   return options;
 }
