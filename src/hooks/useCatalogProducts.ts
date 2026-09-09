@@ -29,10 +29,10 @@ export function useCatalogProducts(query: CatalogQuery = {}) {
   const normalized = normalizeCatalogQuery(query);
 
   return useQuery({
-    queryKey: ["catalog", "page-v3", normalized],
+    queryKey: ["catalog", "page-v4", normalized],
     placeholderData: keepPreviousData,
     queryFn: async () => {
-      const data = await callSupabaseRpc<Json>("catalog_products_page_v3", {
+      const data = await callSupabaseRpc<Json>("catalog_products_page_v4", {
         ...catalogFilterArgs(normalized),
         p_sort: normalized.sort,
         p_page: normalized.page,
