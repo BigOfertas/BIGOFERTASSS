@@ -30,7 +30,10 @@ function readStoredFavorites() {
     if (!Array.isArray(parsed)) return [];
     return parsed.filter(
       (item): item is FavoriteProduct =>
-        Boolean(item) && typeof item.id === "string" && typeof item.slug === "string" && typeof item.name === "string",
+        Boolean(item) &&
+        typeof item.id === "string" &&
+        typeof item.slug === "string" &&
+        typeof item.name === "string",
     );
   } catch {
     return [];
@@ -39,17 +42,22 @@ function readStoredFavorites() {
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<FavoriteProduct[]>([]);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     setFavorites(readStoredFavorites());
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!hydrated || typeof window === "undefined") return;
     window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
-  }, [favorites]);
+  }, [favorites, hydrated]);
 
-  const isFavorite = useCallback((id: string) => favorites.some((item) => item.id === id), [favorites]);
+  const isFavorite = useCallback(
+    (id: string) => favorites.some((item) => item.id === id),
+    [favorites],
+  );
 
   const toggleFavorite = useCallback((product: FavoriteProduct) => {
     setFavorites((current) =>
