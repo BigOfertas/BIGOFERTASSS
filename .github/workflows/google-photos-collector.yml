@@ -21,20 +21,13 @@ on:
         required: false
         default: "350"
         type: string
-  push:
-    branches:
-      - google-photos-collector-20260909
-    paths:
-      - ".github/google-photos-collector-test.json"
-      - "scripts/google-photos-collector.mjs"
-      - ".github/workflows/google-photos-collector.yml"
 
 permissions:
   contents: read
 
 concurrency:
   group: google-photos-collector-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   collect:
@@ -49,32 +42,20 @@ jobs:
         with:
           node-version: 22
 
-      - name: Resolve collector input
+      - name: Validate input
         shell: bash
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          INPUT_ALBUM_URL: ${{ inputs.album_url }}
-          INPUT_LABEL: ${{ inputs.label }}
-          INPUT_EXPECTED_MIN_IMAGES: ${{ inputs.expected_min_images }}
-          INPUT_MAX_SCROLLS: ${{ inputs.max_scrolls }}
+          ALBUM_URL: ${{ inputs.album_url }}
+          LABEL: ${{ inputs.label }}
+          EXPECTED_MIN_IMAGES: ${{ inputs.expected_min_images }}
+          MAX_SCROLLS: ${{ inputs.max_scrolls }}
         run: |
           set -euo pipefail
-          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
-            ALBUM_URL="$INPUT_ALBUM_URL"
-            LABEL="$INPUT_LABEL"
-            EXPECTED_MIN_IMAGES="${INPUT_EXPECTED_MIN_IMAGES:-1}"
-            MAX_SCROLLS="${INPUT_MAX_SCROLLS:-350}"
-          else
-            ALBUM_URL=$(node -e 'const x=require("./.github/google-photos-collector-test.json"); process.stdout.write(String(x.album_url||""))')
-            LABEL=$(node -e 'const x=require("./.github/google-photos-collector-test.json"); process.stdout.write(String(x.label||""))')
-            EXPECTED_MIN_IMAGES=$(node -e 'const x=require("./.github/google-photos-collector-test.json"); process.stdout.write(String(x.expected_min_images||1))')
-            MAX_SCROLLS=$(node -e 'const x=require("./.github/google-photos-collector-test.json"); process.stdout.write(String(x.max_scrolls||350))')
-          fi
           test -n "$ALBUM_URL"
           echo "ALBUM_URL=$ALBUM_URL" >> "$GITHUB_ENV"
           echo "LABEL=$LABEL" >> "$GITHUB_ENV"
-          echo "EXPECTED_MIN_IMAGES=$EXPECTED_MIN_IMAGES" >> "$GITHUB_ENV"
-          echo "MAX_SCROLLS=$MAX_SCROLLS" >> "$GITHUB_ENV"
+          echo "EXPECTED_MIN_IMAGES=${EXPECTED_MIN_IMAGES:-1}" >> "$GITHUB_ENV"
+          echo "MAX_SCROLLS=${MAX_SCROLLS:-350}" >> "$GITHUB_ENV"
 
       - name: Validate collector code
         run: node --check scripts/google-photos-collector.mjs
