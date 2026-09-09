@@ -1,24 +1,32 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
-import { useCatalogProducts } from "@/hooks/useCatalogProducts";
+import type { Json } from "@/integrations/supabase/types";
+import { parseCatalogPage } from "@/lib/catalog";
+import { callSupabaseRpc } from "@/lib/supabase-rpc";
 
-const SHOWCASE_SIZE = 15;
+const SHOWCASE_SIZE = 10;
 const LOADING_SIZE = 5;
 
 const BestSellers: React.FC = () => {
-  const { data, isLoading, error } = useCatalogProducts({ pageSize: 24, sort: "newest" });
-  const newestProducts = (data?.items ?? []).slice(0, SHOWCASE_SIZE);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["home", "launches", "top-10"],
+    staleTime: 60_000,
+    queryFn: async () =>
+      parseCatalogPage(await callSupabaseRpc<Json>("storefront_launch_products")),
+  });
+  const launchProducts = (data?.items ?? []).slice(0, SHOWCASE_SIZE);
 
-  if (!isLoading && newestProducts.length === 0) return null;
+  if (!isLoading && launchProducts.length === 0) return null;
 
   const content = isLoading
     ? Array.from({ length: LOADING_SIZE }).map((_, index) => (
-        <ProductCardPlaceholder key={`new-loading-${index}`} loading />
+        <ProductCardPlaceholder key={`launch-loading-${index}`} loading />
       ))
-    : newestProducts.map((product) => (
+    : launchProducts.map((product) => (
         <ProductCard
           key={product.id}
           id={product.id}
@@ -43,7 +51,7 @@ const BestSellers: React.FC = () => {
           <h2 className="display-title mt-2">Lançamentos</h2>
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
-          <ProductCarousel itemCount={isLoading ? LOADING_SIZE : newestProducts.length}>
+          <ProductCarousel itemCount={isLoading ? LOADING_SIZE : launchProducts.length}>
             {content}
           </ProductCarousel>
         </div>
