@@ -8,6 +8,7 @@ on:
       - ".github/workflows/deploy-storefront-upgrades-backend.yml"
       - "scripts/deploy-storefront-upgrade-migrations.mjs"
       - "scripts/deploy-home-launches-top10.mjs"
+      - "scripts/deploy-kids-purchase-sizes.mjs"
       - "supabase/migrations/20260904213000_storefront_personalization.sql"
       - "supabase/migrations/20260904213500_catalog_commercial_type.sql"
       - "supabase/migrations/20260905004500_affiliate_self_service_links.sql"
@@ -20,6 +21,7 @@ on:
       - "supabase/migrations/20260908170000_catalog_bulk_import_bridge.sql"
       - "supabase/migrations/20260909220000_catalog_public_rpc_security_fix.sql"
       - "supabase/migrations/20260909233000_home_launches_top10.sql"
+      - "supabase/migrations/20260909234000_product_purchase_sizes_override.sql"
   workflow_dispatch:
 
 permissions:
@@ -48,3 +50,6 @@ jobs:
 
       - name: Deploy pinned homepage launches
         run: node scripts/deploy-home-launches-top10.mjs
+
+      - name: Deploy Kids purchase sizes
+        run: node scripts/deploy-kids-purchase-sizes.mjs
