@@ -35,6 +35,24 @@ export const BRAZIL_CLUB_PATCHES = Object.freeze([
   Object.freeze({ code: "mundial-de-clubes", label: "Mundial de Clubes", enabled: true }),
 ]);
 
+const BRAZILIAN_CLUB_KEYS = Object.freeze([
+  "ATLETICO MINEIRO",
+  "BAHIA",
+  "BOTAFOGO",
+  "CORINTHIANS",
+  "CRUZEIRO",
+  "FLAMENGO",
+  "FLUMINENSE",
+  "FORTALEZA",
+  "GREMIO",
+  "INTERNACIONAL",
+  "PALMEIRAS",
+  "SANTOS",
+  "SAO PAULO",
+  "VASCO DA GAMA",
+  "VASCO",
+]);
+
 function sourceText(product) {
   return normalizeCatalogText(
     [
@@ -104,8 +122,9 @@ export function appendUniformSpecification(existingSpecifications, productOrTitl
 
 export function inferPurchasePatches(product) {
   const source = sourceText(product);
-  const isBrazilClubContext = /\b(BRASILEIRAO|CAMPEONATO BRASILEIRO|COPA DO BRASIL|LIBERTADORES|SUL AMERICANA)\b/.test(source);
-  if (!isBrazilClubContext) return [];
+  const competitionSaysBrazil = /\b(BRASILEIRAO|CAMPEONATO BRASILEIRO|COPA DO BRASIL|LIBERTADORES|SUL AMERICANA)\b/.test(source);
+  const teamSaysBrazil = BRAZILIAN_CLUB_KEYS.some((club) => source.includes(club));
+  if (!competitionSaysBrazil && !teamSaysBrazil) return [];
   return BRAZIL_CLUB_PATCHES.map(({ code, enabled }) => ({ code, enabled }));
 }
 
