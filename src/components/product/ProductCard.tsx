@@ -63,7 +63,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <article
-      className={`group relative flex h-full flex-col bg-white outline-none ${className}`}
+      className={`group block h-full relative flex-col bg-white outline-none ${className}`}
+      style={{ display: "flex" }}
       data-product-card
     >
       <Link
@@ -112,9 +113,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               height={800}
               sizes="(max-width: 639px) 48vw, (max-width: 1023px) 31vw, 260px"
               onError={() => setImageFailed(true)}
-              className={`h-full w-full object-contain p-1.5 transition duration-300 motion-reduce:transition-none sm:p-2 ${
-                showHoverImage ? "md:group-hover:opacity-0" : "group-hover:scale-[1.025] motion-reduce:transform-none"
-              }`}
+              className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-[1.025] motion-reduce:transform-none motion-reduce:transition-none sm:p-2"
             />
             {showHoverImage ? (
               <img
@@ -127,7 +126,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 height={800}
                 sizes="(max-width: 1023px) 1px, 260px"
                 onError={() => setHoverImageFailed(true)}
-                className="pointer-events-none absolute inset-0 hidden h-full w-full object-contain p-2 opacity-0 transition-opacity duration-300 md:block md:group-hover:opacity-100 motion-reduce:transition-none"
+                className="pointer-events-none absolute inset-0 hidden h-full w-full object-contain bg-[#f6f6f6] p-2 opacity-0 transition-opacity duration-300 md:block md:group-hover:opacity-100 motion-reduce:transition-none"
               />
             ) : null}
           </>
