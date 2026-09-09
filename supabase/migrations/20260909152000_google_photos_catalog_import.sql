@@ -67,6 +67,11 @@ BEGIN
         updated_at = now()
     WHERE status <> 'archived'::public.product_status;
 
+    -- Remove variantes explicitamente enquanto o produto pai ainda existe e ja esta
+    -- arquivado. Assim block_last_active_variant_removal() enxerga o status nao-ativo
+    -- do pai antes que a exclusao do produto torne a linha invisivel ao trigger.
+    DELETE FROM public.product_variants;
+
     DELETE FROM public.products;
   END IF;
 

@@ -58,7 +58,7 @@ const migrations = [
   ],
   ["multiple_purchase_patches", "supabase/migrations/20260909151000_multiple_purchase_patches.sql"],
   [
-    "google_photos_catalog_import",
+    "google_photos_catalog_import_reset_fix_20260909",
     "supabase/migrations/20260909152000_google_photos_catalog_import.sql",
   ],
 ];
