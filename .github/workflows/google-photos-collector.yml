@@ -21,6 +21,12 @@ on:
         required: false
         default: "350"
         type: string
+  push:
+    branches:
+      - google-photos-visual-assimilation-20260909
+    paths:
+      - ".github/workflows/google-photos-collector.yml"
+      - "scripts/google-photos-assimilator.mjs"
 
 permissions:
   contents: read
@@ -42,23 +48,37 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate input
+      - name: Resolve input
         shell: bash
         env:
-          ALBUM_URL: ${{ inputs.album_url }}
-          LABEL: ${{ inputs.label }}
-          EXPECTED_MIN_IMAGES: ${{ inputs.expected_min_images }}
-          MAX_SCROLLS: ${{ inputs.max_scrolls }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ALBUM_URL: ${{ inputs.album_url }}
+          INPUT_LABEL: ${{ inputs.label }}
+          INPUT_EXPECTED_MIN_IMAGES: ${{ inputs.expected_min_images }}
+          INPUT_MAX_SCROLLS: ${{ inputs.max_scrolls }}
         run: |
           set -euo pipefail
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            ALBUM_URL="$INPUT_ALBUM_URL"
+            LABEL="$INPUT_LABEL"
+            EXPECTED_MIN_IMAGES="${INPUT_EXPECTED_MIN_IMAGES:-1}"
+            MAX_SCROLLS="${INPUT_MAX_SCROLLS:-350}"
+          else
+            ALBUM_URL="https://photos.google.com/share/AF1QipMB9TskKUor2S7eVlJL0wnAqKc2QT8Tb3qNuzwbQuEOQVMfDzQTlk9sakc2K_Mb_w?key=cE9zZTcyYWtQYmFVdGlGaTFBazllR0JucDRQN3N3"
+            LABEL="TOP 10 LANCAMENTOS"
+            EXPECTED_MIN_IMAGES="50"
+            MAX_SCROLLS="220"
+          fi
           test -n "$ALBUM_URL"
           echo "ALBUM_URL=$ALBUM_URL" >> "$GITHUB_ENV"
           echo "LABEL=$LABEL" >> "$GITHUB_ENV"
-          echo "EXPECTED_MIN_IMAGES=${EXPECTED_MIN_IMAGES:-1}" >> "$GITHUB_ENV"
-          echo "MAX_SCROLLS=${MAX_SCROLLS:-350}" >> "$GITHUB_ENV"
+          echo "EXPECTED_MIN_IMAGES=$EXPECTED_MIN_IMAGES" >> "$GITHUB_ENV"
+          echo "MAX_SCROLLS=$MAX_SCROLLS" >> "$GITHUB_ENV"
 
       - name: Validate collector code
-        run: node --check scripts/google-photos-collector.mjs
+        run: |
+          node --check scripts/google-photos-collector.mjs
+          node --check scripts/google-photos-assimilator.mjs
 
       - name: Install Playwright
         shell: bash
@@ -78,6 +98,14 @@ jobs:
             --max-scrolls "$MAX_SCROLLS" \
             --out .artifacts/google-photos-collector
 
+      - name: Generate visual assimilation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/google-photos-assimilator.mjs \
+            --input .artifacts/google-photos-collector/collector.json \
+            --out .artifacts/google-photos-collector/assimilation
+
       - name: Summarize collector result
         if: always()
         shell: bash
@@ -87,7 +115,14 @@ jobs:
           const fs=require('fs');
           const r=JSON.parse(fs.readFileSync('.artifacts/google-photos-collector/collector.json','utf8'));
           console.log(`COLLECTOR_SUMMARY productImages=${r.stats.productImages} titles=${r.stats.titles} groups=${r.stats.groups} ungrouped=${r.stats.ungrouped} mediaObserved=${r.stats.mediaObserved}`);
-          for (const g of r.groups || []) console.log(`GROUP: ${g.title} -> ${g.images.length}`);
+          NODE
+          fi
+          if [[ -f .artifacts/google-photos-collector/assimilation/assimilation.json ]]; then
+            node - <<'NODE'
+          const fs=require('fs');
+          const a=JSON.parse(fs.readFileSync('.artifacts/google-photos-collector/assimilation/assimilation.json','utf8'));
+          console.log(`ASSIMILATION_SUMMARY groups=${a.stats.groups} productImages=${a.stats.productImages} proposedBaseProducts=${a.stats.proposedBaseProducts} contactSheets=${a.stats.contactSheets} failures=${a.stats.contactSheetsWithImageFailures}`);
+          for (const g of a.groups || []) console.log(`ASSIMILATED: ${g.title} -> entity=${g.proposal.entity || '-'} model=${g.proposal.model || '-'} version=${g.proposal.version || '-'} images=${g.imageCount}`);
           NODE
           fi
 
