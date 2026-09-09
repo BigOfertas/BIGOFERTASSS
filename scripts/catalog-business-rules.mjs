@@ -72,9 +72,10 @@ export function inferCommercialType(product) {
 }
 
 export function resolveCommercialPrice(commercialType, explicitPrice = null, fallbackPrice = null) {
-  if (Number.isFinite(explicitPrice)) return Number(explicitPrice);
+  // Para tipos reconhecidos, a tabela BIGofertas é a fonte de verdade.
   const fixed = COMMERCIAL_TYPE_PRICES[commercialType];
   if (Number.isFinite(fixed)) return fixed;
+  if (Number.isFinite(explicitPrice)) return Number(explicitPrice);
   return Number.isFinite(fallbackPrice) ? Number(fallbackPrice) : null;
 }
 
