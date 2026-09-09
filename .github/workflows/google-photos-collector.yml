@@ -1,0 +1,122 @@
+name: Google Photos Catalog Collector
+
+on:
+  workflow_dispatch:
+    inputs:
+      album_url:
+        description: "URL publica do album Google Photos"
+        required: true
+        type: string
+      label:
+        description: "Rotulo do lote, ex.: TOP 10 LANCAMENTOS"
+        required: false
+        type: string
+      expected_min_images:
+        description: "Minimo esperado de imagens para considerar a coleta valida"
+        required: false
+        default: "1"
+        type: string
+      max_scrolls:
+        description: "Limite maximo de ciclos de rolagem"
+        required: false
+        default: "350"
+        type: string
+  push:
+    branches:
+      - google-photos-collector-20260909
+    paths:
+      - ".github/google-photos-collector-test.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: google-photos-collector-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Resolve collector input
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ALBUM_URL: ${{ inputs.album_url }}
+          INPUT_LABEL: ${{ inputs.label }}
+          INPUT_EXPECTED_MIN_IMAGES: ${{ inputs.expected_min_images }}
+          INPUT_MAX_SCROLLS: ${{ inputs.max_scrolls }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            ALBUM_URL="$INPUT_ALBUM_URL"
+            LABEL="$INPUT_LABEL"
+            EXPECTED_MIN_IMAGES="${INPUT_EXPECTED_MIN_IMAGES:-1}"
+            MAX_SCROLLS="${INPUT_MAX_SCROLLS:-350}"
+          else
+            test -f .github/google-photos-collector-test.json
+            ALBUM_URL=$(node -e 'const x=require("./.github/google-photos-collector-test.json"); process.stdout.write(String(x.album_url||""))')
+            LABEL=$(node -e 'const x=require("./.github/google-photos-collector-test.json"); process.stdout.write(String(x.label||""))')
+            EXPECTED_MIN_IMAGES=$(node -e 'const x=require("./.github/google-photos-collector-test.json"); process.stdout.write(String(x.expected_min_images||1))')
+            MAX_SCROLLS=$(node -e 'const x=require("./.github/google-photos-collector-test.json"); process.stdout.write(String(x.max_scrolls||350))')
+          fi
+          test -n "$ALBUM_URL"
+          echo "ALBUM_URL=$ALBUM_URL" >> "$GITHUB_ENV"
+          echo "LABEL=$LABEL" >> "$GITHUB_ENV"
+          echo "EXPECTED_MIN_IMAGES=$EXPECTED_MIN_IMAGES" >> "$GITHUB_ENV"
+          echo "MAX_SCROLLS=$MAX_SCROLLS" >> "$GITHUB_ENV"
+
+      - name: Validate collector code
+        run: |
+          node --check scripts/google-photos-collector.mjs
+          node scripts/validate-google-photos-collector.mjs
+
+      - name: Install Playwright
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Collect Google Photos album
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/google-photos-collector.mjs \
+            --url "$ALBUM_URL" \
+            --label "$LABEL" \
+            --expected-min-images "$EXPECTED_MIN_IMAGES" \
+            --max-scrolls "$MAX_SCROLLS" \
+            --out .artifacts/google-photos-collector
+
+      - name: Summarize collector result
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f .artifacts/google-photos-collector/collector.json ]]; then
+            node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('.artifacts/google-photos-collector/collector.json', 'utf8'));
+          console.log(`COLLECTOR_SUMMARY images=${report.stats.images} titles=${report.stats.titleCandidates} groups=${report.stats.groups} ungrouped=${report.stats.ungrouped}`);
+          for (const warning of report.warnings || []) console.log(`WARNING: ${warning}`);
+          NODE
+          fi
+
+      - name: Upload collector artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: google-photos-collector-${{ github.run_id }}
+          path: .artifacts/google-photos-collector/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
