@@ -1,0 +1,53 @@
+name: Fix Kids Canonical Team Once
+
+on:
+  push:
+    branches:
+      - catalog-kids-first-deploy-20260909
+    paths:
+      - catalog-jobs/fix-kids-canonical-team.json
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: catalog-kids-first-deploy-20260909
+      - name: Use canonical team for business inference
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/google-photos-catalog-pipeline.mjs')
+          text = path.read_text()
+          old = '''    const effectiveAudience = kidsSource ? "infantil" : proposed.audience;\n    const catalogProposal = kidsSource ? { ...proposed, audience: "infantil" } : proposed;\n    const business = buildCatalogBusinessProfile({\n      name: firstGroupRef?.title ?? productName(proposed),\n      team: proposed.entity,'''
+          new = '''    const effectiveAudience = kidsSource ? "infantil" : proposed.audience;\n    const catalogProposal = kidsSource ? { ...proposed, audience: "infantil" } : proposed;\n    const canonicalTeam = titleCaseEntity(proposed.entity);\n    const business = buildCatalogBusinessProfile({\n      name: firstGroupRef?.title ?? productName(catalogProposal),\n      team: canonicalTeam,'''
+          if old not in text:
+              raise SystemExit('business canonical-team target not found')
+          text = text.replace(old, new, 1)
+          old_variant = '''        name: group.title,\n        team: proposed.entity,\n        season: proposed.season,'''
+          new_variant = '''        name: group.title,\n        team: canonicalTeam,\n        season: proposed.season,'''
+          if old_variant not in text:
+              raise SystemExit('variant canonical-team target not found')
+          text = text.replace(old_variant, new_variant, 1)
+          text = text.replace('      team: titleCaseEntity(proposed.entity),', '      team: canonicalTeam,', 1)
+          path.write_text(text)
+          PY
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: |
+          bunx prettier --write scripts/google-photos-catalog-pipeline.mjs
+          node scripts/validate-google-photos-final-pipeline.mjs
+          bun run lint
+      - name: Commit
+        run: |
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add scripts/google-photos-catalog-pipeline.mjs
+          git commit -m "fix: canonicalize Kids teams before inference"
+          git push origin HEAD:catalog-kids-first-deploy-20260909
