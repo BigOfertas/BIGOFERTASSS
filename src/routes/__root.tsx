@@ -14,7 +14,9 @@ import appCss from "../styles.css?url";
 import glassLegacyCss from "../glass-legacy.css?url";
 import { AuthProvider } from "../lib/auth";
 import Footer from "../components/layout/Footer";
+import { MiniCartDrawer } from "@/components/cart/MiniCartDrawer";
 import { CartProvider } from "../context/CartContext";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 import { Toaster } from "@/components/ui/sonner";
 import { BRAND } from "@/config/brand";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -23,6 +25,7 @@ const FOOTER_ROUTES = new Set([
   "/",
   "/products",
   "/cart",
+  "/favoritos",
   "/privacidade",
   "/trocas-e-devolucoes",
   "/termos-de-compra",
@@ -33,7 +36,7 @@ const FOOTER_ROUTES = new Set([
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="glass-panel max-w-md rounded-[1.5rem] p-8 text-center">
+      <div className="max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
         <h1 className="display-title text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -60,7 +63,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="glass-panel max-w-md rounded-[1.5rem] p-8 text-center">
+      <div className="max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Não foi possível carregar esta página
         </h1>
@@ -79,7 +82,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           </button>
           <Link
             to="/"
-            className="glass-card inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium text-foreground"
+            className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-foreground"
           >
             Voltar ao início
           </Link>
@@ -136,11 +139,14 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CartProvider>
-          <Outlet />
-          {showStorefrontFooter ? <Footer /> : null}
-          <Toaster position="top-center" richColors />
-        </CartProvider>
+        <FavoritesProvider>
+          <CartProvider>
+            <Outlet />
+            {showStorefrontFooter ? <Footer /> : null}
+            <MiniCartDrawer />
+            <Toaster position="top-center" richColors />
+          </CartProvider>
+        </FavoritesProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
