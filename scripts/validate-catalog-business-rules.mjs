@@ -65,7 +65,8 @@ const hasAll = (actual, expected, label) => {
   for (const code of expected) assert.ok(actual.includes(code), `${label} missing ${code}`);
 };
 const hasNone = (actual, forbidden, label) => {
-  for (const code of forbidden) assert.ok(!actual.includes(code), `${label} must not include ${code}`);
+  for (const code of forbidden)
+    assert.ok(!actual.includes(code), `${label} must not include ${code}`);
 };
 
 const vasco = patchCodes({ name: "CAMISA I VASCO 26/27 ADIDAS", team: "VASCO" });
@@ -83,11 +84,19 @@ hasAll(manCity, ["premier-league", "fa-cup", "champions-league", "mundial-de-clu
 hasNone(manCity, ["europa-league", "conference-league", "brasileirao"], "Man City");
 
 const chelsea = patchCodes({ name: "CAMISA I CHELSEA 26/27 NIKE", league: "Premier League" });
-hasAll(chelsea, ["premier-league", "fa-cup", "mundial-de-clubes", "fifa-club-world-champions"], "Chelsea");
+hasAll(
+  chelsea,
+  ["premier-league", "fa-cup", "mundial-de-clubes", "fifa-club-world-champions"],
+  "Chelsea",
+);
 hasNone(chelsea, ["champions-league", "europa-league", "conference-league"], "Chelsea");
 
 const arsenal = patchCodes({ name: "CAMISA I ARSENAL 26/27 ADIDAS", league: "Premier League" });
-hasAll(arsenal, ["premier-league", "premier-league-champions", "fa-cup", "champions-league"], "Arsenal");
+hasAll(
+  arsenal,
+  ["premier-league", "premier-league-champions", "fa-cup", "champions-league"],
+  "Arsenal",
+);
 
 const barcelona = patchCodes({ name: "CAMISA II BARCELONA 26/27 NIKE", league: "LaLiga" });
 hasAll(barcelona, ["laliga", "copa-del-rey", "champions-league"], "Barcelona");
@@ -100,20 +109,38 @@ const lyon = patchCodes({ name: "CAMISA II LYON 26/27 ADIDAS", league: "Ligue 1"
 hasAll(lyon, ["ligue-1", "coupe-de-france", "europa-league"], "Lyon");
 
 const benfica = patchCodes({ name: "CAMISA I BENFICA 26/27 ADIDAS", league: "Liga Portugal" });
-hasAll(benfica, ["liga-portugal", "taca-de-portugal", "europa-league", "mundial-de-clubes"], "Benfica");
+hasAll(
+  benfica,
+  ["liga-portugal", "taca-de-portugal", "europa-league", "mundial-de-clubes"],
+  "Benfica",
+);
 
 const argentinaClub = patchCodes({ name: "CAMISA I RIVER PLATE 26/27 ADIDAS" });
 hasAll(
   argentinaClub,
-  ["liga-profesional-argentina", "copa-argentina", "libertadores", "sul-americana", "mundial-de-clubes"],
+  [
+    "liga-profesional-argentina",
+    "copa-argentina",
+    "libertadores",
+    "sul-americana",
+    "mundial-de-clubes",
+  ],
   "River Plate",
 );
 
 const interMiami = patchCodes({ name: "CAMISA I INTER MIAMI 26/27 ADIDAS", league: "MLS" });
-hasAll(interMiami, ["mls", "leagues-cup", "concacaf-champions-cup", "mundial-de-clubes"], "Inter Miami");
+hasAll(
+  interMiami,
+  ["mls", "leagues-cup", "concacaf-champions-cup", "mundial-de-clubes"],
+  "Inter Miami",
+);
 
 const nationalCases = [
-  [{ name: "CAMISA I BRASIL 26/27 NIKE", selecao: "Brasil" }, ["fifa-world-cup-2026", "copa-america"], []],
+  [
+    { name: "CAMISA I BRASIL 26/27 NIKE", selecao: "Brasil" },
+    ["fifa-world-cup-2026", "copa-america"],
+    [],
+  ],
   [
     { name: "CAMISA I ESPANHA 26/27 ADIDAS", selecao: "Espanha" },
     ["fifa-world-cup-2026", "fifa-world-champions", "euro", "uefa-nations-league"],
@@ -124,9 +151,21 @@ const nationalCases = [
     ["euro", "uefa-nations-league"],
     ["fifa-world-cup-2026"],
   ],
-  [{ name: "CAMISA I AFRICA DO SUL 26/27 ADIDAS", selecao: "África do Sul" }, ["fifa-world-cup-2026", "afcon"], []],
-  [{ name: "CAMISA I JAPAO 26/27 ADIDAS", selecao: "Japão" }, ["fifa-world-cup-2026", "afc-asian-cup"], []],
-  [{ name: "CAMISA I NOVA ZELANDIA 26/27 NIKE", selecao: "Nova Zelândia" }, ["fifa-world-cup-2026", "ofc-nations-cup"], []],
+  [
+    { name: "CAMISA I AFRICA DO SUL 26/27 ADIDAS", selecao: "África do Sul" },
+    ["fifa-world-cup-2026", "afcon"],
+    [],
+  ],
+  [
+    { name: "CAMISA I JAPAO 26/27 ADIDAS", selecao: "Japão" },
+    ["fifa-world-cup-2026", "afc-asian-cup"],
+    [],
+  ],
+  [
+    { name: "CAMISA I NOVA ZELANDIA 26/27 NIKE", selecao: "Nova Zelândia" },
+    ["fifa-world-cup-2026", "ofc-nations-cup"],
+    [],
+  ],
   [
     { name: "CAMISA I JAMAICA 26/27 ADIDAS", selecao: "Jamaica" },
     ["concacaf-gold-cup", "concacaf-nations-league"],
