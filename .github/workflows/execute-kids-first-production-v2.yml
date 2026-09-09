@@ -1,0 +1,205 @@
+name: Execute Kids First Production V2
+
+on:
+  push:
+    branches:
+      - catalog-kids-first-deploy-20260909
+    paths:
+      - "catalog-jobs/execute-kids-first-production-v2.json"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: kids-first-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+      KIDS_COLLECTOR: .artifacts/kids-validated/kids-source/collector.json
+      KIDS_ASSIMILATION: .artifacts/kids-validated/kids-corrected/assimilation/assimilation.json
+      KIDS_PLAN: .artifacts/kids-validated/kids-corrected/catalog-pipeline-plan.json
+    steps:
+      - name: Checkout latest branch
+        uses: actions/checkout@v7
+        with:
+          ref: catalog-kids-first-deploy-20260909
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Snapshot production invariants
+        run: |
+          mkdir -p .artifacts/kids-production
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const ref = process.env.SUPABASE_PROJECT_ID;
+          const token = process.env.SUPABASE_ACCESS_TOKEN;
+          async function query(sql) {
+            const r = await fetch(`https://api.supabase.com/v1/projects/${encodeURIComponent(ref)}/database/query/read-only`, {
+              method: 'POST',
+              headers: { authorization: `Bearer ${token}`, accept: 'application/json', 'content-type': 'application/json' },
+              body: JSON.stringify({ query: sql }),
+              signal: AbortSignal.timeout(30000),
+            });
+            const text = await r.text();
+            if (!r.ok) throw new Error(`snapshot query HTTP ${r.status}: ${text.slice(0,1000)}`);
+            return JSON.parse(text);
+          }
+          const rows = await query(`
+            select
+              (select count(*)::int from public.products) as products,
+              (select count(*)::int from public.products where status = 'active'::public.product_status) as active_products,
+              (select count(*)::int from public.product_images where image_source = 'google_photos' and external_url is not null and status = 'ready'::public.product_image_status) as google_images,
+              (select count(*)::int from public.orders) as orders,
+              (select count(*)::int from public.order_items) as order_items,
+              (select count(*)::int from public.profiles) as profiles,
+              (select count(*)::int from public.affiliates) as affiliates,
+              (select count(*)::int from public.affiliate_referrals) as affiliate_referrals,
+              (select count(*)::int from public.affiliate_commissions) as affiliate_commissions,
+              (select count(*)::int from public.products where catalog_code between 'P000001' and 'P000010') as top10_products,
+              (select count(*)::int from public.products where catalog_code between 'P000001' and 'P000010' and status = 'active'::public.product_status) as top10_active;
+          `);
+          const snap = Array.isArray(rows) ? rows[0] : rows;
+          if (snap.products !== 10 || snap.active_products !== 10 || snap.google_images !== 50 || snap.top10_products !== 10 || snap.top10_active !== 10) throw new Error(`Unexpected production baseline: ${JSON.stringify(snap)}`);
+          fs.writeFileSync('.artifacts/kids-production/before.json', JSON.stringify(snap, null, 2) + '\n');
+          console.log('KIDS_PRODUCTION_BASELINE_OK');
+          console.log(JSON.stringify(snap));
+          NODE
+
+      - name: Download validated Kids release candidate
+        run: |
+          mkdir -p .artifacts/kids-validated
+          gh run download 34416703175 \
+            --repo BigOfertas/BIGOFERTASSS \
+            --name kids-validated-plan-34416703175 \
+            --dir .artifacts/kids-validated
+          test -f "$KIDS_COLLECTOR"
+          test -f "$KIDS_ASSIMILATION"
+          test -f "$KIDS_PLAN"
+          echo KIDS_VALIDATED_ARTIFACT_OK
+
+      - name: Guard validated release candidate
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const plan = JSON.parse(fs.readFileSync(process.env.KIDS_PLAN,'utf8'));
+          const fail = (code, detail='') => { throw new Error(`${code}${detail ? ': '+detail : ''}`); };
+          if (plan.summary?.products !== 91 || plan.summary?.variants !== 91 || plan.summary?.images !== 455) fail('KIDS_RELEASE_COUNTS', JSON.stringify(plan.summary));
+          if (plan.products?.length !== 91) fail('KIDS_RELEASE_PRODUCT_ARRAY');
+          const keys = new Set();
+          const titles = new Set();
+          for (const [i,p] of plan.products.entries()) {
+            if (!p.sourceKey || keys.has(p.sourceKey)) fail('KIDS_DUPLICATE_SOURCE_KEY', String(i+1));
+            keys.add(p.sourceKey);
+            if (!p.sourceTitle || titles.has(p.sourceTitle)) fail('KIDS_DUPLICATE_SOURCE_TITLE', String(p.sourceTitle));
+            titles.add(p.sourceTitle);
+            if (p.category?.slug !== 'infantil' || p.commercialType !== 'infantil' || String(p.audience).toUpperCase() !== 'INFANTIL') fail('KIDS_RELEASE_CLASSIFICATION', `${i+1}:${p.name}`);
+            if (Math.abs(Number(p.price)-169.9) > 0.001) fail('KIDS_RELEASE_PRICE', `${i+1}:${p.price}`);
+            if (!Array.isArray(p.variants) || p.variants.length !== 1 || p.variants[0].images?.length !== 5) fail('KIDS_RELEASE_STRUCTURE', `${i+1}:${p.name}`);
+          }
+          const kobe = plan.products.find(p => p.sourceTitle === 'CONJUNTO INFANTIL II BARCELONA 25/26 KOBE');
+          const nike = plan.products.find(p => p.sourceTitle === 'CONJUNTO INFANTIL II BARCELONA 25/26 NIKE');
+          if (!kobe || !nike || kobe.sourceKey === nike.sourceKey || kobe.brand !== 'KOBE' || nike.brand !== 'NIKE') fail('KIDS_BRAND_SEPARATION');
+          if (plan.products[0]?.team !== 'Corinthians' || plan.products[0]?.name !== 'Corinthians — Conjunto Infantil I 26/27 Nike') fail('KIDS_FIRST_PRODUCT', plan.products[0]?.name);
+          if (!plan.products.some(p => p.team === 'Grêmio') || !plan.products.some(p => p.team === 'Internazionale') || !plan.products.some(p => p.team === 'Dortmund')) fail('KIDS_CANONICAL_TEAMS');
+          console.log('KIDS_RELEASE_CANDIDATE_OK products=91 variants=91 images=455');
+          NODE
+
+      - name: Deploy pinned homepage launches
+        run: node scripts/deploy-home-launches-top10.mjs
+
+      - name: Deploy Kids purchase sizes
+        run: node scripts/deploy-kids-purchase-sizes.mjs
+
+      - name: Recompute plan and validate all 455 image URLs
+        run: |
+          node scripts/google-photos-catalog-pipeline.mjs \
+            --collector "$KIDS_COLLECTOR" \
+            --assimilation "$KIDS_ASSIMILATION" \
+            --report .artifacts/kids-production/recomputed-plan.json \
+            --validate-urls \
+            --stock 999
+          cmp "$KIDS_PLAN" .artifacts/kids-production/recomputed-plan.json
+          echo KIDS_RELEASE_RECOMPUTE_IDENTICAL
+
+      - name: Import and activate Kids catalog without reset
+        run: |
+          node scripts/google-photos-catalog-pipeline.mjs \
+            --collector "$KIDS_COLLECTOR" \
+            --assimilation "$KIDS_ASSIMILATION" \
+            --report .artifacts/kids-production/applied-plan.json \
+            --apply \
+            --activate \
+            --stock 999
+
+      - name: Verify production catalog and preserved data
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const before = JSON.parse(fs.readFileSync('.artifacts/kids-production/before.json','utf8'));
+          const ref = process.env.SUPABASE_PROJECT_ID;
+          const token = process.env.SUPABASE_ACCESS_TOKEN;
+          async function query(sql) {
+            const r = await fetch(`https://api.supabase.com/v1/projects/${encodeURIComponent(ref)}/database/query/read-only`, {
+              method: 'POST',
+              headers: { authorization: `Bearer ${token}`, accept: 'application/json', 'content-type': 'application/json' },
+              body: JSON.stringify({ query: sql }),
+              signal: AbortSignal.timeout(30000),
+            });
+            const text = await r.text();
+            if (!r.ok) throw new Error(`verify query HTTP ${r.status}: ${text.slice(0,1200)}`);
+            return JSON.parse(text);
+          }
+          const rows = await query(`
+            with expected_codes as (
+              select 'P' || lpad(gs::text, 6, '0') as code from generate_series(1,101) gs
+            ), kids as (
+              select id, catalog_code from public.products where catalog_code between 'P000011' and 'P000101'
+            )
+            select
+              (select count(*)::int from public.products) as products,
+              (select count(*)::int from public.products where status = 'active'::public.product_status) as active_products,
+              (select count(*)::int from expected_codes e left join public.products p on p.catalog_code=e.code where p.id is null) as missing_codes,
+              (select count(*)::int from kids) as kids_products,
+              (select count(*)::int from public.products p join kids k on k.id=p.id where p.status='active'::public.product_status) as kids_active,
+              (select count(*)::int from public.products p join kids k on k.id=p.id where p.audience <> 'INFANTIL' or abs(p.price-169.90) > 0.001) as kids_bad_commercial_rows,
+              (select count(*)::int from public.product_purchase_settings s join kids k on k.id=s.product_id where s.commercial_type <> 'infantil' or s.sizes_override is distinct from ARRAY['16','18','20','22','24','26','28']::text[]) as kids_bad_purchase_settings,
+              (select count(*)::int from public.product_images i join kids k on k.id=i.product_id where i.image_source='google_photos' and i.external_url is not null and i.status='ready'::public.product_image_status) as kids_google_images,
+              (select count(*)::int from (select k.id from kids k left join public.product_images i on i.product_id=k.id and i.image_source='google_photos' and i.status='ready'::public.product_image_status group by k.id having count(i.id) <> 5) q) as kids_bad_image_counts,
+              (select count(*)::int from public.products where catalog_code between 'P000001' and 'P000010') as top10_products,
+              (select count(*)::int from public.products where catalog_code between 'P000001' and 'P000010' and status='active'::public.product_status) as top10_active,
+              (select count(*)::int from public.product_images i join public.products p on p.id=i.product_id where p.catalog_code between 'P000001' and 'P000010' and i.image_source='google_photos' and i.status='ready'::public.product_image_status) as top10_google_images,
+              (select count(*)::int from public.orders) as orders,
+              (select count(*)::int from public.order_items) as order_items,
+              (select count(*)::int from public.profiles) as profiles,
+              (select count(*)::int from public.affiliates) as affiliates,
+              (select count(*)::int from public.affiliate_referrals) as affiliate_referrals,
+              (select count(*)::int from public.affiliate_commissions) as affiliate_commissions;
+          `);
+          const v = Array.isArray(rows) ? rows[0] : rows;
+          const expected = { products:101, active_products:101, missing_codes:0, kids_products:91, kids_active:91, kids_bad_commercial_rows:0, kids_bad_purchase_settings:0, kids_google_images:455, kids_bad_image_counts:0, top10_products:10, top10_active:10, top10_google_images:50 };
+          for (const [k,val] of Object.entries(expected)) if (v[k] !== val) throw new Error(`KIDS_PRODUCTION_VERIFY_${k}: expected ${val}, got ${v[k]}`);
+          for (const k of ['orders','order_items','profiles','affiliates','affiliate_referrals','affiliate_commissions']) if (v[k] !== before[k]) throw new Error(`KIDS_PRESERVATION_${k}: before ${before[k]}, after ${v[k]}`);
+          fs.writeFileSync('.artifacts/kids-production/after.json', JSON.stringify(v,null,2)+'\n');
+          console.log('KIDS_PRODUCTION_DEPLOY_OK');
+          console.log(JSON.stringify(v));
+          NODE
+
+      - name: Upload production evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: kids-production-evidence-${{ github.run_id }}
+          path: .artifacts/kids-production/
+          if-no-files-found: error
+          retention-days: 30
