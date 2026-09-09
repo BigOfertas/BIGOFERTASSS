@@ -55,7 +55,7 @@ export async function fetchProductDetail(identifier: string): Promise<ProductDet
   if (!normalizedIdentifier) throw new Error("Produto indisponível");
 
   const payload = await callSupabaseRpc<ProductDetailRpcPayload | null>(
-    "storefront_product_detail_v1",
+    "storefront_product_detail_v2",
     { p_identifier: normalizedIdentifier },
   );
 

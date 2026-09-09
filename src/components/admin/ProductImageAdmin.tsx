@@ -11,7 +11,7 @@ import {
   uploadAdminProductImage,
 } from "@/lib/admin-product-images";
 import { fetchAdminCatalog, type AdminProduct } from "@/lib/admin-products";
-import { buildR2PublicImageUrl } from "@/lib/product-images";
+import { getProductImageSourceUrl } from "@/lib/product-images";
 import type { ProductImage } from "@/lib/products";
 
 function statusLabel(status: AdminProduct["status"]) {
@@ -316,7 +316,7 @@ export function ProductImageAdmin() {
           ) : (
             <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {images.map((image, index) => {
-                const imageUrl = buildR2PublicImageUrl(image.storage_key);
+                const imageUrl = getProductImageSourceUrl(image);
                 const busy = busyImageId === image.id;
 
                 return (

@@ -325,15 +325,30 @@ const UEFA_2627 = Object.freeze({
   ]),
 });
 
+const CONMEBOL_2026 = Object.freeze({
+  libertadores: Object.freeze([
+    "CORINTHIANS",
+    "CRUZEIRO",
+    "FLAMENGO",
+    "FLUMINENSE",
+    "MIRASSOL",
+    "PALMEIRAS",
+  ]),
+  "sul-americana": Object.freeze([
+    "ATLETICO MINEIRO",
+    "BOTAFOGO",
+    "GREMIO",
+    "RB BRAGANTINO",
+    "RED BULL BRAGANTINO",
+    "SANTOS",
+    "SAO PAULO",
+    "VASCO",
+  ]),
+});
+
 const CLUB_DOMESTIC_RULES = Object.freeze([
   {
-    patches: [
-      "brasileirao",
-      "libertadores",
-      "sul-americana",
-      "copa-do-brasil",
-      "mundial-de-clubes",
-    ],
+    patches: ["brasileirao", "copa-do-brasil"],
     leagueMarkers: ["BRASILEIRAO", "CAMPEONATO BRASILEIRO", "SERIE A BRASIL"],
     clubs: [
       "ATLETICO MINEIRO",
@@ -353,7 +368,7 @@ const CLUB_DOMESTIC_RULES = Object.freeze([
     ],
   },
   {
-    patches: ["liga-profesional-argentina", "copa-argentina", "libertadores", "sul-americana"],
+    patches: ["liga-profesional-argentina", "copa-argentina"],
     leagueMarkers: ["LIGA PROFESIONAL ARGENTINA", "PRIMERA DIVISION ARGENTINA"],
     clubs: [
       "BOCA JUNIORS",
@@ -498,7 +513,7 @@ const CLUB_DOMESTIC_RULES = Object.freeze([
     ],
   },
   {
-    patches: ["mls", "leagues-cup", "concacaf-champions-cup"],
+    patches: ["mls", "leagues-cup"],
     leagueMarkers: ["MLS", "MAJOR LEAGUE SOCCER"],
     clubs: [
       "ATLANTA UNITED",
@@ -536,7 +551,7 @@ const CLUB_DOMESTIC_RULES = Object.freeze([
     ],
   },
   {
-    patches: ["liga-mx", "leagues-cup", "concacaf-champions-cup"],
+    patches: ["liga-mx", "leagues-cup"],
     leagueMarkers: ["LIGA MX"],
     clubs: [
       "AMERICA MEXICO",
@@ -571,7 +586,7 @@ const CLUB_DOMESTIC_RULES = Object.freeze([
     clubs: ["GALATASARAY", "FENERBAHCE", "BESIKTAS", "TRABZONSPOR"],
   },
   {
-    patches: ["saudi-pro-league", "kings-cup", "afc-champions-league-elite"],
+    patches: ["saudi-pro-league", "kings-cup"],
     leagueMarkers: ["SAUDI PRO LEAGUE"],
     clubs: ["AL HILAL", "AL NASSR", "AL ITTIHAD", "AL AHLI"],
   },
@@ -647,7 +662,8 @@ function finalizePatches(codes) {
 }
 
 function currentSeason2627(source) {
-  return /\b(26[/-]27|2026[/-]27|2026 27)\b/.test(source);
+  // 26/26 é preservado como título de origem do fornecedor (caso Napoli), mas pertence ao ciclo atual.
+  return /\b(26[/-](?:26|27)|2026[/-]27|2026 27)\b/.test(source);
 }
 
 function explicitPatches(source) {
@@ -674,6 +690,18 @@ function inferDomesticClubPatches(source) {
     if (!anyAlias(source, rule.leagueMarkers) && !anyAlias(source, rule.clubs)) continue;
     for (const code of rule.patches) addPatch(codes, code);
   }
+  return codes;
+}
+
+function inferContinentalClubPatches(source) {
+  const codes = new Set();
+  if (!currentSeason2627(source)) return codes;
+
+  if (anyAlias(source, CONMEBOL_2026.libertadores)) addPatch(codes, "libertadores");
+  if (anyAlias(source, CONMEBOL_2026["sul-americana"])) addPatch(codes, "sul-americana");
+
+  const uefaPatch = inferUefa2627Patch(source);
+  if (uefaPatch) addPatch(codes, uefaPatch);
   return codes;
 }
 
@@ -716,20 +744,19 @@ function inferUefa2627Patch(source) {
 
 function inferSpecialClubPatches(source) {
   const codes = new Set();
-  if (anyAlias(source, CLUB_WORLD_CUP_2025)) addPatch(codes, "mundial-de-clubes");
   if (currentSeason2627(source) && aliasInSource(source, "CHELSEA"))
     addPatch(codes, "fifa-club-world-champions");
   if (currentSeason2627(source) && aliasInSource(source, "ARSENAL"))
     addPatch(codes, "premier-league-champions");
-  const uefaPatch = inferUefa2627Patch(source);
-  if (uefaPatch) addPatch(codes, uefaPatch);
   if (currentSeason2627(source) && anyAlias(source, ["PSG", "PARIS SAINT GERMAIN"]))
     addPatch(codes, "champions-league-titleholder");
-  if (currentSeason2627(source) && aliasInSource(source, "ASTON VILLA"))
-    addPatch(codes, "europa-league-titleholder");
-  if (currentSeason2627(source) && aliasInSource(source, "CRYSTAL PALACE"))
-    addPatch(codes, "conference-league-titleholder");
   return codes;
+}
+
+function replaceCompetitionBadgeWithTitleholder(codes) {
+  if (codes.has("champions-league-titleholder")) codes.delete("champions-league");
+  if (codes.has("europa-league-titleholder")) codes.delete("europa-league");
+  if (codes.has("conference-league-titleholder")) codes.delete("conference-league");
 }
 
 export function inferCommercialType(product) {
@@ -780,22 +807,19 @@ export function inferPurchasePatches(product) {
   const explicit = explicitPatches(source);
   if (/\bRETRO\b/.test(source)) return finalizePatches(explicit);
 
-  const domestic = inferDomesticClubPatches(source);
-  if (domestic.size > 0) {
-    for (const code of inferSpecialClubPatches(source)) domestic.add(code);
-    for (const code of explicit) domestic.add(code);
-    return finalizePatches(domestic);
-  }
-
   const national = identifyNationalTeam(source, product);
   if (national) {
     const codes = inferNationalPatches(source, national);
     for (const code of explicit) codes.add(code);
+    replaceCompetitionBadgeWithTitleholder(codes);
     return finalizePatches(codes);
   }
 
-  const codes = inferSpecialClubPatches(source);
+  const codes = inferDomesticClubPatches(source);
+  for (const code of inferContinentalClubPatches(source)) codes.add(code);
+  for (const code of inferSpecialClubPatches(source)) codes.add(code);
   for (const code of explicit) codes.add(code);
+  replaceCompetitionBadgeWithTitleholder(codes);
   return finalizePatches(codes);
 }
 

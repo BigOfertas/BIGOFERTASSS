@@ -3,7 +3,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { buildCatalogBusinessProfile, normalizeCatalogText } from "./catalog-business-rules.mjs";
 
-const clean = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
+const clean = (value) =>
+  String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
 const slugify = (value) =>
   clean(value)
     .normalize("NFD")
@@ -43,6 +46,9 @@ function parseArgs(argv) {
 }
 
 function titleCaseEntity(value) {
+  const normalized = normalizeCatalogText(value);
+  if (["MAN. CITY", "MAN CITY"].includes(normalized)) return "Manchester City";
+  if (["PSG", "PARIS SAINT GERMAIN"].includes(normalized)) return "PSG";
   const upperWords = new Set(["PSG", "AC", "FC", "NBA", "EA7"]);
   return clean(value)
     .toLowerCase()
@@ -85,20 +91,27 @@ function leagueFromPatchCodes(codes) {
 }
 
 function commercialLabel(type) {
-  return {
-    torcedor: "Torcedor",
-    jogador: "Jogador",
-    feminino: "Feminino",
-    infantil: "Infantil",
-    retro: "Retrô",
-    calcao: "Calção",
-    basquete: "Basquete",
-  }[type] ?? "Versão";
+  return (
+    {
+      torcedor: "Torcedor",
+      jogador: "Jogador",
+      feminino: "Feminino",
+      infantil: "Infantil",
+      retro: "Retrô",
+      calcao: "Calção",
+      basquete: "Basquete",
+    }[type] ?? "Versão"
+  );
 }
 
 function productName(proposal) {
   const entity = titleCaseEntity(proposal.entity || "Produto");
-  const type = proposal.type === "regata" ? "Regata" : proposal.type === "camisa" ? "Camisa" : titleCaseEntity(proposal.type);
+  const type =
+    proposal.type === "regata"
+      ? "Regata"
+      : proposal.type === "camisa"
+        ? "Camisa"
+        : titleCaseEntity(proposal.type);
   const model = proposal.model ? ` ${proposal.model}` : "";
   const season = proposal.season ? ` ${proposal.season}` : "";
   const brand = proposal.brand ? ` ${titleCaseEntity(proposal.brand)}` : "";
@@ -107,7 +120,8 @@ function productName(proposal) {
 
 function descriptionFor(name, proposal, commercialType, uniformLabel) {
   const parts = [name + "."];
-  if (commercialType && commercialType !== "other") parts.push(`Versão ${commercialLabel(commercialType)}.`);
+  if (commercialType && commercialType !== "other")
+    parts.push(`Versão ${commercialLabel(commercialType)}.`);
   if (proposal.season) parts.push(`Temporada ${proposal.season}.`);
   if (proposal.brand) parts.push(`Marca ${titleCaseEntity(proposal.brand)}.`);
   parts.push("Disponível com as opções de tamanho e personalização configuradas pela BIGofertas.");
@@ -173,7 +187,7 @@ function buildPlan(collector, assimilation, options) {
       });
       const commercialType =
         variantBusiness.commercialType === "other"
-          ? firstProposal.commercialType ?? business.commercialType
+          ? (firstProposal.commercialType ?? business.commercialType)
           : variantBusiness.commercialType;
       const images = group.images.map((image, imageIndex) => {
         const url = clean(image.highQualityUrl || image.directUrl || image.url);
@@ -191,7 +205,9 @@ function buildPlan(collector, assimilation, options) {
       if (images.length === 0) throw new Error(`${name}: variante sem imagens.`);
 
       variants.push({
-        code: slugify(groupProposal.version || `versao-${variantIndex + 1}`) || `versao-${variantIndex + 1}`,
+        code:
+          slugify(groupProposal.version || `versao-${variantIndex + 1}`) ||
+          `versao-${variantIndex + 1}`,
         name: commercialLabel(commercialType),
         commercialType,
         price: variantBusiness.price,
@@ -210,7 +226,9 @@ function buildPlan(collector, assimilation, options) {
       proposed.season ? `Temporada: ${proposed.season}` : null,
       `Versão: ${commercialLabel(productCommercialType)}`,
       business.uniform?.label ? `Uniforme: ${business.uniform.label}` : null,
-    ].filter(Boolean).join(" | ");
+    ]
+      .filter(Boolean)
+      .join(" | ");
 
     const record = {
       sourceKey,
@@ -223,25 +241,40 @@ function buildPlan(collector, assimilation, options) {
       team: titleCaseEntity(proposed.entity),
       season: proposed.season ?? null,
       brand: proposed.brand ?? null,
-      audience: normalizeCatalogText(proposed.audience || "adulto"),
+      audience:
+        normalizeCatalogText(proposed.audience) === "ADULTO"
+          ? "MASCULINO"
+          : normalizeCatalogText(proposed.audience || "MASCULINO"),
       commercialType: productCommercialType,
       price,
       specifications: specs,
-      personalizationEnabled: ["torcedor", "feminino", "jogador", "retro", "infantil", "basquete"].includes(productCommercialType),
-      phraseEnabled: ["torcedor", "feminino", "jogador", "retro", "infantil", "basquete"].includes(productCommercialType),
+      personalizationEnabled: [
+        "torcedor",
+        "feminino",
+        "jogador",
+        "retro",
+        "infantil",
+        "basquete",
+      ].includes(productCommercialType),
+      phraseEnabled: ["torcedor", "feminino", "jogador", "retro", "infantil", "basquete"].includes(
+        productCommercialType,
+      ),
       patches: business.patches,
       variants,
     };
 
     if (options.reset) record.catalogCode = `P${String(productIndex + 1).padStart(6, "0")}`;
     if (proposed.season === "26/26") {
-      warnings.push(`${record.catalogCode ?? sourceKey}: temporada 26/26 preservada exatamente como veio do fornecedor.`);
+      warnings.push(
+        `${record.catalogCode ?? sourceKey}: temporada 26/26 preservada exatamente como veio do fornecedor.`,
+      );
     }
     products.push(record);
   }
 
   const imageCount = products.reduce(
-    (sum, product) => sum + product.variants.reduce((inner, variant) => inner + variant.images.length, 0),
+    (sum, product) =>
+      sum + product.variants.reduce((inner, variant) => inner + variant.images.length, 0),
     0,
   );
   const variantCount = products.reduce((sum, product) => sum + product.variants.length, 0);

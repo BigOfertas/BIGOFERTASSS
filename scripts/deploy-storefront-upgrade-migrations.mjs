@@ -49,6 +49,15 @@ const migrations = [
   ],
   ["catalog_business_rules", "supabase/migrations/20260909130000_catalog_business_rules.sql"],
   ["global_patch_matrix", "supabase/migrations/20260909143000_global_patch_matrix.sql"],
+  [
+    "google_photos_external_images",
+    "supabase/migrations/20260909150000_google_photos_external_images.sql",
+  ],
+  ["multiple_purchase_patches", "supabase/migrations/20260909151000_multiple_purchase_patches.sql"],
+  [
+    "google_photos_catalog_import",
+    "supabase/migrations/20260909152000_google_photos_catalog_import.sql",
+  ],
 ];
 
 function migrationSql(file) {
@@ -222,7 +231,21 @@ select
     cross join lateral jsonb_array_elements(s.patch_catalog) p(value)
     where s.singleton = true
       and p.value->>'code' = 'champions-league'
-  ) as global_patch_matrix;
+  ) as global_patch_matrix,
+  exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'product_images' and column_name = 'external_url'
+  ) as external_image_url_column,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'storefront_product_detail_v2'
+  ) as product_detail_v2_rpc,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'catalog_apply_normalized_batch'
+  ) as catalog_normalized_batch_rpc;
 `);
 
 console.log("STOREFRONT_UPGRADE_BACKEND_VERIFICATION");
@@ -253,6 +276,9 @@ const required = [
   "affiliate_deactivate_rpc",
   "signup_phone_trigger",
   "global_patch_matrix",
+  "external_image_url_column",
+  "product_detail_v2_rpc",
+  "catalog_normalized_batch_rpc",
 ];
 
 if (!required.every((key) => verification?.[key] === true)) {

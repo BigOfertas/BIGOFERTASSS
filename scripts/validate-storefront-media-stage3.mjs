@@ -80,7 +80,7 @@ check(
 );
 check(
   "detalhe público passou a uma única RPC de produto",
-  productDetail.includes('"storefront_product_detail_v1"') &&
+  productDetail.includes('"storefront_product_detail_v2"') &&
     migration.includes("CREATE OR REPLACE FUNCTION public.storefront_product_detail_v1") &&
     !productDetail.includes('.from("product_images")') &&
     !productDetail.includes('.from("product_options")') &&
@@ -116,7 +116,7 @@ check(
 );
 check(
   "ponte SEO para Hostinger consulta o mesmo detalhe e injeta metadados no edge",
-  hostingerSeoWorker.includes("storefront_product_detail_v1") &&
+  hostingerSeoWorker.includes("storefront_product_detail_v2") &&
     hostingerSeoWorker.includes("HTMLRewriter") &&
     hostingerSeoWorker.includes("STOREFRONT_ORIGIN_BASE_URL") &&
     hostingerSeoWorker.includes('meta property="og:image"'),

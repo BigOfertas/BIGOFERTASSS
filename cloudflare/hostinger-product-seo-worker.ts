@@ -23,6 +23,7 @@ type ProductDetailPayload = {
   images?: Array<{
     storage_key?: string | null;
     card_storage_key?: string | null;
+    external_url?: string | null;
     is_primary?: boolean;
   }>;
 };
@@ -49,7 +50,7 @@ function escapeAttribute(value: string) {
 
 async function fetchProduct(slug: string, env: Env) {
   const response = await fetch(
-    `${cleanBase(env.SUPABASE_URL)}/rest/v1/rpc/storefront_product_detail_v1`,
+    `${cleanBase(env.SUPABASE_URL)}/rest/v1/rpc/storefront_product_detail_v2`,
     {
       method: "POST",
       headers: {
@@ -89,9 +90,10 @@ function productMeta(detail: ProductDetailPayload, env: Env) {
   const canonical = `${siteUrl}/product/${encodeURIComponent(product.slug)}`;
   const primary = detail.images?.find((image) => image.is_primary) ?? detail.images?.[0] ?? null;
   const imageKey = primary?.storage_key ?? primary?.card_storage_key ?? null;
-  const image = imageKey
-    ? `${cleanBase(env.R2_PUBLIC_BASE_URL)}/${encodeObjectKey(imageKey)}`
-    : null;
+  const externalImage = primary?.external_url?.trim() || null;
+  const image =
+    externalImage ??
+    (imageKey ? `${cleanBase(env.R2_PUBLIC_BASE_URL)}/${encodeObjectKey(imageKey)}` : null);
   const price = Number(product.promotional_price ?? product.price ?? 0).toFixed(2);
 
   return { title, description, canonical, image, price, productName: product.name };
