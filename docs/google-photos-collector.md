@@ -42,7 +42,7 @@ node scripts/google-photos-collector.mjs \
 
 ## Prova real - Top 10 Lançamentos
 
-A versao final foi validada contra o album real `[26/27] TOP 10 LANÇAMENTOS DO ANO`:
+A versao final foi validada contra o album real `[26/27] TOP 10 LANÇAMENTOS DO ANO` no workflow run `34368646867`:
 
 - 55 midias Google observadas no total;
 - 5 midias de interface/capa descartadas;
@@ -52,6 +52,8 @@ A versao final foi validada contra o album real `[26/27] TOP 10 LANÇAMENTOS DO 
 - 5 imagens em cada grupo;
 - 0 imagens sem titulo;
 - workflow concluido com sucesso.
+
+Os grupos validados foram Chelsea I, Chelsea II, Manchester City II, Bayern I, Bayern II, Barcelona II, PSG I, Lyon II, Milan II e Napoli I, todos com cinco imagens.
 
 ## Seguranca
 
