@@ -1,0 +1,46 @@
+name: Fix Kids Training Type Once
+
+on:
+  push:
+    branches:
+      - catalog-kids-first-deploy-20260909
+    paths:
+      - catalog-jobs/fix-kids-training-type.json
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: catalog-kids-first-deploy-20260909
+      - name: Preserve training characteristic inside Kids album
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/google-photos-assimilator.mjs')
+          text = path.read_text()
+          old = '''  if (/\\bSHORTS?\\b/.test(upper)) return "shorts";\n  if (/\\bCONJUNTO\\b/.test(upper) && /\\b(?:INFANTIL|INFATIL|KIDS?)\\b/.test(upper)) return "conjunto";\n  if (/\\bTREINO\\b/.test(upper)) return "treino";\n  if (/\\bVIAGEM\\b/.test(upper)) return "viagem";'''
+          new = '''  if (/\\bSHORTS?\\b/.test(upper)) return "shorts";\n  if (/\\bTREINO\\b/.test(upper)) return "treino";\n  if (/\\bVIAGEM\\b/.test(upper)) return "viagem";\n  if (/\\bCONJUNTO\\b/.test(upper) && /\\b(?:INFANTIL|INFATIL|KIDS?)\\b/.test(upper)) return "conjunto";'''
+          if old not in text:
+              raise SystemExit('training type target not found')
+          path.write_text(text.replace(old, new))
+          PY
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: |
+          bunx prettier --write scripts/google-photos-assimilator.mjs
+          bun run lint
+          node scripts/validate-google-photos-final-pipeline.mjs
+      - name: Commit
+        run: |
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add scripts/google-photos-assimilator.mjs
+          git commit -m "fix: preserve Kids training-set classification"
+          git push origin HEAD:catalog-kids-first-deploy-20260909
