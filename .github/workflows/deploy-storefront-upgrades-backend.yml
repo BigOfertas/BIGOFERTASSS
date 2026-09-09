@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/deploy-storefront-upgrades-backend.yml"
       - "scripts/deploy-storefront-upgrade-migrations.mjs"
+      - "scripts/deploy-home-launches-top10.mjs"
       - "supabase/migrations/20260904213000_storefront_personalization.sql"
       - "supabase/migrations/20260904213500_catalog_commercial_type.sql"
       - "supabase/migrations/20260905004500_affiliate_self_service_links.sql"
@@ -18,6 +19,7 @@ on:
       - "supabase/migrations/20260908152000_storefront_media_seo_stage_3.sql"
       - "supabase/migrations/20260908170000_catalog_bulk_import_bridge.sql"
       - "supabase/migrations/20260909220000_catalog_public_rpc_security_fix.sql"
+      - "supabase/migrations/20260909233000_home_launches_top10.sql"
   workflow_dispatch:
 
 permissions:
@@ -43,3 +45,6 @@ jobs:
 
       - name: Deploy storefront upgrade migrations
         run: node scripts/deploy-storefront-upgrade-migrations.mjs
+
+      - name: Deploy pinned homepage launches
+        run: node scripts/deploy-home-launches-top10.mjs
