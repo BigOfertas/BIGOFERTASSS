@@ -162,11 +162,6 @@ select
   exists (
     select 1 from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and p.proname = 'catalog_products_page_v4'
-  ) as catalog_v4_rpc,
-  exists (
-    select 1 from pg_catalog.pg_proc p
-    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'catalog_filter_facets_v2'
   ) as catalog_facets_v2_rpc,
   exists (
@@ -241,7 +236,6 @@ const required = [
   "catalog_rpc",
   "catalog_v2_rpc",
   "catalog_v3_rpc",
-  "catalog_v4_rpc",
   "catalog_facets_v2_rpc",
   "product_detail_v1_rpc",
   "scalable_catalog_admin_rpc",
