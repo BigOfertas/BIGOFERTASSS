@@ -2,11 +2,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { legacyWorkerFallbackAvailable } from "@/lib/backend-routing";
 import type { CartItem } from "@/lib/cart";
 
+export const LAST_CHECKOUT_STORAGE_KEY = "bigofertas:last-checkout:v1";
+
 export type CheckoutStartResult = {
   checkoutUrl: string;
   orderId: string;
   orderNumber: string;
   totalAmount: number;
+};
+
+export type LastCheckoutSnapshot = Pick<CheckoutStartResult, "orderId" | "orderNumber" | "totalAmount"> & {
+  createdAt: string;
 };
 
 type CheckoutErrorPayload = {
@@ -56,6 +62,42 @@ async function checkoutResponse(accessToken: string, body: string) {
   }
 
   throw new Error("Não foi possível iniciar o pagamento agora.");
+}
+
+export function readLastCheckoutSnapshot(): LastCheckoutSnapshot | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(LAST_CHECKOUT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<LastCheckoutSnapshot>;
+    if (
+      typeof parsed.orderId !== "string" ||
+      typeof parsed.orderNumber !== "string" ||
+      typeof parsed.totalAmount !== "number" ||
+      typeof parsed.createdAt !== "string"
+    ) {
+      return null;
+    }
+    return parsed as LastCheckoutSnapshot;
+  } catch {
+    return null;
+  }
+}
+
+export function clearLastCheckoutSnapshot() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(LAST_CHECKOUT_STORAGE_KEY);
+}
+
+function storeLastCheckoutSnapshot(result: CheckoutStartResult) {
+  if (typeof window === "undefined") return;
+  const snapshot: LastCheckoutSnapshot = {
+    orderId: result.orderId,
+    orderNumber: result.orderNumber,
+    totalAmount: result.totalAmount,
+    createdAt: new Date().toISOString(),
+  };
+  window.sessionStorage.setItem(LAST_CHECKOUT_STORAGE_KEY, JSON.stringify(snapshot));
 }
 
 export async function startInfinitePayCheckout(input: {
@@ -128,5 +170,6 @@ export async function startInfinitePayCheckout(input: {
     throw new Error("O link de pagamento retornado é inválido.");
   }
 
+  storeLastCheckoutSnapshot(payload);
   return payload;
 }
