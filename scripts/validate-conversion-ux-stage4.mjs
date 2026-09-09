@@ -160,7 +160,7 @@ check(
   checkoutLib.includes("LAST_CHECKOUT_STORAGE_KEY") &&
     checkoutLib.includes("storeLastCheckoutSnapshot(payload)") &&
     account.includes("Pedido recebido") &&
-    account.includes("a confirmação pode levar alguns instantes") &&
+    /a\s+confirmação pode levar alguns instantes/.test(account) &&
     account.includes("Acompanhar pedido") &&
     account.includes('to="/conta/pedidos/$orderNumber"'),
 );
