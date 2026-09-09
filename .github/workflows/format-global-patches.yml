@@ -1,0 +1,48 @@
+name: Format Global Patch Matrix
+
+on:
+  push:
+    branches:
+      - catalog-global-patches-20260909
+    paths:
+      - catalog-jobs/format-global-patches.json
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Format files
+        run: |
+          bunx prettier --write \
+            scripts/catalog-business-rules.mjs \
+            scripts/validate-catalog-business-rules.mjs \
+            scripts/deploy-storefront-upgrade-migrations.mjs \
+            src/components/product/ProductPurchaseOptions.tsx
+
+      - name: Commit formatting
+        run: |
+          if git diff --quiet; then
+            echo "No formatting changes needed"
+            exit 0
+          fi
+          git config user.name "BigOfertas Automation"
+          git config user.email "contato@bigofertas.net"
+          git add scripts/catalog-business-rules.mjs scripts/validate-catalog-business-rules.mjs scripts/deploy-storefront-upgrade-migrations.mjs src/components/product/ProductPurchaseOptions.tsx
+          git commit -m "style: format global patch matrix"
+          git push origin HEAD:catalog-global-patches-20260909
