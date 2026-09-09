@@ -1,0 +1,43 @@
+name: Fix Kids Base Key Once
+
+on:
+  push:
+    branches:
+      - catalog-kids-first-deploy-20260909
+    paths:
+      - "catalog-jobs/fix-kids-basekey.json"
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: catalog-kids-first-deploy-20260909
+      - name: Keep supplier brand in product base identity
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path('scripts/google-photos-assimilator.mjs')
+          s = p.read_text()
+          old = '''  const baseKey = [type, normalizeKey(entity || ""), season || "", model || "", audience.value]\n    .filter(Boolean)\n    .join("|");'''
+          new = '''  const baseKey = [\n    type,\n    normalizeKey(entity || ""),\n    season || "",\n    model || "",\n    brand || "",\n    audience.value,\n  ]\n    .filter(Boolean)\n    .join("|");'''
+          if old not in s:
+              raise SystemExit('expected baseKey block not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx prettier --write scripts/google-photos-assimilator.mjs
+      - run: node scripts/validate-catalog-business-rules.mjs
+      - name: Commit
+        run: |
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add scripts/google-photos-assimilator.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: separate Kids products by supplier brand"
+          git push origin HEAD:catalog-kids-first-deploy-20260909
