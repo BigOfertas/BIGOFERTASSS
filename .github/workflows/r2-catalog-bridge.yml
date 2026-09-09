@@ -70,8 +70,8 @@ jobs:
       CATALOG_IMPORT_OWNER_EMAIL: ${{ secrets.CATALOG_IMPORT_OWNER_EMAIL }}
       CATALOG_IMPORT_OWNER_PASSWORD: ${{ secrets.CATALOG_IMPORT_OWNER_PASSWORD }}
       R2_BRIDGE_ARTIFACT_DIR: .artifacts/r2-catalog-bridge
-      INPUT_ACTION: ${{ github.event_name == 'workflow_dispatch' && inputs.action || 'list' }}
-      INPUT_OBJECT_KEY: ${{ github.event_name == 'workflow_dispatch' && inputs.object_key || '' }}
+      INPUT_ACTION: ${{ github.event_name == 'workflow_dispatch' && inputs.action || 'analyze' }}
+      INPUT_OBJECT_KEY: ${{ github.event_name == 'workflow_dispatch' && inputs.object_key || 'incoming/catalogo/BIGOFERTAS_CATALOGO_SHORTS_FINAL.zip' }}
       INPUT_COMPETITION: ${{ github.event_name == 'workflow_dispatch' && inputs.competition || '' }}
       INPUT_LEAGUE: ${{ github.event_name == 'workflow_dispatch' && inputs.league || '' }}
       INPUT_DEFAULT_PRICE: ${{ github.event_name == 'workflow_dispatch' && inputs.default_price || '' }}
