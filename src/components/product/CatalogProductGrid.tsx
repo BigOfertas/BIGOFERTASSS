@@ -68,6 +68,20 @@ function DensityButton({
   );
 }
 
+function ProductCardSkeleton() {
+  return (
+    <div className="animate-pulse" aria-hidden="true">
+      <div className="aspect-[4/5] rounded-xl bg-gray-100" />
+      <div className="pt-3.5">
+        <div className="h-2.5 w-2/5 rounded bg-gray-100" />
+        <div className="mt-2 h-3.5 w-11/12 rounded bg-gray-100" />
+        <div className="mt-1.5 h-3.5 w-8/12 rounded bg-gray-100" />
+        <div className="mt-4 h-5 w-1/3 rounded bg-gray-100" />
+      </div>
+    </div>
+  );
+}
+
 export function CatalogProductGrid({
   products,
   isLoading,
@@ -118,7 +132,7 @@ export function CatalogProductGrid({
   return (
     <div>
       <div
-        className="mb-4 flex items-center justify-end gap-2"
+        className="mb-5 flex items-center justify-end gap-2"
         aria-label="Modo de visualização do catálogo"
       >
         <span className="mr-1 text-[11px] font-bold uppercase tracking-wide text-gray-400">
@@ -150,13 +164,13 @@ export function CatalogProductGrid({
         className={`transition-opacity duration-200 ease-out ${fading ? "opacity-0" : "opacity-100"}`}
       >
         {isLoading ? (
-          <div className={`grid ${gridClass} gap-4 md:gap-6`}>
+          <div className={`grid ${gridClass} gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-10`}>
             {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="aspect-[4/5] animate-pulse rounded-md bg-gray-100" />
+              <ProductCardSkeleton key={index} />
             ))}
           </div>
         ) : (
-          <div className={`grid ${gridClass} gap-4 md:gap-6`}>
+          <div className={`grid ${gridClass} gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-10`}>
             {products.map((product) => (
               <ProductCard
                 key={product.id}
@@ -166,6 +180,7 @@ export function CatalogProductGrid({
                 price={product.price}
                 promotionalPrice={product.promotional_price}
                 imageUrl={product.displayImageUrl}
+                hoverImageUrl={product.hoverImageUrl}
                 time={product.time}
                 commercialType={product.commercial_type}
               />
