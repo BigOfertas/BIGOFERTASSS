@@ -1,0 +1,165 @@
+name: Apply Catalog Business Rules
+
+on:
+  push:
+    branches:
+      - catalog-business-rules-20260909
+    paths:
+      - catalog-jobs/business-rules/**
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Patch catalog rules into existing flows
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'pattern not found in {path}: {old[:120]!r}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace_once(
+              'scripts/catalog-import-zip.mjs',
+              'import { execFileSync, spawnSync } from "node:child_process";\n',
+              'import { execFileSync, spawnSync } from "node:child_process";\nimport { buildCatalogBusinessProfile, inferCommercialType, resolveCommercialPrice } from "./catalog-business-rules.mjs";\n',
+          )
+
+          replace_once(
+              'scripts/catalog-import-zip.mjs',
+              '''    const explicitPrice = parseNumber(row.preco ?? row.price);\n    const price = explicitPrice ?? options.defaultPrice;\n    const explicitStock = parseInteger(row.estoque ?? row.stock);\n    const stock = explicitStock ?? options.defaultStock ?? 0;\n    const category = inferCategory(row);\n''',
+              '''    const explicitPrice = parseNumber(row.preco ?? row.price);\n    const explicitStock = parseInteger(row.estoque ?? row.stock);\n    const stock = explicitStock ?? options.defaultStock ?? 0;\n    const category = inferCategory(row);\n    const resolvedLeague = text(options.league) || text(row.liga);\n    const resolvedTeam = text(row.time ?? row.selecao);\n    const audience = inferAudience(row);\n    const businessProfile = buildCatalogBusinessProfile(\n      { ...row, name, competition, league: resolvedLeague, team: resolvedTeam, audience },\n      {\n        explicitPrice,\n        fallbackPrice: options.defaultPrice,\n        specifications: row.especificacoes ?? row.specifications,\n      },\n    );\n    const price = businessProfile.price;\n''',
+          )
+
+          replace_once('scripts/catalog-import-zip.mjs', '      league: text(options.league) || text(row.liga),\n', '      league: resolvedLeague,\n')
+          replace_once('scripts/catalog-import-zip.mjs', '      team: text(row.time ?? row.selecao),\n', '      team: resolvedTeam,\n')
+          replace_once('scripts/catalog-import-zip.mjs', '      audience: inferAudience(row),\n', '      audience,\n')
+          replace_once('scripts/catalog-import-zip.mjs', '      commercialType: inferCommercialType(row),\n', '      commercialType: businessProfile.commercialType,\n')
+          replace_once(
+              'scripts/catalog-import-zip.mjs',
+              '      category,\n      description: text(row.descricao),\n',
+              '      category,\n      specifications: businessProfile.specifications,\n      patches: businessProfile.patches,\n      description: text(row.descricao),\n',
+          )
+
+          replace_once(
+              'scripts/catalog-import-zip.mjs',
+              '''    product.variations.set(variantCode, {\n      code: variantCode,\n      name: variationLabel(variantCode, row.nome_descricao),\n      sortOrder: Math.max(\n        0,\n        (parseInteger(variantCode.match(/\\d+$/)?.[0]) ?? product.variations.size + 1) - 1,\n      ),\n      stock: parseInteger(row.estoque) ?? product.stock,\n    });\n''',
+              '''    const variantName = variationLabel(variantCode, row.nome_descricao);\n    const explicitVariantType = inferCommercialType({ name: variantName, tipo_produto: row.tipo_produto });\n    const variantCommercialType = explicitVariantType === "other"\n      ? product.commercialType\n      : explicitVariantType;\n    const variantPrice = resolveCommercialPrice(\n      variantCommercialType,\n      parseNumber(row.preco ?? row.price),\n      product.price,\n    );\n    product.variations.set(variantCode, {\n      code: variantCode,\n      name: variantName,\n      commercialType: variantCommercialType,\n      price: variantPrice,\n      sortOrder: Math.max(\n        0,\n        (parseInteger(variantCode.match(/\\d+$/)?.[0]) ?? product.variations.size + 1) - 1,\n      ),\n      stock: parseInteger(row.estoque) ?? product.stock,\n    });\n''',
+          )
+
+          replace_once(
+              'scripts/catalog-import-zip.mjs',
+              '''      product.variations.set("versao-01", {\n        code: "versao-01",\n        name: "Versão 01",\n        sortOrder: 0,\n        stock: product.stock,\n      });\n''',
+              '''      product.variations.set("versao-01", {\n        code: "versao-01",\n        name: "Versão 01",\n        commercialType: product.commercialType,\n        price: product.price,\n        sortOrder: 0,\n        stock: product.stock,\n      });\n''',
+          )
+
+          replace_once(
+              'scripts/catalog-import-zip.mjs',
+              '''    product.remoteId = saved.id;\n    if (saved.created) stats.productsCreated += 1;\n    else stats.productsUpdated += 1;\n\n    const variantIds = new Map();\n''',
+              '''    product.remoteId = saved.id;\n    if (saved.created) stats.productsCreated += 1;\n    else stats.productsUpdated += 1;\n\n    const personalizationEnabled = [\n      "torcedor",\n      "feminino",\n      "jogador",\n      "retro",\n      "infantil",\n      "basquete",\n    ].includes(product.commercialType);\n    await client.rpc("owner_save_product_purchase_settings_v2", {\n      p_product_id: product.remoteId,\n      p_commercial_type: product.commercialType,\n      p_size_enabled: true,\n      p_personalization_enabled: personalizationEnabled,\n      p_phrase_enabled: personalizationEnabled,\n      p_patches: product.patches,\n    });\n    if (product.specifications) {\n      await client.rpc("owner_catalog_import_set_specifications", {\n        p_product_id: product.remoteId,\n        p_specifications: product.specifications,\n      });\n    }\n\n    const variantIds = new Map();\n''',
+          )
+
+          replace_once(
+              'scripts/catalog-import-zip.mjs',
+              '''      variantIds.set(variant.code, savedVariant.id);\n      if (savedVariant.created) stats.variantsCreated += 1;\n      else stats.variantsUpdated += 1;\n''',
+              '''      variantIds.set(variant.code, savedVariant.id);\n      if (Number.isFinite(variant.price)) {\n        await client.rpc("owner_catalog_import_set_variant_price", {\n          p_product_id: product.remoteId,\n          p_variant_id: savedVariant.id,\n          p_price_override: variant.price,\n        });\n      }\n      if (savedVariant.created) stats.variantsCreated += 1;\n      else stats.variantsUpdated += 1;\n''',
+          )
+
+          replace_once(
+              'scripts/google-photos-assimilator.mjs',
+              "import path from 'node:path';\n",
+              "import path from 'node:path';\nimport { buildCatalogBusinessProfile } from './catalog-business-rules.mjs';\n",
+          )
+          replace_once(
+              'scripts/google-photos-assimilator.mjs',
+              "  const entity = extractEntity(normalizedTitle, { brand, season, model, type }) || null;\n  const warnings = [];\n",
+              "  const entity = extractEntity(normalizedTitle, { brand, season, model, type }) || null;\n  const businessProfile = buildCatalogBusinessProfile({ name: normalizedTitle, tipo_produto: type, audience: audience.value });\n  const warnings = [];\n",
+          )
+          replace_once(
+              'scripts/google-photos-assimilator.mjs',
+              '''    audience: audience.value,\n    audienceInferred: audience.inferred,\n    baseKey,\n''',
+              '''    audience: audience.value,\n    audienceInferred: audience.inferred,\n    commercialType: businessProfile.commercialType,\n    price: businessProfile.price,\n    uniform: businessProfile.uniform,\n    specifications: businessProfile.specifications,\n    patches: businessProfile.patches,\n    baseKey,\n''',
+          )
+          replace_once(
+              'scripts/google-photos-assimilator.mjs',
+              'function buildGroupHtml(group, proposal) {\n',
+              '''function formatPrice(value) {\n  const numeric = Number(value);\n  return Number.isFinite(numeric) ? `R$ ${numeric.toFixed(2).replace('.', ',')}` : '—';\n}\n\nfunction buildGroupHtml(group, proposal) {\n''',
+          )
+          replace_once(
+              'scripts/google-photos-assimilator.mjs',
+              '''  <div class="meta"><div><b>Entidade</b>${escapeHtml(proposal.entity || '—')}</div><div><b>Tipo</b>${escapeHtml(proposal.type)}</div><div><b>Modelo</b>${escapeHtml(proposal.model || '—')}</div><div><b>Versão</b>${escapeHtml(proposal.version || '—')}</div><div><b>Temporada</b>${escapeHtml(proposal.season || '—')}</div><div><b>Marca</b>${escapeHtml(proposal.brand || '—')}</div><div><b>Público</b>${escapeHtml(proposal.audience || '—')}</div><div><b>Confiança</b>${proposal.confidence}</div></div>\n''',
+              '''  <div class="meta"><div><b>Entidade</b>${escapeHtml(proposal.entity || '—')}</div><div><b>Tipo</b>${escapeHtml(proposal.type)}</div><div><b>Modelo</b>${escapeHtml(proposal.model || '—')}</div><div><b>Versão</b>${escapeHtml(proposal.version || '—')}</div><div><b>Temporada</b>${escapeHtml(proposal.season || '—')}</div><div><b>Marca</b>${escapeHtml(proposal.brand || '—')}</div><div><b>Público</b>${escapeHtml(proposal.audience || '—')}</div><div><b>Comercial</b>${escapeHtml(proposal.commercialType || '—')}</div><div><b>Preço</b>${escapeHtml(formatPrice(proposal.price))}</div><div><b>Uniforme</b>${escapeHtml(proposal.uniform?.label || '—')}</div><div><b>Confiança</b>${proposal.confidence}</div></div>\n''',
+          )
+          replace_once(
+              'scripts/google-photos-assimilator.mjs',
+              '''    return `<section><h2>${escapeHtml(group.title)}</h2><p>${escapeHtml(proposal.entity || '—')} · ${escapeHtml(proposal.type)} · ${escapeHtml(proposal.model || '—')} · ${escapeHtml(proposal.version || '—')} · ${escapeHtml(proposal.season || '—')} · ${escapeHtml(proposal.brand || '—')}</p><div class="thumbs">${images}</div><small>${escapeHtml(screenshot)}</small></section>`;\n''',
+              '''    return `<section><h2>${escapeHtml(group.title)}</h2><p>${escapeHtml(proposal.entity || '—')} · ${escapeHtml(proposal.type)} · ${escapeHtml(proposal.model || '—')} · ${escapeHtml(proposal.version || '—')} · ${escapeHtml(proposal.season || '—')} · ${escapeHtml(proposal.brand || '—')} · ${escapeHtml(proposal.commercialType || '—')} · ${escapeHtml(formatPrice(proposal.price))} · ${escapeHtml(proposal.uniform?.label || '—')}</p><div class="thumbs">${images}</div><small>${escapeHtml(screenshot)}</small></section>`;\n''',
+          )
+
+          replace_once(
+              'src/components/product/ProductPurchaseOptions.tsx',
+              '{config.phraseEnabled ? (\n',
+              '{config.phraseEnabled && !normalEnabled ? (\n',
+          )
+          replace_once(
+              'src/components/product/ProductPurchaseOptions.tsx',
+              '<option value="yes">Sim (+{currency.format(config.personalizationPrice)})</option>',
+              '<option value="yes">Sim — nome e número (+{currency.format(config.personalizationPrice)})</option>',
+          )
+          replace_once(
+              'src/components/product/ProductPurchaseOptions.tsx',
+              '<option value="yes">Sim (+{currency.format(config.phrasePrice)})</option>',
+              '<option value="yes">Sim — frase (+{currency.format(config.phrasePrice)})</option>',
+          )
+          replace_once(
+              'src/components/product/ProductPurchaseOptions.tsx',
+              'placeholder={`Até ${config.phraseMax} caracteres, sem número separado`}',
+              'placeholder={`Até ${config.phraseMax} caracteres, sem números`}',
+          )
+
+          replace_once(
+              'src/lib/product-purchase.ts',
+              '''  if (customization.phrase && customization.phrase.length > config.phraseMax) {\n    return `A frase pode ter no máximo ${config.phraseMax} caracteres.`;\n  }\n''',
+              '''  if (customization.phrase) {\n    if (customization.phrase.length > config.phraseMax) {\n      return `A frase pode ter no máximo ${config.phraseMax} caracteres.`;\n    }\n    if (/\\d/.test(customization.phrase)) {\n      return "A frase personalizada não pode conter números.";\n    }\n  }\n''',
+          )
+
+          replace_once(
+              'scripts/deploy-storefront-upgrade-migrations.mjs',
+              '''  [\n    "catalog_bulk_import_bridge",\n    "supabase/migrations/20260908170000_catalog_bulk_import_bridge.sql",\n  ],\n];\n''',
+              '''  [\n    "catalog_bulk_import_bridge",\n    "supabase/migrations/20260908170000_catalog_bulk_import_bridge.sql",\n  ],\n  [\n    "catalog_business_rules",\n    "supabase/migrations/20260909130000_catalog_business_rules.sql",\n  ],\n];\n''',
+          )
+          PY
+
+      - name: Validate syntax and business rules
+        run: |
+          node --check scripts/catalog-business-rules.mjs
+          node --check scripts/catalog-import-zip.mjs
+          node --check scripts/google-photos-assimilator.mjs
+          node --check scripts/deploy-storefront-upgrade-migrations.mjs
+          node scripts/validate-catalog-business-rules.mjs
+
+      - name: Commit patched files
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "BigOfertas Automation"
+          git config user.email "contato@bigofertas.net"
+          git add scripts/catalog-import-zip.mjs scripts/google-photos-assimilator.mjs scripts/deploy-storefront-upgrade-migrations.mjs src/components/product/ProductPurchaseOptions.tsx src/lib/product-purchase.ts
+          git commit -m "feat: apply catalog pricing personalization and patch rules"
+          git push origin HEAD:${GITHUB_REF_NAME}
