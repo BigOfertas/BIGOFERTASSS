@@ -2,7 +2,7 @@
 
 O coletor percorre um album publico do Google Photos em navegador real (Chromium/Playwright), identifica o container interno de rolagem, percorre o album ate estabilizar, captura as imagens do catalogo em ordem visual e registra os URLs diretos servidos pelo Google.
 
-## Saidas
+## Saidas da coleta
 
 - `collector.json`: relatorio completo com imagens, titulos, grupos, ordem visual e dados de auditoria.
 - `groups.json`: grupos `titulo -> imagens` prontos para o normalizador do catalogo.
@@ -12,15 +12,53 @@ O coletor percorre um album publico do Google Photos em navegador real (Chromium
 
 O coletor separa midias de interface/capa das imagens reais do catalogo usando posicao no album e dimensoes visuais. Titulos duplicados pelo DOM do Google Photos sao consolidados antes do agrupamento.
 
-## Regra de operacao
+## Assimilacao visual automatica
 
-Os prints enviados pelo usuario continuam sendo o gabarito humano para interpretar produto-base, versoes e variacoes. O coletor automatiza a parte mecanica: abrir album, rolar, identificar titulos, capturar URLs e associar as imagens ao titulo anterior.
+Depois da coleta, `scripts/google-photos-assimilator.mjs` transforma cada grupo em material visual que o assistente pode revisar sem depender de prints enviados manualmente pelo usuario.
 
-Se alguma imagem ficar sem titulo, a execucao falha em vez de cadastrar silenciosamente um produto incorreto.
+Saidas adicionais em `assimilation/`:
 
-## GitHub Actions
+- `overview.png`: painel completo do lote, com titulo e ate cinco imagens por grupo;
+- `contact-sheets/*.png`: um screenshot individual para cada titulo/produto encontrado;
+- `contact-sheets/*.html`: versao HTML auditavel de cada contact sheet;
+- `assimilation.json`: metadados, contagens, caminhos dos screenshots e proposta estrutural de cada grupo;
+- `catalog-proposals.json`: produtos-base propostos e seus grupos/versoes;
+- `assimilation.md`: resumo humano para auditoria rapida.
 
-O workflow `Google Photos Catalog Collector` e disparado manualmente informando URL publica do album, rotulo do lote, minimo esperado de imagens e limite de rolagens. O resultado e publicado como artifact da execucao. Nenhum login do Google e necessario para albuns publicos e nenhuma credencial do Google e armazenada no repositorio.
+O parser estrutural propoe automaticamente tipo, time/selecao, temporada, marca, modelo I/II/III, versao Torcedor/Jogador e publico. Inferencias sao marcadas explicitamente e nao substituem revisao visual quando houver ambiguidade.
+
+A regra continua conservadora: se alguma imagem de produto ficar sem titulo, a coleta falha. Se alguma imagem nao carregar no contact sheet, a assimilacao visual tambem falha.
+
+## Operacao sem prints do usuario
+
+O fluxo pode ser executado sem upload manual de prints:
+
+1. o assistente encontra o link do album no PDF/catalogo-fonte;
+2. cria uma branch temporaria com nome `catalog-google-photos-*` baseada na `main`;
+3. cria `catalog-jobs/google-photos/job.json` nessa branch;
+4. o push dispara automaticamente o workflow;
+5. o workflow coleta o album, gera URLs, `overview.png` e contact sheets;
+6. o assistente baixa o artifact e revisa visualmente os grupos;
+7. somente casos realmente ambiguos exigem print/manual review.
+
+Formato do job:
+
+```json
+{
+  "album_url": "https://photos.google.com/share/...",
+  "label": "TOP 10 LANCAMENTOS",
+  "expected_min_images": 50,
+  "max_scrolls": 220
+}
+```
+
+O workflow tambem continua disponivel por `workflow_dispatch` para execucao manual.
+
+## Prova real - Top 10 Lancamentos
+
+A coleta base foi validada no album real `[26/27] TOP 10 LANÇAMENTOS DO ANO`: 55 midias Google observadas, 5 midias de interface/capa descartadas, 50 imagens de produto mantidas, 10 titulos consolidados, 10 grupos, 5 imagens em cada grupo e 0 imagens sem titulo.
+
+A camada de assimilacao visual foi validada no workflow run `34370379605`: 10 contact sheets gerados, `overview.png` com as 50 imagens, 50/50 imagens carregadas, 0 falhas visuais e 10 produtos-base propostos. A revisao visual do overview confirmou Chelsea I, Chelsea II, Manchester City II, Bayern I, Bayern II, Barcelona II, PSG I, Lyon II, Milan II e Napoli I, todos com cinco imagens.
 
 ## Execucao local
 
@@ -31,18 +69,16 @@ node scripts/google-photos-collector.mjs \
   --url "https://photos.google.com/share/..." \
   --label "TOP 10 LANCAMENTOS" \
   --expected-min-images 50
+
+node scripts/google-photos-assimilator.mjs \
+  --input .artifacts/google-photos-collector/collector.json \
+  --out .artifacts/google-photos-collector/assimilation
 ```
-
-## Prova real - Top 10 Lançamentos
-
-A versao final foi validada contra o album real `[26/27] TOP 10 LANÇAMENTOS DO ANO` no workflow run `34368646867`: 55 midias Google observadas, 5 midias de interface/capa descartadas, 50 imagens de produto mantidas, 10 titulos consolidados, 10 grupos, 5 imagens em cada grupo, 0 imagens sem titulo e workflow concluido com sucesso.
-
-Os grupos validados foram Chelsea I, Chelsea II, Manchester City II, Bayern I, Bayern II, Barcelona II, PSG I, Lyon II, Milan II e Napoli I, todos com cinco imagens.
 
 ## Estado
 
-Coletor concluido e pronto para uso nos lotes do catalogo. A proxima camada e o normalizador/cadastro: receber o gabarito dos prints, consumir `groups.json`, gerar produto-base/variacoes/descricao/P000XXX e gravar os produtos no Supabase.
+Coleta e assimilacao visual automatica concluidas. O usuario nao precisa mais enviar prints como regra geral; prints passam a ser excecao para casos ambiguos. A proxima camada independente e o normalizador/cadastro: transformar a proposta revisada em produto-base/variacoes/descricao/P000XXX e gravar no Supabase.
 
 ## Seguranca
 
-O coletor aceita apenas URLs HTTPS de `photos.google.com` ou `photos.app.goo.gl`. A coleta e somente leitura: nao apaga, altera ou envia arquivos ao Google Photos.
+O coletor aceita apenas URLs HTTPS de `photos.google.com` ou `photos.app.goo.gl`. A coleta e somente leitura: nao apaga, altera ou envia arquivos ao Google Photos. O job de catalogo contem apenas URL publica e parametros operacionais; nenhuma credencial do Google e armazenada no repositorio.
