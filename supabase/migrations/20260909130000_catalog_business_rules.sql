@@ -80,4 +80,41 @@ $$;
 REVOKE ALL ON FUNCTION public.owner_catalog_import_set_specifications(uuid,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.owner_catalog_import_set_specifications(uuid,text) TO authenticated, service_role;
 
+-- A frase estendida é texto puro: até 50 caracteres e sem número.
+ALTER FUNCTION public.resolve_product_purchase_customization(uuid,jsonb)
+  RENAME TO resolve_product_purchase_customization_base_20260909;
+
+REVOKE ALL ON FUNCTION public.resolve_product_purchase_customization_base_20260909(uuid,jsonb) FROM PUBLIC;
+
+CREATE OR REPLACE FUNCTION public.resolve_product_purchase_customization(
+  p_product_id uuid,
+  p_customization jsonb DEFAULT '{}'::jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  raw jsonb := COALESCE(p_customization, '{}'::jsonb);
+  phrase_value text;
+BEGIN
+  IF jsonb_typeof(raw) = 'object' THEN
+    phrase_value := NULLIF(btrim(COALESCE(raw->>'phrase', '')), '');
+    IF phrase_value IS NOT NULL AND phrase_value ~ '[0-9]' THEN
+      RAISE EXCEPTION 'A frase personalizada não pode conter números';
+    END IF;
+  END IF;
+
+  RETURN public.resolve_product_purchase_customization_base_20260909(
+    p_product_id,
+    p_customization
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.resolve_product_purchase_customization(uuid,jsonb) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.resolve_product_purchase_customization(uuid,jsonb) TO anon, authenticated, service_role;
+
 COMMIT;
