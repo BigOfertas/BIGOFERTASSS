@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import bannerInferiorAsset from "@/assets/promos/banner-promo-inferior.png.asset.json";
 import BestSellers from "@/components/home/BestSellers";
-import BrazilianProducts from "@/components/home/BrazilianProducts";
 import BrazilianTeams from "@/components/home/BrazilianTeams";
 import FAQ from "@/components/home/FAQ";
 import ShopByLeague from "@/components/home/ShopByLeague";
@@ -114,7 +113,6 @@ function Index() {
         )}
 
         <BrazilianTeams />
-        <BrazilianProducts />
         <ShopByLeague />
         <FAQ />
       </main>
