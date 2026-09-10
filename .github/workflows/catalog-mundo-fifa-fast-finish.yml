@@ -1,0 +1,228 @@
+name: Catalog Mundo FIFA Fast Finish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/catalog-mundo-fifa-fast-finish.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: catalog-mundo-fifa-production
+  cancel-in-progress: true
+
+jobs:
+  collect-missing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - index: "28"
+            name: "Itália"
+            url: "https://photos.google.com/share/AF1QipMCmbTDImz8qGymGZiu2AAoq631FBhdXCNpUohoNEBCmZSl2u-srtlLDvmzq8YXPA?key=MFNPT2lSYlNPdjVUVFdrQ1Y5Yk9Vc1h2aEtKMmpn"
+          - index: "42"
+            name: "Sérvia"
+            url: "https://photos.google.com/share/AF1QipM7xE5z1HY5Fr0wkw9r-Otfg9C_gdO9cMdZ0w2lnutNjNrPjsWDs6ypo43UYT5Zxg?key=OU9sTThLWjdiMjhRb1A0WDEyYVZMZFVtbnpLYzRn"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+      - name: Collect complete missing album
+        env:
+          ALBUM_URL: ${{ matrix.url }}
+          ALBUM_NAME: ${{ matrix.name }}
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/mundo-fifa/${ALBUM_INDEX}"
+          node scripts/google-photos-collector.mjs \
+            --url "$ALBUM_URL" \
+            --label "MUNDO FIFA - $ALBUM_NAME" \
+            --out "$OUT" \
+            --expected-min-images 1 \
+            --max-scrolls 350
+          node scripts/google-photos-assimilator-runner.mjs \
+            --input "$OUT/collector.json" \
+            --out "$OUT/assimilation"
+          node scripts/catalog-mundo-fifa-assimilation-filter.mjs \
+            --input "$OUT/assimilation/assimilation.json" \
+            --output "$OUT/assimilation/mundo-fifa-filtered.json" \
+            --report "$OUT/scope-filter.json"
+          node scripts/google-photos-catalog-pipeline.mjs \
+            --collector "$OUT/collector.json" \
+            --assimilation "$OUT/assimilation/mundo-fifa-filtered.json" \
+            --report "$OUT/raw-plan.json" \
+            --validate-urls
+          node scripts/catalog-mundo-fifa-plan.mjs \
+            --input "$OUT/raw-plan.json" \
+            --output "$OUT/plan.json" \
+            --source-group "$ALBUM_NAME"
+      - name: Upload corrected missing plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: mundo-fifa-plan-${{ matrix.index }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            .artifacts/mundo-fifa/${{ matrix.index }}/collector.json
+            .artifacts/mundo-fifa/${{ matrix.index }}/groups.json
+            .artifacts/mundo-fifa/${{ matrix.index }}/assimilation/assimilation.json
+            .artifacts/mundo-fifa/${{ matrix.index }}/assimilation/mundo-fifa-filtered.json
+            .artifacts/mundo-fifa/${{ matrix.index }}/scope-filter.json
+            .artifacts/mundo-fifa/${{ matrix.index }}/raw-plan.json
+            .artifacts/mundo-fifa/${{ matrix.index }}/plan.json
+
+  publish:
+    needs: collect-missing
+    if: needs.collect-missing.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Download 44 audited plans from first run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: mundo-fifa-plan-*
+          path: .artifacts/mundo-fifa/old
+          merge-multiple: false
+          github-token: ${{ github.token }}
+          run-id: 34493929050
+      - name: Download corrected Argentina plan
+        uses: actions/download-artifact@v4
+        with:
+          name: mundo-fifa-plan-02
+          path: .artifacts/mundo-fifa/argentina/mundo-fifa-plan-02
+          github-token: ${{ github.token }}
+          run-id: 34495751274
+      - name: Download corrected Itália and Sérvia plans
+        uses: actions/download-artifact@v4
+        with:
+          pattern: mundo-fifa-plan-*
+          path: .artifacts/mundo-fifa/new
+          merge-multiple: false
+      - name: Assemble and sanitize all 47 national-team plans
+        run: |
+          set -euo pipefail
+          ROOT=".artifacts/mundo-fifa/combined"
+          mkdir -p "$ROOT"
+          cp -a .artifacts/mundo-fifa/old/. "$ROOT/"
+          mkdir -p "$ROOT/mundo-fifa-plan-02"
+          cp -a .artifacts/mundo-fifa/argentina/mundo-fifa-plan-02/. "$ROOT/mundo-fifa-plan-02/"
+          cp -a .artifacts/mundo-fifa/new/. "$ROOT/"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const root = '.artifacts/mundo-fifa/combined';
+          const dirs = fs.readdirSync(root).filter((name) => /^mundo-fifa-plan-\d{2}$/.test(name)).sort();
+          if (dirs.length !== 47) throw new Error(`Esperados 47 planos; encontrados ${dirs.length}.`);
+          const missing = [];
+          for (let index = 1; index <= 47; index += 1) {
+            const name = `mundo-fifa-plan-${String(index).padStart(2, '0')}`;
+            if (!dirs.includes(name)) missing.push(name);
+          }
+          if (missing.length) throw new Error(`Planos ausentes: ${missing.join(', ')}`);
+          let removed = 0;
+          let kept = 0;
+          for (const dir of dirs) {
+            const file = path.join(root, dir, 'plan.json');
+            const plan = JSON.parse(fs.readFileSync(file, 'utf8'));
+            const before = plan.products?.length ?? 0;
+            plan.products = (plan.products ?? []).filter((product) => {
+              const slug = product.category?.slug;
+              return slug === 'camisas' || slug === 'infantil';
+            });
+            if (!plan.products.length) throw new Error(`${dir}: nenhum produto permitido após congelar treino/corta-vento/adult kit.`);
+            removed += before - plan.products.length;
+            kept += plan.products.length;
+            plan.summary = {
+              products: plan.products.length,
+              variants: plan.products.reduce((sum, product) => sum + (product.variants?.length ?? 0), 0),
+              images: plan.products.reduce((sum, product) => sum + (product.variants ?? []).reduce((inner, variant) => inner + (variant.images?.length ?? 0), 0), 0),
+            };
+            fs.writeFileSync(file, `${JSON.stringify(plan, null, 2)}\n`);
+          }
+          console.log(`MUNDO_FIFA_SANITIZED plans=${dirs.length} products=${kept} frozenRemoved=${removed}`);
+          NODE
+      - name: Merge all plans in PDF order
+        run: |
+          node scripts/catalog-merge-mundo-fifa-plans.mjs \
+            --manifest catalog-jobs/pdf-groups/mundo-fifa.json \
+            --root .artifacts/mundo-fifa/combined \
+            --output .artifacts/mundo-fifa/merged-plan.json
+      - name: Snapshot protected business data
+        run: |
+          node scripts/catalog-batch-guard.mjs snapshot \
+            --out .artifacts/mundo-fifa/protected-before.json
+      - id: filter
+        name: Skip products already registered
+        run: |
+          node scripts/catalog-filter-existing-national-teams.mjs \
+            --input .artifacts/mundo-fifa/merged-plan.json \
+            --output .artifacts/mundo-fifa/incremental-plan.json \
+            --report .artifacts/mundo-fifa/existing-products.json
+          COUNT=$(node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('.artifacts/mundo-fifa/incremental-plan.json')); process.stdout.write(String(p.products.length));")
+          echo "product_count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "MUNDO_FIFA_INCREMENTAL_COUNT=$COUNT"
+      - name: Publish new Mundo FIFA products atomically
+        if: steps.filter.outputs.product_count != '0'
+        run: |
+          node scripts/apply-normalized-catalog-plan.mjs \
+            --plan .artifacts/mundo-fifa/incremental-plan.json \
+            --stock 999
+      - name: Verify exact database result and protected data
+        if: steps.filter.outputs.product_count != '0'
+        run: |
+          node scripts/catalog-batch-guard.mjs verify \
+            --snapshot .artifacts/mundo-fifa/protected-before.json \
+            --plan .artifacts/mundo-fifa/incremental-plan.json \
+            --out .artifacts/mundo-fifa/batch-verification.json
+      - name: Verify complete Mundo FIFA coverage
+        run: |
+          node scripts/catalog-mundo-fifa-production-guard.mjs \
+            --manifest catalog-jobs/pdf-groups/mundo-fifa.json \
+            --output .artifacts/mundo-fifa/production-verification.json
+      - name: Install Playwright for live verification
+        if: steps.filter.outputs.product_count != '0'
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+      - name: Verify live storefront product samples
+        if: steps.filter.outputs.product_count != '0'
+        run: |
+          node scripts/catalog-batch-public-verify.mjs \
+            --verification .artifacts/mundo-fifa/batch-verification.json \
+            --base-url https://bigofertas.net \
+            --launch-count 10
+      - name: Upload final Mundo FIFA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mundo-fifa-final-production
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            .artifacts/mundo-fifa/merged-plan.json
+            .artifacts/mundo-fifa/incremental-plan.json
+            .artifacts/mundo-fifa/existing-products.json
+            .artifacts/mundo-fifa/protected-before.json
+            .artifacts/mundo-fifa/batch-verification.json
+            .artifacts/mundo-fifa/production-verification.json
