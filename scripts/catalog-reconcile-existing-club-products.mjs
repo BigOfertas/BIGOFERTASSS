@@ -96,11 +96,7 @@ for (const row of existing) {
   const sourceKey = String(row.catalog_source_key ?? "").trim();
   if (sourceKey) bySourceKey.set(sourceKey, row);
   if (row.catalog_source_title) {
-    pushMap(
-      byTitle,
-      `${normalize(row.time)}|${normalize(row.catalog_source_title)}`,
-      row,
-    );
+    pushMap(byTitle, `${normalize(row.time)}|${normalize(row.catalog_source_title)}`, row);
   }
   pushMap(bySignature, signature(row), row);
 }
