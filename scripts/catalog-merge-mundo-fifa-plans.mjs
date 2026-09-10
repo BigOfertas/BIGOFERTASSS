@@ -62,7 +62,10 @@ for (const [index, album] of albums.entries()) {
       throw new Error(`${album.name}: campeonato incorreto em ${product.name}.`);
     }
     const expectedPrice = PRICE_BY_TYPE[product.commercialType];
-    if (!Number.isFinite(expectedPrice) || Math.abs(Number(product.price) - expectedPrice) > 0.001) {
+    if (
+      !Number.isFinite(expectedPrice) ||
+      Math.abs(Number(product.price) - expectedPrice) > 0.001
+    ) {
       throw new Error(`${album.name}: preço/tipo comercial inválido em ${product.name}.`);
     }
     if (!Array.isArray(product.variants) || product.variants.length === 0) {
