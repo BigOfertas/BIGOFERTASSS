@@ -25,8 +25,10 @@ function normalize(value) {
 const options = parseArgs(process.argv.slice(2));
 const manifest = JSON.parse(fs.readFileSync(path.resolve(options.manifest), "utf8"));
 const teams = (manifest.albums ?? []).map((album) => album.name);
-if (teams.length !== 47) throw new Error(`Manifesto Mundo FIFA inválido: ${teams.length} seleções.`);
-if (teams.some((team) => normalize(team) === "ARGELIA")) throw new Error("Argélia não pode estar no lote.");
+if (teams.length !== 47)
+  throw new Error(`Manifesto Mundo FIFA inválido: ${teams.length} seleções.`);
+if (teams.some((team) => normalize(team) === "ARGELIA"))
+  throw new Error("Argélia não pode estar no lote.");
 
 const projectRef = String(process.env.SUPABASE_PROJECT_ID ?? "").trim();
 const accessToken = String(process.env.SUPABASE_ACCESS_TOKEN ?? "").trim();
@@ -83,7 +85,13 @@ if (missing.length > 0) {
   throw new Error(`Seleções sem produto ativo no Mundo FIFA: ${missing.join(", ")}`);
 }
 
-const expectedPrices = { torcedor: 184.9, feminino: 184.9, jogador: 219.9, retro: 219.9, infantil: 169.9 };
+const expectedPrices = {
+  torcedor: 184.9,
+  feminino: 184.9,
+  jogador: 219.9,
+  retro: 219.9,
+  infantil: 169.9,
+};
 const targetKeys = new Set(teams.map(normalize));
 for (const row of rows) {
   if (!targetKeys.has(normalize(row.time))) continue;
