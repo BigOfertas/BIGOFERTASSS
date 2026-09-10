@@ -39,7 +39,9 @@ const options = parseArgs(process.argv.slice(2));
 const manifest = JSON.parse(fs.readFileSync(path.resolve(options.manifest), "utf8"));
 const albums = Array.isArray(manifest.albums) ? manifest.albums : [];
 if (albums.length !== EXPECTED_ALBUMS) {
-  throw new Error(`Esperados ${EXPECTED_ALBUMS} álbuns do Campeonato Brasileiro; recebidos ${albums.length}.`);
+  throw new Error(
+    `Esperados ${EXPECTED_ALBUMS} álbuns do Campeonato Brasileiro; recebidos ${albums.length}.`,
+  );
 }
 
 const products = [];
@@ -79,7 +81,9 @@ for (const [index, album] of albums.entries()) {
         !Number.isFinite(expectedVariantPrice) ||
         Math.abs(Number(variant.price) - expectedVariantPrice) > 0.001
       ) {
-        throw new Error(`${album.name}: preço inválido na variante ${variant.name} de ${product.name}.`);
+        throw new Error(
+          `${album.name}: preço inválido na variante ${variant.name} de ${product.name}.`,
+        );
       }
     }
     products.push(product);
