@@ -12,6 +12,7 @@ import internacionalAsset from "@/assets/teams/internacional.png.asset.json";
 import palmeirasAsset from "@/assets/teams/palmeiras.png.asset.json";
 import santosAsset from "@/assets/teams/santos_final.png.asset.json";
 import saoPauloAsset from "@/assets/teams/sao_paulo.png.asset.json";
+import BrazilianProducts from "@/components/home/BrazilianProducts";
 import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalization";
 
 interface Team {
@@ -22,7 +23,7 @@ interface Team {
 
 const teams: Team[] = [
   { id: "flamengo", name: "Flamengo", logoUrl: flamengoAsset.url },
-  { id: "atletico-mg", name: "Atlético-MG", logoUrl: atleticoMGAsset.url },
+  { id: "atletico-mineiro", name: "Atlético-MG", logoUrl: atleticoMGAsset.url },
   { id: "cruzeiro", name: "Cruzeiro", logoUrl: cruzeiroAsset.url },
   { id: "sao-paulo", name: "São Paulo", logoUrl: saoPauloAsset.url },
   { id: "corinthians", name: "Corinthians", logoUrl: corinthiansAsset.url },
@@ -109,7 +110,10 @@ const BrazilianTeams: React.FC = () => {
         </div>
       ) : null}
 
-      <div className="mx-auto max-w-7xl px-4 lg:max-w-[1536px] lg:px-4">
+      <div
+        id="brasileirao"
+        className="mx-auto max-w-7xl scroll-mt-28 px-4 lg:max-w-[1536px] lg:px-4"
+      >
         <div className="mb-6 text-center sm:mb-8">
           <p className="display-kicker">Futebol brasileiro</p>
           <h2 className="display-title-sm mt-2">Encontre seu time</h2>
@@ -145,6 +149,8 @@ const BrazilianTeams: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <BrazilianProducts />
       </div>
     </section>
   );
