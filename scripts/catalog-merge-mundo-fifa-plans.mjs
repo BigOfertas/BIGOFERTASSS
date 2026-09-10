@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const EXPECTED_ALBUMS = 47;
+const SOURCE_EMPTY_ALBUMS = new Set(["SERVIA"]);
 const PRICE_BY_TYPE = Object.freeze({
   torcedor: 184.9,
   feminino: 184.9,
@@ -45,7 +46,26 @@ if (albums.some((album) => normalized(album.name) === "ARGELIA")) {
 
 const products = [];
 const albumSummaries = [];
+const sourceSkips = [];
 for (const [index, album] of albums.entries()) {
+  if (SOURCE_EMPTY_ALBUMS.has(normalized(album.name))) {
+    albumSummaries.push({
+      order: index + 1,
+      name: album.name,
+      sourceAlbumUrl: album.url,
+      products: 0,
+      variants: 0,
+      images: 0,
+      skippedSource: true,
+      reason: "Álbum-fonte verificado sem imagens de produto em coletas independentes.",
+    });
+    sourceSkips.push({
+      name: album.name,
+      reason: "Álbum-fonte verificado sem imagens de produto em coletas independentes.",
+    });
+    continue;
+  }
+
   const artifactName = `mundo-fifa-plan-${String(index + 1).padStart(2, "0")}`;
   const planPath = path.resolve(options.root, artifactName, "plan.json");
   if (!fs.existsSync(planPath)) throw new Error(`Plano ausente: ${artifactName}`);
@@ -100,7 +120,8 @@ const merged = {
   sourceAlbumUrl: "pdf:mundo-fifa:page-2",
   products,
   summary: {
-    albums: albums.length,
+    sourceAlbums: albums.length,
+    albums: albums.length - sourceSkips.length,
     products: products.length,
     variants: products.reduce((sum, product) => sum + product.variants.length, 0),
     images: products.reduce(
@@ -110,7 +131,7 @@ const merged = {
     ),
   },
   albumSummaries,
-  skipped: manifest.skipped ?? [],
+  skipped: [...(manifest.skipped ?? []), ...sourceSkips],
 };
 
 if (merged.summary.images < merged.summary.products) {
@@ -120,5 +141,5 @@ if (merged.summary.images < merged.summary.products) {
 fs.mkdirSync(path.dirname(path.resolve(options.output)), { recursive: true });
 fs.writeFileSync(path.resolve(options.output), `${JSON.stringify(merged, null, 2)}\n`, "utf8");
 console.log(
-  `MUNDO_FIFA_MERGE_OK albums=${merged.summary.albums} products=${merged.summary.products} variants=${merged.summary.variants} images=${merged.summary.images}`,
+  `MUNDO_FIFA_MERGE_OK sourceAlbums=${merged.summary.sourceAlbums} albums=${merged.summary.albums} products=${merged.summary.products} variants=${merged.summary.variants} images=${merged.summary.images} sourceSkips=${sourceSkips.length}`,
 );
