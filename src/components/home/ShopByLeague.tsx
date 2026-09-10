@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
+import { isStandardHomeJersey, selectVariedProducts } from "@/lib/home-product-selection";
 
 interface League {
   id: string;
@@ -28,13 +29,32 @@ const ShopByLeague: React.FC = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const displayLeague = LEAGUES.find((league) => league.id === displayLeagueId) ?? DEFAULT_LEAGUE;
-  const { data, isLoading, error } = useCatalogProducts({
+  const torcedorQuery = useCatalogProducts({
     liga: displayLeague.slug,
-    pageSize: 24,
+    commercialType: "torcedor",
+    pageSize: 48,
+    sort: "newest",
+  });
+  const jogadorQuery = useCatalogProducts({
+    liga: displayLeague.slug,
+    commercialType: "jogador",
+    pageSize: 48,
     sort: "newest",
   });
 
-  const products = (data?.items ?? []).slice(0, SHOWCASE_SIZE);
+  const products = useMemo(() => {
+    const candidates = [
+      ...(torcedorQuery.data?.items ?? []),
+      ...(jogadorQuery.data?.items ?? []),
+    ]
+      .filter(isStandardHomeJersey)
+      .sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at));
+
+    return selectVariedProducts(candidates, SHOWCASE_SIZE);
+  }, [jogadorQuery.data?.items, torcedorQuery.data?.items]);
+
+  const isLoading = torcedorQuery.isLoading || jogadorQuery.isLoading;
+  const error = torcedorQuery.error ?? jogadorQuery.error;
   const placeholderCount = Math.max(0, SHOWCASE_SIZE - products.length);
 
   const handleLeagueChange = (id: string) => {
