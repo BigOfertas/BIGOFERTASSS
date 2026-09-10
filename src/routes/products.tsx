@@ -23,12 +23,15 @@ import {
   type CatalogQuery,
   type CatalogSort,
 } from "@/lib/catalog";
+import { toCatalogFilterKey } from "@/lib/catalog-filter-key";
 
 const filterKeySchema = z
   .string()
   .trim()
-  .max(100)
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+  .min(1)
+  .max(120)
+  .transform(toCatalogFilterKey)
+  .pipe(z.string().min(1).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/));
 
 const productSearchSchema = z
   .object({
@@ -53,7 +56,8 @@ const productSearchSchema = z
       value.maxPrice === undefined ||
       value.minPrice <= value.maxPrice,
     { message: "Faixa de preço inválida" },
-  );
+  )
+  .catch({});
 
 export const Route = createFileRoute("/products")({
   validateSearch: (search) => productSearchSchema.parse(search),
