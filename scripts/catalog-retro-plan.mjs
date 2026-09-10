@@ -52,17 +52,22 @@ function stripPattern(value, pattern) {
   return value.replace(pattern, " ").replace(/\s+/g, " ").trim();
 }
 
+function correctKnownSourceTypos(value) {
+  return String(value).replace(/\b19989\/91\b/g, "1989/91");
+}
+
 function parseRetroIdentity(product, sourceGroup) {
   const sourceTitle = String(
     product.sourceTitle ?? product.variants?.[0]?.sourceTitle ?? "",
   ).trim();
-  const typeMatch = sourceTitle.match(/^(CAMISA|REGATA)\b/i);
+  const parseTitle = correctKnownSourceTypos(sourceTitle);
+  const typeMatch = parseTitle.match(/^(CAMISA|REGATA)\b/i);
   if (!typeMatch) {
     throw new Error(`Título fora do escopo de camisas retrô: ${sourceTitle}`);
   }
 
   const seasonMatches = [
-    ...sourceTitle.matchAll(/\b((?:19|20)\d{2}(?:[/-]\d{2,4})?|\d{2}\/\d{2})\b/g),
+    ...parseTitle.matchAll(/\b((?:19|20)\d{2}(?:[/-]\d{2,4})?|\d{2}\/\d{2})\b/g),
   ];
   const seasonMatch = seasonMatches.at(-1);
   if (!seasonMatch || seasonMatch.index === undefined) {
@@ -70,11 +75,11 @@ function parseRetroIdentity(product, sourceGroup) {
   }
 
   const season = seasonMatch[1].replace("-", "/");
-  const beforeSeason = sourceTitle
+  const beforeSeason = parseTitle
     .slice(typeMatch[0].length, seasonMatch.index)
     .replace(/\s+/g, " ")
     .trim();
-  const sourceTail = sourceTitle
+  const sourceTail = parseTitle
     .slice(seasonMatch.index + seasonMatch[0].length)
     .replace(/\s+/g, " ")
     .trim();
@@ -90,6 +95,7 @@ function parseRetroIdentity(product, sourceGroup) {
     ["Treino", /\bDE\s+TREINO\b/gi],
     ["Treino", /\bTREINO\b/gi],
     ["Manga Longa", /\bMANGA\s+LONGA\b/gi],
+    ["Final Champions", /\bFINAL\s+CHAMPIONS\b/gi],
     ["Goleiro", /\bGOLEIRO\b/gi],
     ["Feminina", /\bFEMININ[AO]\b/gi],
     ["Jogador", /\b(?:PLAYER|JOGADOR)\b/gi],
