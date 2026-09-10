@@ -49,7 +49,8 @@ const products = plans.flatMap(({ data }) => data.products ?? []);
 if (products.length === 0) throw new Error("Planos reconciliados sem produtos.");
 const sourceKeys = products.map((product) => clean(product.sourceKey));
 if (sourceKeys.some((key) => !key)) throw new Error("Produto sem sourceKey no plano final.");
-if (new Set(sourceKeys).size !== sourceKeys.length) throw new Error("sourceKey duplicada no plano final.");
+if (new Set(sourceKeys).size !== sourceKeys.length)
+  throw new Error("sourceKey duplicada no plano final.");
 
 const projectRef = clean(process.env.SUPABASE_PROJECT_ID);
 const accessToken = clean(process.env.SUPABASE_ACCESS_TOKEN);
@@ -139,7 +140,9 @@ const expected = {
 };
 for (const [key, value] of Object.entries(expected)) {
   if (Number(database[key]) !== Number(value)) {
-    throw new Error(`Verificação final falhou em ${key}: esperado ${value}, recebido ${database[key]}`);
+    throw new Error(
+      `Verificação final falhou em ${key}: esperado ${value}, recebido ${database[key]}`,
+    );
   }
 }
 
@@ -175,7 +178,11 @@ const result = {
     variants: data.products.reduce((sum, product) => sum + (product.variants?.length ?? 0), 0),
     images: data.products.reduce(
       (sum, product) =>
-        sum + (product.variants ?? []).reduce((inner, variant) => inner + (variant.images?.length ?? 0), 0),
+        sum +
+        (product.variants ?? []).reduce(
+          (inner, variant) => inner + (variant.images?.length ?? 0),
+          0,
+        ),
       0,
     ),
   })),
@@ -185,4 +192,6 @@ fs.mkdirSync(path.dirname(path.resolve(options.output)), { recursive: true });
 fs.writeFileSync(path.resolve(options.output), `${JSON.stringify(result, null, 2)}\n`, "utf8");
 console.log("PDF_REMAINING_DB_VERIFICATION");
 console.log(JSON.stringify(result, null, 2));
-console.log(`PDF_REMAINING_DB_OK products=${products.length} variants=${plannedVariants} images=${plannedImages}`);
+console.log(
+  `PDF_REMAINING_DB_OK products=${products.length} variants=${plannedVariants} images=${plannedImages}`,
+);

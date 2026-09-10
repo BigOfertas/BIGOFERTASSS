@@ -72,7 +72,9 @@ if (!Array.isArray(assimilation.proposedProducts)) {
 }
 
 const kept = assimilation.proposedProducts.filter((product) => shouldKeep(product, options.mode));
-const skipped = assimilation.proposedProducts.filter((product) => !shouldKeep(product, options.mode));
+const skipped = assimilation.proposedProducts.filter(
+  (product) => !shouldKeep(product, options.mode),
+);
 if (kept.length === 0) {
   throw new Error(`Nenhum produto elegível restou após o filtro ${options.mode}.`);
 }

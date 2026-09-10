@@ -53,7 +53,10 @@ for (const [index, album] of albums.entries()) {
     if (normalize(product.competition) !== "NBA" || normalize(product.league) !== "NBA") {
       throw new Error(`${album.name}: liga/campeonato incorreto em ${product.name}.`);
     }
-    if (product.commercialType !== "basquete" || Math.abs(Number(product.price) - NBA_PRICE) > 0.001) {
+    if (
+      product.commercialType !== "basquete" ||
+      Math.abs(Number(product.price) - NBA_PRICE) > 0.001
+    ) {
       throw new Error(`${album.name}: preço/tipo comercial inválido em ${product.name}.`);
     }
     if (!Array.isArray(product.variants) || product.variants.length === 0) {
@@ -64,7 +67,10 @@ for (const [index, album] of albums.entries()) {
       throw new Error(`${album.name}: códigos de variação duplicados em ${product.name}.`);
     }
     for (const variant of product.variants) {
-      if (variant.commercialType !== "basquete" || Math.abs(Number(variant.price) - NBA_PRICE) > 0.001) {
+      if (
+        variant.commercialType !== "basquete" ||
+        Math.abs(Number(variant.price) - NBA_PRICE) > 0.001
+      ) {
         throw new Error(`${album.name}: variante NBA com preço/tipo incorreto em ${product.name}.`);
       }
       if (!Array.isArray(variant.images) || variant.images.length === 0) {
@@ -114,4 +120,6 @@ const merged = {
 
 fs.mkdirSync(path.dirname(path.resolve(options.output)), { recursive: true });
 fs.writeFileSync(path.resolve(options.output), `${JSON.stringify(merged, null, 2)}\n`, "utf8");
-console.log(`NBA_MERGE_OK albums=${merged.summary.albums} products=${merged.summary.products} variants=${merged.summary.variants} images=${merged.summary.images}`);
+console.log(
+  `NBA_MERGE_OK albums=${merged.summary.albums} products=${merged.summary.products} variants=${merged.summary.variants} images=${merged.summary.images}`,
+);

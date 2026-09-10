@@ -62,12 +62,15 @@ for (const group of groups) {
   const expected = Array.isArray(group.albums) ? group.albums : [];
   const groupPlans = plans.filter(({ data }) => data.pdfGroupId === group.id);
   if (groupPlans.length !== expected.length) {
-    throw new Error(`${group.name}: esperados ${expected.length} planos, encontrados ${groupPlans.length}.`);
+    throw new Error(
+      `${group.name}: esperados ${expected.length} planos, encontrados ${groupPlans.length}.`,
+    );
   }
   const bySource = new Map();
   for (const item of groupPlans) {
     const key = normalize(item.data.sourceGroup);
-    if (bySource.has(key)) throw new Error(`${group.name}: plano duplicado para ${item.data.sourceGroup}.`);
+    if (bySource.has(key))
+      throw new Error(`${group.name}: plano duplicado para ${item.data.sourceGroup}.`);
     bySource.set(key, item);
   }
 
@@ -83,12 +86,17 @@ for (const group of groups) {
     }
     for (const product of plan.products) {
       const expectedTypePrice = PRICE_BY_TYPE[product.commercialType];
-      if (!Number.isFinite(expectedTypePrice) || Math.abs(Number(product.price) - expectedTypePrice) > 0.001) {
+      if (
+        !Number.isFinite(expectedTypePrice) ||
+        Math.abs(Number(product.price) - expectedTypePrice) > 0.001
+      ) {
         throw new Error(`${group.name}/${album.name}: preço/tipo inválido em ${product.name}.`);
       }
       if (group.mode === "club") {
         if (normalize(product.team) !== normalize(album.name)) {
-          throw new Error(`${group.name}: ${product.name} associado ao time incorreto (${product.team}).`);
+          throw new Error(
+            `${group.name}: ${product.name} associado ao time incorreto (${product.team}).`,
+          );
         }
         if (group.league && normalize(product.league) !== normalize(group.league)) {
           throw new Error(`${group.name}/${album.name}: liga incorreta em ${product.name}.`);
@@ -97,7 +105,9 @@ for (const group of groups) {
           throw new Error(`${group.name}/${album.name}: campeonato incorreto em ${product.name}.`);
         }
         if (product.commercialType === "retro") {
-          throw new Error(`${group.name}/${album.name}: produto retrô entrou em lote que não deve refazer Retrô.`);
+          throw new Error(
+            `${group.name}/${album.name}: produto retrô entrou em lote que não deve refazer Retrô.`,
+          );
         }
       } else if (group.mode === "kids" && product.commercialType !== "infantil") {
         throw new Error(`Kids: produto não infantil em ${product.name}.`);
@@ -122,7 +132,8 @@ for (const group of groups) {
       variants: plan.products.reduce((sum, product) => sum + product.variants.length, 0),
       images: plan.products.reduce(
         (sum, product) =>
-          sum + product.variants.reduce((inner, variant) => inner + (variant.images?.length ?? 0), 0),
+          sum +
+          product.variants.reduce((inner, variant) => inner + (variant.images?.length ?? 0), 0),
         0,
       ),
     });
@@ -141,7 +152,8 @@ for (const group of groups) {
       variants: products.reduce((sum, product) => sum + product.variants.length, 0),
       images: products.reduce(
         (sum, product) =>
-          sum + product.variants.reduce((inner, variant) => inner + (variant.images?.length ?? 0), 0),
+          sum +
+          product.variants.reduce((inner, variant) => inner + (variant.images?.length ?? 0), 0),
         0,
       ),
     },
@@ -162,7 +174,8 @@ if (consumed.size !== plans.length) {
 }
 const sourceKeys = allProducts.map((product) => product.sourceKey);
 if (sourceKeys.some((key) => !key)) throw new Error("Há produto sem sourceKey.");
-if (new Set(sourceKeys).size !== sourceKeys.length) throw new Error("Há sourceKey duplicada entre os lotes restantes.");
+if (new Set(sourceKeys).size !== sourceKeys.length)
+  throw new Error("Há sourceKey duplicada entre os lotes restantes.");
 
 const merged = {
   schemaVersion: 1,

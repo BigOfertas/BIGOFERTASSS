@@ -45,4 +45,6 @@ fs.mkdirSync(path.dirname(path.resolve(options.output)), { recursive: true });
 fs.mkdirSync(path.dirname(path.resolve(options.report)), { recursive: true });
 fs.writeFileSync(path.resolve(options.output), `${JSON.stringify(filtered, null, 2)}\n`, "utf8");
 fs.writeFileSync(path.resolve(options.report), `${JSON.stringify(report, null, 2)}\n`, "utf8");
-console.log(`NBA_SCOPE_FILTER_OK before=${report.before} kept=${report.kept} skipped=${report.skipped.length}`);
+console.log(
+  `NBA_SCOPE_FILTER_OK before=${report.before} kept=${report.kept} skipped=${report.skipped.length}`,
+);

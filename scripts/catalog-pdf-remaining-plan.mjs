@@ -101,8 +101,9 @@ const products = input.products.map((product, productIndex) => {
     throw new Error(`${options.sourceGroup}: produto ${productIndex + 1} incompleto.`);
   }
 
-  const forcedType = options.mode === "kids" ? "infantil" : options.mode === "shorts" ? "calcao" : null;
-  const team = options.mode === "club" ? options.sourceGroup : product.team ?? null;
+  const forcedType =
+    options.mode === "kids" ? "infantil" : options.mode === "shorts" ? "calcao" : null;
+  const team = options.mode === "club" ? options.sourceGroup : (product.team ?? null);
   const mappedVariants = product.variants.map((variant, variantIndex) => {
     if (!Array.isArray(variant.images) || variant.images.length === 0) {
       throw new Error(`${options.sourceGroup}: variante sem imagens em ${product.name}.`);
@@ -116,7 +117,8 @@ const products = input.products.map((product, productIndex) => {
       league: options.league,
     });
     const commercialType =
-      forcedType ?? (profile.commercialType === "other" ? variant.commercialType : profile.commercialType);
+      forcedType ??
+      (profile.commercialType === "other" ? variant.commercialType : profile.commercialType);
     if (!ALLOWED_CLUB_TYPES.has(commercialType)) {
       throw new Error(
         `${options.sourceGroup}: tipo comercial não permitido em ${variant.sourceTitle || product.name}: ${commercialType}`,
@@ -150,10 +152,10 @@ const products = input.products.map((product, productIndex) => {
       : options.mode === "shorts"
         ? { name: "Shorts", slug: "shorts" }
         : product.category;
-  const competition = options.mode === "club" ? options.competition : product.competition ?? null;
-  const league = options.mode === "club" ? options.league : product.league ?? null;
+  const competition = options.mode === "club" ? options.competition : (product.competition ?? null);
+  const league = options.mode === "club" ? options.league : (product.league ?? null);
   const customizable = primaryType !== "calcao";
-  const patches = primaryType === "calcao" ? [] : profile.patches ?? product.patches ?? [];
+  const patches = primaryType === "calcao" ? [] : (profile.patches ?? product.patches ?? []);
   const specifications = [
     product.brand ? `Marca: ${product.brand}` : null,
     product.season ? `Temporada: ${product.season}` : null,

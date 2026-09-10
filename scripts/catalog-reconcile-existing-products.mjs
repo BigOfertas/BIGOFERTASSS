@@ -10,7 +10,8 @@ function parseArgs(argv) {
     else if (arg === "--report") out.report = argv[++index];
     else throw new Error(`Opção desconhecida: ${arg}`);
   }
-  if (!out.input || !out.output || !out.report) throw new Error("Use --input, --output e --report.");
+  if (!out.input || !out.output || !out.report)
+    throw new Error("Use --input, --output e --report.");
   return out;
 }
 
@@ -45,7 +46,8 @@ function unique(rows) {
 const options = parseArgs(process.argv.slice(2));
 const projectRef = String(process.env.SUPABASE_PROJECT_ID ?? "").trim();
 const accessToken = String(process.env.SUPABASE_ACCESS_TOKEN ?? "").trim();
-if (!projectRef || !accessToken) throw new Error("SUPABASE_PROJECT_ID e SUPABASE_ACCESS_TOKEN são obrigatórios.");
+if (!projectRef || !accessToken)
+  throw new Error("SUPABASE_PROJECT_ID e SUPABASE_ACCESS_TOKEN são obrigatórios.");
 
 const plan = JSON.parse(fs.readFileSync(path.resolve(options.input), "utf8"));
 if (!Array.isArray(plan.products) || plan.products.length === 0) throw new Error("Plano vazio.");
@@ -101,7 +103,12 @@ for (const product of plan.products) {
   if (incomingSourceKey && bySourceKey.has(incomingSourceKey)) {
     const row = bySourceKey.get(incomingSourceKey);
     kept.push({ ...product, catalogCode: row.catalog_code ?? product.catalogCode });
-    adopted.push({ mode: "same_source_key", name: product.name, team: product.team ?? null, catalogCode: row.catalog_code ?? null });
+    adopted.push({
+      mode: "same_source_key",
+      name: product.name,
+      team: product.team ?? null,
+      catalogCode: row.catalog_code ?? null,
+    });
     continue;
   }
 
@@ -165,7 +172,11 @@ const reconciled = {
     variants: kept.reduce((sum, product) => sum + (product.variants?.length ?? 0), 0),
     images: kept.reduce(
       (sum, product) =>
-        sum + (product.variants ?? []).reduce((inner, variant) => inner + (variant.images?.length ?? 0), 0),
+        sum +
+        (product.variants ?? []).reduce(
+          (inner, variant) => inner + (variant.images?.length ?? 0),
+          0,
+        ),
       0,
     ),
     adoptedExisting: adopted.length,

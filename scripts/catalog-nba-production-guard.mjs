@@ -111,4 +111,6 @@ const result = {
 };
 fs.mkdirSync(path.dirname(path.resolve(options.output)), { recursive: true });
 fs.writeFileSync(path.resolve(options.output), `${JSON.stringify(result, null, 2)}\n`, "utf8");
-console.log(`NBA_PRODUCTION_OK teams=${result.coveredTeams} activeProducts=${result.activeProducts} readyImages=${result.readyImages}`);
+console.log(
+  `NBA_PRODUCTION_OK teams=${result.coveredTeams} activeProducts=${result.activeProducts} readyImages=${result.readyImages}`,
+);
