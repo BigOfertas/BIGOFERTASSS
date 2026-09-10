@@ -126,7 +126,10 @@ function extractBrand(title, season) {
   const normalizedAfter = normalized(after);
   for (const brand of KNOWN_BRANDS) {
     if (normalizedAfter === brand || normalizedAfter.endsWith(` ${brand}`)) {
-      return { brand: displayWords(brand), raw: after.slice(Math.max(0, after.length - brand.length)) };
+      return {
+        brand: displayWords(brand),
+        raw: after.slice(Math.max(0, after.length - brand.length)),
+      };
     }
   }
   const before = clean(title.slice(0, season.index));
@@ -152,7 +155,10 @@ function parseShort(title) {
   const seasonMatch = extractSeason(sourceTitle);
   const brandInfo = extractBrand(sourceTitle, seasonMatch);
   let before = clean(sourceTitle.slice(0, seasonMatch.index).replace(/^SHORTS?\b/i, " "));
-  let after = stripKnownBrand(clean(sourceTitle.slice(seasonMatch.index + seasonMatch.token.length)), brandInfo.raw);
+  let after = stripKnownBrand(
+    clean(sourceTitle.slice(seasonMatch.index + seasonMatch.token.length)),
+    brandInfo.raw,
+  );
 
   let model = null;
   const modelMatch = before.match(/^(I|II|III|IV)\b/i);
@@ -190,11 +196,15 @@ function parseTraining(title) {
   if (/^\[?\d{2,4}\/\d{2,4}\]?\s+CONJUNTOS? DE TREINO\s*\/\s*VIAGEM$/i.test(sourceTitle)) {
     return null;
   }
-  if (!/^CONJUNTO\b/i.test(sourceTitle)) throw new Error(`Título fora de Treino/Kit: ${sourceTitle}`);
+  if (!/^CONJUNTO\b/i.test(sourceTitle))
+    throw new Error(`Título fora de Treino/Kit: ${sourceTitle}`);
   const seasonMatch = extractSeason(sourceTitle);
   const brandInfo = extractBrand(sourceTitle, seasonMatch);
   const before = clean(sourceTitle.slice(0, seasonMatch.index).replace(/^CONJUNTO\b/i, " "));
-  const after = stripKnownBrand(clean(sourceTitle.slice(seasonMatch.index + seasonMatch.token.length)), brandInfo.raw);
+  const after = stripKnownBrand(
+    clean(sourceTitle.slice(seasonMatch.index + seasonMatch.token.length)),
+    brandInfo.raw,
+  );
   const teamText = clean(`${before} ${after}`);
   if (!teamText) throw new Error(`Time ausente: ${sourceTitle}`);
   return {
@@ -217,7 +227,10 @@ function parseWindbreaker(title) {
   const seasonMatch = extractSeason(sourceTitle);
   const brandInfo = extractBrand(sourceTitle, seasonMatch);
   let before = clean(sourceTitle.slice(0, seasonMatch.index).replace(/^CORTA[- ]?VENTO\b/i, " "));
-  let after = stripKnownBrand(clean(sourceTitle.slice(seasonMatch.index + seasonMatch.token.length)), brandInfo.raw);
+  let after = stripKnownBrand(
+    clean(sourceTitle.slice(seasonMatch.index + seasonMatch.token.length)),
+    brandInfo.raw,
+  );
   const retro = /\bRETR[ÔO]\b/i.test(before) || /\bRETR[ÔO]\b/i.test(after);
   before = clean(before.replace(/\bRETR[ÔO]\b/gi, " "));
   after = clean(after.replace(/\bRETR[ÔO]\b/gi, " "));
@@ -248,7 +261,9 @@ function familyConfig(family, priceOverride) {
     };
   }
   if (!Number.isFinite(priceOverride) || priceOverride <= 0) {
-    throw new Error(`${family}: informe --price com o preço comercial aprovado; preço não será inventado.`);
+    throw new Error(
+      `${family}: informe --price com o preço comercial aprovado; preço não será inventado.`,
+    );
   }
   if (family === "treino") {
     return {
@@ -440,7 +455,8 @@ async function validateUrl(url) {
     redirect: "follow",
     signal: AbortSignal.timeout(20_000),
   });
-  if (!response.ok) throw new Error(`Imagem indisponível (${response.status}): ${url.slice(0, 120)}`);
+  if (!response.ok)
+    throw new Error(`Imagem indisponível (${response.status}): ${url.slice(0, 120)}`);
   await response.body?.cancel();
 }
 
@@ -463,7 +479,9 @@ const plan = buildPlan(collector, options);
 if (options.validateUrls) {
   const urls = [
     ...new Set(
-      plan.products.flatMap((product) => product.variants.flatMap((variant) => variant.images.map((image) => image.url))),
+      plan.products.flatMap((product) =>
+        product.variants.flatMap((variant) => variant.images.map((image) => image.url)),
+      ),
     ),
   ];
   await mapLimit(urls, 16, validateUrl);
