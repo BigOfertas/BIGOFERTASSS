@@ -35,7 +35,9 @@ if (!Array.isArray(assimilation.proposedProducts)) {
 const kept = assimilation.proposedProducts.filter(shouldKeep);
 const skipped = assimilation.proposedProducts.filter((product) => !shouldKeep(product));
 if (kept.length === 0) {
-  throw new Error("Nenhuma camisa, short ou kit infantil restou no álbum do Campeonato Brasileiro.");
+  throw new Error(
+    "Nenhuma camisa, short ou kit infantil restou no álbum do Campeonato Brasileiro.",
+  );
 }
 
 const filtered = {
