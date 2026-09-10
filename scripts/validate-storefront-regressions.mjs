@@ -139,6 +139,13 @@ check(
     brazilProducts.includes("const SHOWCASE_SIZE = 15"),
 );
 check(
+  "Futebol Brasileiro mostra somente Camisas I II III Torcedor ou Jogador",
+  brazilProducts.includes('commercialType: "torcedor"') &&
+    brazilProducts.includes('commercialType: "jogador"') &&
+    brazilProducts.includes(".filter(isStandardHomeJersey)") &&
+    !brazilProducts.includes("!isStandardHomeJersey"),
+);
+check(
   "carrossel padrão mantém cinco cards por página e quinze itens geram três páginas",
   carousel.includes("const productsPerPage = 5") && 15 / 5 === 3,
 );
