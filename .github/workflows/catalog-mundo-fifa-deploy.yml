@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - ".github/workflows/catalog-mundo-fifa-deploy.yml"
       - "catalog-jobs/pdf-groups/mundo-fifa.json"
 
 permissions:
@@ -12,7 +13,7 @@ permissions:
 
 concurrency:
   group: catalog-mundo-fifa-production
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   resolve:
@@ -38,7 +39,7 @@ jobs:
             process.exit(0);
           }
           if (albums.length !== 47) throw new Error(`Esperados 47 álbuns após pular Argélia; recebidos ${albums.length}.`);
-          if (albums.some((album) => normalize(album.name) === 'ARGELIA')) throw new Error('Argélia foi explicitamente excluída.');
+          if (albums.some((album) => normalize(album.name) === 'ARGELIA') ) throw new Error('Argélia foi explicitamente excluída.');
           for (const [index, album] of albums.entries()) {
             if (!album?.name || !/^https:\/\/photos\.google\.com\/share\//.test(album?.url || '')) {
               throw new Error(`Álbum Mundo FIFA inválido na posição ${index + 1}.`);
