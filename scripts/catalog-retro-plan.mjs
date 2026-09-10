@@ -49,10 +49,7 @@ function displayEntity(value) {
 }
 
 function stripPattern(value, pattern) {
-  return value
-    .replace(pattern, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return value.replace(pattern, " ").replace(/\s+/g, " ").trim();
 }
 
 function parseRetroIdentity(product, sourceGroup) {
