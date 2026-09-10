@@ -59,11 +59,16 @@ const normalized = {
     if (!product?.sourceKey || !Array.isArray(product.variants) || product.variants.length === 0) {
       throw new Error(`Produto ${productIndex + 1} incompleto.`);
     }
-    const sourceTitles = [product.sourceTitle, ...product.variants.map((variant) => variant?.sourceTitle)]
+    const sourceTitles = [
+      product.sourceTitle,
+      ...product.variants.map((variant) => variant?.sourceTitle),
+    ]
       .filter(Boolean)
       .join(" ");
     if (!/\b(CAMISA|REGATA|RET[RÔO])\b/i.test(sourceTitles)) {
-      throw new Error(`Produto fora do escopo de camisas retrô: ${product.sourceTitle ?? product.name}`);
+      throw new Error(
+        `Produto fora do escopo de camisas retrô: ${product.sourceTitle ?? product.name}`,
+      );
     }
 
     const name = forceRetroName(product.name);
