@@ -76,7 +76,9 @@ const text = await response.text();
 if (!response.ok) throw new Error(`Supabase HTTP ${response.status}: ${text.slice(0, 2000)}`);
 const existing = text ? JSON.parse(text) : [];
 
-const sourceKeys = new Set(existing.map((row) => String(row.catalog_source_key ?? "")).filter(Boolean));
+const sourceKeys = new Set(
+  existing.map((row) => String(row.catalog_source_key ?? "")).filter(Boolean),
+);
 const titleKeys = new Set(
   existing
     .filter((row) => row.catalog_source_title && row.time)
@@ -84,9 +86,12 @@ const titleKeys = new Set(
 );
 const signatures = new Set(
   existing.map((row) =>
-    [normalize(row.time), normalize(row.name), normalize(row.season), normalize(row.commercial_type)].join(
-      "|",
-    ),
+    [
+      normalize(row.time),
+      normalize(row.name),
+      normalize(row.season),
+      normalize(row.commercial_type),
+    ].join("|"),
   ),
 );
 
