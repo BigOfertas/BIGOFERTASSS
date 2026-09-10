@@ -63,6 +63,14 @@ check(
     "/checkout",
   ].every((route) => !footerRoutes.includes(route)),
 );
+check(
+  "rodapé não aparece antes do conteúdo no F5",
+  root.includes("const [footerReady, setFooterReady] = useState(false)") &&
+    root.includes("window.requestAnimationFrame") &&
+    root.includes("footerReady && showStorefrontFooter") &&
+    root.includes('className="flex min-h-screen flex-col"') &&
+    root.includes('className="min-h-0 flex-1"'),
+);
 const routeFooterUsers = routeFiles("src/routes").filter(
   (file) => file !== "src/routes/__root.tsx" && /<Footer\b|import\s+Footer\b/.test(read(file)),
 );
