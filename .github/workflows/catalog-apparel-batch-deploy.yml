@@ -1,0 +1,194 @@
+name: Catalog Apparel Batch Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "catalog-jobs/apparel-batch/job.json"
+      - ".github/workflows/catalog-apparel-batch-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-apparel-batch-production
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.resolve.outputs.enabled }}
+      album_url: ${{ steps.resolve.outputs.album_url }}
+      label: ${{ steps.resolve.outputs.label }}
+      price_override: ${{ steps.resolve.outputs.price_override }}
+      expected_min_images: ${{ steps.resolve.outputs.expected_min_images }}
+      max_scrolls: ${{ steps.resolve.outputs.max_scrolls }}
+      default_stock: ${{ steps.resolve.outputs.default_stock }}
+      public_base_url: ${{ steps.resolve.outputs.public_base_url }}
+      launch_count: ${{ steps.resolve.outputs.launch_count }}
+      request_id: ${{ steps.resolve.outputs.request_id }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: resolve
+        name: Resolve apparel request
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const request = JSON.parse(fs.readFileSync('catalog-jobs/apparel-batch/job.json', 'utf8'));
+          const output = (key, value) => fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${String(value ?? '').replace(/[\r\n]+/g, ' ').trim()}\n`);
+          if (request.enabled !== true) {
+            output('enabled', 'false');
+            output('request_id', request.request_id || 'disabled');
+            console.log('APPAREL_BATCH_REQUEST_DISABLED');
+            process.exit(0);
+          }
+          const album = new URL(String(request.album_url || ''));
+          if (album.protocol !== 'https:' || !['photos.google.com', 'photos.app.goo.gl'].includes(album.hostname)) throw new Error('album_url inválido.');
+          const label = String(request.label || '').trim();
+          if (!label) throw new Error('label obrigatório.');
+          if (!/^(SHORTS|CONJUNTOS DE TREINO \/ KIT|CORTA-VENTO)$/i.test(label)) throw new Error(`Grupo não permitido: ${label}`);
+          const price = request.price_override == null ? '' : Number(request.price_override);
+          if (label.toUpperCase() !== 'SHORTS' && (!Number.isFinite(price) || price <= 0)) throw new Error(`${label}: price_override aprovado é obrigatório; o pipeline não inventa preço.`);
+          if (label.toUpperCase() === 'SHORTS' && price !== '' && Math.abs(price - 159.9) > 0.001) throw new Error('SHORTS deve usar R$ 159,90.');
+          if (request.reset_catalog === true) throw new Error('Reset de catálogo é proibido neste pipeline incremental.');
+          output('enabled', 'true');
+          output('album_url', album.href);
+          output('label', label);
+          output('price_override', price);
+          output('expected_min_images', Number.parseInt(String(request.expected_min_images ?? 1), 10));
+          output('max_scrolls', Number.parseInt(String(request.max_scrolls ?? 350), 10));
+          output('default_stock', Number.parseInt(String(request.default_stock ?? 999), 10));
+          output('public_base_url', String(request.public_base_url || 'https://bigofertas.net').replace(/\/$/, ''));
+          output('launch_count', Number.parseInt(String(request.launch_count ?? 10), 10));
+          output('request_id', request.request_id || `push-${process.env.GITHUB_SHA?.slice(0, 12)}`);
+          console.log(`APPAREL_BATCH_REQUEST_OK label=${label} price=${price || 'fixed-rule'}`);
+          NODE
+
+  catalog:
+    needs: resolve
+    if: needs.resolve.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Validate apparel pipeline code
+        run: |
+          node --check scripts/google-photos-collector.mjs
+          node --check scripts/google-photos-assimilator.mjs
+          node --check scripts/google-photos-assimilator-runner.mjs
+          node --check scripts/catalog-pdf-apparel-plan.mjs
+          node --check scripts/apply-normalized-catalog-plan.mjs
+          node --check scripts/catalog-batch-guard.mjs
+          node --check scripts/catalog-batch-public-verify.mjs
+
+      - name: Ensure catalog backend prerequisites are live
+        run: |
+          node scripts/deploy-storefront-upgrade-migrations.mjs
+          node scripts/deploy-home-launches-top10.mjs
+          node scripts/deploy-kids-purchase-sizes.mjs
+
+      - name: Snapshot protected business data
+        run: |
+          node scripts/catalog-batch-guard.mjs snapshot --out .artifacts/catalog-batch/protected-state-before.json
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Collect complete Google Photos album
+        run: |
+          node scripts/google-photos-collector.mjs \
+            --url "${{ needs.resolve.outputs.album_url }}" \
+            --label "${{ needs.resolve.outputs.label }}" \
+            --expected-min-images "${{ needs.resolve.outputs.expected_min_images }}" \
+            --max-scrolls "${{ needs.resolve.outputs.max_scrolls }}" \
+            --out .artifacts/google-photos-collector
+
+      - name: Assimilate every visual group
+        run: |
+          node scripts/google-photos-assimilator-runner.mjs \
+            --input .artifacts/google-photos-collector/collector.json \
+            --out .artifacts/google-photos-collector/assimilation
+
+      - name: Normalize and validate apparel plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          PRICE_ARGS=()
+          if [[ -n "${{ needs.resolve.outputs.price_override }}" ]]; then
+            PRICE_ARGS=(--price "${{ needs.resolve.outputs.price_override }}")
+          fi
+          node scripts/catalog-pdf-apparel-plan.mjs \
+            --collector .artifacts/google-photos-collector/collector.json \
+            --output .artifacts/google-photos-collector/catalog-pipeline-plan.json \
+            --source-group "${{ needs.resolve.outputs.label }}" \
+            --stock "${{ needs.resolve.outputs.default_stock }}" \
+            --validate-urls \
+            "${PRICE_ARGS[@]}"
+
+      - name: Apply and activate normalized apparel batch
+        run: |
+          node scripts/apply-normalized-catalog-plan.mjs \
+            --plan .artifacts/google-photos-collector/catalog-pipeline-plan.json \
+            --stock "${{ needs.resolve.outputs.default_stock }}"
+
+      - name: Verify exact database result and protected data
+        run: |
+          node scripts/catalog-batch-guard.mjs verify \
+            --snapshot .artifacts/catalog-batch/protected-state-before.json \
+            --plan .artifacts/google-photos-collector/catalog-pipeline-plan.json \
+            --out .artifacts/catalog-batch/verification.json
+
+      - name: Upload complete deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-apparel-deploy-${{ github.run_id }}
+          path: .artifacts/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+
+  verify_public:
+    needs: [resolve, catalog]
+    if: needs.resolve.outputs.enabled == 'true' && needs.catalog.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Download deployment evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: catalog-apparel-deploy-${{ github.run_id }}
+          path: .artifacts
+      - name: Install Playwright for public E2E
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install chromium
+      - name: Verify public catalog and product details
+        run: |
+          node scripts/catalog-batch-public-verify.mjs \
+            --verification .artifacts/catalog-batch/verification.json \
+            --base-url "${{ needs.resolve.outputs.public_base_url }}" \
+            --launch-count "${{ needs.resolve.outputs.launch_count }}"
+      - name: Final apparel deployment marker
+        run: |
+          echo "APPAREL_BATCH_DEPLOY_COMPLETE request=${{ needs.resolve.outputs.request_id }}"
+          echo "APPAREL_BATCH_DEPLOY_PUBLIC_OK"
