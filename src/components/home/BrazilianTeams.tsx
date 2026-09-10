@@ -1,10 +1,9 @@
 import React, { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
+import TEAM_CREST_SPRITE from "@/assets/teams/brasileirao-sprite";
 import BrazilianProducts from "@/components/home/BrazilianProducts";
 import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalization";
-
-const TEAM_CREST_SPRITE = "/assets/teams/brasileirao-team-crests.webp";
 
 interface Team {
   id: string;
