@@ -31,7 +31,13 @@ const filterKeySchema = z
   .min(1)
   .max(120)
   .transform(toCatalogFilterKey)
-  .pipe(z.string().min(1).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/));
+  .pipe(
+    z
+      .string()
+      .min(1)
+      .max(100)
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  );
 
 const productSearchSchema = z
   .object({
