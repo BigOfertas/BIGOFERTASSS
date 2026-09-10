@@ -1,0 +1,14 @@
+{
+  "enabled": false,
+  "request_id": "template-disabled",
+  "album_url": "https://photos.google.com/",
+  "label": "LOTE DESABILITADO",
+  "expected_min_images": 1,
+  "max_scrolls": 350,
+  "default_stock": 999,
+  "deploy_frontend": false,
+  "reset_catalog": false,
+  "reset_authorization": "",
+  "public_base_url": "https://bigofertas.net",
+  "launch_count": 10
+}
