@@ -22,7 +22,6 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 const FOOTER_ROUTES = new Set([
   "/",
   "/products",
-  "/cart",
   "/privacidade",
   "/trocas-e-devolucoes",
   "/termos-de-compra",
