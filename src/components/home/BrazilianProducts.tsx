@@ -59,7 +59,10 @@ const BrazilianProducts: React.FC = () => {
       ));
 
   return (
-    <div className="mt-6 rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
+    <div
+      id="brasileirao"
+      className="mt-6 scroll-mt-28 rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5"
+    >
       <ProductCarousel itemCount={isLoading ? LOADING_SIZE : brazilianProducts.length}>
         {content}
       </ProductCarousel>
