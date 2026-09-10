@@ -3,16 +3,24 @@ name: Hostinger Production Deploy
 on:
   workflow_dispatch:
   workflow_call:
+  workflow_run:
+    workflows:
+      - Validate Storefront Main
+    types:
+      - completed
 
 permissions:
   contents: read
 
 concurrency:
-  group: hostinger-production-deploy-${{ github.ref }}
+  group: hostinger-production-deploy-${{ github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: false
 
 jobs:
   deploy:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     env:
       HOSTINGER_SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
@@ -23,6 +31,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -82,6 +92,16 @@ jobs:
           cp public/.htaccess "$HOSTINGER_OUTPUT/.htaccess"
           test -f "$HOSTINGER_OUTPUT/.htaccess"
 
+      - name: Verify hard-refresh HTML has no premature footer
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -Eiq '<footer([[:space:]>])' "$HOSTINGER_OUTPUT/index.html"; then
+            echo "Footer is present in the prerendered HTML and can flash before hydration." >&2
+            exit 1
+          fi
+          echo "HOSTINGER_FOOTER_PRERENDER_OK"
+
       - name: Prepare SSH
         shell: bash
         run: |
@@ -135,3 +155,21 @@ jobs:
             -o PubkeyAuthentication=no \
             "$HOSTINGER_SSH_USER@$HOSTINGER_SSH_HOST" \
             'set -eu; TARGET="$HOME/domains/bigofertas.net/public_html"; test -f "$TARGET/index.html"; test -f "$TARGET/.htaccess"; test -d "$TARGET/media"; echo HOSTINGER_DEPLOY_OK'
+
+      - name: Verify production hard-refresh HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in / /products /login; do
+            body="$(mktemp)"
+            curl --fail --silent --show-error --location --retry 3 --retry-delay 2 \
+              "https://bigofertas.net${path}?footer_refresh_check=${GITHUB_RUN_ID}" \
+              -o "$body"
+            if grep -Eiq '<footer([[:space:]>])' "$body"; then
+              echo "Premature footer found in production HTML for ${path}." >&2
+              rm -f "$body"
+              exit 1
+            fi
+            rm -f "$body"
+          done
+          echo "HOSTINGER_FOOTER_REFRESH_PRODUCTION_OK"
