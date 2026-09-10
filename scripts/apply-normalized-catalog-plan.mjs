@@ -115,7 +115,9 @@ async function applyMigration(name, query, historyNames) {
 }
 
 const history = await request("/database/migrations");
-const historyNames = new Set(Array.isArray(history) ? history.map((item) => item?.name).filter(Boolean) : []);
+const historyNames = new Set(
+  Array.isArray(history) ? history.map((item) => item?.name).filter(Boolean) : [],
+);
 if (historyNames.has(migrationName)) {
   console.log(`CATALOG_BATCH_ALREADY_APPLIED migration=${migrationName}`);
   process.exit(0);
@@ -129,11 +131,16 @@ const directQuery = `
     ${options.stock}
   );
 `;
-const directBodyBytes = Buffer.byteLength(JSON.stringify({ name: migrationName, query: directQuery }), "utf8");
+const directBodyBytes = Buffer.byteLength(
+  JSON.stringify({ name: migrationName, query: directQuery }),
+  "utf8",
+);
 
 if (directBodyBytes <= MAX_STAGE_CHUNK_BYTES) {
   await applyMigration(migrationName, directQuery, historyNames);
-  console.log(`CATALOG_BATCH_APPLIED migration=${migrationName} mode=direct products=${plan.products.length}`);
+  console.log(
+    `CATALOG_BATCH_APPLIED migration=${migrationName} mode=direct products=${plan.products.length}`,
+  );
   process.exit(0);
 }
 
