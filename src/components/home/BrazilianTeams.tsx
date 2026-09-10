@@ -1,38 +1,29 @@
 import React, { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
-import atleticoMGAsset from "@/assets/teams/atletico_mineiro.png.asset.json";
-import botafogoAsset from "@/assets/teams/botafogo_final.png.asset.json";
-import corinthiansAsset from "@/assets/teams/corinthians_v2.png.asset.json";
-import cruzeiroAsset from "@/assets/teams/cruzeiro.png.asset.json";
-import flamengoAsset from "@/assets/teams/flamengo.png.asset.json";
-import fluminenseAsset from "@/assets/teams/fluminense_final.png.asset.json";
-import gremioAsset from "@/assets/teams/gremio_final.png.asset.json";
-import internacionalAsset from "@/assets/teams/internacional.png.asset.json";
-import palmeirasAsset from "@/assets/teams/palmeiras.png.asset.json";
-import santosAsset from "@/assets/teams/santos_final.png.asset.json";
-import saoPauloAsset from "@/assets/teams/sao_paulo.png.asset.json";
 import BrazilianProducts from "@/components/home/BrazilianProducts";
 import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalization";
+
+const TEAM_CREST_SPRITE = "/assets/teams/brasileirao-team-crests.webp";
 
 interface Team {
   id: string;
   name: string;
-  logoUrl: string;
+  spriteIndex: number;
 }
 
 const teams: Team[] = [
-  { id: "flamengo", name: "Flamengo", logoUrl: flamengoAsset.url },
-  { id: "atletico-mineiro", name: "Atlético-MG", logoUrl: atleticoMGAsset.url },
-  { id: "cruzeiro", name: "Cruzeiro", logoUrl: cruzeiroAsset.url },
-  { id: "sao-paulo", name: "São Paulo", logoUrl: saoPauloAsset.url },
-  { id: "corinthians", name: "Corinthians", logoUrl: corinthiansAsset.url },
-  { id: "palmeiras", name: "Palmeiras", logoUrl: palmeirasAsset.url },
-  { id: "santos", name: "Santos", logoUrl: santosAsset.url },
-  { id: "botafogo", name: "Botafogo", logoUrl: botafogoAsset.url },
-  { id: "fluminense", name: "Fluminense", logoUrl: fluminenseAsset.url },
-  { id: "gremio", name: "Grêmio", logoUrl: gremioAsset.url },
-  { id: "internacional", name: "Internacional", logoUrl: internacionalAsset.url },
+  { id: "flamengo", name: "Flamengo", spriteIndex: 0 },
+  { id: "atletico-mineiro", name: "Atlético-MG", spriteIndex: 1 },
+  { id: "cruzeiro", name: "Cruzeiro", spriteIndex: 2 },
+  { id: "sao-paulo", name: "São Paulo", spriteIndex: 3 },
+  { id: "corinthians", name: "Corinthians", spriteIndex: 4 },
+  { id: "palmeiras", name: "Palmeiras", spriteIndex: 5 },
+  { id: "santos", name: "Santos", spriteIndex: 6 },
+  { id: "botafogo", name: "Botafogo", spriteIndex: 7 },
+  { id: "fluminense", name: "Fluminense", spriteIndex: 8 },
+  { id: "gremio", name: "Grêmio", spriteIndex: 9 },
+  { id: "internacional", name: "Internacional", spriteIndex: 10 },
 ];
 
 const TeamLogo: React.FC<{ team: Team }> = ({ team }) => (
@@ -43,14 +34,14 @@ const TeamLogo: React.FC<{ team: Team }> = ({ team }) => (
     className="group flex flex-shrink-0 flex-col items-center justify-center"
   >
     <div className="flex h-[104px] w-[104px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition group-hover:-translate-y-0.5 group-hover:shadow-md motion-reduce:transform-none motion-reduce:transition-none lg:h-[80px] lg:w-[80px] xl:h-[100px] xl:w-[100px] 2xl:h-[104px] 2xl:w-[104px]">
-      <img
-        src={team.logoUrl}
-        alt={team.name}
-        loading="lazy"
-        decoding="async"
-        width={600}
-        height={600}
-        className="h-full w-full object-contain"
+      <span
+        aria-hidden="true"
+        className="block h-full w-full bg-no-repeat"
+        style={{
+          backgroundImage: `url(${TEAM_CREST_SPRITE})`,
+          backgroundSize: "1100% 100%",
+          backgroundPosition: `${team.spriteIndex * 10}% 50%`,
+        }}
       />
     </div>
   </Link>
