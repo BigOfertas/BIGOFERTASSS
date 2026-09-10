@@ -55,19 +55,22 @@ for (const [index, album] of manifest.albums.entries()) {
 
 const sourceKeys = products.map((product) => product.sourceKey);
 if (sourceKeys.some((key) => !key)) throw new Error("Produto sem sourceKey.");
-if (new Set(sourceKeys).size !== sourceKeys.length)
+if (new Set(sourceKeys).size !== sourceKeys.length) {
   throw new Error("sourceKey duplicada entre álbuns.");
-
-const names = products.map((product) =>
-  String(product.name ?? "").trim().toLocaleLowerCase("pt-BR"),
-);
-const duplicateNames = names.filter((name, index) => name && names.indexOf(name) !== index);
-if (duplicateNames.length > 0) {
-  throw new Error(
-    `Nomes públicos duplicados entre álbuns: ${[...new Set(duplicateNames)].join(", ")}`,
-  );
 }
 
+const names = products.map((product) =>
+  String(product.name ?? "")
+    .trim()
+    .toLocaleLowerCase("pt-BR"),
+);
+const duplicateNames = [
+  ...new Set(names.filter((name, index) => name && names.indexOf(name) !== index)),
+];
+
+const warnings = duplicateNames.map(
+  (name) => `Nome público repetido preservado por possuir sourceKey distinta: ${name}`,
+);
 const merged = {
   schemaVersion: 1,
   batchKey: manifest.request_id || "pdf-camisas-retro",
@@ -88,24 +91,31 @@ const merged = {
     ),
   },
   albumSummaries,
-  warnings: [],
+  warnings,
 };
 
-if (merged.summary.albums !== 30)
+if (merged.summary.albums !== 30) {
   throw new Error(`Esperados 30 álbuns retrô; recebidos ${merged.summary.albums}.`);
-if (merged.summary.products < 29)
+}
+if (merged.summary.products < 29) {
   throw new Error(`Poucos produtos retrô: ${merged.summary.products}.`);
-if (merged.summary.images < merged.summary.products)
+}
+if (merged.summary.images < merged.summary.products) {
   throw new Error("Há produto retrô sem imagem.");
+}
 for (const product of merged.products) {
-  if (product.category?.slug !== "retro")
+  if (product.category?.slug !== "retro") {
     throw new Error(`${product.name}: categoria não é retro.`);
-  if (product.commercialType !== "retro")
+  }
+  if (product.commercialType !== "retro") {
     throw new Error(`${product.name}: tipo comercial não é retro.`);
-  if (Number(product.price) !== 219.9)
+  }
+  if (Number(product.price) !== 219.9) {
     throw new Error(`${product.name}: preço retrô incorreto.`);
-  if ((product.patches ?? []).length !== 0)
+  }
+  if ((product.patches ?? []).length !== 0) {
     throw new Error(`${product.name}: patch automático indevido em retrô.`);
+  }
 }
 
 fs.mkdirSync(path.dirname(path.resolve(options.output)), { recursive: true });
@@ -113,3 +123,4 @@ fs.writeFileSync(path.resolve(options.output), `${JSON.stringify(merged, null, 2
 console.log(
   `RETRO_MERGE_OK albums=${merged.summary.albums} products=${merged.summary.products} variants=${merged.summary.variants} images=${merged.summary.images}`,
 );
+if (warnings.length > 0) console.log(`RETRO_MERGE_WARNINGS count=${warnings.length}`);
