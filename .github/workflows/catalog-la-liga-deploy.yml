@@ -1,0 +1,336 @@
+name: Catalog La Liga Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/catalog-la-liga-deploy.yml"
+      - "catalog-jobs/pdf-groups/remaining.parts/**"
+      - "scripts/catalog-pdf-remaining-*.mjs"
+      - "scripts/catalog-merge-pdf-remaining-plans.mjs"
+      - "scripts/catalog-reconcile-existing-products.mjs"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-la-liga-deploy-production
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.resolve.outputs.matrix }}
+      request_id: ${{ steps.resolve.outputs.request_id }}
+      album_count: ${{ steps.resolve.outputs.album_count }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: resolve
+        name: Resolve La Liga manifest
+        run: |
+          set -euo pipefail
+          mkdir -p .artifacts/la-liga
+          cat catalog-jobs/pdf-groups/remaining.parts/*.b64 | tr -d '\r\n ' | base64 -d > .artifacts/la-liga/full-manifest.json
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+
+          const full = JSON.parse(fs.readFileSync(".artifacts/la-liga/full-manifest.json", "utf8"));
+          const group = (full.groups ?? []).find((item) => item.id === "la-liga");
+          if (!group) throw new Error("Grupo La Liga não encontrado no manifesto restante.");
+          if (group.mode !== "club") throw new Error(`Modo inesperado para La Liga: ${group.mode}`);
+          if (group.competition !== "La Liga" || group.league !== "La Liga") {
+            throw new Error(`Metadados incorretos da La Liga: competition=${group.competition} league=${group.league}`);
+          }
+          const albums = Array.isArray(group.albums) ? group.albums : [];
+          if (albums.length === 0) throw new Error("La Liga sem álbuns.");
+          for (const [index, album] of albums.entries()) {
+            if (!album?.name || !/^https:\/\/photos\.google\.com\/share\//.test(album?.url ?? "")) {
+              throw new Error(`Álbum inválido da La Liga na posição ${index + 1}.`);
+            }
+          }
+
+          const selected = {
+            enabled: true,
+            request_id: `${full.request_id}-la-liga`,
+            source: full.source,
+            notes: full.notes ?? [],
+            groups: [group],
+          };
+          fs.writeFileSync(
+            ".artifacts/la-liga/manifest.json",
+            `${JSON.stringify(selected, null, 2)}\n`,
+            "utf8",
+          );
+
+          const include = albums.map((album, index) => ({
+            index: String(index + 1).padStart(2, "0"),
+            name: album.name,
+            url: album.url,
+          }));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `matrix=${JSON.stringify({ include })}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `request_id=${selected.request_id}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `album_count=${albums.length}\n`);
+          console.log(`LA_LIGA_MANIFEST_OK albums=${albums.length} request=${selected.request_id}`);
+          NODE
+
+  collect:
+    needs: resolve
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJSON(needs.resolve.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Validate La Liga pipeline code
+        run: |
+          node --check scripts/google-photos-collector.mjs
+          node --check scripts/google-photos-assimilator.mjs
+          node --check scripts/google-photos-assimilator-runner.mjs
+          node --check scripts/google-photos-catalog-pipeline.mjs
+          node --check scripts/catalog-pdf-remaining-scope-filter.mjs
+          node --check scripts/catalog-pdf-remaining-plan.mjs
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Collect complete La Liga club album
+        env:
+          ALBUM_URL: ${{ matrix.url }}
+          ALBUM_NAME: ${{ matrix.name }}
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/la-liga/${ALBUM_INDEX}"
+          mkdir -p "$OUT"
+          node scripts/google-photos-collector.mjs \
+            --url "$ALBUM_URL" \
+            --label "LA LIGA - $ALBUM_NAME" \
+            --out "$OUT" \
+            --expected-min-images 1 \
+            --max-scrolls 350
+
+      - name: Assimilate and filter La Liga scope
+        env:
+          ALBUM_NAME: ${{ matrix.name }}
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/la-liga/${ALBUM_INDEX}"
+          node scripts/google-photos-assimilator-runner.mjs \
+            --input "$OUT/collector.json" \
+            --out "$OUT/assimilation"
+          node scripts/catalog-pdf-remaining-scope-filter.mjs \
+            --input "$OUT/assimilation/assimilation.json" \
+            --output "$OUT/assimilation/club-filtered.json" \
+            --report "$OUT/scope-filter.json" \
+            --mode club
+
+          node --input-type=module - "$OUT/assimilation/club-filtered.json" "$OUT/assimilation/filtered.json" <<'NODE'
+          import fs from "node:fs";
+
+          const [inputPath, outputPath] = process.argv.slice(2);
+          const input = JSON.parse(fs.readFileSync(inputPath, "utf8"));
+          const products = (input.proposedProducts ?? []).filter((product) => {
+            const type = String(product?.type ?? "").toLowerCase();
+            const text = [
+              product?.entity,
+              product?.type,
+              product?.audience,
+              ...(product?.groups ?? []).map((group) => group?.title),
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .toUpperCase();
+            const isShorts = type === "shorts" || /\b(SHORTS?|CALCAO)\b/.test(text);
+            return !isShorts;
+          });
+          if (products.length === 0) {
+            throw new Error("Nenhuma camisa/kit elegível restou após excluir shorts já concluídos.");
+          }
+          fs.writeFileSync(
+            outputPath,
+            `${JSON.stringify({ ...input, proposedProducts: products }, null, 2)}\n`,
+            "utf8",
+          );
+          console.log(
+            `LA_LIGA_SCOPE_OK before=${input.proposedProducts?.length ?? 0} kept=${products.length}`,
+          );
+          NODE
+
+      - name: Build normalized La Liga plan
+        env:
+          ALBUM_NAME: ${{ matrix.name }}
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/la-liga/${ALBUM_INDEX}"
+          node scripts/google-photos-catalog-pipeline.mjs \
+            --collector "$OUT/collector.json" \
+            --assimilation "$OUT/assimilation/filtered.json" \
+            --report "$OUT/raw-plan.json" \
+            --validate-urls
+
+          node scripts/catalog-pdf-remaining-plan.mjs \
+            --input "$OUT/raw-plan.json" \
+            --output "$OUT/plan.json" \
+            --group-id "la-liga" \
+            --group-name "La Liga" \
+            --source-group "$ALBUM_NAME" \
+            --mode club \
+            --competition "La Liga" \
+            --league "La Liga"
+
+      - name: Upload audited La Liga club plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: la-liga-plan-${{ matrix.index }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            .artifacts/la-liga/${{ matrix.index }}/collector.json
+            .artifacts/la-liga/${{ matrix.index }}/groups.json
+            .artifacts/la-liga/${{ matrix.index }}/scope-filter.json
+            .artifacts/la-liga/${{ matrix.index }}/assimilation/assimilation.json
+            .artifacts/la-liga/${{ matrix.index }}/assimilation/overview.png
+            .artifacts/la-liga/${{ matrix.index }}/raw-plan.json
+            .artifacts/la-liga/${{ matrix.index }}/plan.json
+
+  publish:
+    needs:
+      - resolve
+      - collect
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Rebuild selected La Liga manifest
+        run: |
+          set -euo pipefail
+          mkdir -p .artifacts/la-liga
+          cat catalog-jobs/pdf-groups/remaining.parts/*.b64 | tr -d '\r\n ' | base64 -d > .artifacts/la-liga/full-manifest.json
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const full = JSON.parse(fs.readFileSync(".artifacts/la-liga/full-manifest.json", "utf8"));
+          const group = (full.groups ?? []).find((item) => item.id === "la-liga");
+          if (!group) throw new Error("Grupo La Liga não encontrado.");
+          const selected = {
+            enabled: true,
+            request_id: `${full.request_id}-la-liga`,
+            source: full.source,
+            notes: full.notes ?? [],
+            groups: [group],
+          };
+          fs.writeFileSync(
+            ".artifacts/la-liga/manifest.json",
+            `${JSON.stringify(selected, null, 2)}\n`,
+            "utf8",
+          );
+          NODE
+
+      - name: Download every audited La Liga plan
+        uses: actions/download-artifact@v6
+        with:
+          pattern: la-liga-plan-*
+          path: .artifacts/la-liga/downloaded
+          merge-multiple: false
+
+      - name: Merge La Liga plans in PDF order
+        run: |
+          set -euo pipefail
+          node scripts/catalog-merge-pdf-remaining-plans.mjs \
+            --manifest .artifacts/la-liga/manifest.json \
+            --root .artifacts/la-liga/downloaded \
+            --output .artifacts/la-liga/merged-plan.json \
+            --group-dir .artifacts/la-liga/groups
+
+      - name: Reconcile any already-existing products without duplication
+        run: |
+          set -euo pipefail
+          node scripts/catalog-reconcile-existing-products.mjs \
+            --input .artifacts/la-liga/merged-plan.json \
+            --output .artifacts/la-liga/reconciled-plan.json \
+            --report .artifacts/la-liga/reconcile-report.json
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const plan = JSON.parse(fs.readFileSync(".artifacts/la-liga/reconciled-plan.json", "utf8"));
+          if (!Array.isArray(plan.products) || plan.products.length === 0) {
+            throw new Error("Plano reconciliado da La Liga ficou vazio.");
+          }
+          console.log(
+            `LA_LIGA_RECONCILED_OK products=${plan.products.length} variants=${plan.summary?.variants ?? 0} images=${plan.summary?.images ?? 0}`,
+          );
+          NODE
+
+      - name: Snapshot protected business data
+        run: |
+          node scripts/catalog-batch-guard.mjs snapshot \
+            --out .artifacts/la-liga/protected-before.json
+
+      - name: Publish La Liga atomically
+        run: |
+          node scripts/apply-normalized-catalog-plan.mjs \
+            --plan .artifacts/la-liga/reconciled-plan.json \
+            --stock 999
+
+      - name: Verify exact La Liga database result
+        run: |
+          set -euo pipefail
+          mkdir -p .artifacts/la-liga/final-plan
+          cp .artifacts/la-liga/reconciled-plan.json .artifacts/la-liga/final-plan/la-liga.json
+          node scripts/catalog-pdf-remaining-verify.mjs \
+            --snapshot .artifacts/la-liga/protected-before.json \
+            --root .artifacts/la-liga/final-plan \
+            --output .artifacts/la-liga/database-verification.json
+          node scripts/catalog-pdf-remaining-production-guard.mjs \
+            --manifest .artifacts/la-liga/manifest.json \
+            --output .artifacts/la-liga/production-verification.json
+
+      - name: Install Playwright for public verification
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Verify La Liga live on bigofertas.net
+        run: |
+          node scripts/catalog-batch-public-verify.mjs \
+            --verification .artifacts/la-liga/database-verification.json \
+            --base-url https://bigofertas.net \
+            --launch-count 10
+
+      - name: Upload complete La Liga deployment evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: la-liga-production-${{ needs.resolve.outputs.request_id }}
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            .artifacts/la-liga/manifest.json
+            .artifacts/la-liga/merged-plan.json
+            .artifacts/la-liga/reconciled-plan.json
+            .artifacts/la-liga/reconcile-report.json
+            .artifacts/la-liga/protected-before.json
+            .artifacts/la-liga/database-verification.json
+            .artifacts/la-liga/production-verification.json
