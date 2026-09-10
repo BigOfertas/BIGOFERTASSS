@@ -1,0 +1,151 @@
+name: Catalog Campeonato Brasileiro Publish Hotfix
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/catalog-brasileirao-publish-hotfix.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SOURCE_RUN_ID: "34509769763"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Download complete 30-club audited recovery plan
+        uses: actions/download-artifact@v6
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          name: brasileirao-production-recovery-v2
+          path: .artifacts/brasileirao/hotfix-source
+      - name: Preserve every distinct variant with unique deterministic codes
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+
+          const inputPath = '.artifacts/brasileirao/hotfix-source/reconciled-plan.json';
+          const outputPath = '.artifacts/brasileirao/fixed-plan.json';
+          const plan = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+          const labels = {
+            torcedor: 'Torcedor',
+            jogador: 'Jogador',
+            feminino: 'Feminino',
+            infantil: 'Infantil',
+            retro: 'Retrô',
+            calcao: 'Calção',
+          };
+          let changed = 0;
+          for (const product of plan.products ?? []) {
+            const totals = new Map();
+            for (const variant of product.variants ?? []) {
+              const type = String(variant.commercialType || variant.code || 'other').toLowerCase();
+              totals.set(type, (totals.get(type) ?? 0) + 1);
+            }
+            const seen = new Map();
+            for (const variant of product.variants ?? []) {
+              const type = String(variant.commercialType || variant.code || 'other').toLowerCase();
+              const occurrence = (seen.get(type) ?? 0) + 1;
+              seen.set(type, occurrence);
+              const total = totals.get(type) ?? 1;
+              const suffix = String(occurrence).padStart(2, '0');
+              const nextCode = total > 1 ? `${type}-${suffix}` : type;
+              const nextName = total > 1 ? `${labels[type] ?? 'Versão'} ${suffix}` : (labels[type] ?? variant.name ?? 'Versão');
+              if (variant.code !== nextCode || variant.name !== nextName) changed += 1;
+              variant.code = nextCode;
+              variant.name = nextName;
+            }
+            const codes = (product.variants ?? []).map((variant) => variant.code);
+            if (new Set(codes).size !== codes.length) {
+              throw new Error(`Códigos de variação ainda duplicados em ${product.name}.`);
+            }
+          }
+          if ((plan.products ?? []).length !== 545) {
+            throw new Error(`Plano inesperado: ${(plan.products ?? []).length} produtos; esperado 545.`);
+          }
+          const variants = plan.products.reduce((sum, product) => sum + (product.variants?.length ?? 0), 0);
+          const images = plan.products.reduce((sum, product) => sum + (product.variants ?? []).reduce((inner, variant) => inner + (variant.images?.length ?? 0), 0), 0);
+          if (variants !== 636 || images !== 3180) {
+            throw new Error(`Totais inesperados após correção: variants=${variants} images=${images}.`);
+          }
+          fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+          fs.writeFileSync(outputPath, `${JSON.stringify(plan, null, 2)}\n`);
+          console.log(`BRASILEIRAO_VARIANTS_FIXED changed=${changed} products=545 variants=636 images=3180`);
+          NODE
+      - name: Snapshot protected business data
+        run: |
+          node scripts/catalog-batch-guard.mjs snapshot \
+            --out .artifacts/brasileirao/protected-before.json
+      - id: reconcile
+        name: Reconcile against current catalog
+        run: |
+          set -euo pipefail
+          node scripts/catalog-reconcile-existing-club-products.mjs \
+            --input .artifacts/brasileirao/fixed-plan.json \
+            --output .artifacts/brasileirao/final-plan.json \
+            --report .artifacts/brasileirao/existing-products.json
+          AMBIGUOUS=$(node --input-type=module -e "import fs from 'node:fs'; const r=JSON.parse(fs.readFileSync('.artifacts/brasileirao/existing-products.json')); process.stdout.write(String(r.skipped.filter((x) => x.reason === 'ambiguous_existing_match').length));")
+          if [[ "$AMBIGUOUS" != "0" ]]; then
+            echo "Há $AMBIGUOUS correspondência(s) ambígua(s) com o catálogo atual." >&2
+            exit 1
+          fi
+          COUNT=$(node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('.artifacts/brasileirao/final-plan.json')); process.stdout.write(String(p.products.length));")
+          echo "product_count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "BRASILEIRAO_FINAL_COUNT=$COUNT"
+      - name: Publish Campeonato Brasileiro atomically
+        if: steps.reconcile.outputs.product_count != '0'
+        run: |
+          node scripts/apply-normalized-catalog-plan.mjs \
+            --plan .artifacts/brasileirao/final-plan.json \
+            --stock 999
+      - name: Verify exact database result and protected data
+        if: steps.reconcile.outputs.product_count != '0'
+        run: |
+          node scripts/catalog-batch-guard.mjs verify \
+            --snapshot .artifacts/brasileirao/protected-before.json \
+            --plan .artifacts/brasileirao/final-plan.json \
+            --out .artifacts/brasileirao/batch-verification.json
+      - name: Verify all 30 Brazilian clubs in production
+        run: |
+          node scripts/catalog-brasileirao-production-guard.mjs \
+            --manifest catalog-jobs/pdf-groups/brasileirao.json \
+            --output .artifacts/brasileirao/production-verification.json
+      - name: Verify public site responds
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 --retry-delay 2 https://bigofertas.net/ > .artifacts/brasileirao/homepage.html
+          test -s .artifacts/brasileirao/homepage.html
+          echo "BIGOFERTAS_PUBLIC_SITE_OK"
+      - name: Upload final evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brasileirao-production-final
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            .artifacts/brasileirao/fixed-plan.json
+            .artifacts/brasileirao/final-plan.json
+            .artifacts/brasileirao/existing-products.json
+            .artifacts/brasileirao/protected-before.json
+            .artifacts/brasileirao/batch-verification.json
+            .artifacts/brasileirao/production-verification.json
+            .artifacts/brasileirao/homepage.html
