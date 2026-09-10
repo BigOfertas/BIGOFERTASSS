@@ -110,10 +110,7 @@ const BrazilianTeams: React.FC = () => {
         </div>
       ) : null}
 
-      <div
-        id="brasileirao"
-        className="mx-auto max-w-7xl scroll-mt-28 px-4 lg:max-w-[1536px] lg:px-4"
-      >
+      <div className="mx-auto max-w-7xl px-4 lg:max-w-[1536px] lg:px-4">
         <div className="mb-6 text-center sm:mb-8">
           <p className="display-kicker">Futebol brasileiro</p>
           <h2 className="display-title-sm mt-2">Encontre seu time</h2>
