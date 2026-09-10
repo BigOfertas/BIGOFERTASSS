@@ -1,0 +1,13 @@
+{
+  "enabled": false,
+  "request_id": "template-disabled",
+  "album_url": "https://photos.google.com/",
+  "label": "SHORTS",
+  "price_override": 159.9,
+  "expected_min_images": 1,
+  "max_scrolls": 350,
+  "default_stock": 999,
+  "reset_catalog": false,
+  "public_base_url": "https://bigofertas.net",
+  "launch_count": 10
+}
