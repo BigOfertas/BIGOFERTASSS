@@ -1,19 +1,42 @@
-import React from "react";
+import React, { useMemo } from "react";
 
 import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
+import { isStandardHomeJersey, selectVariedProducts } from "@/lib/home-product-selection";
 
 const SHOWCASE_SIZE = 15;
 const LOADING_SIZE = 5;
 
 const BrazilianProducts: React.FC = () => {
-  const { data, isLoading, error } = useCatalogProducts({
+  const championshipQuery = useCatalogProducts({
     campeonato: "brasileirao",
-    pageSize: 24,
+    pageSize: 48,
+    sort: "newest",
   });
-  const brazilianProducts = (data?.items ?? []).slice(0, SHOWCASE_SIZE);
+  const legacyLeagueQuery = useCatalogProducts({
+    liga: "brasileirao",
+    pageSize: 48,
+    sort: "newest",
+  });
+
+  const brazilianProducts = useMemo(() => {
+    const candidates = [
+      ...(championshipQuery.data?.items ?? []),
+      ...(legacyLeagueQuery.data?.items ?? []),
+    ].sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at));
+
+    const preferred = [
+      ...candidates.filter(isStandardHomeJersey),
+      ...candidates.filter((product) => !isStandardHomeJersey(product)),
+    ];
+
+    return selectVariedProducts(preferred, SHOWCASE_SIZE);
+  }, [championshipQuery.data?.items, legacyLeagueQuery.data?.items]);
+
+  const isLoading = championshipQuery.isLoading || legacyLeagueQuery.isLoading;
+  const error = championshipQuery.error ?? legacyLeagueQuery.error;
 
   if (!isLoading && brazilianProducts.length === 0) return null;
 
@@ -36,25 +59,14 @@ const BrazilianProducts: React.FC = () => {
       ));
 
   return (
-    <section
-      id="brasileirao"
-      className="scroll-mt-28 overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14"
-    >
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <div className="mb-7 text-center sm:mb-8">
-          <p className="display-kicker">Campeonato brasileiro</p>
-          <h2 className="display-title-sm mt-2">Produtos do Brasileirão</h2>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
-          <ProductCarousel itemCount={isLoading ? LOADING_SIZE : brazilianProducts.length}>
-            {content}
-          </ProductCarousel>
-        </div>
-        {error ? (
-          <span className="sr-only">Não foi possível carregar os produtos do Brasileirão.</span>
-        ) : null}
-      </div>
-    </section>
+    <div className="mt-6 rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
+      <ProductCarousel itemCount={isLoading ? LOADING_SIZE : brazilianProducts.length}>
+        {content}
+      </ProductCarousel>
+      {error ? (
+        <span className="sr-only">Não foi possível carregar os produtos do Brasileirão.</span>
+      ) : null}
+    </div>
   );
 };
 
