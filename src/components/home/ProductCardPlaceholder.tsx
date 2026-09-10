@@ -13,7 +13,7 @@ const ProductCardPlaceholder: React.FC<ProductCardPlaceholderProps> = ({ loading
       loading ? "animate-pulse" : ""
     }`}
   >
-    <div className="glass-media relative mb-3 flex aspect-[4/5] items-center justify-center overflow-hidden rounded-[1rem] sm:mb-4">
+    <div className="glass-media relative mb-3 flex aspect-square items-center justify-center overflow-hidden rounded-[1rem] sm:mb-4">
       <div className="flex h-full w-full items-center justify-center text-gray-300">
         <span className="text-lg font-black uppercase tracking-[-0.06em] text-red-500/20">
           {BRAND.shortMark}

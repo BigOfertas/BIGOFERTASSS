@@ -26,10 +26,10 @@ const Lens: React.FC<LensProps> = ({
   setHovering,
   className = "",
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const boundsRef = useRef<DOMRect | null>(null);
+  const focusRef = useRef({ x: 100, y: 100 });
   const [localIsHovering, setLocalIsHovering] = useState(false);
   const [canHover, setCanHover] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 100, y: 100 });
   const isHovering = hovering !== undefined ? hovering : localIsHovering;
   const setIsHovering = setHovering || setLocalIsHovering;
 
@@ -41,49 +41,64 @@ const Lens: React.FC<LensProps> = ({
     return () => media.removeEventListener("change", sync);
   }, []);
 
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+  const updateFocusPosition = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!canHover || isStatic) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    setMousePosition({
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    });
+
+    const rect = boundsRef.current ?? event.currentTarget.getBoundingClientRect();
+    boundsRef.current = rect;
+    const x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+    const y = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
+
+    focusRef.current = { x, y };
+    event.currentTarget.style.setProperty("--lens-x", `${x}px`);
+    event.currentTarget.style.setProperty("--lens-y", `${y}px`);
   };
 
-  const focusPosition = isStatic ? position : mousePosition;
   const showLens = isStatic || (canHover && isHovering);
+  const focus = isStatic ? position : focusRef.current;
+  const rootStyle = {
+    "--lens-x": `${focus.x}px`,
+    "--lens-y": `${focus.y}px`,
+  } as React.CSSProperties;
 
   return (
     <div
-      ref={containerRef}
       className={`relative overflow-hidden ${canHover && !isStatic ? "cursor-none" : ""} ${className}`}
-      onMouseEnter={() => {
+      style={rootStyle}
+      onPointerEnter={(event) => {
         if (!canHover || isStatic) return;
+        boundsRef.current = event.currentTarget.getBoundingClientRect();
+        updateFocusPosition(event);
         setIsHovering(true);
         isFocusing?.();
       }}
-      onMouseLeave={() => {
+      onPointerLeave={() => {
+        boundsRef.current = null;
         if (!isStatic) setIsHovering(false);
       }}
-      onMouseMove={handleMouseMove}
+      onPointerCancel={() => {
+        boundsRef.current = null;
+        if (!isStatic) setIsHovering(false);
+      }}
+      onPointerMove={updateFocusPosition}
     >
       {children}
 
       {showLens ? (
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-50">
           <div
-            className="absolute inset-0 overflow-hidden animate-in fade-in zoom-in-50 duration-300 motion-reduce:animate-none"
+            className="absolute inset-0 overflow-hidden"
             style={{
-              maskImage: `radial-gradient(circle ${lensSize / 2}px at ${focusPosition.x}px ${focusPosition.y}px, black 100%, transparent 100%)`,
-              WebkitMaskImage: `radial-gradient(circle ${lensSize / 2}px at ${focusPosition.x}px ${focusPosition.y}px, black 100%, transparent 100%)`,
-              transformOrigin: `${focusPosition.x}px ${focusPosition.y}px`,
+              maskImage: `radial-gradient(circle ${lensSize / 2}px at var(--lens-x) var(--lens-y), black 100%, transparent 100%)`,
+              WebkitMaskImage: `radial-gradient(circle ${lensSize / 2}px at var(--lens-x) var(--lens-y), black 100%, transparent 100%)`,
+              transformOrigin: "var(--lens-x) var(--lens-y)",
             }}
           >
             <div
               className="absolute inset-0"
               style={{
                 transform: `scale(${zoomFactor})`,
-                transformOrigin: `${focusPosition.x}px ${focusPosition.y}px`,
+                transformOrigin: "var(--lens-x) var(--lens-y)",
               }}
             >
               {children}
@@ -91,10 +106,10 @@ const Lens: React.FC<LensProps> = ({
           </div>
 
           <div
-            className="absolute animate-in fade-in zoom-in-50 duration-300 motion-reduce:animate-none"
+            className="absolute"
             style={{
-              left: focusPosition.x - lensSize / 2,
-              top: focusPosition.y - lensSize / 2,
+              left: `calc(var(--lens-x) - ${lensSize / 2}px)`,
+              top: `calc(var(--lens-y) - ${lensSize / 2}px)`,
               width: lensSize,
               height: lensSize,
               borderRadius: "50%",

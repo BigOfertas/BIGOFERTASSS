@@ -230,23 +230,31 @@ export default function ProductGallery({
           </div>
 
           <div
-            className="relative flex min-h-0 flex-1 touch-pan-y items-center justify-center overflow-auto p-4"
+            className="relative flex min-h-0 flex-1 touch-pan-y items-center justify-center overflow-hidden p-4"
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
           >
             <button
               type="button"
               onClick={() => setZoomed((current) => !current)}
-              className="flex min-h-full min-w-full items-center justify-center"
+              className="h-full w-full"
               aria-label={zoomed ? "Reduzir zoom" : "Aumentar zoom"}
             >
-              <img
-                src={activeImage.url}
-                alt={activeImage.alt}
-                className={`max-h-[82vh] max-w-[94vw] object-contain transition-transform duration-200 ${
-                  zoomed ? "scale-[1.75] cursor-zoom-out" : "scale-100 cursor-zoom-in"
-                }`}
-              />
+              <Lens
+                zoomFactor={zoomed ? 3.25 : 2.5}
+                lensSize={220}
+                className="h-full w-full rounded-none"
+              >
+                <div className="flex h-full w-full items-center justify-center">
+                  <img
+                    src={activeImage.url}
+                    alt={activeImage.alt}
+                    className={`max-h-[82vh] max-w-[94vw] object-contain transition-transform duration-100 motion-reduce:transition-none ${
+                      zoomed ? "scale-[1.75]" : "scale-100"
+                    }`}
+                  />
+                </div>
+              </Lens>
             </button>
 
             {usableImages.length > 1 && !zoomed ? (
@@ -254,7 +262,7 @@ export default function ProductGallery({
                 <button
                   type="button"
                   onClick={() => move(-1)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+                  className="absolute left-3 top-1/2 z-[70] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
                   aria-label="Imagem anterior"
                 >
                   <ChevronLeft className="h-6 w-6" />
@@ -262,7 +270,7 @@ export default function ProductGallery({
                 <button
                   type="button"
                   onClick={() => move(1)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+                  className="absolute right-3 top-1/2 z-[70] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
                   aria-label="Próxima imagem"
                 >
                   <ChevronRight className="h-6 w-6" />
