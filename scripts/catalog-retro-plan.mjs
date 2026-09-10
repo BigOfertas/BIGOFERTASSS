@@ -15,26 +15,73 @@ function parseArgs(argv) {
   return out;
 }
 
-function forceRetroName(value) {
-  const name = String(value ?? "").trim();
-  if (!name) throw new Error("Produto sem nome.");
-  if (/\bRetr[oô]\b/i.test(name)) return name;
-  if (/\bCamisa\b/i.test(name)) return name.replace(/\bCamisa\b/i, (match) => `${match} Retrô`);
-  if (/\bRegata\b/i.test(name)) return name.replace(/\bRegata\b/i, (match) => `${match} Retrô`);
-  return `${name} — Retrô`;
+function displayEntity(value) {
+  const clean = String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const upper = clean.toUpperCase();
+  const aliases = new Map([
+    ["M. CITY", "Manchester City"],
+    ["MAN. CITY", "Manchester City"],
+    ["MAN CITY", "Manchester City"],
+    ["M. UNITED", "Manchester United"],
+    ["MAN. UNITED", "Manchester United"],
+    ["MAN UNITED", "Manchester United"],
+    ["PARIS SAINT GERMAIN", "PSG"],
+    ["PSG", "PSG"],
+    ["INTERZIONALE", "Internazionale"],
+    ["AC MILAN", "Milan"],
+  ]);
+  if (aliases.has(upper)) return aliases.get(upper);
+  const keepUpper = new Set(["AC", "FC", "PSG", "EA7"]);
+  return clean
+    .toLowerCase()
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => {
+      const token = word.toUpperCase();
+      return keepUpper.has(token) ? token : token.slice(0, 1) + token.slice(1).toLowerCase();
+    })
+    .join(" ");
 }
 
-function retroSpecifications(value) {
-  const parts = String(value ?? "")
-    .split("|")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .filter((part) => !/^Vers[aã]o\s*:/i.test(part) && !/^Uniforme\s*:/i.test(part));
+function parseRetroIdentity(product) {
+  const sourceTitle = String(
+    product.sourceTitle ?? product.variants?.[0]?.sourceTitle ?? "",
+  ).trim();
+  const match = sourceTitle.match(
+    /^(CAMISA|REGATA)\s+(?:(I|II|III)\s+)?(.+?)\s+((?:19|20)\d{2}|\d{2}\/\d{2})(?:\s+(.+))?$/i,
+  );
+  if (!match) {
+    throw new Error(`Título retrô não pôde ser estruturado com segurança: ${sourceTitle}`);
+  }
+  const [, sourceType, model, rawTeam, season, sourceTail] = match;
+  const team = displayEntity(rawTeam);
+  const brand = product.brand ? displayEntity(product.brand) : displayEntity(sourceTail);
+  if (!team || !season) throw new Error(`Identidade retrô incompleta: ${sourceTitle}`);
+  return {
+    sourceTitle,
+    type: sourceType.toUpperCase() === "REGATA" ? "Regata" : "Camisa",
+    model: model?.toUpperCase() ?? null,
+    team,
+    season,
+    brand: brand || null,
+  };
+}
+
+function retroSpecifications(identity, value) {
   const uniform = String(value ?? "")
     .split("|")
     .map((part) => part.trim())
     .find((part) => /^Uniforme\s*:/i.test(part));
-  return [...parts, "Versão: Retrô", uniform].filter(Boolean).join(" | ");
+  return [
+    identity.brand ? `Marca: ${identity.brand}` : null,
+    `Temporada: ${identity.season}`,
+    "Versão: Retrô",
+    uniform,
+  ]
+    .filter(Boolean)
+    .join(" | ");
 }
 
 function retroVariantName(variant, count, index) {
@@ -59,19 +106,16 @@ const normalized = {
     if (!product?.sourceKey || !Array.isArray(product.variants) || product.variants.length === 0) {
       throw new Error(`Produto ${productIndex + 1} incompleto.`);
     }
-    const sourceTitles = [
-      product.sourceTitle,
-      ...product.variants.map((variant) => variant?.sourceTitle),
+
+    const identity = parseRetroIdentity(product);
+    const name = [
+      `${identity.team} — ${identity.type} Retrô`,
+      identity.model,
+      identity.season,
+      identity.brand,
     ]
       .filter(Boolean)
       .join(" ");
-    if (!/\b(CAMISA|REGATA|RET[RÔO])\b/i.test(sourceTitles)) {
-      throw new Error(
-        `Produto fora do escopo de camisas retrô: ${product.sourceTitle ?? product.name}`,
-      );
-    }
-
-    const name = forceRetroName(product.name);
     const variants = product.variants.map((variant, variantIndex) => {
       const variantName = retroVariantName(variant, product.variants.length, variantIndex);
       const code =
@@ -89,14 +133,19 @@ const normalized = {
 
     return {
       ...product,
+      sourceTitle: identity.sourceTitle,
       name,
       description: `${name}. Versão Retrô. Disponível com as opções de tamanho e personalização configuradas pela BIGofertas.`,
       category: { name: "Camisas Retrô", slug: "retro" },
       competition: null,
       league: null,
+      team: identity.team,
+      season: identity.season,
+      brand: identity.brand,
+      audience: "MASCULINO",
       commercialType: "retro",
       price: RETRO_PRICE,
-      specifications: retroSpecifications(product.specifications),
+      specifications: retroSpecifications(identity, product.specifications),
       personalizationEnabled: true,
       phraseEnabled: true,
       patches: [],
