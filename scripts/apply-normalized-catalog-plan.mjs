@@ -64,13 +64,15 @@ async function request(endpoint, init = {}) {
     signal: AbortSignal.timeout(180_000),
   });
   const text = await response.text();
-  if (!response.ok)
+  if (!response.ok) {
     throw new Error(`${endpoint} HTTP ${response.status}: ${text.slice(0, 2500)}`);
+  }
   return text ? JSON.parse(text) : null;
 }
 
 const history = await request("/database/migrations");
-const alreadyApplied = Array.isArray(history) && history.some((item) => item?.name === migrationName);
+const alreadyApplied =
+  Array.isArray(history) && history.some((item) => item?.name === migrationName);
 if (!alreadyApplied) {
   const query = `
     select public.catalog_apply_normalized_batch(
