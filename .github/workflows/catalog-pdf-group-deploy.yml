@@ -102,6 +102,7 @@ jobs:
       - name: Build and validate normalized plan
         env:
           ALBUM_INDEX: ${{ matrix.index }}
+          ALBUM_NAME: ${{ matrix.name }}
         run: |
           set -euo pipefail
           OUT=".artifacts/retro/${ALBUM_INDEX}"
@@ -112,7 +113,8 @@ jobs:
             --validate-urls
           node scripts/catalog-retro-plan.mjs \
             --input "$OUT/raw-plan.json" \
-            --output "$OUT/plan.json"
+            --output "$OUT/plan.json" \
+            --source-group "$ALBUM_NAME"
 
       - name: Upload audited album plan
         uses: actions/upload-artifact@v4
