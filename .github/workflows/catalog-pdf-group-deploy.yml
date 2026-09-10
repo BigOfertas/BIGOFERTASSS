@@ -1,0 +1,207 @@
+name: Catalog PDF Group Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/catalog-pdf-group-deploy.yml"
+      - "catalog-jobs/pdf-groups/retro.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-pdf-group-deploy-production
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.resolve.outputs.enabled }}
+      matrix: ${{ steps.resolve.outputs.matrix }}
+      request_id: ${{ steps.resolve.outputs.request_id }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: resolve
+        name: Resolve Retro PDF manifest
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
+          const manifest = JSON.parse(fs.readFileSync('catalog-jobs/pdf-groups/retro.json', 'utf8'));
+          const albums = Array.isArray(manifest.albums) ? manifest.albums : [];
+          if (manifest.enabled !== true) {
+            console.log('Retro deployment request is disabled.');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'enabled=false\n');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'matrix={"include":[]}\n');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `request_id=${manifest.request_id || 'disabled'}\n`);
+            process.exit(0);
+          }
+          if (albums.length !== 30) throw new Error(`Expected 30 Retro albums, received ${albums.length}.`);
+          for (const [index, album] of albums.entries()) {
+            if (!album?.name || !/^https:\/\/photos\.google\.com\/share\//.test(album?.url || '')) {
+              throw new Error(`Invalid Retro album at position ${index + 1}.`);
+            }
+          }
+          const include = albums.map((album, index) => ({
+            index: String(index + 1).padStart(2, '0'),
+            name: album.name,
+            url: album.url,
+          }));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'enabled=true\n');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `matrix=${JSON.stringify({ include })}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `request_id=${manifest.request_id}\n`);
+          console.log(`RETRO_MANIFEST_OK albums=${albums.length} request=${manifest.request_id}`);
+          NODE
+
+  collect:
+    needs: resolve
+    if: needs.resolve.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJSON(needs.resolve.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Collect complete Retro album
+        env:
+          ALBUM_URL: ${{ matrix.url }}
+          ALBUM_NAME: ${{ matrix.name }}
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/retro/${ALBUM_INDEX}"
+          node scripts/google-photos-collector.mjs \
+            --url "$ALBUM_URL" \
+            --label "CAMISAS RETRÔ - $ALBUM_NAME" \
+            --out "$OUT" \
+            --expected-min-images 1 \
+            --max-scrolls 350
+
+      - name: Assimilate and visually validate album
+        env:
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/retro/${ALBUM_INDEX}"
+          node scripts/google-photos-assimilator-runner.mjs \
+            --input "$OUT/collector.json" \
+            --out "$OUT/assimilation"
+
+      - name: Build and validate normalized plan
+        env:
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/retro/${ALBUM_INDEX}"
+          node scripts/google-photos-catalog-pipeline.mjs \
+            --collector "$OUT/collector.json" \
+            --assimilation "$OUT/assimilation/assimilation.json" \
+            --report "$OUT/raw-plan.json" \
+            --validate-urls
+          node scripts/catalog-retro-plan.mjs \
+            --input "$OUT/raw-plan.json" \
+            --output "$OUT/plan.json"
+
+      - name: Upload audited album plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-group-plan-${{ matrix.index }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            .artifacts/retro/${{ matrix.index }}/collector.json
+            .artifacts/retro/${{ matrix.index }}/groups.json
+            .artifacts/retro/${{ matrix.index }}/assimilation/assimilation.json
+            .artifacts/retro/${{ matrix.index }}/assimilation/overview.png
+            .artifacts/retro/${{ matrix.index }}/raw-plan.json
+            .artifacts/retro/${{ matrix.index }}/plan.json
+
+  publish:
+    needs:
+      - resolve
+      - collect
+    if: needs.resolve.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download all audited plans
+        uses: actions/download-artifact@v6
+        with:
+          pattern: catalog-group-plan-*
+          path: .artifacts/retro/downloaded
+          merge-multiple: false
+
+      - name: Merge plans in PDF order
+        run: |
+          node scripts/catalog-merge-plans.mjs \
+            --manifest catalog-jobs/pdf-groups/retro.json \
+            --root .artifacts/retro/downloaded \
+            --output .artifacts/retro/merged-plan.json
+
+      - name: Snapshot protected and catalog state
+        run: |
+          node scripts/catalog-batch-guard.mjs snapshot \
+            --out .artifacts/retro/protected-before.json
+          node scripts/catalog-retro-production-guard.mjs snapshot \
+            --plan .artifacts/retro/merged-plan.json \
+            --out .artifacts/retro/retro-before.json
+
+      - name: Publish Retro catalog atomically
+        run: |
+          node scripts/apply-normalized-catalog-plan.mjs \
+            --plan .artifacts/retro/merged-plan.json \
+            --stock 999
+
+      - name: Verify database and protected data
+        run: |
+          node scripts/catalog-batch-guard.mjs verify \
+            --snapshot .artifacts/retro/protected-before.json \
+            --plan .artifacts/retro/merged-plan.json \
+            --out .artifacts/retro/batch-verification.json
+          node scripts/catalog-retro-production-guard.mjs verify \
+            --plan .artifacts/retro/merged-plan.json \
+            --snapshot .artifacts/retro/retro-before.json \
+            --out .artifacts/retro/retro-production-verification.json
+
+      - name: Install Playwright for live production verification
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Verify live storefront in production
+        run: |
+          node scripts/catalog-batch-public-verify.mjs \
+            --verification .artifacts/retro/batch-verification.json \
+            --base-url https://bigofertas.net \
+            --launch-count 10
+
+      - name: Upload complete Retro deployment evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: retro-production-${{ needs.resolve.outputs.request_id }}
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            .artifacts/retro/merged-plan.json
+            .artifacts/retro/protected-before.json
+            .artifacts/retro/retro-before.json
+            .artifacts/retro/batch-verification.json
+            .artifacts/retro/retro-production-verification.json
