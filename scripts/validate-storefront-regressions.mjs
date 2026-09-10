@@ -64,11 +64,24 @@ check(
   ].every((route) => !footerRoutes.includes(route)),
 );
 check(
-  "rodapé não aparece antes do conteúdo no F5",
-  root.includes("const [footerReady, setFooterReady] = useState(false)") &&
-    root.includes("window.requestAnimationFrame") &&
-    root.includes("footerReady && showStorefrontFooter") &&
-    root.includes('className="flex min-h-screen flex-col"') &&
+  "F5 mantém carregamento visual por um segundo antes de liberar o site",
+  root.includes("const [initialRefreshLoading, setInitialRefreshLoading] = useState(true)") &&
+    root.includes("window.setTimeout") &&
+    root.includes("}, 1000)") &&
+    root.includes('document.documentElement.style.overflow = "hidden"') &&
+    root.includes("!initialRefreshLoading && showStorefrontFooter"),
+);
+check(
+  "carregamento do F5 usa blur forte e somente ícone rotativo sobre o site",
+  root.includes('data-initial-refresh-loader') &&
+    root.includes('aria-label="Carregando"') &&
+    root.includes("blur-[22px]") &&
+    root.includes("backdrop-blur-2xl") &&
+    root.includes("<LoaderCircle") &&
+    root.includes("animate-spin") &&
+    root.includes("[animation-duration:1.1s]") &&
+    !root.includes("Carregando...") &&
+    root.includes('className="relative min-h-screen overflow-x-clip"') &&
     root.includes('className="min-h-0 flex-1"'),
 );
 const routeFooterUsers = routeFiles("src/routes").filter(
