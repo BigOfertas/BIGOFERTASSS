@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "@tanstack/react-router";
 
+import Lens from "@/components/ui/magnifier-lens";
 import { BRAND } from "@/config/brand";
 
 interface ProductCardProps {
@@ -59,23 +60,25 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <article className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition duration-200 hover:border-gray-300 hover:shadow-sm motion-reduce:transition-none">
         <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-gray-50">
           {hasPromotion ? (
-            <span className="absolute left-2.5 top-2.5 z-10 rounded-full bg-red-600 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white sm:text-[10px]">
+            <span className="absolute left-2.5 top-2.5 z-[70] rounded-full bg-red-600 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white sm:text-[10px]">
               Oferta
             </span>
           ) : null}
 
           {showImage ? (
-            <img
-              src={imageUrl ?? undefined}
-              alt={name}
-              loading="lazy"
-              decoding="async"
-              width={640}
-              height={800}
-              sizes="(max-width: 639px) 48vw, (max-width: 1023px) 31vw, 260px"
-              onError={() => setImageFailed(true)}
-              className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none sm:p-2"
-            />
+            <Lens zoomFactor={2.5} lensSize={130} className="h-full w-full rounded-none">
+              <img
+                src={imageUrl ?? undefined}
+                alt={name}
+                loading="lazy"
+                decoding="async"
+                width={640}
+                height={800}
+                sizes="(max-width: 639px) 48vw, (max-width: 1023px) 31vw, 260px"
+                onError={() => setImageFailed(true)}
+                className="h-full w-full object-contain p-1.5 sm:p-2"
+              />
+            </Lens>
           ) : (
             <div className="flex h-full w-full items-center justify-center font-bold italic uppercase text-gray-300">
               <span className="text-lg font-black tracking-[-0.06em] text-red-500/20">

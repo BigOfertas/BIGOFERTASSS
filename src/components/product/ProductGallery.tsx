@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageOff, Maximize2, X, ZoomIn, ZoomOut } from "lucide-react";
 
+import Lens from "@/components/ui/magnifier-lens";
 import type { ProductGalleryItem } from "@/lib/product-images";
 
 interface ProductGalleryProps {
@@ -94,18 +95,20 @@ export default function ProductGallery({
             className="group h-full w-full cursor-zoom-in"
             aria-label={`Ampliar imagem ${activeIndex + 1} de ${productName}`}
           >
-            <img
-              key={activeImage.id}
-              src={activeImage.url}
-              alt={activeImage.alt}
-              width={1200}
-              height={1500}
-              sizes="(max-width: 1023px) 92vw, 600px"
-              fetchPriority="high"
-              decoding="async"
-              onError={() => markFailed(activeImage.id)}
-              className="h-full w-full object-contain p-5 transition-transform duration-200 group-hover:scale-[1.01] sm:p-10"
-            />
+            <Lens zoomFactor={2.5} lensSize={180} className="h-full w-full rounded-none">
+              <img
+                key={activeImage.id}
+                src={activeImage.url}
+                alt={activeImage.alt}
+                width={1200}
+                height={1500}
+                sizes="(max-width: 1023px) 92vw, 600px"
+                fetchPriority="high"
+                decoding="async"
+                onError={() => markFailed(activeImage.id)}
+                className="h-full w-full object-contain p-5 sm:p-10"
+              />
+            </Lens>
           </button>
         ) : (
           <div className="flex flex-col items-center gap-3 px-6 text-center text-gray-400">
@@ -115,7 +118,7 @@ export default function ProductGallery({
         )}
 
         {activeImage ? (
-          <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2">
+          <div className="pointer-events-none absolute left-3 top-3 z-[70] flex items-center gap-2">
             <span className="rounded-full bg-black/75 px-2.5 py-1 text-xs font-bold text-white sm:hidden">
               {activeIndex + 1} / {usableImages.length}
             </span>
@@ -130,7 +133,7 @@ export default function ProductGallery({
             <button
               type="button"
               onClick={() => move(-1)}
-              className="absolute left-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-800 shadow transition hover:bg-white sm:block"
+              className="absolute left-2 top-1/2 z-[70] hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-800 shadow transition hover:bg-white sm:block"
               aria-label="Imagem anterior"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -138,7 +141,7 @@ export default function ProductGallery({
             <button
               type="button"
               onClick={() => move(1)}
-              className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-800 shadow transition hover:bg-white sm:block"
+              className="absolute right-2 top-1/2 z-[70] hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-800 shadow transition hover:bg-white sm:block"
               aria-label="Próxima imagem"
             >
               <ChevronRight className="h-5 w-5" />
@@ -147,7 +150,7 @@ export default function ProductGallery({
         ) : null}
 
         {unavailable ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
+          <div className="absolute inset-0 z-[80] flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
             <span className="rounded-full bg-black px-6 py-2 font-black uppercase tracking-tight text-white">
               Combinação indisponível
             </span>
