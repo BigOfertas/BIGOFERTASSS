@@ -7,13 +7,7 @@ import {
   resolveCommercialPrice,
 } from "./catalog-business-rules.mjs";
 
-const ALLOWED_TYPES = new Set([
-  "torcedor",
-  "jogador",
-  "feminino",
-  "infantil",
-  "retro",
-]);
+const ALLOWED_TYPES = new Set(["torcedor", "jogador", "feminino", "infantil", "retro"]);
 
 function parseArgs(argv) {
   const out = { input: "", output: "", sourceGroup: "" };
