@@ -64,7 +64,8 @@ async function request(endpoint, init = {}) {
     signal: AbortSignal.timeout(180_000),
   });
   const text = await response.text();
-  if (!response.ok) throw new Error(`${endpoint} HTTP ${response.status}: ${text.slice(0, 2500)}`);
+  if (!response.ok)
+    throw new Error(`${endpoint} HTTP ${response.status}: ${text.slice(0, 2500)}`);
   return text ? JSON.parse(text) : null;
 }
 
