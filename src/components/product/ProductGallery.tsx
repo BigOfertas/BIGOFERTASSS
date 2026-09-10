@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageOff, Maximize2, X, ZoomIn, ZoomOut } from "lucide-react";
 
 import Lens from "@/components/ui/magnifier-lens";
@@ -11,6 +11,7 @@ interface ProductGalleryProps {
 }
 
 const SWIPE_THRESHOLD = 42;
+const SLIDE_DURATION_MS = 280;
 
 export default function ProductGallery({
   images,
@@ -25,15 +26,53 @@ export default function ProductGallery({
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
   const [viewerOpen, setViewerOpen] = useState(false);
   const [zoomed, setZoomed] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<-1 | 1>(1);
   const touchStartX = useRef<number | null>(null);
+  const mainFrameRef = useRef<HTMLDivElement>(null);
+  const viewerFrameRef = useRef<HTMLDivElement>(null);
+  const lastAnimatedImageIdRef = useRef<string | null>(preferredImageId);
+
+  const usableImages = useMemo(
+    () => images.filter((image) => !failedImageIds.has(image.id)),
+    [failedImageIds, images],
+  );
+  const activeImage =
+    usableImages.find((image) => image.id === activeImageId) ?? usableImages[0] ?? null;
+  const activeIndex = activeImage
+    ? Math.max(
+        0,
+        usableImages.findIndex((image) => image.id === activeImage.id),
+      )
+    : 0;
 
   useEffect(() => {
     setActiveImageId(preferredImageId);
+    lastAnimatedImageIdRef.current = preferredImageId;
   }, [preferredImageId]);
 
   useEffect(() => {
     if (!viewerOpen) setZoomed(false);
   }, [viewerOpen]);
+
+  useEffect(() => {
+    for (const image of usableImages) {
+      const preloader = new Image();
+      preloader.decoding = "async";
+      preloader.src = image.url;
+      void preloader.decode().catch(() => undefined);
+    }
+  }, [usableImages]);
+
+  const move = useCallback(
+    (direction: -1 | 1) => {
+      if (usableImages.length < 2) return;
+      const nextIndex = (activeIndex + direction + usableImages.length) % usableImages.length;
+      setSlideDirection(direction);
+      setActiveImageId(usableImages[nextIndex]?.id ?? null);
+      setZoomed(false);
+    },
+    [activeIndex, usableImages],
+  );
 
   useEffect(() => {
     if (!viewerOpen) return;
@@ -44,26 +83,47 @@ export default function ProductGallery({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  });
+  }, [move, viewerOpen]);
 
-  const usableImages = images.filter((image) => !failedImageIds.has(image.id));
-  const activeImage =
-    usableImages.find((image) => image.id === activeImageId) ?? usableImages[0] ?? null;
-  const activeIndex = activeImage
-    ? Math.max(
-        0,
-        usableImages.findIndex((image) => image.id === activeImage.id),
-      )
-    : 0;
+  useEffect(() => {
+    if (!activeImage || lastAnimatedImageIdRef.current === activeImage.id) return;
+    lastAnimatedImageIdRef.current = activeImage.id;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) return;
+
+    const animateFrame = (element: HTMLDivElement | null) => {
+      if (!element) return;
+      element.getAnimations().forEach((animation) => animation.cancel());
+      element.animate(
+        [
+          {
+            opacity: 0.45,
+            transform: `translate3d(${slideDirection * 34}px, 0, 0) scale(0.99)`,
+          },
+          { opacity: 1, transform: "translate3d(0, 0, 0) scale(1)" },
+        ],
+        {
+          duration: SLIDE_DURATION_MS,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        },
+      );
+    };
+
+    requestAnimationFrame(() => {
+      animateFrame(mainFrameRef.current);
+      if (viewerOpen) animateFrame(viewerFrameRef.current);
+    });
+  }, [activeImage, slideDirection, viewerOpen]);
 
   const markFailed = (imageId: string) => {
     setFailedImageIds((current) => new Set(current).add(imageId));
   };
 
-  const move = (direction: -1 | 1) => {
-    if (usableImages.length < 2) return;
-    const nextIndex = (activeIndex + direction + usableImages.length) % usableImages.length;
-    setActiveImageId(usableImages[nextIndex]?.id ?? null);
+  const selectImage = (imageId: string, index: number) => {
+    if (imageId === activeImage?.id) return;
+    setSlideDirection(index < activeIndex ? -1 : 1);
+    setActiveImageId(imageId);
     setZoomed(false);
   };
 
@@ -95,20 +155,22 @@ export default function ProductGallery({
             className="group h-full w-full cursor-zoom-in"
             aria-label={`Ampliar imagem ${activeIndex + 1} de ${productName}`}
           >
-            <Lens zoomFactor={2.5} lensSize={180} className="h-full w-full rounded-none">
-              <img
-                key={activeImage.id}
-                src={activeImage.url}
-                alt={activeImage.alt}
-                width={1200}
-                height={1500}
-                sizes="(max-width: 1023px) 92vw, 600px"
-                fetchPriority="high"
-                decoding="async"
-                onError={() => markFailed(activeImage.id)}
-                className="h-full w-full object-contain p-5 sm:p-10"
-              />
-            </Lens>
+            <div ref={mainFrameRef} className="h-full w-full">
+              <Lens zoomFactor={2.5} lensSize={180} className="h-full w-full rounded-none">
+                <img
+                  key={activeImage.id}
+                  src={activeImage.url}
+                  alt={activeImage.alt}
+                  width={1200}
+                  height={1500}
+                  sizes="(max-width: 1023px) 92vw, 600px"
+                  fetchPriority="high"
+                  decoding="async"
+                  onError={() => markFailed(activeImage.id)}
+                  className="h-full w-full object-contain"
+                />
+              </Lens>
+            </div>
           </button>
         ) : (
           <div className="flex flex-col items-center gap-3 px-6 text-center text-gray-400">
@@ -168,7 +230,7 @@ export default function ProductGallery({
               <button
                 key={image.id}
                 type="button"
-                onClick={() => setActiveImageId(image.id)}
+                onClick={() => selectImage(image.id, index)}
                 className={`flex aspect-square items-center justify-center overflow-hidden rounded-md border bg-gray-50 transition-colors ${
                   active
                     ? "border-red-600 ring-1 ring-red-600"
@@ -205,7 +267,7 @@ export default function ProductGallery({
           aria-modal="true"
           aria-label={`Visualização ampliada de ${productName}`}
         >
-          <div className="flex items-center justify-between px-4 py-3 text-white">
+          <div className="relative z-[120] flex items-center justify-between px-4 py-3 text-white">
             <span className="text-sm font-bold">
               {activeIndex + 1} / {usableImages.length}
             </span>
@@ -230,31 +292,36 @@ export default function ProductGallery({
           </div>
 
           <div
-            className="relative flex min-h-0 flex-1 touch-pan-y items-center justify-center overflow-hidden p-4"
+            className="relative min-h-0 flex-1 touch-pan-y overflow-hidden"
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
           >
             <button
               type="button"
               onClick={() => setZoomed((current) => !current)}
-              className="h-full w-full"
+              className="absolute inset-0 h-full w-full"
               aria-label={zoomed ? "Reduzir zoom" : "Aumentar zoom"}
             >
-              <Lens
-                zoomFactor={zoomed ? 3.25 : 2.5}
-                lensSize={220}
-                className="h-full w-full rounded-none"
-              >
-                <div className="flex h-full w-full items-center justify-center">
+              <div ref={viewerFrameRef} className="h-full w-full">
+                <Lens
+                  zoomFactor={zoomed ? 3.25 : 2.5}
+                  lensSize={220}
+                  className="h-full w-full rounded-none"
+                >
                   <img
+                    key={`viewer-${activeImage.id}`}
                     src={activeImage.url}
                     alt={activeImage.alt}
-                    className={`max-h-[82vh] max-w-[94vw] object-contain transition-transform duration-100 motion-reduce:transition-none ${
+                    width={1600}
+                    height={2000}
+                    decoding="sync"
+                    onError={() => markFailed(activeImage.id)}
+                    className={`h-full w-full object-contain transition-transform duration-200 ease-out motion-reduce:transition-none ${
                       zoomed ? "scale-[1.75]" : "scale-100"
                     }`}
                   />
-                </div>
-              </Lens>
+                </Lens>
+              </div>
             </button>
 
             {usableImages.length > 1 && !zoomed ? (
@@ -262,7 +329,7 @@ export default function ProductGallery({
                 <button
                   type="button"
                   onClick={() => move(-1)}
-                  className="absolute left-3 top-1/2 z-[70] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+                  className="absolute left-3 top-1/2 z-[110] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
                   aria-label="Imagem anterior"
                 >
                   <ChevronLeft className="h-6 w-6" />
@@ -270,7 +337,7 @@ export default function ProductGallery({
                 <button
                   type="button"
                   onClick={() => move(1)}
-                  className="absolute right-3 top-1/2 z-[70] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+                  className="absolute right-3 top-1/2 z-[110] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
                   aria-label="Próxima imagem"
                 >
                   <ChevronRight className="h-6 w-6" />
