@@ -1,18 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import {
-  buildCatalogBusinessProfile,
-  resolveCommercialPrice,
-} from "./catalog-business-rules.mjs";
+import { buildCatalogBusinessProfile, resolveCommercialPrice } from "./catalog-business-rules.mjs";
 
-const ALLOWED_TYPES = new Set([
-  "torcedor",
-  "jogador",
-  "feminino",
-  "infantil",
-  "retro",
-  "calcao",
+const ALLOWED_TYPES = new Set(["torcedor", "jogador", "feminino", "infantil", "retro", "calcao"]);
+const BRAZILIAN_PATCHES = new Set([
+  "brasileirao",
+  "copa-do-brasil",
+  "libertadores",
+  "sul-americana",
+  "mundial-de-clubes",
 ]);
 
 function parseArgs(argv) {
@@ -44,11 +41,7 @@ function commercialLabel(type) {
 }
 
 function descriptionFor(product, team, commercialType) {
-  const parts = [
-    `${product.name}.`,
-    `Time: ${team}.`,
-    "Campeonato: Brasileirão.",
-  ];
+  const parts = [`${product.name}.`, `Time: ${team}.`, "Campeonato: Brasileirão."];
   if (commercialType && commercialType !== "other") {
     parts.push(`Versão ${commercialLabel(commercialType)}.`);
   }
@@ -118,6 +111,7 @@ const products = input.products.map((product, productIndex) => {
     .filter(Boolean)
     .join(" | ");
   const customizable = primaryType !== "calcao";
+  const patches = (profile.patches ?? []).filter((patch) => BRAZILIAN_PATCHES.has(patch));
 
   return {
     ...product,
@@ -130,7 +124,7 @@ const products = input.products.map((product, productIndex) => {
     specifications,
     personalizationEnabled: customizable,
     phraseEnabled: customizable,
-    patches: profile.patches,
+    patches,
     variants,
   };
 });
