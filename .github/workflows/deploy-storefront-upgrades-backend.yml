@@ -9,6 +9,7 @@ on:
       - "scripts/deploy-storefront-upgrade-migrations.mjs"
       - "scripts/deploy-home-launches-top10.mjs"
       - "scripts/deploy-kids-purchase-sizes.mjs"
+      - "scripts/deploy-catalog-filter-key-fix.mjs"
       - "supabase/migrations/20260904213000_storefront_personalization.sql"
       - "supabase/migrations/20260904213500_catalog_commercial_type.sql"
       - "supabase/migrations/20260905004500_affiliate_self_service_links.sql"
@@ -22,6 +23,7 @@ on:
       - "supabase/migrations/20260909220000_catalog_public_rpc_security_fix.sql"
       - "supabase/migrations/20260909233000_home_launches_top10.sql"
       - "supabase/migrations/20260909234000_product_purchase_sizes_override.sql"
+      - "supabase/migrations/20260910043000_catalog_filter_key_canonical.sql"
   workflow_dispatch:
 
 permissions:
@@ -47,6 +49,9 @@ jobs:
 
       - name: Deploy storefront upgrade migrations
         run: node scripts/deploy-storefront-upgrade-migrations.mjs
+
+      - name: Deploy canonical catalog filter keys
+        run: node scripts/deploy-catalog-filter-key-fix.mjs
 
       - name: Deploy pinned homepage launches
         run: node scripts/deploy-home-launches-top10.mjs
