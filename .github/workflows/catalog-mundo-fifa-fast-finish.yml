@@ -12,7 +12,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: catalog-mundo-fifa-production
+  group: catalog-mundo-fifa-fast-finish
   cancel-in-progress: true
 
 jobs:
