@@ -51,6 +51,27 @@ function descriptionFor(product, team, commercialType) {
   return parts.join(" ");
 }
 
+function preserveDistinctVariants(variants) {
+  const totals = new Map();
+  for (const variant of variants) {
+    totals.set(variant.commercialType, (totals.get(variant.commercialType) ?? 0) + 1);
+  }
+
+  const seen = new Map();
+  return variants.map((variant) => {
+    const type = variant.commercialType;
+    const occurrence = (seen.get(type) ?? 0) + 1;
+    seen.set(type, occurrence);
+    const total = totals.get(type) ?? 1;
+    const suffix = String(occurrence).padStart(2, "0");
+    return {
+      ...variant,
+      code: total > 1 ? `${type}-${suffix}` : type,
+      name: total > 1 ? `${commercialLabel(type)} ${suffix}` : commercialLabel(type),
+    };
+  });
+}
+
 const options = parseArgs(process.argv.slice(2));
 const input = JSON.parse(fs.readFileSync(path.resolve(options.input), "utf8"));
 if (!Array.isArray(input.products) || input.products.length === 0) {
@@ -62,7 +83,7 @@ const products = input.products.map((product, productIndex) => {
     throw new Error(`${options.sourceGroup}: produto ${productIndex + 1} incompleto.`);
   }
 
-  const variants = product.variants.map((variant, variantIndex) => {
+  const mappedVariants = product.variants.map((variant, variantIndex) => {
     const profile = buildCatalogBusinessProfile({
       name: variant.sourceTitle || product.sourceTitle || product.name,
       team: options.sourceGroup,
@@ -84,11 +105,16 @@ const products = input.products.map((product, productIndex) => {
     }
     return {
       ...variant,
-      name: commercialLabel(commercialType),
       commercialType,
       price,
     };
   });
+
+  const variants = preserveDistinctVariants(mappedVariants);
+  const codes = variants.map((variant) => variant.code);
+  if (new Set(codes).size !== codes.length) {
+    throw new Error(`${options.sourceGroup}: códigos de variação duplicados em ${product.name}.`);
+  }
 
   const primaryType = variants[0].commercialType;
   const primaryPrice = variants[0].price;
