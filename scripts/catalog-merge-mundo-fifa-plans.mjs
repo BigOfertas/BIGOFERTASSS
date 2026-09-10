@@ -3,6 +3,15 @@ import path from "node:path";
 
 const EXPECTED_ALBUMS = 47;
 const SOURCE_EMPTY_ALBUMS = new Set(["SERVIA"]);
+const SOURCE_TEAM_OVERRIDES = new Map([
+  [13, "Coreia"],
+  [14, "Croácia"],
+  [15, "Dinamarca"],
+  [16, "Equador"],
+  [17, "Costa do Marfim"],
+  [40, "Suécia"],
+  [41, "Portugal"],
+]);
 const PRICE_BY_TYPE = Object.freeze({
   torcedor: 184.9,
   feminino: 184.9,
@@ -48,9 +57,11 @@ const products = [];
 const albumSummaries = [];
 const sourceSkips = [];
 for (const [index, album] of albums.entries()) {
+  const sourceIndex = index + 1;
+  const actualTeam = SOURCE_TEAM_OVERRIDES.get(sourceIndex) ?? album.name;
   if (SOURCE_EMPTY_ALBUMS.has(normalized(album.name))) {
     albumSummaries.push({
-      order: index + 1,
+      order: sourceIndex,
       name: album.name,
       sourceAlbumUrl: album.url,
       products: 0,
@@ -66,37 +77,38 @@ for (const [index, album] of albums.entries()) {
     continue;
   }
 
-  const artifactName = `mundo-fifa-plan-${String(index + 1).padStart(2, "0")}`;
+  const artifactName = `mundo-fifa-plan-${String(sourceIndex).padStart(2, "0")}`;
   const planPath = path.resolve(options.root, artifactName, "plan.json");
   if (!fs.existsSync(planPath)) throw new Error(`Plano ausente: ${artifactName}`);
   const plan = JSON.parse(fs.readFileSync(planPath, "utf8"));
   if (!Array.isArray(plan.products) || plan.products.length === 0) {
-    throw new Error(`${album.name}: plano vazio.`);
+    throw new Error(`${actualTeam}: plano vazio.`);
   }
 
   for (const product of plan.products) {
-    if (normalized(product.team) !== normalized(album.name)) {
-      throw new Error(`${album.name}: produto associado a seleção incorreta (${product.team}).`);
+    if (normalized(product.team) !== normalized(actualTeam)) {
+      throw new Error(`${actualTeam}: produto associado a seleção incorreta (${product.team}).`);
     }
     if (normalized(product.competition) !== "COPA DO MUNDO") {
-      throw new Error(`${album.name}: campeonato incorreto em ${product.name}.`);
+      throw new Error(`${actualTeam}: campeonato incorreto em ${product.name}.`);
     }
     const expectedPrice = PRICE_BY_TYPE[product.commercialType];
     if (
       !Number.isFinite(expectedPrice) ||
       Math.abs(Number(product.price) - expectedPrice) > 0.001
     ) {
-      throw new Error(`${album.name}: preço/tipo comercial inválido em ${product.name}.`);
+      throw new Error(`${actualTeam}: preço/tipo comercial inválido em ${product.name}.`);
     }
     if (!Array.isArray(product.variants) || product.variants.length === 0) {
-      throw new Error(`${album.name}: produto sem variante.`);
+      throw new Error(`${actualTeam}: produto sem variante.`);
     }
     products.push(product);
   }
 
   albumSummaries.push({
-    order: index + 1,
-    name: album.name,
+    order: sourceIndex,
+    name: actualTeam,
+    sourceLabel: actualTeam === album.name ? undefined : album.name,
     sourceAlbumUrl: album.url,
     products: plan.products.length,
     variants: plan.products.reduce((sum, product) => sum + product.variants.length, 0),
