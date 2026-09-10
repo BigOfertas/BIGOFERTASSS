@@ -5,12 +5,7 @@ on:
     branches:
       - main
     paths:
-      - ".github/workflows/catalog-mundo-fifa-deploy.yml"
       - "catalog-jobs/pdf-groups/mundo-fifa.json"
-      - "scripts/catalog-mundo-fifa-plan.mjs"
-      - "scripts/catalog-merge-mundo-fifa-plans.mjs"
-      - "scripts/catalog-filter-existing-national-teams.mjs"
-      - "scripts/catalog-mundo-fifa-production-guard.mjs"
 
 permissions:
   contents: read
