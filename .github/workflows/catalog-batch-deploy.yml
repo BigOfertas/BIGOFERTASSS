@@ -1,0 +1,304 @@
+name: Catalog Batch Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      album_url:
+        description: "URL publica do album Google Photos"
+        required: true
+        type: string
+      label:
+        description: "Rotulo/categoria-fonte do lote"
+        required: true
+        type: string
+      expected_min_images:
+        description: "Minimo de imagens esperado"
+        required: false
+        default: "1"
+        type: string
+      max_scrolls:
+        description: "Limite de ciclos de rolagem"
+        required: false
+        default: "350"
+        type: string
+      default_stock:
+        description: "Estoque inicial por variacao"
+        required: false
+        default: "999"
+        type: string
+      deploy_frontend:
+        description: "Publicar tambem o frontend atual na Hostinger"
+        required: false
+        default: false
+        type: boolean
+      reset_catalog:
+        description: "Zerar somente o catalogo antes da carga (normalmente NAO)"
+        required: false
+        default: false
+        type: boolean
+      reset_authorization:
+        description: "Obrigatorio para reset: RESET-CATALOGO-AUTORIZADO"
+        required: false
+        default: ""
+        type: string
+      public_base_url:
+        description: "Site para E2E publico"
+        required: false
+        default: "https://bigofertas.net"
+        type: string
+      launch_count:
+        description: "Quantidade fixa esperada em Lancamentos"
+        required: false
+        default: "10"
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - "catalog-jobs/batch-deploy/job.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-batch-deploy-production
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.resolve.outputs.enabled }}
+      album_url: ${{ steps.resolve.outputs.album_url }}
+      label: ${{ steps.resolve.outputs.label }}
+      expected_min_images: ${{ steps.resolve.outputs.expected_min_images }}
+      max_scrolls: ${{ steps.resolve.outputs.max_scrolls }}
+      default_stock: ${{ steps.resolve.outputs.default_stock }}
+      deploy_frontend: ${{ steps.resolve.outputs.deploy_frontend }}
+      reset_catalog: ${{ steps.resolve.outputs.reset_catalog }}
+      public_base_url: ${{ steps.resolve.outputs.public_base_url }}
+      launch_count: ${{ steps.resolve.outputs.launch_count }}
+      request_id: ${{ steps.resolve.outputs.request_id }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: resolve
+        name: Resolve and validate deployment request
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ALBUM_URL: ${{ inputs.album_url }}
+          INPUT_LABEL: ${{ inputs.label }}
+          INPUT_EXPECTED_MIN_IMAGES: ${{ inputs.expected_min_images }}
+          INPUT_MAX_SCROLLS: ${{ inputs.max_scrolls }}
+          INPUT_DEFAULT_STOCK: ${{ inputs.default_stock }}
+          INPUT_DEPLOY_FRONTEND: ${{ inputs.deploy_frontend }}
+          INPUT_RESET_CATALOG: ${{ inputs.reset_catalog }}
+          INPUT_RESET_AUTHORIZATION: ${{ inputs.reset_authorization }}
+          INPUT_PUBLIC_BASE_URL: ${{ inputs.public_base_url }}
+          INPUT_LAUNCH_COUNT: ${{ inputs.launch_count }}
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
+          const eventName = process.env.EVENT_NAME;
+          let request;
+          if (eventName === 'workflow_dispatch') {
+            request = {
+              enabled: true,
+              request_id: `manual-${process.env.GITHUB_RUN_ID}`,
+              album_url: process.env.INPUT_ALBUM_URL,
+              label: process.env.INPUT_LABEL,
+              expected_min_images: process.env.INPUT_EXPECTED_MIN_IMAGES || '1',
+              max_scrolls: process.env.INPUT_MAX_SCROLLS || '350',
+              default_stock: process.env.INPUT_DEFAULT_STOCK || '999',
+              deploy_frontend: process.env.INPUT_DEPLOY_FRONTEND === 'true',
+              reset_catalog: process.env.INPUT_RESET_CATALOG === 'true',
+              reset_authorization: process.env.INPUT_RESET_AUTHORIZATION || '',
+              public_base_url: process.env.INPUT_PUBLIC_BASE_URL || 'https://bigofertas.net',
+              launch_count: process.env.INPUT_LAUNCH_COUNT || '10',
+            };
+          } else {
+            request = JSON.parse(fs.readFileSync('catalog-jobs/batch-deploy/job.json', 'utf8'));
+          }
+
+          const enabled = request.enabled === true;
+          const output = (key, value) => {
+            const normalized = String(value ?? '').replace(/[\r\n]+/g, ' ').trim();
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${normalized}\n`);
+          };
+
+          if (!enabled) {
+            output('enabled', 'false');
+            output('request_id', request.request_id || 'disabled');
+            console.log('CATALOG_BATCH_REQUEST_DISABLED');
+            process.exit(0);
+          }
+
+          const album = new URL(String(request.album_url || ''));
+          if (album.protocol !== 'https:' || !['photos.google.com', 'photos.app.goo.gl'].includes(album.hostname)) {
+            throw new Error('album_url precisa ser um album HTTPS do Google Photos.');
+          }
+          const label = String(request.label || '').trim();
+          if (!label) throw new Error('label e obrigatorio.');
+
+          const integer = (value, name, min, max) => {
+            const parsed = Number.parseInt(String(value), 10);
+            if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
+              throw new Error(`${name} invalido.`);
+            }
+            return parsed;
+          };
+          const expectedMinImages = integer(request.expected_min_images ?? 1, 'expected_min_images', 1, 100000);
+          const maxScrolls = integer(request.max_scrolls ?? 350, 'max_scrolls', 1, 2000);
+          const defaultStock = integer(request.default_stock ?? 999, 'default_stock', 0, 1000000);
+          const launchCount = integer(request.launch_count ?? 10, 'launch_count', 0, 100);
+          const resetCatalog = request.reset_catalog === true;
+          if (resetCatalog && request.reset_authorization !== 'RESET-CATALOGO-AUTORIZADO') {
+            throw new Error('Reset do catalogo bloqueado: autorizacao destrutiva explicita ausente.');
+          }
+          const publicBase = new URL(String(request.public_base_url || 'https://bigofertas.net'));
+          if (publicBase.protocol !== 'https:') throw new Error('public_base_url precisa usar HTTPS.');
+
+          output('enabled', 'true');
+          output('album_url', album.href);
+          output('label', label);
+          output('expected_min_images', expectedMinImages);
+          output('max_scrolls', maxScrolls);
+          output('default_stock', defaultStock);
+          output('deploy_frontend', request.deploy_frontend === true ? 'true' : 'false');
+          output('reset_catalog', resetCatalog ? 'true' : 'false');
+          output('public_base_url', publicBase.href.replace(/\/$/, ''));
+          output('launch_count', launchCount);
+          output('request_id', request.request_id || `push-${process.env.GITHUB_SHA?.slice(0, 12)}`);
+          console.log(`CATALOG_BATCH_REQUEST_OK label=${label} reset=${resetCatalog} deployFrontend=${request.deploy_frontend === true}`);
+          NODE
+
+  catalog:
+    needs: resolve
+    if: needs.resolve.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Validate permanent pipeline code
+        run: |
+          node --check scripts/google-photos-collector.mjs
+          node --check scripts/google-photos-assimilator.mjs
+          node --check scripts/google-photos-assimilator-runner.mjs
+          node --check scripts/google-photos-catalog-pipeline.mjs
+          node --check scripts/catalog-batch-guard.mjs
+          node --check scripts/catalog-batch-public-verify.mjs
+
+      - name: Ensure catalog backend prerequisites are live
+        run: |
+          node scripts/deploy-storefront-upgrade-migrations.mjs
+          node scripts/deploy-home-launches-top10.mjs
+          node scripts/deploy-kids-purchase-sizes.mjs
+
+      - name: Snapshot protected business data
+        run: |
+          node scripts/catalog-batch-guard.mjs snapshot \
+            --out .artifacts/catalog-batch/protected-state-before.json
+
+      - name: Install Playwright for album collection
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Collect complete Google Photos album
+        run: |
+          node scripts/google-photos-collector.mjs \
+            --url "${{ needs.resolve.outputs.album_url }}" \
+            --label "${{ needs.resolve.outputs.label }}" \
+            --expected-min-images "${{ needs.resolve.outputs.expected_min_images }}" \
+            --max-scrolls "${{ needs.resolve.outputs.max_scrolls }}" \
+            --out .artifacts/google-photos-collector
+
+      - name: Assimilate and validate every image group
+        run: |
+          node scripts/google-photos-assimilator-runner.mjs \
+            --input .artifacts/google-photos-collector/collector.json \
+            --out .artifacts/google-photos-collector/assimilation
+
+      - name: Normalize, validate URLs, write and activate batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          FLAGS="--validate-urls --apply --activate --stock ${{ needs.resolve.outputs.default_stock }}"
+          if [[ "${{ needs.resolve.outputs.reset_catalog }}" == "true" ]]; then
+            FLAGS="$FLAGS --reset"
+          fi
+          node scripts/google-photos-catalog-pipeline.mjs $FLAGS
+
+      - name: Verify exact database result and protected data
+        run: |
+          node scripts/catalog-batch-guard.mjs verify \
+            --snapshot .artifacts/catalog-batch/protected-state-before.json \
+            --plan .artifacts/google-photos-collector/catalog-pipeline-plan.json \
+            --out .artifacts/catalog-batch/verification.json
+
+      - name: Upload complete deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-batch-deploy-${{ github.run_id }}
+          path: .artifacts/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+
+  deploy_frontend:
+    needs: [resolve, catalog]
+    if: needs.resolve.outputs.enabled == 'true' && needs.resolve.outputs.deploy_frontend == 'true'
+    uses: ./.github/workflows/hostinger-production-deploy.yml
+    secrets: inherit
+
+  verify_public:
+    needs: [resolve, catalog, deploy_frontend]
+    if: >-
+      ${{
+        always() &&
+        needs.resolve.outputs.enabled == 'true' &&
+        needs.catalog.result == 'success' &&
+        (needs.deploy_frontend.result == 'success' || needs.deploy_frontend.result == 'skipped')
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Download catalog deployment evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: catalog-batch-deploy-${{ github.run_id }}
+          path: .artifacts
+
+      - name: Install Playwright for public E2E
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install chromium
+
+      - name: Verify public homepage, categories and product details
+        run: |
+          node scripts/catalog-batch-public-verify.mjs \
+            --verification .artifacts/catalog-batch/verification.json \
+            --base-url "${{ needs.resolve.outputs.public_base_url }}" \
+            --launch-count "${{ needs.resolve.outputs.launch_count }}"
+
+      - name: Final deployment marker
+        run: |
+          echo "CATALOG_BATCH_DEPLOY_COMPLETE request=${{ needs.resolve.outputs.request_id }}"
+          echo "CATALOG_BATCH_DEPLOY_PUBLIC_OK"
