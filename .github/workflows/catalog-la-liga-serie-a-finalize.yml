@@ -16,8 +16,8 @@ concurrency:
 
 jobs:
   finalize:
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
+    runs-on: ubuntu-slim
+    timeout-minutes: 15
     environment: production
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
