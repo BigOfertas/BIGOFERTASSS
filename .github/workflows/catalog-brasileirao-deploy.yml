@@ -1,0 +1,234 @@
+name: Catalog Campeonato Brasileiro Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/catalog-brasileirao-deploy.yml"
+      - "catalog-jobs/pdf-groups/brasileirao.json"
+      - "scripts/catalog-brasileirao-assimilation-filter.mjs"
+      - "scripts/catalog-brasileirao-plan.mjs"
+      - "scripts/catalog-merge-brasileirao-plans.mjs"
+      - "scripts/catalog-reconcile-existing-club-products.mjs"
+      - "scripts/catalog-brasileirao-production-guard.mjs"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-brasileirao-production
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.resolve.outputs.enabled }}
+      matrix: ${{ steps.resolve.outputs.matrix }}
+      request_id: ${{ steps.resolve.outputs.request_id }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: resolve
+        name: Resolve Campeonato Brasileiro PDF manifest
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const manifest = JSON.parse(fs.readFileSync('catalog-jobs/pdf-groups/brasileirao.json', 'utf8'));
+          const albums = Array.isArray(manifest.albums) ? manifest.albums : [];
+          if (manifest.enabled !== true) {
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'enabled=false\n');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'matrix={"include":[]}\n');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `request_id=${manifest.request_id || 'disabled'}\n`);
+            process.exit(0);
+          }
+          if (albums.length !== 30) throw new Error(`Esperados 30 álbuns do Campeonato Brasileiro; recebidos ${albums.length}.`);
+          if (new Set(albums.map((album) => album.url)).size !== 30) throw new Error('Há URL de álbum duplicada no Campeonato Brasileiro.');
+          for (const [index, album] of albums.entries()) {
+            if (!album?.name || !/^https:\/\/photos\.google\.com\/share\//.test(album?.url || '')) {
+              throw new Error(`Álbum do Campeonato Brasileiro inválido na posição ${index + 1}.`);
+            }
+          }
+          const include = albums.map((album, index) => ({
+            index: String(index + 1).padStart(2, '0'),
+            name: album.name,
+            url: album.url,
+          }));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'enabled=true\n');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `matrix=${JSON.stringify({ include })}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `request_id=${manifest.request_id}\n`);
+          console.log(`BRASILEIRAO_MANIFEST_OK albums=${albums.length} request=${manifest.request_id}`);
+          NODE
+
+  collect:
+    needs: resolve
+    if: needs.resolve.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJSON(needs.resolve.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+      - name: Collect complete club album
+        env:
+          ALBUM_URL: ${{ matrix.url }}
+          ALBUM_NAME: ${{ matrix.name }}
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/brasileirao/${ALBUM_INDEX}"
+          node scripts/google-photos-collector.mjs \
+            --url "$ALBUM_URL" \
+            --label "CAMPEONATO BRASILEIRO - $ALBUM_NAME" \
+            --out "$OUT" \
+            --expected-min-images 1 \
+            --max-scrolls 350
+      - name: Assimilate every visual group
+        env:
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/brasileirao/${ALBUM_INDEX}"
+          node scripts/google-photos-assimilator-runner.mjs \
+            --input "$OUT/collector.json" \
+            --out "$OUT/assimilation"
+      - name: Keep approved Brasileirão product scope
+        env:
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/brasileirao/${ALBUM_INDEX}"
+          node scripts/catalog-brasileirao-assimilation-filter.mjs \
+            --input "$OUT/assimilation/assimilation.json" \
+            --output "$OUT/assimilation/brasileirao-filtered.json" \
+            --report "$OUT/scope-filter.json"
+      - name: Build normalized Brasileirão plan
+        env:
+          ALBUM_INDEX: ${{ matrix.index }}
+          ALBUM_NAME: ${{ matrix.name }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/brasileirao/${ALBUM_INDEX}"
+          node scripts/google-photos-catalog-pipeline.mjs \
+            --collector "$OUT/collector.json" \
+            --assimilation "$OUT/assimilation/brasileirao-filtered.json" \
+            --report "$OUT/raw-plan.json" \
+            --validate-urls
+          node scripts/catalog-brasileirao-plan.mjs \
+            --input "$OUT/raw-plan.json" \
+            --output "$OUT/plan.json" \
+            --source-group "$ALBUM_NAME"
+      - name: Upload audited club plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: brasileirao-plan-${{ matrix.index }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            .artifacts/brasileirao/${{ matrix.index }}/collector.json
+            .artifacts/brasileirao/${{ matrix.index }}/groups.json
+            .artifacts/brasileirao/${{ matrix.index }}/assimilation/assimilation.json
+            .artifacts/brasileirao/${{ matrix.index }}/assimilation/brasileirao-filtered.json
+            .artifacts/brasileirao/${{ matrix.index }}/assimilation/overview.png
+            .artifacts/brasileirao/${{ matrix.index }}/scope-filter.json
+            .artifacts/brasileirao/${{ matrix.index }}/raw-plan.json
+            .artifacts/brasileirao/${{ matrix.index }}/plan.json
+
+  publish:
+    needs: [resolve, collect]
+    if: needs.resolve.outputs.enabled == 'true' && needs.collect.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Download all audited plans
+        uses: actions/download-artifact@v6
+        with:
+          pattern: brasileirao-plan-*
+          path: .artifacts/brasileirao/downloaded
+          merge-multiple: false
+      - name: Merge plans in PDF order
+        run: |
+          node scripts/catalog-merge-brasileirao-plans.mjs \
+            --manifest catalog-jobs/pdf-groups/brasileirao.json \
+            --root .artifacts/brasileirao/downloaded \
+            --output .artifacts/brasileirao/merged-plan.json
+      - name: Snapshot protected business data
+        run: |
+          node scripts/catalog-batch-guard.mjs snapshot \
+            --out .artifacts/brasileirao/protected-before.json
+      - id: reconcile
+        name: Reconcile products already registered
+        run: |
+          node scripts/catalog-reconcile-existing-club-products.mjs \
+            --input .artifacts/brasileirao/merged-plan.json \
+            --output .artifacts/brasileirao/reconciled-plan.json \
+            --report .artifacts/brasileirao/existing-products.json
+          AMBIGUOUS=$(node --input-type=module -e "import fs from 'node:fs'; const r=JSON.parse(fs.readFileSync('.artifacts/brasileirao/existing-products.json')); process.stdout.write(String(r.skipped.filter((x) => x.reason === 'ambiguous_existing_match').length));")
+          if [[ "$AMBIGUOUS" != "0" ]]; then
+            echo "Há $AMBIGUOUS correspondência(s) ambígua(s) com o catálogo atual." >&2
+            exit 1
+          fi
+          COUNT=$(node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('.artifacts/brasileirao/reconciled-plan.json')); process.stdout.write(String(p.products.length));")
+          echo "product_count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "BRASILEIRAO_RECONCILED_COUNT=$COUNT"
+      - name: Publish Campeonato Brasileiro atomically
+        if: steps.reconcile.outputs.product_count != '0'
+        run: |
+          node scripts/apply-normalized-catalog-plan.mjs \
+            --plan .artifacts/brasileirao/reconciled-plan.json \
+            --stock 999
+      - name: Verify exact database result and protected data
+        if: steps.reconcile.outputs.product_count != '0'
+        run: |
+          node scripts/catalog-batch-guard.mjs verify \
+            --snapshot .artifacts/brasileirao/protected-before.json \
+            --plan .artifacts/brasileirao/reconciled-plan.json \
+            --out .artifacts/brasileirao/batch-verification.json
+      - name: Verify all 30 Brazilian clubs in production
+        run: |
+          node scripts/catalog-brasileirao-production-guard.mjs \
+            --manifest catalog-jobs/pdf-groups/brasileirao.json \
+            --output .artifacts/brasileirao/production-verification.json
+      - name: Install Playwright for live verification
+        if: steps.reconcile.outputs.product_count != '0'
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+      - name: Verify live storefront product samples
+        if: steps.reconcile.outputs.product_count != '0'
+        run: |
+          node scripts/catalog-batch-public-verify.mjs \
+            --verification .artifacts/brasileirao/batch-verification.json \
+            --base-url https://bigofertas.net \
+            --launch-count 10
+      - name: Upload complete Campeonato Brasileiro evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brasileirao-production-${{ needs.resolve.outputs.request_id }}
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            .artifacts/brasileirao/merged-plan.json
+            .artifacts/brasileirao/reconciled-plan.json
+            .artifacts/brasileirao/existing-products.json
+            .artifacts/brasileirao/protected-before.json
+            .artifacts/brasileirao/batch-verification.json
+            .artifacts/brasileirao/production-verification.json
