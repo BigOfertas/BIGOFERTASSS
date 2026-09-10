@@ -4,11 +4,12 @@ import path from "node:path";
 const RETRO_PRICE = 219.9;
 
 function parseArgs(argv) {
-  const out = { input: "", output: "" };
+  const out = { input: "", output: "", sourceGroup: "" };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--input") out.input = argv[++index];
     else if (arg === "--output") out.output = argv[++index];
+    else if (arg === "--source-group") out.sourceGroup = argv[++index];
     else throw new Error(`Opção desconhecida: ${arg}`);
   }
   if (!out.input || !out.output) throw new Error("Use --input e --output.");
@@ -27,9 +28,11 @@ function displayEntity(value) {
     ["M. UNITED", "Manchester United"],
     ["MAN. UNITED", "Manchester United"],
     ["MAN UNITED", "Manchester United"],
+    ["PARIS", "PSG"],
     ["PARIS SAINT GERMAIN", "PSG"],
     ["PSG", "PSG"],
     ["INTERZIONALE", "Internazionale"],
+    ["INTER", "Internazionale"],
     ["AC MILAN", "Milan"],
   ]);
   if (aliases.has(upper)) return aliases.get(upper);
@@ -45,27 +48,78 @@ function displayEntity(value) {
     .join(" ");
 }
 
-function parseRetroIdentity(product) {
+function stripPattern(value, pattern) {
+  return value
+    .replace(pattern, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseRetroIdentity(product, sourceGroup) {
   const sourceTitle = String(
     product.sourceTitle ?? product.variants?.[0]?.sourceTitle ?? "",
   ).trim();
-  const match = sourceTitle.match(
-    /^(CAMISA|REGATA)\s+(?:(I|II|III)\s+)?(.+?)\s+((?:19|20)\d{2}|\d{2}\/\d{2})(?:\s+(.+))?$/i,
-  );
-  if (!match) {
-    throw new Error(`Título retrô não pôde ser estruturado com segurança: ${sourceTitle}`);
+  const typeMatch = sourceTitle.match(/^(CAMISA|REGATA)\b/i);
+  if (!typeMatch) {
+    throw new Error(`Título fora do escopo de camisas retrô: ${sourceTitle}`);
   }
-  const [, sourceType, model, rawTeam, season, sourceTail] = match;
-  const team = displayEntity(rawTeam);
-  const brand = product.brand ? displayEntity(product.brand) : displayEntity(sourceTail);
+
+  const seasonMatches = [
+    ...sourceTitle.matchAll(/\b((?:19|20)\d{2}(?:[/-]\d{2,4})?|\d{2}\/\d{2})\b/g),
+  ];
+  const seasonMatch = seasonMatches.at(-1);
+  if (!seasonMatch || seasonMatch.index === undefined) {
+    throw new Error(`Temporada retrô não identificada com segurança: ${sourceTitle}`);
+  }
+
+  const season = seasonMatch[1].replace("-", "/");
+  const beforeSeason = sourceTitle
+    .slice(typeMatch[0].length, seasonMatch.index)
+    .replace(/\s+/g, " ")
+    .trim();
+  const sourceTail = sourceTitle
+    .slice(seasonMatch.index + seasonMatch[0].length)
+    .replace(/\s+/g, " ")
+    .trim();
+
+  let remainder = beforeSeason;
+  const modelMatch = remainder.match(/^(I|II|III|IV)\b/i);
+  const model = modelMatch?.[1]?.toUpperCase() ?? null;
+  if (modelMatch) remainder = stripPattern(remainder, /^(I|II|III|IV)\b/i);
+
+  const descriptors = [];
+  const descriptorPatterns = [
+    ["Pré-jogo", /\bPR[ÉE]-?JOGO\b/gi],
+    ["Treino", /\bDE\s+TREINO\b/gi],
+    ["Treino", /\bTREINO\b/gi],
+    ["Manga Longa", /\bMANGA\s+LONGA\b/gi],
+    ["Goleiro", /\bGOLEIRO\b/gi],
+    ["Feminina", /\bFEMININ[AO]\b/gi],
+    ["Jogador", /\b(?:PLAYER|JOGADOR)\b/gi],
+  ];
+  for (const [label, pattern] of descriptorPatterns) {
+    if (pattern.test(remainder) && !descriptors.includes(label)) descriptors.push(label);
+    pattern.lastIndex = 0;
+    remainder = stripPattern(remainder, pattern);
+  }
+  remainder = stripPattern(remainder, /\b(?:RETRO|RETRÔ)\b/gi);
+
+  const normalizedGroup = String(sourceGroup ?? "").trim();
+  const team =
+    normalizedGroup && normalizedGroup.toUpperCase() !== "OUTROS"
+      ? displayEntity(normalizedGroup)
+      : displayEntity(remainder);
+  const brand = displayEntity(sourceTail || product.brand);
   if (!team || !season) throw new Error(`Identidade retrô incompleta: ${sourceTitle}`);
+
   return {
     sourceTitle,
-    type: sourceType.toUpperCase() === "REGATA" ? "Regata" : "Camisa",
-    model: model?.toUpperCase() ?? null,
+    type: typeMatch[1].toUpperCase() === "REGATA" ? "Regata" : "Camisa",
+    model,
     team,
     season,
     brand: brand || null,
+    descriptors,
   };
 }
 
@@ -78,6 +132,7 @@ function retroSpecifications(identity, value) {
     identity.brand ? `Marca: ${identity.brand}` : null,
     `Temporada: ${identity.season}`,
     "Versão: Retrô",
+    identity.descriptors.length > 0 ? `Detalhes: ${identity.descriptors.join(", ")}` : null,
     uniform,
   ]
     .filter(Boolean)
@@ -107,10 +162,11 @@ const normalized = {
       throw new Error(`Produto ${productIndex + 1} incompleto.`);
     }
 
-    const identity = parseRetroIdentity(product);
+    const identity = parseRetroIdentity(product, options.sourceGroup);
     const name = [
       `${identity.team} — ${identity.type} Retrô`,
       identity.model,
+      ...identity.descriptors,
       identity.season,
       identity.brand,
     ]
