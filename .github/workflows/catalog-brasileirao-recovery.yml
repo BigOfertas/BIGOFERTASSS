@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - ".github/workflows/catalog-brasileirao-recovery.yml"
+      - "scripts/catalog-brasileirao-plan.mjs"
 
 permissions:
   contents: read
@@ -234,7 +235,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: brasileirao-production-recovery-v2
+          name: brasileirao-production-recovery-v3
           retention-days: 30
           if-no-files-found: warn
           path: |
