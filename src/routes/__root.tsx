@@ -17,6 +17,7 @@ import { AuthProvider } from "../lib/auth";
 import Footer from "../components/layout/Footer";
 import { CartProvider } from "../context/CartContext";
 import { Toaster } from "@/components/ui/sonner";
+import { Component as CursorFollower } from "@/components/ui/cursor-follower";
 import { BRAND } from "@/config/brand";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -183,6 +184,7 @@ function RootComponent() {
               </div>
             ) : null}
           </div>
+          <CursorFollower />
           <Toaster position="top-center" richColors />
         </CartProvider>
       </AuthProvider>
