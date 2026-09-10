@@ -54,7 +54,7 @@ jobs:
           github-token: ${{ github.token }}
           run-id: 34496701221
 
-      - name: Assemble 46 product-bearing national-team plans
+      - name: Assemble source plans
         run: |
           set -euo pipefail
           ROOT=".artifacts/mundo-fifa/combined"
@@ -64,68 +64,10 @@ jobs:
           cp -a .artifacts/mundo-fifa/corrections/mundo-fifa-plan-02 "$ROOT/mundo-fifa-plan-02"
           cp -a .artifacts/mundo-fifa/corrections/mundo-fifa-plan-28 "$ROOT/mundo-fifa-plan-28"
 
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          import path from 'node:path';
-
-          const root = '.artifacts/mundo-fifa/combined';
-          const dirs = fs.readdirSync(root)
-            .filter((name) => /^mundo-fifa-plan-\d{2}$/.test(name))
-            .sort();
-          const expected = Array.from({ length: 47 }, (_, index) => index + 1)
-            .filter((index) => index !== 42)
-            .map((index) => `mundo-fifa-plan-${String(index).padStart(2, '0')}`);
-          const missing = expected.filter((name) => !dirs.includes(name));
-          const unexpected = dirs.filter((name) => !expected.includes(name));
-          if (missing.length || unexpected.length || dirs.length !== 46) {
-            throw new Error(
-              `Planos inválidos. total=${dirs.length} missing=${missing.join(',')} unexpected=${unexpected.join(',')}`,
-            );
-          }
-
-          let removed = 0;
-          let kept = 0;
-          let variants = 0;
-          let images = 0;
-          for (const dir of dirs) {
-            const file = path.join(root, dir, 'plan.json');
-            const plan = JSON.parse(fs.readFileSync(file, 'utf8'));
-            const before = plan.products?.length ?? 0;
-            plan.products = (plan.products ?? []).filter((product) => {
-              const slug = product.category?.slug;
-              return slug === 'camisas' || slug === 'infantil';
-            });
-            if (!plan.products.length) {
-              throw new Error(`${dir}: nenhum produto permitido após aplicar o escopo congelado.`);
-            }
-            removed += before - plan.products.length;
-            kept += plan.products.length;
-            const planVariants = plan.products.reduce(
-              (sum, product) => sum + (product.variants?.length ?? 0),
-              0,
-            );
-            const planImages = plan.products.reduce(
-              (sum, product) =>
-                sum +
-                (product.variants ?? []).reduce(
-                  (inner, variant) => inner + (variant.images?.length ?? 0),
-                  0,
-                ),
-              0,
-            );
-            variants += planVariants;
-            images += planImages;
-            plan.summary = {
-              products: plan.products.length,
-              variants: planVariants,
-              images: planImages,
-            };
-            fs.writeFileSync(file, `${JSON.stringify(plan, null, 2)}\n`);
-          }
-          console.log(
-            `MUNDO_FIFA_ASSEMBLED plans=${dirs.length} products=${kept} variants=${variants} images=${images} frozenRemoved=${removed} sourceSkipped=Serbia`,
-          );
-          NODE
+      - name: Sanitize frozen scope, source labels and duplicate variants
+        run: |
+          node scripts/catalog-mundo-fifa-sanitize-plan.mjs \
+            --root .artifacts/mundo-fifa/combined
 
       - name: Merge all plans in original PDF order
         run: |
