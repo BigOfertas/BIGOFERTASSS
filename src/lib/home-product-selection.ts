@@ -9,9 +9,7 @@ function normalizeProductName(value: string) {
     .toUpperCase();
 }
 
-export function isStandardHomeJersey(
-  product: Pick<CatalogListItem, "name" | "commercial_type">,
-) {
+export function isStandardHomeJersey(product: Pick<CatalogListItem, "name" | "commercial_type">) {
   if (!product.commercial_type || !STANDARD_COMMERCIAL_TYPES.has(product.commercial_type)) {
     return false;
   }
