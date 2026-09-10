@@ -1,0 +1,157 @@
+name: Finalize La Liga and Serie A
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/catalog-la-liga-serie-a-finalize.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-la-liga-serie-a-finalize-production
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Validate finalization code
+        run: |
+          node --check scripts/catalog-reconcile-existing-products.mjs
+          node --check scripts/catalog-batch-guard.mjs
+          node --check scripts/apply-normalized-catalog-plan.mjs
+          node --check scripts/catalog-pdf-remaining-verify.mjs
+          node --check scripts/catalog-batch-public-verify.mjs
+
+      - name: Fetch already-processed La Liga and Serie A plan
+        run: |
+          set -euo pipefail
+          mkdir -p .artifacts/la-liga-serie-a/source
+          URL="https://raw.githubusercontent.com/BigOfertas/catalog-worker-temp/main/published/merged-plan.json"
+          for attempt in $(seq 1 60); do
+            if curl -fsSL "$URL" -o .artifacts/la-liga-serie-a/source/merged-plan.json; then
+              if node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const p = '.artifacts/la-liga-serie-a/source/merged-plan.json';
+          const d = JSON.parse(fs.readFileSync(p, 'utf8'));
+          const ok = d?.summary?.albums === 36 && d?.summary?.products === 243 && d?.summary?.variants === 304 && d?.summary?.images === 1518;
+          if (!ok) process.exit(2);
+          const la = d.products.filter((x) => x.competition === 'La Liga').length;
+          const sa = d.products.filter((x) => x.competition === 'Serie A').length;
+          if (la !== 154 || sa !== 89) process.exit(3);
+          console.log(`PROCESSED_PLAN_READY albums=36 products=243 variants=304 images=1518 laliga=${la} seriea=${sa}`);
+          NODE
+              then
+                break
+              fi
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              echo "Processed public plan was not published in time." >&2
+              exit 1
+            fi
+            sleep 10
+          done
+
+      - name: Split exact league plans
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const root = '.artifacts/la-liga-serie-a';
+          const source = JSON.parse(fs.readFileSync(`${root}/source/merged-plan.json`, 'utf8'));
+          const defs = [
+            ['La Liga', 'la-liga', 154, 193, 963],
+            ['Serie A', 'serie-a', 89, 111, 555],
+          ];
+          for (const [competition, key, expectedProducts, expectedVariants, expectedImages] of defs) {
+            const products = source.products.filter((p) => p.competition === competition);
+            const variants = products.reduce((n, p) => n + (p.variants?.length ?? 0), 0);
+            const images = products.reduce((n, p) => n + (p.variants ?? []).reduce((m, v) => m + (v.images?.length ?? 0), 0), 0);
+            if (products.length !== expectedProducts || variants !== expectedVariants || images !== expectedImages) {
+              throw new Error(`${competition} source mismatch products=${products.length}/${expectedProducts} variants=${variants}/${expectedVariants} images=${images}/${expectedImages}`);
+            }
+            const out = {
+              schemaVersion: source.schemaVersion ?? 1,
+              batchKey: `final-${key}-20260910`,
+              products,
+            };
+            fs.writeFileSync(`${root}/source/${key}.json`, `${JSON.stringify(out, null, 2)}\n`, 'utf8');
+            console.log(`${key.toUpperCase().replaceAll('-', '_')}_SOURCE_OK products=${products.length} variants=${variants} images=${images}`);
+          }
+          NODE
+
+      - name: Reconcile against production without duplication
+        run: |
+          set -euo pipefail
+          mkdir -p .artifacts/la-liga-serie-a/reconciled .artifacts/la-liga-serie-a/reports
+          node scripts/catalog-reconcile-existing-products.mjs \
+            --input .artifacts/la-liga-serie-a/source/la-liga.json \
+            --output .artifacts/la-liga-serie-a/reconciled/la-liga.json \
+            --report .artifacts/la-liga-serie-a/reports/la-liga-reconcile.json
+          node scripts/catalog-reconcile-existing-products.mjs \
+            --input .artifacts/la-liga-serie-a/source/serie-a.json \
+            --output .artifacts/la-liga-serie-a/reconciled/serie-a.json \
+            --report .artifacts/la-liga-serie-a/reports/serie-a-reconcile.json
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          for (const key of ['la-liga', 'serie-a']) {
+            const plan = JSON.parse(fs.readFileSync(`.artifacts/la-liga-serie-a/reconciled/${key}.json`, 'utf8'));
+            if (!Array.isArray(plan.products) || plan.products.length === 0) throw new Error(`${key}: reconciled plan is empty`);
+            const variants = plan.products.reduce((n,p)=>n+(p.variants?.length??0),0);
+            const images = plan.products.reduce((n,p)=>n+(p.variants??[]).reduce((m,v)=>m+(v.images?.length??0),0),0);
+            console.log(`${key.toUpperCase().replaceAll('-', '_')}_RECONCILED_OK products=${plan.products.length} variants=${variants} images=${images}`);
+          }
+          NODE
+
+      - name: Snapshot protected business data
+        run: |
+          node scripts/catalog-batch-guard.mjs snapshot \
+            --out .artifacts/la-liga-serie-a/protected-before.json
+
+      - name: Publish La Liga atomically
+        run: |
+          node scripts/apply-normalized-catalog-plan.mjs \
+            --plan .artifacts/la-liga-serie-a/reconciled/la-liga.json \
+            --stock 999
+
+      - name: Publish Serie A atomically
+        run: |
+          node scripts/apply-normalized-catalog-plan.mjs \
+            --plan .artifacts/la-liga-serie-a/reconciled/serie-a.json \
+            --stock 999
+
+      - name: Verify exact production database result and protected data
+        run: |
+          node scripts/catalog-pdf-remaining-verify.mjs \
+            --snapshot .artifacts/la-liga-serie-a/protected-before.json \
+            --root .artifacts/la-liga-serie-a/reconciled \
+            --output .artifacts/la-liga-serie-a/database-verification.json
+
+      - name: Verify products live on bigofertas.net
+        run: |
+          node scripts/catalog-batch-public-verify.mjs \
+            --verification .artifacts/la-liga-serie-a/database-verification.json \
+            --base-url https://bigofertas.net \
+            --launch-count 10
+
+      - name: Upload final deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: la-liga-serie-a-final-${{ github.run_id }}
+          retention-days: 30
+          if-no-files-found: warn
+          path: .artifacts/la-liga-serie-a/
