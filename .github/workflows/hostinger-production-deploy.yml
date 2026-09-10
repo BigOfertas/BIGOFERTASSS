@@ -92,15 +92,16 @@ jobs:
           cp public/.htaccess "$HOSTINGER_OUTPUT/.htaccess"
           test -f "$HOSTINGER_OUTPUT/.htaccess"
 
-      - name: Verify hard-refresh HTML has no premature footer
+      - name: Verify hard-refresh loading shell
         shell: bash
         run: |
           set -euo pipefail
+          grep -F -q 'data-initial-refresh-loader' "$HOSTINGER_OUTPUT/index.html"
           if grep -Eiq '<footer([[:space:]>])' "$HOSTINGER_OUTPUT/index.html"; then
             echo "Footer is present in the prerendered HTML and can flash before hydration." >&2
             exit 1
           fi
-          echo "HOSTINGER_FOOTER_PRERENDER_OK"
+          echo "HOSTINGER_REFRESH_SHELL_OK"
 
       - name: Prepare SSH
         shell: bash
@@ -156,15 +157,20 @@ jobs:
             "$HOSTINGER_SSH_USER@$HOSTINGER_SSH_HOST" \
             'set -eu; TARGET="$HOME/domains/bigofertas.net/public_html"; test -f "$TARGET/index.html"; test -f "$TARGET/.htaccess"; test -d "$TARGET/media"; echo HOSTINGER_DEPLOY_OK'
 
-      - name: Verify production hard-refresh HTML
+      - name: Verify production hard-refresh loading shell
         shell: bash
         run: |
           set -euo pipefail
           for path in / /products /login; do
             body="$(mktemp)"
             curl --fail --silent --show-error --location --retry 3 --retry-delay 2 \
-              "https://bigofertas.net${path}?footer_refresh_check=${GITHUB_RUN_ID}" \
+              "https://bigofertas.net${path}?refresh_loading_check=${GITHUB_RUN_ID}" \
               -o "$body"
+            if ! grep -F -q 'data-initial-refresh-loader' "$body"; then
+              echo "Initial refresh loader missing from production HTML for ${path}." >&2
+              rm -f "$body"
+              exit 1
+            fi
             if grep -Eiq '<footer([[:space:]>])' "$body"; then
               echo "Premature footer found in production HTML for ${path}." >&2
               rm -f "$body"
@@ -172,4 +178,4 @@ jobs:
             fi
             rm -f "$body"
           done
-          echo "HOSTINGER_FOOTER_REFRESH_PRODUCTION_OK"
+          echo "HOSTINGER_REFRESH_LOADING_PRODUCTION_OK"
