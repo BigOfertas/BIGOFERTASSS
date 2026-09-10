@@ -82,13 +82,21 @@ if (options.mode === "snapshot") {
 const before = JSON.parse(fs.readFileSync(path.resolve(options.snapshot), "utf8"));
 const after = await state();
 const plannedProducts = plan.products.length;
-const plannedVariants = plan.products.reduce((sum, product) => sum + (product.variants?.length ?? 0), 0);
-const plannedImages = plan.products.reduce(
-  (sum, product) =>
-    sum + (product.variants ?? []).reduce((inner, variant) => inner + (variant.images?.length ?? 0), 0),
+const plannedVariants = plan.products.reduce(
+  (sum, product) => sum + (product.variants?.length ?? 0),
   0,
 );
-const detail = (await query(`
+const plannedImages = plan.products.reduce(
+  (sum, product) =>
+    sum +
+    (product.variants ?? []).reduce(
+      (inner, variant) => inner + (variant.images?.length ?? 0),
+      0,
+    ),
+  0,
+);
+const detail = (
+  await query(`
   with selected_products as (
     select p.* from public.products p where p.catalog_source_key = any(${sourceArray})
   )
@@ -103,13 +111,18 @@ const detail = (await query(`
     (select count(*)::int from public.product_variants v join selected_products p on p.id = v.product_id where abs(coalesce(v.price_override, p.price) - 219.90) < 0.001) as correct_variant_prices,
     (select count(*)::int from public.product_images i join selected_products p on p.id = i.product_id where i.status::text = 'ready' and i.image_source = 'google_photos' and i.external_url is not null) as ready_google_images
   ;
-`))[0];
+`)
+)[0];
 
-const expectedTotal = Number(before.total_products) + plannedProducts - (before.selected?.length ?? 0);
+const expectedTotal =
+  Number(before.total_products) + plannedProducts - (before.selected?.length ?? 0);
 if (Number(after.total_products) !== expectedTotal) {
   throw new Error(`Total de produtos inesperado: ${after.total_products} != ${expectedTotal}`);
 }
-if (Number(after.launch_count) !== Number(before.launch_count) || Number(after.active_launch_count) !== 10) {
+if (
+  Number(after.launch_count) !== Number(before.launch_count) ||
+  Number(after.active_launch_count) !== 10
+) {
   throw new Error("Os 10 lançamentos existentes foram alterados.");
 }
 const expectations = {
@@ -134,16 +147,25 @@ const codes = after.selected
   .filter((code) => /^P\d{6}$/.test(String(code)))
   .map((code) => Number(code.slice(1)))
   .sort((a, b) => a - b);
-if (new Set(codes).size !== plannedProducts) throw new Error("Códigos P do lote não são únicos/completos.");
+if (new Set(codes).size !== plannedProducts)
+  throw new Error("Códigos P do lote não são únicos/completos.");
 for (let index = 1; index < codes.length; index += 1) {
-  if (codes[index] !== codes[index - 1] + 1) throw new Error("Códigos P do lote retrô não são consecutivos.");
+  if (codes[index] !== codes[index - 1] + 1)
+    throw new Error("Códigos P do lote retrô não são consecutivos.");
 }
-if ((before.selected?.length ?? 0) === 0 && codes[0] !== Number(before.max_catalog_number) + 1) {
+if (
+  (before.selected?.length ?? 0) === 0 &&
+  codes[0] !== Number(before.max_catalog_number) + 1
+) {
   throw new Error(`Lote retrô não começou no próximo P esperado: ${codes[0]}.`);
 }
 
 const result = {
-  planned: { products: plannedProducts, variants: plannedVariants, images: plannedImages },
+  planned: {
+    products: plannedProducts,
+    variants: plannedVariants,
+    images: plannedImages,
+  },
   firstCatalogCode: `P${String(codes[0]).padStart(6, "0")}`,
   lastCatalogCode: `P${String(codes.at(-1)).padStart(6, "0")}`,
   before,
