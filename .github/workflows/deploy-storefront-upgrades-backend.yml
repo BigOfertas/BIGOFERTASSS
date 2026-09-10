@@ -10,6 +10,7 @@ on:
       - "scripts/deploy-home-launches-top10.mjs"
       - "scripts/deploy-kids-purchase-sizes.mjs"
       - "scripts/deploy-catalog-filter-key-fix.mjs"
+      - "scripts/deploy-owner-order-history-cutoff.mjs"
       - "supabase/migrations/20260904213000_storefront_personalization.sql"
       - "supabase/migrations/20260904213500_catalog_commercial_type.sql"
       - "supabase/migrations/20260905004500_affiliate_self_service_links.sql"
@@ -24,6 +25,7 @@ on:
       - "supabase/migrations/20260909233000_home_launches_top10.sql"
       - "supabase/migrations/20260909234000_product_purchase_sizes_override.sql"
       - "supabase/migrations/20260910043000_catalog_filter_key_canonical.sql"
+      - "supabase/migrations/20260910143538_hide_existing_owner_order_history.sql"
   workflow_dispatch:
 
 permissions:
@@ -58,3 +60,6 @@ jobs:
 
       - name: Deploy Kids purchase sizes
         run: node scripts/deploy-kids-purchase-sizes.mjs
+
+      - name: Hide existing owner order history
+        run: node scripts/deploy-owner-order-history-cutoff.mjs
