@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: catalog-pdf-group-deploy-production
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   resolve:
