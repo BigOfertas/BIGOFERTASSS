@@ -34,8 +34,8 @@ jobs:
           set -euo pipefail
           echo 'Downloaded evidence files:'
           find .artifacts/retro-production -maxdepth 4 -type f -print | sort
-          verification="$(find .artifacts/retro-production -type f -name 'verification.json' -print -quit)"
-          test -n "$verification"
+          verification='.artifacts/retro-production/batch-verification.json'
+          test -s "$verification"
           echo "verification=$verification" >> "$GITHUB_OUTPUT"
 
       - name: Install Playwright Chromium
