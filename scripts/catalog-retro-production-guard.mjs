@@ -47,7 +47,9 @@ async function query(sql) {
     signal: AbortSignal.timeout(120_000),
   });
   const text = await response.text();
-  if (!response.ok) throw new Error(`Supabase HTTP ${response.status}: ${text.slice(0, 2500)}`);
+  if (!response.ok) {
+    throw new Error(`Supabase HTTP ${response.status}: ${text.slice(0, 2500)}`);
+  }
   return text ? JSON.parse(text) : [];
 }
 
@@ -105,7 +107,7 @@ const detail = (
     (select count(*)::int from selected_products where status::text = 'active') as active_products,
     (select count(*)::int from selected_products p join public.categories c on c.id = p.primary_category_id where c.slug = 'retro') as retro_category_products,
     (select count(*)::int from selected_products where abs(price - 219.90) < 0.001) as correct_product_prices,
-    (select count(*)::int from selected_products where nullif(btrim(time), '') is not null and season ~ '^((19|20)[0-9]{2}|[0-9]{2}/[0-9]{2})$' and time !~ '(^| )((19|20)[0-9]{2}|[0-9]{2}/[0-9]{2})$') as valid_identity_products,
+    (select count(*)::int from selected_products where nullif(btrim(time), '') is not null and season ~ '^((19|20)[0-9]{2}(/[0-9]{2,4})?|[0-9]{2}/[0-9]{2})$' and time !~ '(^| )((19|20)[0-9]{2}(/[0-9]{2,4})?|[0-9]{2}/[0-9]{2})$') as valid_identity_products,
     (select count(*)::int from public.product_purchase_settings s join selected_products p on p.id = s.product_id where s.commercial_type = 'retro') as retro_purchase_settings,
     (select count(*)::int from public.product_purchase_settings s join selected_products p on p.id = s.product_id where jsonb_array_length(coalesce(s.patches, '[]'::jsonb)) = 0) as zero_patch_products,
     (select count(*)::int from public.product_variants v join selected_products p on p.id = v.product_id where v.status::text = 'active') as active_variants,
@@ -149,16 +151,15 @@ const codes = after.selected
   .filter((code) => /^P\d{6}$/.test(String(code)))
   .map((code) => Number(code.slice(1)))
   .sort((a, b) => a - b);
-if (new Set(codes).size !== plannedProducts)
+if (new Set(codes).size !== plannedProducts) {
   throw new Error("Códigos P do lote não são únicos/completos.");
-for (let index = 1; index < codes.length; index += 1) {
-  if (codes[index] !== codes[index - 1] + 1)
-    throw new Error("Códigos P do lote retrô não são consecutivos.");
 }
-if (
-  (before.selected?.length ?? 0) === 0 &&
-  codes[0] !== Number(before.max_catalog_number) + 1
-) {
+for (let index = 1; index < codes.length; index += 1) {
+  if (codes[index] !== codes[index - 1] + 1) {
+    throw new Error("Códigos P do lote retrô não são consecutivos.");
+  }
+}
+if ((before.selected?.length ?? 0) === 0 && codes[0] !== Number(before.max_catalog_number) + 1) {
   throw new Error(`Lote retrô não começou no próximo P esperado: ${codes[0]}.`);
 }
 
