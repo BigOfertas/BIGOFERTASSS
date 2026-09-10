@@ -71,6 +71,48 @@ assert.match(workflow, /workflow_dispatch/);
 assert.match(workflow, /reset_catalog/);
 assert.match(workflow, /google-photos-catalog-pipeline\.mjs/);
 
+const batchWorkflow = read(".github/workflows/catalog-batch-deploy.yml");
+for (const token of [
+  "catalog-jobs/batch-deploy/job.json",
+  "Collect complete Google Photos album",
+  "--apply --activate",
+  "catalog-batch-guard.mjs snapshot",
+  "catalog-batch-guard.mjs verify",
+  "catalog-batch-public-verify.mjs",
+  "RESET-CATALOGO-AUTORIZADO",
+  "uses: ./.github/workflows/hostinger-production-deploy.yml",
+  "CATALOG_BATCH_DEPLOY_PUBLIC_OK",
+]) {
+  assert.ok(batchWorkflow.includes(token), `batch workflow missing ${token}`);
+}
+
+const guard = read("scripts/catalog-batch-guard.mjs");
+for (const token of [
+  "public.orders",
+  "public.order_items",
+  "public.profiles",
+  "public.affiliates",
+  "distinct_catalog_codes",
+  "ready_google_images",
+  "CATALOG_BATCH_DB_OK",
+]) {
+  assert.ok(guard.includes(token), `catalog batch guard missing ${token}`);
+}
+
+const publicVerifier = read("scripts/catalog-batch-public-verify.mjs");
+assert.match(publicVerifier, /chromium/);
+assert.match(publicVerifier, /#lancamentos/);
+assert.match(publicVerifier, /googleusercontent/);
+assert.match(publicVerifier, /CATALOG_BATCH_PUBLIC_OK/);
+
+const hostingerWorkflow = read(".github/workflows/hostinger-production-deploy.yml");
+assert.match(hostingerWorkflow, /workflow_dispatch/);
+assert.match(hostingerWorkflow, /workflow_call/);
+
+const requestTemplate = JSON.parse(read("catalog-jobs/batch-deploy/job.json"));
+assert.equal(requestTemplate.enabled, false, "permanent batch request slot must be disabled at rest");
+assert.equal(requestTemplate.reset_catalog, false, "catalog reset must be disabled at rest");
+
 const vasco = codes({ name: "CAMISA I VASCO 26/27 ADIDAS", team: "Vasco", season: "26/27" });
 includesAll(vasco, ["brasileirao", "copa-do-brasil", "sul-americana"], "Vasco 26/27");
 excludesAll(vasco, ["libertadores", "mundial-de-clubes"], "Vasco 26/27");
