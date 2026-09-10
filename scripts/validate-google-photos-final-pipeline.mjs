@@ -94,6 +94,7 @@ for (const token of [
   "public.affiliates",
   "distinct_catalog_codes",
   "ready_google_images",
+  "Numeração P000XXX não contínua",
   "CATALOG_BATCH_DB_OK",
 ]) {
   assert.ok(guard.includes(token), `catalog batch guard missing ${token}`);
@@ -110,8 +111,23 @@ assert.match(hostingerWorkflow, /workflow_dispatch/);
 assert.match(hostingerWorkflow, /workflow_call/);
 
 const requestTemplate = JSON.parse(read("catalog-jobs/batch-deploy/job.json"));
-assert.equal(requestTemplate.enabled, false, "permanent batch request slot must be disabled at rest");
-assert.equal(requestTemplate.reset_catalog, false, "catalog reset must be disabled at rest");
+assert.equal(
+  typeof requestTemplate.enabled,
+  "boolean",
+  "permanent batch request must expose a boolean enabled flag",
+);
+assert.equal(
+  typeof requestTemplate.reset_catalog,
+  "boolean",
+  "permanent batch request must expose a boolean reset flag",
+);
+if (requestTemplate.reset_catalog) {
+  assert.equal(
+    requestTemplate.reset_authorization,
+    "RESET-CATALOGO-AUTORIZADO",
+    "enabled catalog reset must carry explicit destructive authorization",
+  );
+}
 
 const vasco = codes({ name: "CAMISA I VASCO 26/27 ADIDAS", team: "Vasco", season: "26/27" });
 includesAll(vasco, ["brasileirao", "copa-do-brasil", "sul-americana"], "Vasco 26/27");

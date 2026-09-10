@@ -84,7 +84,8 @@ if (products.length === 0) throw new Error("Plano do catálogo sem produtos.");
 
 const sourceKeys = products.map((product) => clean(product.sourceKey));
 if (sourceKeys.some((key) => !key)) throw new Error("Plano contém produto sem sourceKey.");
-if (new Set(sourceKeys).size !== sourceKeys.length) throw new Error("Plano contém sourceKey duplicada.");
+if (new Set(sourceKeys).size !== sourceKeys.length)
+  throw new Error("Plano contém sourceKey duplicada.");
 
 const plannedProducts = products.length;
 const plannedVariants = products.reduce(
@@ -152,7 +153,9 @@ const expected = {
 };
 for (const [key, value] of Object.entries(expected)) {
   if (Number(verification[key]) !== Number(value)) {
-    throw new Error(`Verificação do lote falhou em ${key}: esperado ${value}, recebido ${verification[key]}`);
+    throw new Error(
+      `Verificação do lote falhou em ${key}: esperado ${value}, recebido ${verification[key]}`,
+    );
   }
 }
 
@@ -169,8 +172,29 @@ const sampleRows = await request(`
   order by p.catalog_code asc;
 `);
 
-const sampleIndexes = [...new Set([0, Math.floor((sampleRows.length - 1) / 2), sampleRows.length - 1])]
-  .filter((index) => index >= 0 && index < sampleRows.length);
+if (sampleRows.length !== plannedProducts) {
+  throw new Error(
+    `Consulta final do lote retornou ${sampleRows.length} produtos; esperado ${plannedProducts}.`,
+  );
+}
+
+const codeNumbers = sampleRows.map((row) => {
+  if (!/^P\d{6}$/.test(row.catalog_code ?? "")) {
+    throw new Error(`Código de catálogo inválido no lote: ${row.catalog_code ?? "(ausente)"}`);
+  }
+  return Number.parseInt(row.catalog_code.slice(1), 10);
+});
+for (let index = 1; index < codeNumbers.length; index += 1) {
+  if (codeNumbers[index] !== codeNumbers[index - 1] + 1) {
+    throw new Error(
+      `Numeração P000XXX não contínua: ${sampleRows[index - 1].catalog_code} -> ${sampleRows[index].catalog_code}`,
+    );
+  }
+}
+
+const sampleIndexes = [
+  ...new Set([0, Math.floor((sampleRows.length - 1) / 2), sampleRows.length - 1]),
+].filter((index) => index >= 0 && index < sampleRows.length);
 const samples = sampleIndexes.map((index) => sampleRows[index]);
 
 const result = {

@@ -40,18 +40,21 @@ try {
   await page.locator("#lancamentos").waitFor({ state: "visible" });
 
   if (options.launchCount > 0) {
-    await page.waitForFunction(
-      (expected) => {
-        const links = [...document.querySelectorAll('#lancamentos a[href*="/product/"]')];
-        return new Set(links.map((node) => node.getAttribute("href")).filter(Boolean)).size >= expected;
-      },
-      options.launchCount,
-    );
+    await page.waitForFunction((expected) => {
+      const links = [...document.querySelectorAll('#lancamentos a[href*="/product/"]')];
+      return (
+        new Set(links.map((node) => node.getAttribute("href")).filter(Boolean)).size >= expected
+      );
+    }, options.launchCount);
     const launchLinks = await page
       .locator('#lancamentos a[href*="/product/"]')
-      .evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute("href")).filter(Boolean))]);
+      .evaluateAll((nodes) => [
+        ...new Set(nodes.map((node) => node.getAttribute("href")).filter(Boolean)),
+      ]);
     if (launchLinks.length !== options.launchCount) {
-      throw new Error(`Lançamentos: esperado ${options.launchCount}, recebido ${launchLinks.length}`);
+      throw new Error(
+        `Lançamentos: esperado ${options.launchCount}, recebido ${launchLinks.length}`,
+      );
     }
     console.log(`CATALOG_BATCH_PUBLIC_LAUNCHES_OK count=${launchLinks.length}`);
   }
@@ -61,7 +64,8 @@ try {
     if (!sample?.slug || !sample?.name) throw new Error("Amostra pública incompleta.");
     const detailUrl = new URL(`/product/${encodeURIComponent(sample.slug)}`, base).href;
     const response = await page.goto(detailUrl, { waitUntil: "commit", timeout: 45_000 });
-    if (!response?.ok()) throw new Error(`${sample.catalog_code ?? sample.slug}: HTTP ${response?.status()}`);
+    if (!response?.ok())
+      throw new Error(`${sample.catalog_code ?? sample.slug}: HTTP ${response?.status()}`);
     await page.locator("main").waitFor({ state: "visible" });
     await page.waitForFunction(
       (expectedName) => document.querySelector("main")?.innerText.includes(expectedName),
@@ -79,12 +83,20 @@ try {
 
     if (sample.category_slug && !verifiedCategories.has(sample.category_slug)) {
       verifiedCategories.add(sample.category_slug);
-      const categoryUrl = new URL(`/products?category=${encodeURIComponent(sample.category_slug)}`, base).href;
-      const categoryResponse = await page.goto(categoryUrl, { waitUntil: "commit", timeout: 45_000 });
+      const categoryUrl = new URL(
+        `/products?category=${encodeURIComponent(sample.category_slug)}`,
+        base,
+      ).href;
+      const categoryResponse = await page.goto(categoryUrl, {
+        waitUntil: "commit",
+        timeout: 45_000,
+      });
       if (!categoryResponse?.ok()) {
         throw new Error(`Categoria ${sample.category_slug}: HTTP ${categoryResponse?.status()}`);
       }
-      await page.getByRole("heading", { name: "Produtos", exact: true }).waitFor({ state: "visible" });
+      await page
+        .getByRole("heading", { name: "Produtos", exact: true })
+        .waitFor({ state: "visible" });
       await page.locator('main a[href*="/product/"]').first().waitFor({ state: "visible" });
       console.log(`CATALOG_BATCH_PUBLIC_CATEGORY_OK category=${sample.category_slug}`);
     }
