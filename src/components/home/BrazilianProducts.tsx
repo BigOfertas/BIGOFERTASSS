@@ -10,33 +10,59 @@ const SHOWCASE_SIZE = 15;
 const LOADING_SIZE = 5;
 
 const BrazilianProducts: React.FC = () => {
-  const championshipQuery = useCatalogProducts({
+  const championshipTorcedorQuery = useCatalogProducts({
     campeonato: "brasileirao",
+    commercialType: "torcedor",
     pageSize: 48,
     sort: "newest",
   });
-  const legacyLeagueQuery = useCatalogProducts({
+  const championshipJogadorQuery = useCatalogProducts({
+    campeonato: "brasileirao",
+    commercialType: "jogador",
+    pageSize: 48,
+    sort: "newest",
+  });
+  const legacyTorcedorQuery = useCatalogProducts({
     liga: "brasileirao",
+    commercialType: "torcedor",
+    pageSize: 48,
+    sort: "newest",
+  });
+  const legacyJogadorQuery = useCatalogProducts({
+    liga: "brasileirao",
+    commercialType: "jogador",
     pageSize: 48,
     sort: "newest",
   });
 
   const brazilianProducts = useMemo(() => {
     const candidates = [
-      ...(championshipQuery.data?.items ?? []),
-      ...(legacyLeagueQuery.data?.items ?? []),
-    ].sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at));
+      ...(championshipTorcedorQuery.data?.items ?? []),
+      ...(championshipJogadorQuery.data?.items ?? []),
+      ...(legacyTorcedorQuery.data?.items ?? []),
+      ...(legacyJogadorQuery.data?.items ?? []),
+    ]
+      .filter(isStandardHomeJersey)
+      .sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at));
 
-    const preferred = [
-      ...candidates.filter(isStandardHomeJersey),
-      ...candidates.filter((product) => !isStandardHomeJersey(product)),
-    ];
+    return selectVariedProducts(candidates, SHOWCASE_SIZE);
+  }, [
+    championshipJogadorQuery.data?.items,
+    championshipTorcedorQuery.data?.items,
+    legacyJogadorQuery.data?.items,
+    legacyTorcedorQuery.data?.items,
+  ]);
 
-    return selectVariedProducts(preferred, SHOWCASE_SIZE);
-  }, [championshipQuery.data?.items, legacyLeagueQuery.data?.items]);
-
-  const isLoading = championshipQuery.isLoading || legacyLeagueQuery.isLoading;
-  const error = championshipQuery.error ?? legacyLeagueQuery.error;
+  const isLoading =
+    championshipTorcedorQuery.isLoading ||
+    championshipJogadorQuery.isLoading ||
+    legacyTorcedorQuery.isLoading ||
+    legacyJogadorQuery.isLoading;
+  const error =
+    championshipTorcedorQuery.error ??
+    championshipJogadorQuery.error ??
+    legacyTorcedorQuery.error ??
+    legacyJogadorQuery.error;
 
   if (!isLoading && brazilianProducts.length === 0) return null;
 
