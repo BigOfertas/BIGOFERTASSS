@@ -8,6 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { LoaderCircle } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
@@ -130,18 +131,21 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const [footerReady, setFooterReady] = useState(false);
+  const [initialRefreshLoading, setInitialRefreshLoading] = useState(true);
   const showStorefrontFooter = FOOTER_ROUTES.has(pathname) || pathname.startsWith("/product/");
 
   useEffect(() => {
-    let secondFrame = 0;
-    const firstFrame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(() => setFooterReady(true));
-    });
+    const previousOverflow = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+
+    const timer = window.setTimeout(() => {
+      setInitialRefreshLoading(false);
+      document.documentElement.style.overflow = previousOverflow;
+    }, 1000);
 
     return () => {
-      window.cancelAnimationFrame(firstFrame);
-      if (secondFrame) window.cancelAnimationFrame(secondFrame);
+      window.clearTimeout(timer);
+      document.documentElement.style.overflow = previousOverflow;
     };
   }, []);
 
@@ -149,11 +153,35 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
-          <div className="flex min-h-screen flex-col">
-            <div className="min-h-0 flex-1">
-              <Outlet />
+          <div className="relative min-h-screen overflow-x-clip">
+            <div
+              aria-hidden={initialRefreshLoading ? true : undefined}
+              className={`flex min-h-screen flex-col transition-[filter,transform] duration-200 ease-out ${
+                initialRefreshLoading
+                  ? "pointer-events-none select-none scale-[1.01] blur-[22px]"
+                  : "scale-100 blur-0"
+              }`}
+            >
+              <div className="min-h-0 flex-1">
+                <Outlet />
+              </div>
+              {!initialRefreshLoading && showStorefrontFooter ? <Footer /> : null}
             </div>
-            {footerReady && showStorefrontFooter ? <Footer /> : null}
+
+            {initialRefreshLoading ? (
+              <div
+                data-initial-refresh-loader
+                role="status"
+                aria-label="Carregando"
+                className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/30 backdrop-blur-2xl"
+              >
+                <LoaderCircle
+                  aria-hidden="true"
+                  className="size-11 animate-spin text-foreground [animation-duration:1.1s]"
+                  strokeWidth={1.8}
+                />
+              </div>
+            ) : null}
           </div>
           <Toaster position="top-center" richColors />
         </CartProvider>
