@@ -43,10 +43,7 @@ const ShopByLeague: React.FC = () => {
   });
 
   const products = useMemo(() => {
-    const candidates = [
-      ...(torcedorQuery.data?.items ?? []),
-      ...(jogadorQuery.data?.items ?? []),
-    ]
+    const candidates = [...(torcedorQuery.data?.items ?? []), ...(jogadorQuery.data?.items ?? [])]
       .filter(isStandardHomeJersey)
       .sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at));
 
