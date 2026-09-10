@@ -39,12 +39,12 @@ assert.match(normalizer, /slug: "retro"/);
 assert.match(normalizer, /RETRO_PRICE = 219\.9/);
 assert.match(normalizer, /patches: \[\]/);
 assert.match(normalizer, /sourceGroup/);
-assert.match(normalizer, /\d\{2,4\}/);
+assert.ok(normalizer.includes("\\d{2,4}"), "Retro normalizer must accept extended season ranges");
 assert.match(merger, /merged\.summary\.albums !== 30/);
 assert.match(applier, /catalog_apply_normalized_batch/);
 assert.match(applier, /false,\n\s+true,/);
 assert.match(guard, /active_launch_count/);
-assert.match(guard, /\[0-9\]\{2,4\}/);
+assert.ok(guard.includes("[0-9]{2,4}"), "Retro production guard must accept extended season ranges");
 assert.match(guard, /Códigos P do lote retrô não são consecutivos/);
 assert.match(guard, /commercial_type = 'retro'/);
 
