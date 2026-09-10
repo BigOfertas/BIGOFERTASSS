@@ -12,14 +12,27 @@ permissions:
   actions: read
 
 concurrency:
-  group: catalog-brasileirao-recovery
+  group: catalog-brasileirao-recovery-v2
   cancel-in-progress: false
 
 env:
   ORIGINAL_RUN_ID: "34505064261"
 
 jobs:
-  recover-internacional:
+  recover-missing:
+    name: recover-${{ matrix.slug }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: "15"
+            manifest_index: "14"
+            slug: gremio
+            expected_name: Grêmio
+          - id: "16"
+            manifest_index: "15"
+            slug: internacional
+            expected_name: Internacional
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -40,34 +53,43 @@ jobs:
             sleep 10
             npx playwright install --with-deps chromium
           }
-      - name: Resolve Internacional album
+      - name: Resolve club album
         id: album
+        env:
+          MANIFEST_INDEX: ${{ matrix.manifest_index }}
+          EXPECTED_NAME: ${{ matrix.expected_name }}
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           const manifest = JSON.parse(fs.readFileSync('catalog-jobs/pdf-groups/brasileirao.json', 'utf8'));
-          const album = manifest.albums?.[15];
-          if (!album || album.name !== 'Internacional') throw new Error('Álbum 16 não é Internacional.');
+          const album = manifest.albums?.[Number(process.env.MANIFEST_INDEX)];
+          if (!album || album.name !== process.env.EXPECTED_NAME) {
+            throw new Error(`Álbum inesperado: ${album?.name ?? 'ausente'}; esperado ${process.env.EXPECTED_NAME}.`);
+          }
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `name=${album.name}\n`);
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `url=${album.url}\n`);
           NODE
-      - name: Collect Internacional album
+      - name: Collect complete club album
         env:
           ALBUM_URL: ${{ steps.album.outputs.url }}
           ALBUM_NAME: ${{ steps.album.outputs.name }}
+          PLAN_ID: ${{ matrix.id }}
         run: |
           set -euo pipefail
-          OUT=".artifacts/brasileirao/16"
-          node scripts/google-photos-collector.mjs \
+          OUT=".artifacts/brasileirao/${PLAN_ID}"
+          timeout 12m node scripts/google-photos-collector.mjs \
             --url "$ALBUM_URL" \
             --label "CAMPEONATO BRASILEIRO - $ALBUM_NAME" \
             --out "$OUT" \
             --expected-min-images 1 \
             --max-scrolls 350
-      - name: Assimilate Internacional products
+      - name: Assimilate and normalize club products
+        env:
+          ALBUM_NAME: ${{ steps.album.outputs.name }}
+          PLAN_ID: ${{ matrix.id }}
         run: |
           set -euo pipefail
-          OUT=".artifacts/brasileirao/16"
+          OUT=".artifacts/brasileirao/${PLAN_ID}"
           node scripts/google-photos-assimilator-runner.mjs \
             --input "$OUT/collector.json" \
             --out "$OUT/assimilation"
@@ -83,25 +105,25 @@ jobs:
           node scripts/catalog-brasileirao-plan.mjs \
             --input "$OUT/raw-plan.json" \
             --output "$OUT/plan.json" \
-            --source-group "Internacional"
-      - name: Upload recovered Internacional plan
+            --source-group "$ALBUM_NAME"
+      - name: Upload recovered club plan
         uses: actions/upload-artifact@v4
         with:
-          name: brasileirao-plan-16
+          name: brasileirao-plan-${{ matrix.id }}
           retention-days: 14
           if-no-files-found: error
           path: |
-            .artifacts/brasileirao/16/collector.json
-            .artifacts/brasileirao/16/groups.json
-            .artifacts/brasileirao/16/assimilation/assimilation.json
-            .artifacts/brasileirao/16/assimilation/brasileirao-filtered.json
-            .artifacts/brasileirao/16/assimilation/overview.png
-            .artifacts/brasileirao/16/scope-filter.json
-            .artifacts/brasileirao/16/raw-plan.json
-            .artifacts/brasileirao/16/plan.json
+            .artifacts/brasileirao/${{ matrix.id }}/collector.json
+            .artifacts/brasileirao/${{ matrix.id }}/groups.json
+            .artifacts/brasileirao/${{ matrix.id }}/assimilation/assimilation.json
+            .artifacts/brasileirao/${{ matrix.id }}/assimilation/brasileirao-filtered.json
+            .artifacts/brasileirao/${{ matrix.id }}/assimilation/overview.png
+            .artifacts/brasileirao/${{ matrix.id }}/scope-filter.json
+            .artifacts/brasileirao/${{ matrix.id }}/raw-plan.json
+            .artifacts/brasileirao/${{ matrix.id }}/plan.json
 
   publish:
-    needs: recover-internacional
+    needs: recover-missing
     runs-on: ubuntu-latest
     timeout-minutes: 55
     environment: production
@@ -113,25 +135,6 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-      - name: Wait for audited Grêmio plan from original run
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          for attempt in $(seq 1 80); do
-            JSON=$(curl -fsSL \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${ORIGINAL_RUN_ID}/artifacts?per_page=100")
-            if node --input-type=module -e 'const j=JSON.parse(process.argv[1]); process.exit(j.artifacts?.some((a)=>a.name==="brasileirao-plan-15") ? 0 : 1)' "$JSON"; then
-              echo "GRÊMIO_PLAN_READY"
-              exit 0
-            fi
-            echo "Aguardando plano auditado do Grêmio (${attempt}/80)..."
-            sleep 20
-          done
-          echo "Plano auditado do Grêmio não ficou disponível no prazo." >&2
-          exit 1
       - name: Download original audited plans
         uses: actions/download-artifact@v6
         with:
@@ -139,17 +142,23 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ env.ORIGINAL_RUN_ID }}
           pattern: brasileirao-plan-*
-          path: .artifacts/brasileirao/downloaded
+          path: .artifacts/brasileirao/original
           merge-multiple: false
-      - name: Download recovered Internacional plan
+      - name: Download recovered missing plans
         uses: actions/download-artifact@v6
         with:
-          pattern: brasileirao-plan-16
-          path: .artifacts/brasileirao/downloaded
+          pattern: brasileirao-plan-*
+          path: .artifacts/brasileirao/recovered
           merge-multiple: false
-      - name: Assert all 30 audited plans
+      - name: Assemble and assert all 30 audited plans
         run: |
           set -euo pipefail
+          mkdir -p .artifacts/brasileirao/downloaded
+          if compgen -G '.artifacts/brasileirao/original/brasileirao-plan-*' > /dev/null; then
+            cp -a .artifacts/brasileirao/original/brasileirao-plan-* .artifacts/brasileirao/downloaded/
+          fi
+          cp -a .artifacts/brasileirao/recovered/brasileirao-plan-15 .artifacts/brasileirao/downloaded/
+          cp -a .artifacts/brasileirao/recovered/brasileirao-plan-16 .artifacts/brasileirao/downloaded/
           for n in $(seq -w 1 30); do
             test -f ".artifacts/brasileirao/downloaded/brasileirao-plan-${n}/plan.json" || {
               echo "Plano ausente: brasileirao-plan-${n}" >&2
@@ -225,7 +234,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: brasileirao-production-recovery
+          name: brasileirao-production-recovery-v2
           retention-days: 30
           if-no-files-found: warn
           path: |
