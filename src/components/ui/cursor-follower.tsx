@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 const INTERACTIVE_SELECTOR =
   'a, button, img, input, textarea, select, [role="button"], [data-cursor-interactive]';
@@ -13,17 +13,12 @@ export const Component = () => {
   const borderDotPosition = useRef({ x: -100, y: -100 });
   const animationFrame = useRef<number | null>(null);
   const hasPointerPosition = useRef(false);
-  const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
     const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
-    if (!finePointer.matches) return;
-
-    setEnabled(true);
-
     const dot = dotRef.current;
     const border = borderRef.current;
-    if (!dot || !border) return;
+    if (!finePointer.matches || !dot || !border) return;
 
     const setVisible = (visible: boolean) => {
       const opacity = visible ? "1" : "0";
@@ -40,6 +35,59 @@ export const Component = () => {
     const isInteractive = (target: EventTarget | null) =>
       target instanceof Element && Boolean(target.closest(INTERACTIVE_SELECTOR));
 
+    const lerp = (start: number, end: number, factor: number) =>
+      start + (end - start) * factor;
+
+    const render = () => {
+      if (!hasPointerPosition.current) {
+        animationFrame.current = null;
+        return;
+      }
+
+      const dx = mousePosition.current.x - dotPosition.current.x;
+      const dy = mousePosition.current.y - dotPosition.current.y;
+      const borderDx = mousePosition.current.x - borderDotPosition.current.x;
+      const borderDy = mousePosition.current.y - borderDotPosition.current.y;
+
+      dotPosition.current.x = lerp(dotPosition.current.x, mousePosition.current.x, 0.28);
+      dotPosition.current.y = lerp(dotPosition.current.y, mousePosition.current.y, 0.28);
+      borderDotPosition.current.x = lerp(
+        borderDotPosition.current.x,
+        mousePosition.current.x,
+        0.14,
+      );
+      borderDotPosition.current.y = lerp(
+        borderDotPosition.current.y,
+        mousePosition.current.y,
+        0.14,
+      );
+
+      dot.style.transform = `translate3d(${dotPosition.current.x}px, ${dotPosition.current.y}px, 0) translate(-50%, -50%)`;
+      border.style.transform = `translate3d(${borderDotPosition.current.x}px, ${borderDotPosition.current.y}px, 0) translate(-50%, -50%)`;
+
+      const stillMoving =
+        Math.abs(dx) > 0.1 ||
+        Math.abs(dy) > 0.1 ||
+        Math.abs(borderDx) > 0.1 ||
+        Math.abs(borderDy) > 0.1;
+
+      if (stillMoving) {
+        animationFrame.current = window.requestAnimationFrame(render);
+      } else {
+        dotPosition.current = { ...mousePosition.current };
+        borderDotPosition.current = { ...mousePosition.current };
+        dot.style.transform = `translate3d(${mousePosition.current.x}px, ${mousePosition.current.y}px, 0) translate(-50%, -50%)`;
+        border.style.transform = `translate3d(${mousePosition.current.x}px, ${mousePosition.current.y}px, 0) translate(-50%, -50%)`;
+        animationFrame.current = null;
+      }
+    };
+
+    const ensureAnimation = () => {
+      if (animationFrame.current === null) {
+        animationFrame.current = window.requestAnimationFrame(render);
+      }
+    };
+
     const handlePointerMove = (event: PointerEvent) => {
       if (event.pointerType && event.pointerType !== "mouse") return;
 
@@ -51,6 +99,8 @@ export const Component = () => {
         borderDotPosition.current = { x: event.clientX, y: event.clientY };
         dot.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0) translate(-50%, -50%)`;
         border.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0) translate(-50%, -50%)`;
+      } else {
+        ensureAnimation();
       }
 
       setVisible(true);
@@ -72,36 +122,10 @@ export const Component = () => {
       if (!event.relatedTarget) setVisible(false);
     };
 
-    const lerp = (start: number, end: number, factor: number) =>
-      start + (end - start) * factor;
-
-    const animate = () => {
-      if (hasPointerPosition.current) {
-        dotPosition.current.x = lerp(dotPosition.current.x, mousePosition.current.x, 0.28);
-        dotPosition.current.y = lerp(dotPosition.current.y, mousePosition.current.y, 0.28);
-        borderDotPosition.current.x = lerp(
-          borderDotPosition.current.x,
-          mousePosition.current.x,
-          0.14,
-        );
-        borderDotPosition.current.y = lerp(
-          borderDotPosition.current.y,
-          mousePosition.current.y,
-          0.14,
-        );
-
-        dot.style.transform = `translate3d(${dotPosition.current.x}px, ${dotPosition.current.y}px, 0) translate(-50%, -50%)`;
-        border.style.transform = `translate3d(${borderDotPosition.current.x}px, ${borderDotPosition.current.y}px, 0) translate(-50%, -50%)`;
-      }
-
-      animationFrame.current = window.requestAnimationFrame(animate);
-    };
-
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
     document.addEventListener("pointerover", handlePointerOver, { passive: true });
     document.addEventListener("pointerout", handlePointerOut, { passive: true });
     window.addEventListener("mouseout", handleWindowOut, { passive: true });
-    animationFrame.current = window.requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
@@ -114,10 +138,8 @@ export const Component = () => {
     };
   }, []);
 
-  if (!enabled) return null;
-
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[10000] hidden md:block">
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[10000]">
       <div
         ref={dotRef}
         className="absolute size-2 rounded-full bg-black opacity-0 will-change-transform dark:bg-white"
