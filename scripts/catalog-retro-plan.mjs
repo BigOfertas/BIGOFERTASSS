@@ -52,22 +52,26 @@ function stripPattern(value, pattern) {
   return value.replace(pattern, " ").replace(/\s+/g, " ").trim();
 }
 
-function correctKnownSourceTypos(value) {
-  return String(value)
-    .replace(/\b19989\/91\b/g, "1989/91")
-    .replace(/\b20008\/09\b/g, "2008/09");
-}
-
 function normalizeSeasonToken(value) {
   const token = String(value).replace("-", "/");
   const parts = token.split("/");
-  const first = parts[0];
+  let first = parts[0];
   const second = parts[1] ?? null;
+
+  // Supplier titles occasionally duplicate one digit in a four-digit year
+  // (e.g. 20008/09, 19989/91). Preserve sourceTitle, but normalize the public season.
+  if (/^\d{5}$/.test(first)) {
+    first = `${first.slice(0, 2)}${first.slice(-2)}`;
+  }
 
   if (/^\d{2}$/.test(first)) {
     const year = Number(first);
     const century = year <= 29 ? "20" : "19";
     return second ? `${century}${first}/${second}` : `${century}${first}`;
+  }
+
+  if (/^(?:19|20)\d{2}$/.test(first)) {
+    return second ? `${first}/${second}` : first;
   }
 
   return token;
@@ -77,15 +81,16 @@ function parseRetroIdentity(product, sourceGroup) {
   const sourceTitle = String(
     product.sourceTitle ?? product.variants?.[0]?.sourceTitle ?? "",
   ).trim();
-  const parseTitle = correctKnownSourceTypos(sourceTitle);
+  const parseTitle = sourceTitle;
   const typeMatch = parseTitle.match(/^(CAMISA|REGATA)\b/i);
   if (!typeMatch) {
     throw new Error(`Título fora do escopo de camisas retrô: ${sourceTitle}`);
   }
 
-  const seasonMatches = [
-    ...parseTitle.matchAll(/\b((?:19|20)\d{2}(?:[/-]\d{2,4})?|\d{2}\/\d{2}|\d{2})\b/g),
-  ];
+  // Read the last year-like token. This intentionally accepts malformed supplier
+  // years with 5 digits and standalone 2-digit seasons; normalizeSeasonToken fixes
+  // the public value while sourceTitle remains byte-for-byte unchanged.
+  const seasonMatches = [...parseTitle.matchAll(/(\d{2,5}(?:[/-]\d{2,4})?)/g)];
   const seasonMatch = seasonMatches.at(-1);
   if (!seasonMatch || seasonMatch.index === undefined) {
     throw new Error(`Temporada retrô não identificada com segurança: ${sourceTitle}`);
