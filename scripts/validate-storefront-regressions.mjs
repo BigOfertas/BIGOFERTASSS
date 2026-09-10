@@ -73,7 +73,7 @@ check(
 );
 check(
   "carregamento do F5 usa blur forte e somente ícone rotativo sobre o site",
-  root.includes('data-initial-refresh-loader') &&
+  root.includes("data-initial-refresh-loader") &&
     root.includes('aria-label="Carregando"') &&
     root.includes("blur-[22px]") &&
     root.includes("backdrop-blur-2xl") &&
