@@ -1,0 +1,257 @@
+name: Catalog Serie A Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/catalog-serie-a-deploy.yml"
+      - "catalog-jobs/pdf-groups/remaining.parts/**"
+      - "scripts/catalog-pdf-remaining-*.mjs"
+      - "scripts/catalog-merge-pdf-remaining-plans.mjs"
+      - "scripts/catalog-reconcile-existing-products.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-serie-a-deploy-production
+  cancel-in-progress: false
+
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Validate Serie A pipeline code
+        run: |
+          node --check scripts/google-photos-collector.mjs
+          node --check scripts/google-photos-assimilator.mjs
+          node --check scripts/google-photos-assimilator-runner.mjs
+          node --check scripts/google-photos-catalog-pipeline.mjs
+          node --check scripts/catalog-pdf-remaining-scope-filter.mjs
+          node --check scripts/catalog-pdf-remaining-plan.mjs
+          node --check scripts/catalog-merge-pdf-remaining-plans.mjs
+          node --check scripts/catalog-reconcile-existing-products.mjs
+          node --check scripts/catalog-pdf-remaining-verify.mjs
+          node --check scripts/catalog-pdf-remaining-production-guard.mjs
+          node --check scripts/apply-normalized-catalog-plan.mjs
+          node --check scripts/catalog-batch-guard.mjs
+          node --check scripts/catalog-batch-public-verify.mjs
+
+      - name: Resolve exact Serie A manifest
+        run: |
+          set -euo pipefail
+          mkdir -p .artifacts/serie-a/plans .artifacts/serie-a/group-summaries
+          cat catalog-jobs/pdf-groups/remaining.parts/*.b64 | tr -d '\r\n ' | base64 -d > .artifacts/serie-a/full-manifest.json
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+
+          const full = JSON.parse(fs.readFileSync(".artifacts/serie-a/full-manifest.json", "utf8"));
+          const group = (full.groups ?? []).find((item) => item.id === "serie-a");
+          if (!group) throw new Error("Grupo Serie A não encontrado no manifesto restante.");
+          if (group.mode !== "club") throw new Error(`Modo inesperado para Serie A: ${group.mode}`);
+          if (group.competition !== "Serie A" || group.league !== "Serie A") {
+            throw new Error(
+              `Metadados incorretos da Serie A: competition=${group.competition} league=${group.league}`,
+            );
+          }
+          const albums = Array.isArray(group.albums) ? group.albums : [];
+          if (albums.length !== 12) throw new Error(`Serie A deve ter 12 álbuns; recebeu ${albums.length}.`);
+          for (const [index, album] of albums.entries()) {
+            if (!album?.name || !/^https:\/\/photos\.google\.com\/share\//.test(album?.url ?? "")) {
+              throw new Error(`Álbum inválido da Serie A na posição ${index + 1}.`);
+            }
+          }
+
+          const selected = {
+            enabled: true,
+            request_id: `${full.request_id}-serie-a`,
+            source: full.source,
+            notes: full.notes ?? [],
+            groups: [group],
+          };
+          fs.writeFileSync(
+            ".artifacts/serie-a/manifest.json",
+            `${JSON.stringify(selected, null, 2)}\n`,
+            "utf8",
+          );
+          const rows = albums.map((album, index) =>
+            [String(index + 1).padStart(2, "0"), album.name, album.url].join("\t"),
+          );
+          fs.writeFileSync(".artifacts/serie-a/albums.tsv", `${rows.join("\n")}\n`, "utf8");
+          console.log(`SERIE_A_MANIFEST_OK albums=${albums.length} request=${selected.request_id}`);
+          NODE
+
+      - name: Install Playwright once
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Collect, assimilate and normalize every Serie A club
+        run: |
+          set -euo pipefail
+          while IFS=$'\t' read -r ALBUM_INDEX ALBUM_NAME ALBUM_URL; do
+            [[ -n "$ALBUM_INDEX" ]] || continue
+            echo "SERIE_A_ALBUM_START index=$ALBUM_INDEX name=$ALBUM_NAME"
+            OUT=".artifacts/serie-a/plans/${ALBUM_INDEX}"
+            mkdir -p "$OUT"
+
+            node scripts/google-photos-collector.mjs \
+              --url "$ALBUM_URL" \
+              --label "SERIE A - $ALBUM_NAME" \
+              --out "$OUT" \
+              --expected-min-images 1 \
+              --max-scrolls 350
+
+            node scripts/google-photos-assimilator-runner.mjs \
+              --input "$OUT/collector.json" \
+              --out "$OUT/assimilation"
+
+            node scripts/catalog-pdf-remaining-scope-filter.mjs \
+              --input "$OUT/assimilation/assimilation.json" \
+              --output "$OUT/assimilation/club-filtered.json" \
+              --report "$OUT/scope-filter.json" \
+              --mode club
+
+            node --input-type=module - "$OUT/assimilation/club-filtered.json" "$OUT/assimilation/filtered.json" <<'NODE'
+          import fs from "node:fs";
+
+          const [inputPath, outputPath] = process.argv.slice(2);
+          const input = JSON.parse(fs.readFileSync(inputPath, "utf8"));
+          const products = (input.proposedProducts ?? []).filter((product) => {
+            const type = String(product?.type ?? "").toLowerCase();
+            const text = [
+              product?.entity,
+              product?.type,
+              product?.audience,
+              ...(product?.groups ?? []).map((group) => group?.title),
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .toUpperCase();
+            const isShorts = type === "shorts" || /\b(SHORTS?|CALCAO)\b/.test(text);
+            return !isShorts;
+          });
+          if (products.length === 0) {
+            throw new Error("Nenhuma camisa/kit elegível restou após excluir shorts já concluídos.");
+          }
+          fs.writeFileSync(
+            outputPath,
+            `${JSON.stringify({ ...input, proposedProducts: products }, null, 2)}\n`,
+            "utf8",
+          );
+          console.log(
+            `SERIE_A_SCOPE_OK before=${input.proposedProducts?.length ?? 0} kept=${products.length}`,
+          );
+          NODE
+
+            node scripts/google-photos-catalog-pipeline.mjs \
+              --collector "$OUT/collector.json" \
+              --assimilation "$OUT/assimilation/filtered.json" \
+              --report "$OUT/raw-plan.json" \
+              --validate-urls
+
+            node scripts/catalog-pdf-remaining-plan.mjs \
+              --input "$OUT/raw-plan.json" \
+              --output "$OUT/plan.json" \
+              --group-id "serie-a" \
+              --group-name "Serie A" \
+              --source-group "$ALBUM_NAME" \
+              --mode club \
+              --competition "Serie A" \
+              --league "Serie A"
+
+            echo "SERIE_A_ALBUM_OK index=$ALBUM_INDEX name=$ALBUM_NAME"
+          done < .artifacts/serie-a/albums.tsv
+
+      - name: Merge Serie A in PDF order
+        run: |
+          node scripts/catalog-merge-pdf-remaining-plans.mjs \
+            --manifest .artifacts/serie-a/manifest.json \
+            --root .artifacts/serie-a/plans \
+            --output .artifacts/serie-a/merged-plan.json \
+            --group-dir .artifacts/serie-a/group-summaries
+
+      - name: Reconcile already-existing products without duplication
+        run: |
+          node scripts/catalog-reconcile-existing-products.mjs \
+            --input .artifacts/serie-a/merged-plan.json \
+            --output .artifacts/serie-a/reconciled-plan.json \
+            --report .artifacts/serie-a/reconcile-report.json
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const plan = JSON.parse(fs.readFileSync(".artifacts/serie-a/reconciled-plan.json", "utf8"));
+          if (!Array.isArray(plan.products) || plan.products.length === 0) {
+            throw new Error("Plano reconciliado da Serie A ficou vazio.");
+          }
+          const variants = plan.products.reduce(
+            (sum, product) => sum + (product.variants?.length ?? 0),
+            0,
+          );
+          const images = plan.products.reduce(
+            (sum, product) =>
+              sum +
+              (product.variants ?? []).reduce(
+                (inner, variant) => inner + (variant.images?.length ?? 0),
+                0,
+              ),
+            0,
+          );
+          console.log(
+            `SERIE_A_RECONCILED_OK products=${plan.products.length} variants=${variants} images=${images}`,
+          );
+          NODE
+
+      - name: Snapshot protected business data
+        run: |
+          node scripts/catalog-batch-guard.mjs snapshot \
+            --out .artifacts/serie-a/protected-before.json
+
+      - name: Publish Serie A atomically
+        run: |
+          node scripts/apply-normalized-catalog-plan.mjs \
+            --plan .artifacts/serie-a/reconciled-plan.json \
+            --stock 999
+
+      - name: Verify exact Serie A database result
+        run: |
+          set -euo pipefail
+          mkdir -p .artifacts/serie-a/final-plan
+          cp .artifacts/serie-a/reconciled-plan.json .artifacts/serie-a/final-plan/serie-a.json
+          node scripts/catalog-pdf-remaining-verify.mjs \
+            --snapshot .artifacts/serie-a/protected-before.json \
+            --root .artifacts/serie-a/final-plan \
+            --output .artifacts/serie-a/database-verification.json
+          node scripts/catalog-pdf-remaining-production-guard.mjs \
+            --manifest .artifacts/serie-a/manifest.json \
+            --output .artifacts/serie-a/production-verification.json
+
+      - name: Verify Serie A live on bigofertas.net
+        run: |
+          node scripts/catalog-batch-public-verify.mjs \
+            --verification .artifacts/serie-a/database-verification.json \
+            --base-url https://bigofertas.net \
+            --launch-count 10
+
+      - name: Upload complete Serie A deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: serie-a-production-${{ github.run_id }}
+          retention-days: 30
+          if-no-files-found: warn
+          path: .artifacts/serie-a/
