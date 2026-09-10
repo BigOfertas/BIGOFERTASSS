@@ -96,6 +96,16 @@ jobs:
           node scripts/google-photos-assimilator-runner.mjs \
             --input "$OUT/collector.json" \
             --out "$OUT/assimilation"
+      - name: Keep only approved Mundo FIFA shirt scope
+        env:
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/mundo-fifa/${ALBUM_INDEX}"
+          node scripts/catalog-mundo-fifa-assimilation-filter.mjs \
+            --input "$OUT/assimilation/assimilation.json" \
+            --output "$OUT/assimilation/mundo-fifa-filtered.json" \
+            --report "$OUT/scope-filter.json"
       - name: Build normalized Mundo FIFA plan
         env:
           ALBUM_INDEX: ${{ matrix.index }}
@@ -105,7 +115,7 @@ jobs:
           OUT=".artifacts/mundo-fifa/${ALBUM_INDEX}"
           node scripts/google-photos-catalog-pipeline.mjs \
             --collector "$OUT/collector.json" \
-            --assimilation "$OUT/assimilation/assimilation.json" \
+            --assimilation "$OUT/assimilation/mundo-fifa-filtered.json" \
             --report "$OUT/raw-plan.json" \
             --validate-urls
           node scripts/catalog-mundo-fifa-plan.mjs \
@@ -122,7 +132,9 @@ jobs:
             .artifacts/mundo-fifa/${{ matrix.index }}/collector.json
             .artifacts/mundo-fifa/${{ matrix.index }}/groups.json
             .artifacts/mundo-fifa/${{ matrix.index }}/assimilation/assimilation.json
+            .artifacts/mundo-fifa/${{ matrix.index }}/assimilation/mundo-fifa-filtered.json
             .artifacts/mundo-fifa/${{ matrix.index }}/assimilation/overview.png
+            .artifacts/mundo-fifa/${{ matrix.index }}/scope-filter.json
             .artifacts/mundo-fifa/${{ matrix.index }}/raw-plan.json
             .artifacts/mundo-fifa/${{ matrix.index }}/plan.json
 
