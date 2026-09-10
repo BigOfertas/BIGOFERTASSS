@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import glassLegacyCss from "../glass-legacy.css?url";
@@ -130,14 +130,31 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const [footerReady, setFooterReady] = useState(false);
   const showStorefrontFooter = FOOTER_ROUTES.has(pathname) || pathname.startsWith("/product/");
+
+  useEffect(() => {
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => setFooterReady(true));
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) window.cancelAnimationFrame(secondFrame);
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
-          <Outlet />
-          {showStorefrontFooter ? <Footer /> : null}
+          <div className="flex min-h-screen flex-col">
+            <div className="min-h-0 flex-1">
+              <Outlet />
+            </div>
+            {footerReady && showStorefrontFooter ? <Footer /> : null}
+          </div>
           <Toaster position="top-center" richColors />
         </CartProvider>
       </AuthProvider>
