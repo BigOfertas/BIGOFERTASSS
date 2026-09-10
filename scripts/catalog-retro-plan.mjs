@@ -53,7 +53,24 @@ function stripPattern(value, pattern) {
 }
 
 function correctKnownSourceTypos(value) {
-  return String(value).replace(/\b19989\/91\b/g, "1989/91");
+  return String(value)
+    .replace(/\b19989\/91\b/g, "1989/91")
+    .replace(/\b20008\/09\b/g, "2008/09");
+}
+
+function normalizeSeasonToken(value) {
+  const token = String(value).replace("-", "/");
+  const parts = token.split("/");
+  const first = parts[0];
+  const second = parts[1] ?? null;
+
+  if (/^\d{2}$/.test(first)) {
+    const year = Number(first);
+    const century = year <= 29 ? "20" : "19";
+    return second ? `${century}${first}/${second}` : `${century}${first}`;
+  }
+
+  return token;
 }
 
 function parseRetroIdentity(product, sourceGroup) {
@@ -67,14 +84,14 @@ function parseRetroIdentity(product, sourceGroup) {
   }
 
   const seasonMatches = [
-    ...parseTitle.matchAll(/\b((?:19|20)\d{2}(?:[/-]\d{2,4})?|\d{2}\/\d{2})\b/g),
+    ...parseTitle.matchAll(/\b((?:19|20)\d{2}(?:[/-]\d{2,4})?|\d{2}\/\d{2}|\d{2})\b/g),
   ];
   const seasonMatch = seasonMatches.at(-1);
   if (!seasonMatch || seasonMatch.index === undefined) {
     throw new Error(`Temporada retrô não identificada com segurança: ${sourceTitle}`);
   }
 
-  const season = seasonMatch[1].replace("-", "/");
+  const season = normalizeSeasonToken(seasonMatch[1]);
   const beforeSeason = parseTitle
     .slice(typeMatch[0].length, seasonMatch.index)
     .replace(/\s+/g, " ")
