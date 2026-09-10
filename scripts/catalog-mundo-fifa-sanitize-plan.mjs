@@ -140,10 +140,7 @@ for (const dir of dirs) {
   const planImages = plan.products.reduce(
     (sum, product) =>
       sum +
-      (product.variants ?? []).reduce(
-        (inner, variant) => inner + (variant.images?.length ?? 0),
-        0,
-      ),
+      (product.variants ?? []).reduce((inner, variant) => inner + (variant.images?.length ?? 0), 0),
     0,
   );
   products += plan.products.length;
