@@ -38,7 +38,7 @@ jobs:
         run: bun run validate:catalog-import
 
       - name: Validate final catalog pipeline
-        run: node scripts/validate-catalog-business-rules.mjs && node scripts/validate-google-photos-final-pipeline.mjs
+        run: node scripts/validate-catalog-business-rules.mjs && node scripts/validate-google-photos-final-pipeline.mjs && node scripts/validate-retro-pdf-group-deploy.mjs
 
       - name: Validate storefront customer experience
         run: node scripts/validate-storefront-upgrades.mjs
