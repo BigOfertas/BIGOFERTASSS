@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useRef } from "react";
 
@@ -49,8 +49,16 @@ export const Component = () => {
       const borderDx = mousePosition.current.x - borderDotPosition.current.x;
       const borderDy = mousePosition.current.y - borderDotPosition.current.y;
 
-      dotPosition.current.x = lerp(dotPosition.current.x, mousePosition.current.x, 0.28);
-      dotPosition.current.y = lerp(dotPosition.current.y, mousePosition.current.y, 0.28);
+      dotPosition.current.x = lerp(
+        dotPosition.current.x,
+        mousePosition.current.x,
+        0.28,
+      );
+      dotPosition.current.y = lerp(
+        dotPosition.current.y,
+        mousePosition.current.y,
+        0.28,
+      );
       borderDotPosition.current.x = lerp(
         borderDotPosition.current.x,
         mousePosition.current.x,
@@ -123,7 +131,9 @@ export const Component = () => {
     };
 
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    document.addEventListener("pointerover", handlePointerOver, { passive: true });
+    document.addEventListener("pointerover", handlePointerOver, {
+      passive: true,
+    });
     document.addEventListener("pointerout", handlePointerOut, { passive: true });
     window.addEventListener("mouseout", handleWindowOut, { passive: true });
 
@@ -139,7 +149,10 @@ export const Component = () => {
   }, []);
 
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[10000]">
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 z-[10000]"
+    >
       <div
         ref={dotRef}
         className="absolute size-2 rounded-full bg-black opacity-0 will-change-transform dark:bg-white"
