@@ -5,13 +5,7 @@ on:
     branches:
       - main
     paths:
-      - ".github/workflows/catalog-brasileirao-deploy.yml"
       - "catalog-jobs/pdf-groups/brasileirao.json"
-      - "scripts/catalog-brasileirao-assimilation-filter.mjs"
-      - "scripts/catalog-brasileirao-plan.mjs"
-      - "scripts/catalog-merge-brasileirao-plans.mjs"
-      - "scripts/catalog-reconcile-existing-club-products.mjs"
-      - "scripts/catalog-brasileirao-production-guard.mjs"
 
 permissions:
   contents: read
