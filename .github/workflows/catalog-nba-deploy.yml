@@ -1,0 +1,248 @@
+name: Catalog NBA Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "catalog-jobs/pdf-groups/nba.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-nba-production
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.resolve.outputs.enabled }}
+      matrix: ${{ steps.resolve.outputs.matrix }}
+      request_id: ${{ steps.resolve.outputs.request_id }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: resolve
+        name: Resolve NBA PDF manifest
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const manifest = JSON.parse(fs.readFileSync('catalog-jobs/pdf-groups/nba.json', 'utf8'));
+          const albums = Array.isArray(manifest.albums) ? manifest.albums : [];
+          if (manifest.enabled !== true) {
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'enabled=false\n');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'matrix={"include":[]}\n');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `request_id=${manifest.request_id || 'disabled'}\n`);
+            process.exit(0);
+          }
+          if (albums.length !== 30) throw new Error(`Esperados 30 álbuns NBA; recebidos ${albums.length}.`);
+          if (new Set(albums.map((album) => album.url)).size !== 30) throw new Error('Há URL de álbum duplicada no NBA.');
+          if (new Set(albums.map((album) => album.name)).size !== 30) throw new Error('Há time duplicado no manifesto NBA.');
+          for (const [index, album] of albums.entries()) {
+            if (!album?.name || !/^https:\/\/photos\.google\.com\/share\//.test(album?.url || '')) {
+              throw new Error(`Álbum NBA inválido na posição ${index + 1}.`);
+            }
+          }
+          const include = albums.map((album, index) => ({
+            index: String(index + 1).padStart(2, '0'),
+            name: album.name,
+            url: album.url,
+          }));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'enabled=true\n');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `matrix=${JSON.stringify({ include })}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `request_id=${manifest.request_id}\n`);
+          console.log(`NBA_MANIFEST_OK albums=${albums.length} request=${manifest.request_id}`);
+          NODE
+
+  collect:
+    needs: resolve
+    if: needs.resolve.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix: ${{ fromJSON(needs.resolve.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Install Playwright robustly
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@latest
+          for source in /etc/apt/sources.list.d/*; do
+            if [[ -f "$source" ]] && grep -q "packages.microsoft.com/ubuntu/24.04/prod" "$source"; then
+              sudo sed -i 's/^[[:space:]]*deb /# deb /' "$source"
+            fi
+          done
+          npx playwright install --with-deps chromium || {
+            sleep 10
+            npx playwright install --with-deps chromium
+          }
+      - name: Collect complete NBA team album
+        env:
+          ALBUM_URL: ${{ matrix.url }}
+          ALBUM_NAME: ${{ matrix.name }}
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/nba/${ALBUM_INDEX}"
+          node scripts/google-photos-collector.mjs \
+            --url "$ALBUM_URL" \
+            --label "NBA - $ALBUM_NAME" \
+            --out "$OUT" \
+            --expected-min-images 1 \
+            --max-scrolls 350
+      - name: Assimilate every visual group
+        env:
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/nba/${ALBUM_INDEX}"
+          node scripts/google-photos-assimilator-runner.mjs \
+            --input "$OUT/collector.json" \
+            --out "$OUT/assimilation"
+      - name: Keep NBA jersey scope
+        env:
+          ALBUM_INDEX: ${{ matrix.index }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/nba/${ALBUM_INDEX}"
+          node scripts/catalog-nba-assimilation-filter.mjs \
+            --input "$OUT/assimilation/assimilation.json" \
+            --output "$OUT/assimilation/nba-filtered.json" \
+            --report "$OUT/scope-filter.json"
+      - name: Build normalized NBA plan
+        env:
+          ALBUM_INDEX: ${{ matrix.index }}
+          ALBUM_NAME: ${{ matrix.name }}
+        run: |
+          set -euo pipefail
+          OUT=".artifacts/nba/${ALBUM_INDEX}"
+          node scripts/google-photos-catalog-pipeline.mjs \
+            --collector "$OUT/collector.json" \
+            --assimilation "$OUT/assimilation/nba-filtered.json" \
+            --report "$OUT/raw-plan.json" \
+            --validate-urls
+          node scripts/catalog-nba-plan.mjs \
+            --input "$OUT/raw-plan.json" \
+            --output "$OUT/plan.json" \
+            --source-group "$ALBUM_NAME"
+      - name: Upload audited NBA plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: nba-plan-${{ matrix.index }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            .artifacts/nba/${{ matrix.index }}/collector.json
+            .artifacts/nba/${{ matrix.index }}/groups.json
+            .artifacts/nba/${{ matrix.index }}/assimilation/assimilation.json
+            .artifacts/nba/${{ matrix.index }}/assimilation/nba-filtered.json
+            .artifacts/nba/${{ matrix.index }}/assimilation/overview.png
+            .artifacts/nba/${{ matrix.index }}/scope-filter.json
+            .artifacts/nba/${{ matrix.index }}/raw-plan.json
+            .artifacts/nba/${{ matrix.index }}/plan.json
+
+  publish:
+    needs: [resolve, collect]
+    if: needs.resolve.outputs.enabled == 'true' && needs.collect.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Download all audited NBA plans
+        uses: actions/download-artifact@v6
+        with:
+          pattern: nba-plan-*
+          path: .artifacts/nba/downloaded
+          merge-multiple: false
+      - name: Merge plans in PDF order
+        run: |
+          node scripts/catalog-merge-nba-plans.mjs \
+            --manifest catalog-jobs/pdf-groups/nba.json \
+            --root .artifacts/nba/downloaded \
+            --output .artifacts/nba/merged-plan.json
+      - name: Snapshot protected business data
+        run: |
+          node scripts/catalog-batch-guard.mjs snapshot \
+            --out .artifacts/nba/protected-before.json
+      - id: reconcile
+        name: Reconcile products already registered
+        run: |
+          set -euo pipefail
+          node scripts/catalog-reconcile-existing-club-products.mjs \
+            --input .artifacts/nba/merged-plan.json \
+            --output .artifacts/nba/reconciled-plan.json \
+            --report .artifacts/nba/existing-products.json
+          AMBIGUOUS=$(node --input-type=module -e "import fs from 'node:fs'; const r=JSON.parse(fs.readFileSync('.artifacts/nba/existing-products.json')); process.stdout.write(String(r.skipped.filter((x) => x.reason === 'ambiguous_existing_match').length));")
+          if [[ "$AMBIGUOUS" != "0" ]]; then
+            echo "Há $AMBIGUOUS correspondência(s) ambígua(s) no catálogo NBA atual." >&2
+            exit 1
+          fi
+          COUNT=$(node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('.artifacts/nba/reconciled-plan.json')); process.stdout.write(String(p.products.length));")
+          echo "product_count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "NBA_RECONCILED_COUNT=$COUNT"
+      - name: Publish NBA atomically
+        if: steps.reconcile.outputs.product_count != '0'
+        run: |
+          node scripts/apply-normalized-catalog-plan.mjs \
+            --plan .artifacts/nba/reconciled-plan.json \
+            --stock 999
+      - name: Verify exact database result and protected data
+        if: steps.reconcile.outputs.product_count != '0'
+        run: |
+          node scripts/catalog-batch-guard.mjs verify \
+            --snapshot .artifacts/nba/protected-before.json \
+            --plan .artifacts/nba/reconciled-plan.json \
+            --out .artifacts/nba/batch-verification.json
+      - name: Verify all 30 NBA teams in production
+        run: |
+          node scripts/catalog-nba-production-guard.mjs \
+            --manifest catalog-jobs/pdf-groups/nba.json \
+            --output .artifacts/nba/production-verification.json
+      - name: Install Playwright for live verification
+        if: steps.reconcile.outputs.product_count != '0'
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@latest
+          for source in /etc/apt/sources.list.d/*; do
+            if [[ -f "$source" ]] && grep -q "packages.microsoft.com/ubuntu/24.04/prod" "$source"; then
+              sudo sed -i 's/^[[:space:]]*deb /# deb /' "$source"
+            fi
+          done
+          npx playwright install --with-deps chromium || {
+            sleep 10
+            npx playwright install --with-deps chromium
+          }
+      - name: Verify live storefront product samples
+        if: steps.reconcile.outputs.product_count != '0'
+        run: |
+          node scripts/catalog-batch-public-verify.mjs \
+            --verification .artifacts/nba/batch-verification.json \
+            --base-url https://bigofertas.net \
+            --launch-count 10
+      - name: Upload complete NBA deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nba-production-${{ needs.resolve.outputs.request_id }}
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            .artifacts/nba/merged-plan.json
+            .artifacts/nba/reconciled-plan.json
+            .artifacts/nba/existing-products.json
+            .artifacts/nba/protected-before.json
+            .artifacts/nba/batch-verification.json
+            .artifacts/nba/production-verification.json
