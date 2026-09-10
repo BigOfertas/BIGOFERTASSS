@@ -1,0 +1,201 @@
+name: Catalog Mundo FIFA Finalize
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/catalog-mundo-fifa-finalize.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: catalog-mundo-fifa-finalize
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Download 44 audited plans from complete source scan
+        uses: actions/download-artifact@v4
+        with:
+          pattern: mundo-fifa-plan-*
+          path: .artifacts/mundo-fifa/old
+          merge-multiple: false
+          github-token: ${{ github.token }}
+          run-id: 34493929050
+
+      - name: Download corrected Argentina plan
+        uses: actions/download-artifact@v4
+        with:
+          name: mundo-fifa-plan-02
+          path: .artifacts/mundo-fifa/corrections/mundo-fifa-plan-02
+          github-token: ${{ github.token }}
+          run-id: 34495751274
+
+      - name: Download corrected Italy plan
+        uses: actions/download-artifact@v4
+        with:
+          name: mundo-fifa-plan-28
+          path: .artifacts/mundo-fifa/corrections/mundo-fifa-plan-28
+          github-token: ${{ github.token }}
+          run-id: 34496701221
+
+      - name: Assemble 46 product-bearing national-team plans
+        run: |
+          set -euo pipefail
+          ROOT=".artifacts/mundo-fifa/combined"
+          mkdir -p "$ROOT"
+          cp -a .artifacts/mundo-fifa/old/. "$ROOT/"
+          rm -rf "$ROOT/mundo-fifa-plan-02" "$ROOT/mundo-fifa-plan-28" "$ROOT/mundo-fifa-plan-42"
+          cp -a .artifacts/mundo-fifa/corrections/mundo-fifa-plan-02 "$ROOT/mundo-fifa-plan-02"
+          cp -a .artifacts/mundo-fifa/corrections/mundo-fifa-plan-28 "$ROOT/mundo-fifa-plan-28"
+
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+
+          const root = '.artifacts/mundo-fifa/combined';
+          const dirs = fs.readdirSync(root)
+            .filter((name) => /^mundo-fifa-plan-\d{2}$/.test(name))
+            .sort();
+          const expected = Array.from({ length: 47 }, (_, index) => index + 1)
+            .filter((index) => index !== 42)
+            .map((index) => `mundo-fifa-plan-${String(index).padStart(2, '0')}`);
+          const missing = expected.filter((name) => !dirs.includes(name));
+          const unexpected = dirs.filter((name) => !expected.includes(name));
+          if (missing.length || unexpected.length || dirs.length !== 46) {
+            throw new Error(
+              `Planos inválidos. total=${dirs.length} missing=${missing.join(',')} unexpected=${unexpected.join(',')}`,
+            );
+          }
+
+          let removed = 0;
+          let kept = 0;
+          let variants = 0;
+          let images = 0;
+          for (const dir of dirs) {
+            const file = path.join(root, dir, 'plan.json');
+            const plan = JSON.parse(fs.readFileSync(file, 'utf8'));
+            const before = plan.products?.length ?? 0;
+            plan.products = (plan.products ?? []).filter((product) => {
+              const slug = product.category?.slug;
+              return slug === 'camisas' || slug === 'infantil';
+            });
+            if (!plan.products.length) {
+              throw new Error(`${dir}: nenhum produto permitido após aplicar o escopo congelado.`);
+            }
+            removed += before - plan.products.length;
+            kept += plan.products.length;
+            const planVariants = plan.products.reduce(
+              (sum, product) => sum + (product.variants?.length ?? 0),
+              0,
+            );
+            const planImages = plan.products.reduce(
+              (sum, product) =>
+                sum +
+                (product.variants ?? []).reduce(
+                  (inner, variant) => inner + (variant.images?.length ?? 0),
+                  0,
+                ),
+              0,
+            );
+            variants += planVariants;
+            images += planImages;
+            plan.summary = {
+              products: plan.products.length,
+              variants: planVariants,
+              images: planImages,
+            };
+            fs.writeFileSync(file, `${JSON.stringify(plan, null, 2)}\n`);
+          }
+          console.log(
+            `MUNDO_FIFA_ASSEMBLED plans=${dirs.length} products=${kept} variants=${variants} images=${images} frozenRemoved=${removed} sourceSkipped=Serbia`,
+          );
+          NODE
+
+      - name: Merge all plans in original PDF order
+        run: |
+          node scripts/catalog-merge-mundo-fifa-plans.mjs \
+            --manifest catalog-jobs/pdf-groups/mundo-fifa.json \
+            --root .artifacts/mundo-fifa/combined \
+            --output .artifacts/mundo-fifa/merged-plan.json
+
+      - name: Snapshot protected business data
+        run: |
+          node scripts/catalog-batch-guard.mjs snapshot \
+            --out .artifacts/mundo-fifa/protected-before.json
+
+      - id: filter
+        name: Remove products already registered
+        run: |
+          node scripts/catalog-filter-existing-national-teams.mjs \
+            --input .artifacts/mundo-fifa/merged-plan.json \
+            --output .artifacts/mundo-fifa/incremental-plan.json \
+            --report .artifacts/mundo-fifa/existing-products.json
+          COUNT=$(node --input-type=module -e "import fs from 'node:fs'; const p=JSON.parse(fs.readFileSync('.artifacts/mundo-fifa/incremental-plan.json')); process.stdout.write(String(p.products.length));")
+          echo "product_count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "MUNDO_FIFA_INCREMENTAL_COUNT=$COUNT"
+
+      - name: Publish new Mundo FIFA products atomically
+        if: steps.filter.outputs.product_count != '0'
+        run: |
+          node scripts/apply-normalized-catalog-plan.mjs \
+            --plan .artifacts/mundo-fifa/incremental-plan.json \
+            --stock 999
+
+      - name: Verify exact database result and protected data
+        if: steps.filter.outputs.product_count != '0'
+        run: |
+          node scripts/catalog-batch-guard.mjs verify \
+            --snapshot .artifacts/mundo-fifa/protected-before.json \
+            --plan .artifacts/mundo-fifa/incremental-plan.json \
+            --out .artifacts/mundo-fifa/batch-verification.json
+
+      - name: Verify complete Mundo FIFA production coverage
+        run: |
+          node scripts/catalog-mundo-fifa-production-guard.mjs \
+            --manifest catalog-jobs/pdf-groups/mundo-fifa.json \
+            --output .artifacts/mundo-fifa/production-verification.json
+
+      - name: Install Playwright for live verification
+        if: steps.filter.outputs.product_count != '0'
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Verify live storefront product samples
+        if: steps.filter.outputs.product_count != '0'
+        run: |
+          node scripts/catalog-batch-public-verify.mjs \
+            --verification .artifacts/mundo-fifa/batch-verification.json \
+            --base-url https://bigofertas.net \
+            --launch-count 10
+
+      - name: Upload final Mundo FIFA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mundo-fifa-final-production
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            .artifacts/mundo-fifa/merged-plan.json
+            .artifacts/mundo-fifa/incremental-plan.json
+            .artifacts/mundo-fifa/existing-products.json
+            .artifacts/mundo-fifa/protected-before.json
+            .artifacts/mundo-fifa/batch-verification.json
+            .artifacts/mundo-fifa/production-verification.json
