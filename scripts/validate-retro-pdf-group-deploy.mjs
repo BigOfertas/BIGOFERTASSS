@@ -25,6 +25,7 @@ for (const token of [
   "google-photos-collector.mjs",
   "google-photos-assimilator-runner.mjs",
   "catalog-retro-plan.mjs",
+  "--source-group",
   "catalog-merge-plans.mjs",
   "apply-normalized-catalog-plan.mjs",
   "catalog-retro-production-guard.mjs",
@@ -37,10 +38,13 @@ assert.doesNotMatch(workflow, /--reset\b/);
 assert.match(normalizer, /slug: "retro"/);
 assert.match(normalizer, /RETRO_PRICE = 219\.9/);
 assert.match(normalizer, /patches: \[\]/);
+assert.match(normalizer, /sourceGroup/);
+assert.match(normalizer, /\d\{2,4\}/);
 assert.match(merger, /merged\.summary\.albums !== 30/);
 assert.match(applier, /catalog_apply_normalized_batch/);
 assert.match(applier, /false,\n\s+true,/);
 assert.match(guard, /active_launch_count/);
+assert.match(guard, /\[0-9\]\{2,4\}/);
 assert.match(guard, /Códigos P do lote retrô não são consecutivos/);
 assert.match(guard, /commercial_type = 'retro'/);
 
