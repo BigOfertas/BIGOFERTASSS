@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+const SOURCE_EMPTY_TEAMS = new Set(["SERVIA"]);
+
 function parseArgs(argv) {
   const out = { manifest: "", output: "" };
   for (let index = 0; index < argv.length; index += 1) {
@@ -24,11 +26,14 @@ function normalize(value) {
 
 const options = parseArgs(process.argv.slice(2));
 const manifest = JSON.parse(fs.readFileSync(path.resolve(options.manifest), "utf8"));
-const teams = (manifest.albums ?? []).map((album) => album.name);
-if (teams.length !== 47)
-  throw new Error(`Manifesto Mundo FIFA inválido: ${teams.length} seleções.`);
-if (teams.some((team) => normalize(team) === "ARGELIA"))
+const sourceTeams = (manifest.albums ?? []).map((album) => album.name);
+if (sourceTeams.length !== 47)
+  throw new Error(`Manifesto Mundo FIFA inválido: ${sourceTeams.length} seleções-fonte.`);
+if (sourceTeams.some((team) => normalize(team) === "ARGELIA"))
   throw new Error("Argélia não pode estar no lote.");
+
+const sourceSkipped = sourceTeams.filter((team) => SOURCE_EMPTY_TEAMS.has(normalize(team)));
+const teams = sourceTeams.filter((team) => !SOURCE_EMPTY_TEAMS.has(normalize(team)));
 
 const projectRef = String(process.env.SUPABASE_PROJECT_ID ?? "").trim();
 const accessToken = String(process.env.SUPABASE_ACCESS_TOKEN ?? "").trim();
@@ -99,16 +104,21 @@ for (const row of rows) {
   if (expected !== undefined && Math.abs(Number(row.price) - expected) > 0.001) {
     throw new Error(`${row.catalog_code}: preço incorreto para ${row.commercial_type}.`);
   }
+  if (Number(row.ready_external_images) < 1) {
+    throw new Error(`${row.catalog_code}: produto sem imagem externa pronta.`);
+  }
 }
 
 const result = {
+  sourceTeams: sourceTeams.length,
   expectedTeams: teams.length,
   coveredTeams: teams.length - missing.length,
   activeProducts: rows.filter((row) => targetKeys.has(normalize(row.time))).length,
   missingTeams: missing,
+  sourceSkipped,
 };
 fs.mkdirSync(path.dirname(path.resolve(options.output)), { recursive: true });
 fs.writeFileSync(path.resolve(options.output), `${JSON.stringify(result, null, 2)}\n`, "utf8");
 console.log(
-  `MUNDO_FIFA_PRODUCTION_OK teams=${result.coveredTeams} activeProducts=${result.activeProducts}`,
+  `MUNDO_FIFA_PRODUCTION_OK sourceTeams=${result.sourceTeams} teams=${result.coveredTeams} activeProducts=${result.activeProducts} sourceSkipped=${result.sourceSkipped.length}`,
 );
