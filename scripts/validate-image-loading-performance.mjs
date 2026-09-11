@@ -66,7 +66,7 @@ check(
   "Hostinger gera snapshot antes do build e evita nova espera de dados após hidratação",
   packageJson.includes("node scripts/generate-home-launches-static.mjs") &&
     generator.includes("storefront_launch_products") &&
-    generator.includes("src\", \"generated\", \"home-launches.ts") &&
+    generator.includes('src", "generated", "home-launches.ts') &&
     home.includes('homeLaunchesSnapshot from "@/generated/home-launches"') &&
     home.includes("STATIC_HOME_LAUNCHES") &&
     home.includes("<BestSellers initialData={STATIC_HOME_LAUNCHES} />") &&

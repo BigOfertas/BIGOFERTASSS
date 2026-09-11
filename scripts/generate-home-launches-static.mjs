@@ -71,10 +71,7 @@ function buildPreloadMetadata(item, r2BaseUrl) {
   const r2Card = r2Url(r2BaseUrl, item.image_card_storage_key);
   const r2Thumb = r2Url(r2BaseUrl, item.image_thumb_storage_key);
   if (r2Card) {
-    const candidates = [
-      r2Thumb ? `${r2Thumb} 280w` : null,
-      `${r2Card} 760w`,
-    ].filter(Boolean);
+    const candidates = [r2Thumb ? `${r2Thumb} 280w` : null, `${r2Card} 760w`].filter(Boolean);
     return {
       href: r2Card,
       srcSet: candidates.length > 1 ? candidates.join(", ") : null,
@@ -82,7 +79,8 @@ function buildPreloadMetadata(item, r2BaseUrl) {
     };
   }
 
-  const source = normalizedHttpsUrl(item.image_external_url) ?? normalizedHttpsUrl(item.fallback_image_url);
+  const source =
+    normalizedHttpsUrl(item.image_external_url) ?? normalizedHttpsUrl(item.fallback_image_url);
   if (!source) return null;
 
   try {
@@ -111,20 +109,25 @@ const publishableKey = loadEnvValue("VITE_SUPABASE_PUBLISHABLE_KEY");
 const r2BaseUrl = loadEnvValue("VITE_R2_PUBLIC_BASE_URL");
 
 if (!supabaseUrl || !publishableKey) {
-  console.error("Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY for homepage snapshot.");
+  console.error(
+    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY for homepage snapshot.",
+  );
   process.exit(2);
 }
 
-const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/storefront_launch_products`, {
-  method: "POST",
-  headers: {
-    apikey: publishableKey,
-    authorization: `Bearer ${publishableKey}`,
-    "content-type": "application/json",
+const response = await fetch(
+  `${supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/storefront_launch_products`,
+  {
+    method: "POST",
+    headers: {
+      apikey: publishableKey,
+      authorization: `Bearer ${publishableKey}`,
+      "content-type": "application/json",
+    },
+    body: "{}",
+    signal: AbortSignal.timeout(30_000),
   },
-  body: "{}",
-  signal: AbortSignal.timeout(30_000),
-});
+);
 
 if (!response.ok) {
   const body = await response.text();
@@ -140,7 +143,9 @@ if (!payload || typeof payload !== "object" || !Array.isArray(payload.items)) {
 }
 
 if (payload.items.length === 0) {
-  console.error("Homepage launch snapshot returned zero products; refusing to publish an empty launch section.");
+  console.error(
+    "Homepage launch snapshot returned zero products; refusing to publish an empty launch section.",
+  );
   process.exit(5);
 }
 
