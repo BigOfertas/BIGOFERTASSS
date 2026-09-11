@@ -135,7 +135,9 @@ check(
   expectedNav.every((label) => nav.includes(`name: "${label}"`)) &&
     forbiddenNav.every((label) => !nav.includes(`name: "${label}"`)) &&
     header.includes("<CategoryNav />") &&
-    header.includes("<CategoryNav mobile"),
+    header.includes("MobileLiquidMorphMenu") &&
+    header.includes("categoryLinks") &&
+    header.includes('title="Todas as categorias"'),
 );
 
 check(
