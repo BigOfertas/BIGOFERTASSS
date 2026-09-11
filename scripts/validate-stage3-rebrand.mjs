@@ -111,15 +111,15 @@ check(
 
 check(
   "mailto operacional continua preservado sem inventar endereço novo",
-  contact.includes('href={`mailto:${BRAND.contactEmail}`}') &&
-    privacy.includes('href={`mailto:${BRAND.contactEmail}`}') &&
-    footer.includes('href={`mailto:${BRAND.contactEmail}`}'),
+  contact.includes("href={`mailto:${BRAND.contactEmail}`}") &&
+    privacy.includes("href={`mailto:${BRAND.contactEmail}`}") &&
+    footer.includes("href={`mailto:${BRAND.contactEmail}`}"),
 );
 
 check(
   "favicon público foi substituído por identidade DropBox",
   root.includes('{ rel: "icon", href: "/favicon.svg", type: "image/svg+xml" }') &&
-    !root.includes('/favicon.ico') &&
+    !root.includes("/favicon.ico") &&
     !fs.existsSync("public/favicon.ico") &&
     favicon.includes('aria-label="DropBox"') &&
     favicon.includes('fill="#dc2626"'),
