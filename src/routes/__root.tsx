@@ -34,6 +34,7 @@ const FOOTER_ROUTES = new Set([
 ]);
 
 const INITIAL_BOOT_SPLASH_MS = 2500;
+const DEFAULT_OG_IMAGE = `${BRAND.siteUrl}/og-image.jpg`;
 
 const R2_IMAGE_ORIGIN = (() => {
   const baseUrl = getR2PublicBaseUrl();
@@ -113,10 +114,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: BRAND.storeTitle },
       { name: "description", content: BRAND.storeDescription },
       { name: "author", content: BRAND.officialName },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
       { property: "og:title", content: BRAND.storeTitle },
       { property: "og:description", content: BRAND.storeDescription },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: BRAND.siteUrl },
+      { property: "og:site_name", content: BRAND.officialName },
+      { property: "og:locale", content: "pt_BR" },
+      { property: "og:image", content: DEFAULT_OG_IMAGE },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: `${BRAND.officialName} - Loja esportiva` },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: BRAND.storeTitle },
+      { name: "twitter:description", content: BRAND.storeDescription },
+      { name: "twitter:image", content: DEFAULT_OG_IMAGE },
     ],
     links: [
       { rel: "preconnect", href: "https://lh3.googleusercontent.com" },
@@ -136,7 +148,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: glassLegacyCss },
       { rel: "stylesheet", href: sportThemeCss },
-      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "64x64" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
     ],
   }),
   shellComponent: RootShell,
