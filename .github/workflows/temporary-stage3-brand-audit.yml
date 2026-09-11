@@ -1,0 +1,29 @@
+name: Temporary Stage 3 Brand Audit
+
+on:
+  push:
+    branches:
+      - stage3-dropbox-rebrand-20260911
+    paths:
+      - ".github/workflows/temporary-stage3-brand-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Stage 3 branch
+        uses: actions/checkout@v7
+        with:
+          ref: stage3-dropbox-rebrand-20260911
+
+      - name: Audit site-facing legacy brand references
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== SITE_FACING_LEGACY_BRAND_REFERENCES ==='
+          git grep -nEi 'BIGofertas|BigOfertas|BIGOFERTAS|bigofertas' -- \
+            src public .env supabase/functions 2>/dev/null || true
+          echo '=== END_SITE_FACING_LEGACY_BRAND_REFERENCES ==='
