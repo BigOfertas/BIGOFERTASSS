@@ -42,3 +42,4 @@ jobs:
             exit 1
           fi
           grep -q 'data-home-product-image-preload="true"' dist/client/index.html
+          echo 'FINAL_REFINEMENT_HOSTINGER_SHELL_OK'
