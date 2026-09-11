@@ -1,0 +1,33 @@
+name: Validate Homepage Performance PR
+
+on:
+  push:
+    branches:
+      - homepage-boot-and-league-cache-20260911
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate storefront regressions
+        run: node scripts/validate-storefront-regressions.mjs
+
+      - name: Lint storefront
+        run: bun run lint
+
+      - name: Validate TypeScript and production build
+        run: bun run build
