@@ -15,15 +15,10 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ContaRouteImport } from './routes/conta'
-import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as EsqueciSenhaRouteImport } from './routes/esqueci-senha'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as PrivacidadeRouteImport } from './routes/privacidade'
-import { Route as ProducaoEEnvioRouteImport } from './routes/producao-e-envio'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
-import { Route as TermosDeCompraRouteImport } from './routes/termos-de-compra'
-import { Route as TrocasEDevolucoesRouteImport } from './routes/trocas-e-devolucoes'
 import { Route as ProductIdRouteImport } from './routes/product/$id'
 import { Route as ApiShippingQuoteRouteImport } from './routes/api.shipping.quote'
 import { Route as ContaPedidosOrderNumberRouteImport } from './routes/conta/pedidos/$orderNumber'
@@ -58,11 +53,6 @@ const ContaRoute = ContaRouteImport.update({
   path: '/conta',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ContatoRoute = ContatoRouteImport.update({
-  id: '/contato',
-  path: '/contato',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const EsqueciSenhaRoute = EsqueciSenhaRouteImport.update({
   id: '/esqueci-senha',
   path: '/esqueci-senha',
@@ -73,16 +63,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PrivacidadeRoute = PrivacidadeRouteImport.update({
-  id: '/privacidade',
-  path: '/privacidade',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProducaoEEnvioRoute = ProducaoEEnvioRouteImport.update({
-  id: '/producao-e-envio',
-  path: '/producao-e-envio',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
   path: '/products',
@@ -91,16 +71,6 @@ const ProductsRoute = ProductsRouteImport.update({
 const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
   id: '/redefinir-senha',
   path: '/redefinir-senha',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TermosDeCompraRoute = TermosDeCompraRouteImport.update({
-  id: '/termos-de-compra',
-  path: '/termos-de-compra',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrocasEDevolucoesRoute = TrocasEDevolucoesRouteImport.update({
-  id: '/trocas-e-devolucoes',
-  path: '/trocas-e-devolucoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductIdRoute = ProductIdRouteImport.update({
@@ -126,15 +96,10 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/conta': typeof ContaRouteWithChildren
-  '/contato': typeof ContatoRoute
   '/esqueci-senha': typeof EsqueciSenhaRoute
   '/login': typeof LoginRoute
-  '/privacidade': typeof PrivacidadeRoute
-  '/producao-e-envio': typeof ProducaoEEnvioRoute
   '/products': typeof ProductsRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
-  '/termos-de-compra': typeof TermosDeCompraRoute
-  '/trocas-e-devolucoes': typeof TrocasEDevolucoesRoute
   '/product/$id': typeof ProductIdRoute
   '/api/shipping/quote': typeof ApiShippingQuoteRoute
   '/conta/pedidos/$orderNumber': typeof ContaPedidosOrderNumberRoute
@@ -146,15 +111,10 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/conta': typeof ContaRouteWithChildren
-  '/contato': typeof ContatoRoute
   '/esqueci-senha': typeof EsqueciSenhaRoute
   '/login': typeof LoginRoute
-  '/privacidade': typeof PrivacidadeRoute
-  '/producao-e-envio': typeof ProducaoEEnvioRoute
   '/products': typeof ProductsRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
-  '/termos-de-compra': typeof TermosDeCompraRoute
-  '/trocas-e-devolucoes': typeof TrocasEDevolucoesRoute
   '/product/$id': typeof ProductIdRoute
   '/api/shipping/quote': typeof ApiShippingQuoteRoute
   '/conta/pedidos/$orderNumber': typeof ContaPedidosOrderNumberRoute
@@ -167,15 +127,10 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/conta': typeof ContaRouteWithChildren
-  '/contato': typeof ContatoRoute
   '/esqueci-senha': typeof EsqueciSenhaRoute
   '/login': typeof LoginRoute
-  '/privacidade': typeof PrivacidadeRoute
-  '/producao-e-envio': typeof ProducaoEEnvioRoute
   '/products': typeof ProductsRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
-  '/termos-de-compra': typeof TermosDeCompraRoute
-  '/trocas-e-devolucoes': typeof TrocasEDevolucoesRoute
   '/product/$id': typeof ProductIdRoute
   '/api/shipping/quote': typeof ApiShippingQuoteRoute
   '/conta/pedidos/$orderNumber': typeof ContaPedidosOrderNumberRoute
@@ -189,15 +144,10 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/conta'
-    | '/contato'
     | '/esqueci-senha'
     | '/login'
-    | '/privacidade'
-    | '/producao-e-envio'
     | '/products'
     | '/redefinir-senha'
-    | '/termos-de-compra'
-    | '/trocas-e-devolucoes'
     | '/product/$id'
     | '/api/shipping/quote'
     | '/conta/pedidos/$orderNumber'
@@ -209,15 +159,10 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/conta'
-    | '/contato'
     | '/esqueci-senha'
     | '/login'
-    | '/privacidade'
-    | '/producao-e-envio'
     | '/products'
     | '/redefinir-senha'
-    | '/termos-de-compra'
-    | '/trocas-e-devolucoes'
     | '/product/$id'
     | '/api/shipping/quote'
     | '/conta/pedidos/$orderNumber'
@@ -229,15 +174,10 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/conta'
-    | '/contato'
     | '/esqueci-senha'
     | '/login'
-    | '/privacidade'
-    | '/producao-e-envio'
     | '/products'
     | '/redefinir-senha'
-    | '/termos-de-compra'
-    | '/trocas-e-devolucoes'
     | '/product/$id'
     | '/api/shipping/quote'
     | '/conta/pedidos/$orderNumber'
@@ -250,15 +190,10 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   ContaRoute: typeof ContaRouteWithChildren
-  ContatoRoute: typeof ContatoRoute
   EsqueciSenhaRoute: typeof EsqueciSenhaRoute
   LoginRoute: typeof LoginRoute
-  PrivacidadeRoute: typeof PrivacidadeRoute
-  ProducaoEEnvioRoute: typeof ProducaoEEnvioRoute
   ProductsRoute: typeof ProductsRoute
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
-  TermosDeCompraRoute: typeof TermosDeCompraRoute
-  TrocasEDevolucoesRoute: typeof TrocasEDevolucoesRoute
   ProductIdRoute: typeof ProductIdRoute
   ApiShippingQuoteRoute: typeof ApiShippingQuoteRoute
 }
@@ -307,13 +242,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/contato': {
-      id: '/contato'
-      path: '/contato'
-      fullPath: '/contato'
-      preLoaderRoute: typeof ContatoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/esqueci-senha': {
       id: '/esqueci-senha'
       path: '/esqueci-senha'
@@ -328,20 +256,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/privacidade': {
-      id: '/privacidade'
-      path: '/privacidade'
-      fullPath: '/privacidade'
-      preLoaderRoute: typeof PrivacidadeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/producao-e-envio': {
-      id: '/producao-e-envio'
-      path: '/producao-e-envio'
-      fullPath: '/producao-e-envio'
-      preLoaderRoute: typeof ProducaoEEnvioRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/products': {
       id: '/products'
       path: '/products'
@@ -354,20 +268,6 @@ declare module '@tanstack/react-router' {
       path: '/redefinir-senha'
       fullPath: '/redefinir-senha'
       preLoaderRoute: typeof RedefinirSenhaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/termos-de-compra': {
-      id: '/termos-de-compra'
-      path: '/termos-de-compra'
-      fullPath: '/termos-de-compra'
-      preLoaderRoute: typeof TermosDeCompraRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/trocas-e-devolucoes': {
-      id: '/trocas-e-devolucoes'
-      path: '/trocas-e-devolucoes'
-      fullPath: '/trocas-e-devolucoes'
-      preLoaderRoute: typeof TrocasEDevolucoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/product/$id': {
@@ -411,15 +311,10 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   ContaRoute: ContaRouteWithChildren,
-  ContatoRoute: ContatoRoute,
   EsqueciSenhaRoute: EsqueciSenhaRoute,
   LoginRoute: LoginRoute,
-  PrivacidadeRoute: PrivacidadeRoute,
-  ProducaoEEnvioRoute: ProducaoEEnvioRoute,
   ProductsRoute: ProductsRoute,
   RedefinirSenhaRoute: RedefinirSenhaRoute,
-  TermosDeCompraRoute: TermosDeCompraRoute,
-  TrocasEDevolucoesRoute: TrocasEDevolucoesRoute,
   ProductIdRoute: ProductIdRoute,
   ApiShippingQuoteRoute: ApiShippingQuoteRoute,
 }
