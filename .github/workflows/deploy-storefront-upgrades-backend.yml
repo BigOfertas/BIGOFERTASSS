@@ -29,6 +29,7 @@ on:
       - "supabase/migrations/20260910143538_hide_existing_owner_order_history.sql"
       - "supabase/migrations/20260911051000_stage2_purchase_customization_policy.sql"
       - "supabase/migrations/20260911054000_stage2_storefront_priority.sql"
+      - "supabase/migrations/20260911055500_stage2_storefront_priority_security_fix.sql"
   workflow_dispatch:
 
 permissions:
