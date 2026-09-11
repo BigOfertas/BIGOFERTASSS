@@ -8,7 +8,8 @@ export const Route = createFileRoute("/termos-de-compra")({
   head: () =>
     buildPageHead({
       title: "Termos de Compra",
-      description: "Consulte as condições de produtos, preço, pagamento, produção, entrega e alterações de pedidos realizados na DropBox.",
+      description:
+        "Consulte as condições de produtos, preço, pagamento, produção, entrega e alterações de pedidos realizados na DropBox.",
       path: "/termos-de-compra",
     }),
   component: PurchaseTermsPage,
