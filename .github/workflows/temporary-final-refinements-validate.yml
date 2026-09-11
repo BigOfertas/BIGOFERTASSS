@@ -1,0 +1,44 @@
+name: Temporary Final Refinements Validate
+
+on:
+  push:
+    branches:
+      - final-storefront-refinements-20260911
+    paths:
+      - ".github/workflows/temporary-final-refinements-validate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: final-storefront-refinements-20260911
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Validate refinements
+        run: node scripts/validate-final-storefront-refinements.mjs
+      - name: Validate existing storefront regressions
+        run: node scripts/validate-stage1-ux.mjs && node scripts/validate-stage2-commerce.mjs && node scripts/validate-stage3-rebrand.mjs
+      - name: Validate deployment scripts
+        run: node --check scripts/deploy-final-storefront-refinements.mjs
+      - name: Lint
+        run: bun run lint
+      - name: Build
+        run: bun run build
+      - name: Build Hostinger and verify footer is absent from initial shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun run build:hostinger
+          test -f dist/client/index.html
+          if grep -qi '<footer' dist/client/index.html; then
+            echo 'Footer must not be present in the initial Hostinger shell.' >&2
+            exit 1
+          fi
+          grep -q 'data-home-product-image-preload="true"' dist/client/index.html
