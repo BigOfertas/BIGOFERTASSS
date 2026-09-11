@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "@tanstack/react-router";
 
-import Lens from "@/components/ui/magnifier-lens";
 import { BRAND } from "@/config/brand";
 
 interface ProductCardProps {
@@ -14,6 +13,7 @@ interface ProductCardProps {
   time?: string | null;
   commercialType?: string | null;
   className?: string;
+  priority?: boolean;
 }
 
 const COMMERCIAL_TYPE_LABELS: Record<string, string> = {
@@ -36,6 +36,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   time,
   commercialType,
   className = "",
+  priority = false,
 }) => {
   const [imageFailed, setImageFailed] = React.useState(false);
   const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -67,19 +68,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
           ) : null}
 
           {showImage ? (
-            <Lens zoomFactor={2.5} lensSize={130} className="h-full w-full rounded-none">
-              <img
-                src={imageUrl ?? undefined}
-                alt={name}
-                loading="lazy"
-                decoding="async"
-                width={640}
-                height={640}
-                sizes="(max-width: 639px) 48vw, (max-width: 1023px) 31vw, 260px"
-                onError={() => setImageFailed(true)}
-                className="h-full w-full object-contain !object-cover"
-              />
-            </Lens>
+            <img
+              src={imageUrl ?? undefined}
+              alt={name}
+              loading={priority ? "eager" : "lazy"}
+              fetchPriority={priority ? "high" : "auto"}
+              decoding="async"
+              width={640}
+              height={640}
+              sizes="(max-width: 639px) 48vw, (max-width: 1023px) 31vw, 260px"
+              onError={() => setImageFailed(true)}
+              className="h-full w-full object-cover"
+            />
           ) : (
             <div className="flex h-full w-full items-center justify-center font-bold italic uppercase text-gray-300">
               <span className="text-lg font-black tracking-[-0.06em] text-red-500/20">
