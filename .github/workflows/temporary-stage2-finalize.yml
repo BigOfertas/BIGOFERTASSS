@@ -1,0 +1,83 @@
+name: Temporary Stage 2 Finalize
+
+on:
+  push:
+    branches:
+      - stage2-commerce-fixes-20260911
+    paths:
+      - ".github/workflows/temporary-stage2-finalize.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Stage 2 branch
+        uses: actions/checkout@v7
+        with:
+          ref: stage2-commerce-fixes-20260911
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Fix confirm-password binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("src/routes/cadastro.tsx")
+          text = path.read_text(encoding="utf-8")
+          old = 'onChange={(event) => setShowConfirmPassword(event.target.value)}'
+          new = 'onChange={(event) => setConfirmPassword(event.target.value)}'
+          if old not in text and new not in text:
+              raise SystemExit("Confirm-password binding not found")
+          path.write_text(text.replace(old, new), encoding="utf-8")
+          PY
+
+      - name: Format Stage 2 files
+        run: |
+          bunx prettier --write \
+            src/components/product/ProductCard.tsx \
+            src/components/product/ProductQuickAdd.tsx \
+            src/lib/product-purchase.ts \
+            src/routes/cadastro.tsx \
+            scripts/validate-stage2-commerce.mjs
+
+      - name: Validate Stage 1 regressions
+        run: node scripts/validate-stage1-ux.mjs
+
+      - name: Validate Stage 2 commerce
+        run: node scripts/validate-stage2-commerce.mjs
+
+      - name: Lint storefront
+        run: bun run lint
+
+      - name: Validate TypeScript and production build
+        run: bun run build
+
+      - name: Commit finalized Stage 2 files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add \
+            src/components/product/ProductCard.tsx \
+            src/components/product/ProductQuickAdd.tsx \
+            src/lib/product-purchase.ts \
+            src/routes/cadastro.tsx \
+            scripts/validate-stage2-commerce.mjs
+          if git diff --cached --quiet; then
+            echo "NO_STAGE2_FINALIZE_CHANGES"
+            exit 0
+          fi
+          git commit -m "fix: finalize stage 2 commerce interactions"
+          git push origin HEAD:stage2-commerce-fixes-20260911
