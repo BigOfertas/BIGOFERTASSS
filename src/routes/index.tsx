@@ -13,6 +13,7 @@ import homeLaunchesSnapshot from "@/generated/home-launches";
 import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalization";
 import type { Json } from "@/integrations/supabase/types";
 import { parseCatalogPage } from "@/lib/catalog";
+import { buildPageHead } from "@/lib/page-seo";
 
 const TOP_BANNER_DESKTOP = "/assets/promos/top-banner-desktop.webp";
 const TOP_BANNER_MOBILE = "/assets/promos/top-banner-mobile.webp";
@@ -21,6 +22,12 @@ const AFFILIATE_DESTINATION = "/conta?secao=afiliados";
 const BRAZIL_CATALOG_SEARCH = { campeonato: "brasileirao", sort: "featured" } as const;
 
 export const Route = createFileRoute("/")({
+  head: () =>
+    buildPageHead({
+      title: BRAND.storeTitle,
+      description: BRAND.storeDescription,
+      path: "/",
+    }),
   component: Index,
 });
 
