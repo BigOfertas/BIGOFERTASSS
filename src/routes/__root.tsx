@@ -105,6 +105,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://lh3.googleusercontent.com" },
       { rel: "dns-prefetch", href: "https://lh3.googleusercontent.com" },
+      { rel: "preconnect", href: "https://img.bigofertas.net" },
+      { rel: "dns-prefetch", href: "https://img.bigofertas.net" },
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: glassLegacyCss },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
@@ -118,7 +120,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -131,22 +133,27 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 60_000,
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const showStorefrontFooter = FOOTER_ROUTES.has(pathname) || pathname.startsWith("/product/");
+  const showFooter = FOOTER_ROUTES.has(pathname);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
-          <div className="relative flex min-h-screen flex-col overflow-x-clip">
-            <div className="min-h-0 flex-1">
-              <Outlet />
-            </div>
-            {showStorefrontFooter ? <Footer /> : null}
+          <div className="min-h-screen bg-background text-foreground">
+            <Outlet />
+            {showFooter ? <Footer /> : null}
           </div>
+          <Toaster />
           <CursorFollower />
-          <Toaster position="top-center" richColors />
         </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
