@@ -3,8 +3,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { InstitutionalPage, InstitutionalSection } from "@/components/content/InstitutionalPage";
 import { COOKIE_PREFERENCES_EVENT } from "@/components/privacy/CookieConsent";
 import { BRAND } from "@/config/brand";
+import { buildPageHead } from "@/lib/page-seo";
 
-export const Route = createFileRoute("/privacidade")({ component: PrivacyPage });
+export const Route = createFileRoute("/privacidade")({
+  head: () =>
+    buildPageHead({
+      title: "Política de Privacidade",
+      description: "Entenda como a DropBox usa dados de cadastro, pedidos, entrega, atendimento e preferências de privacidade.",
+      path: "/privacidade",
+    }),
+  component: PrivacyPage,
+});
 
 function PrivacyPage() {
   return (
