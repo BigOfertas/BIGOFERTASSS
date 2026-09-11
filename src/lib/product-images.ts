@@ -39,10 +39,7 @@ function normalizedExternalUrl(rawValue: string | null | undefined) {
   }
 }
 
-export function buildOptimizedExternalImageUrl(
-  rawValue: string | null | undefined,
-  size = 1600,
-) {
+export function buildOptimizedExternalImageUrl(rawValue: string | null | undefined, size = 1600) {
   const external = normalizedExternalUrl(rawValue);
   if (!external) return null;
 

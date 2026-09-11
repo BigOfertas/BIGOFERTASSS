@@ -108,7 +108,9 @@ const ShopByLeague: React.FC = () => {
           <div data-league-products={displayLeagueId} className="relative">
             <ProductCarousel
               key={showInitialPlaceholders ? "league-loading" : displayLeagueId}
-              itemCount={showInitialPlaceholders ? INITIAL_PLACEHOLDER_COUNT : displayProducts.length}
+              itemCount={
+                showInitialPlaceholders ? INITIAL_PLACEHOLDER_COUNT : displayProducts.length
+              }
             >
               {displayProducts.map((product) => (
                 <ProductCard

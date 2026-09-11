@@ -77,13 +77,14 @@ check(
 
 check(
   "conexão com o host das imagens é antecipada",
-  root.includes('rel: "preconnect"') &&
-    root.includes('href: "https://lh3.googleusercontent.com"'),
+  root.includes('rel: "preconnect"') && root.includes('href: "https://lh3.googleusercontent.com"'),
 );
 
 check(
   "status e controles da galeria ficam abaixo do cabeçalho sticky",
-  gallery.includes("data-gallery-status-overlay") && gallery.includes("z-30") && gallery.includes("z-40"),
+  gallery.includes("data-gallery-status-overlay") &&
+    gallery.includes("z-30") &&
+    gallery.includes("z-40"),
 );
 
 check(
@@ -95,8 +96,8 @@ check(
 
 check(
   "Monte seu pedido mantém cards maiores e somente a arte",
-  categories.includes('w-[164px]') &&
-    categories.includes('md:w-[328px]') &&
+  categories.includes("w-[164px]") &&
+    categories.includes("md:w-[328px]") &&
     categoryCard.includes("data-visual-category-card") &&
     !categoryCard.includes("absolute inset-x-3 bottom-3"),
 );

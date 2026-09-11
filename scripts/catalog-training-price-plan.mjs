@@ -23,7 +23,9 @@ function parseArgs(argv) {
 }
 
 function clean(value) {
-  return String(value ?? "").replace(/\s+/g, " ").trim();
+  return String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function nearly(a, b) {
@@ -35,13 +37,20 @@ const plan = JSON.parse(fs.readFileSync(path.resolve(options.plan), "utf8"));
 const collector = JSON.parse(fs.readFileSync(path.resolve(options.collector), "utf8"));
 const priceMap = JSON.parse(fs.readFileSync(path.resolve(options.map), "utf8"));
 
-if (!Array.isArray(plan.products) || plan.products.length === 0) throw new Error("Plano de treino vazio.");
-if (!Array.isArray(collector.groups) || collector.groups.length === 0) throw new Error("Coletor de treino inválido.");
-if (!Array.isArray(priceMap.entries) || priceMap.entries.length === 0) throw new Error("Mapa de preços vazio.");
-if (!String(plan.batchKey || "").startsWith("pdf-apparel:treino:")) throw new Error(`Plano não é de treino: ${plan.batchKey}`);
+if (!Array.isArray(plan.products) || plan.products.length === 0)
+  throw new Error("Plano de treino vazio.");
+if (!Array.isArray(collector.groups) || collector.groups.length === 0)
+  throw new Error("Coletor de treino inválido.");
+if (!Array.isArray(priceMap.entries) || priceMap.entries.length === 0)
+  throw new Error("Mapa de preços vazio.");
+if (!String(plan.batchKey || "").startsWith("pdf-apparel:treino:"))
+  throw new Error(`Plano não é de treino: ${plan.batchKey}`);
 
 const expected = priceMap.expectedCollector ?? {};
-const collectorImages = collector.groups.reduce((sum, group) => sum + (group.images?.length ?? 0), 0);
+const collectorImages = collector.groups.reduce(
+  (sum, group) => sum + (group.images?.length ?? 0),
+  0,
+);
 if (collector.groups.length !== Number(expected.groups)) {
   throw new Error(`Fonte mudou: grupos=${collector.groups.length}, esperado=${expected.groups}.`);
 }
@@ -49,7 +58,9 @@ if (collectorImages !== Number(expected.images)) {
   throw new Error(`Fonte mudou: imagens=${collectorImages}, esperado=${expected.images}.`);
 }
 if (priceMap.entries.length !== Number(expected.productGroups)) {
-  throw new Error(`Mapa incompleto: entries=${priceMap.entries.length}, esperado=${expected.productGroups}.`);
+  throw new Error(
+    `Mapa incompleto: entries=${priceMap.entries.length}, esperado=${expected.productGroups}.`,
+  );
 }
 
 const approved = {
@@ -67,19 +78,26 @@ for (const entry of priceMap.entries) {
   }
   const group = collector.groups[groupIndex - 1];
   if (clean(group.title) !== clean(entry.sourceTitle)) {
-    throw new Error(`Fonte mudou no grupo ${groupIndex}: título ${JSON.stringify(group.title)} != ${JSON.stringify(entry.sourceTitle)}.`);
+    throw new Error(
+      `Fonte mudou no grupo ${groupIndex}: título ${JSON.stringify(group.title)} != ${JSON.stringify(entry.sourceTitle)}.`,
+    );
   }
   if ((group.images?.length ?? 0) !== Number(entry.images)) {
-    throw new Error(`Fonte mudou no grupo ${groupIndex}: imagens=${group.images?.length ?? 0}, esperado=${entry.images}.`);
+    throw new Error(
+      `Fonte mudou no grupo ${groupIndex}: imagens=${group.images?.length ?? 0}, esperado=${entry.images}.`,
+    );
   }
   const expectedPrice = approved[entry.kitType];
   if (!Number.isFinite(expectedPrice) || !nearly(entry.price, expectedPrice)) {
-    throw new Error(`Preço/tipo não aprovado no grupo ${groupIndex}: ${entry.kitType} / ${entry.price}.`);
+    throw new Error(
+      `Preço/tipo não aprovado no grupo ${groupIndex}: ${entry.kitType} / ${entry.price}.`,
+    );
   }
   const mediaKey = clean(group.images?.[0]?.mediaKey);
   if (!mediaKey) throw new Error(`Grupo ${groupIndex} sem mediaKey primária.`);
   const sourceKey = `google_photos:${mediaKey}`;
-  if (byFirstImage.has(sourceKey)) throw new Error(`Imagem primária duplicada no mapa: ${sourceKey}`);
+  if (byFirstImage.has(sourceKey))
+    throw new Error(`Imagem primária duplicada no mapa: ${sourceKey}`);
   byFirstImage.set(sourceKey, {
     groupIndex,
     sourceTitle: entry.sourceTitle,
@@ -101,10 +119,14 @@ for (const product of plan.products) {
     const firstImageSourceKey = clean(variant.images?.[0]?.sourceKey);
     const rule = byFirstImage.get(firstImageSourceKey);
     if (!rule) {
-      throw new Error(`Variação não classificada: ${product.name} / ${variant.name} / ${firstImageSourceKey}`);
+      throw new Error(
+        `Variação não classificada: ${product.name} / ${variant.name} / ${firstImageSourceKey}`,
+      );
     }
     if (clean(variant.sourceTitle) !== clean(rule.sourceTitle)) {
-      throw new Error(`Título divergente na classificação: ${variant.sourceTitle} != ${rule.sourceTitle}`);
+      throw new Error(
+        `Título divergente na classificação: ${variant.sourceTitle} != ${rule.sourceTitle}`,
+      );
     }
     variant.price = rule.price;
     variant.name = rule.label;
@@ -116,7 +138,8 @@ for (const product of plan.products) {
   }
 
   const totals = new Map();
-  for (const variant of product.variants) totals.set(variant.name, (totals.get(variant.name) ?? 0) + 1);
+  for (const variant of product.variants)
+    totals.set(variant.name, (totals.get(variant.name) ?? 0) + 1);
   const seen = new Map();
   for (const variant of product.variants) {
     if ((totals.get(variant.name) ?? 0) <= 1) continue;
@@ -129,18 +152,25 @@ for (const product of plan.products) {
   product.specifications = [
     clean(product.specifications),
     product.variants.length > 1 ? "Preço conforme a versão do kit" : null,
-  ].filter(Boolean).join(" | ");
+  ]
+    .filter(Boolean)
+    .join(" | ");
 }
 
 if (classifiedVariants !== Number(expected.productGroups)) {
-  throw new Error(`Variações classificadas=${classifiedVariants}, esperado=${expected.productGroups}.`);
+  throw new Error(
+    `Variações classificadas=${classifiedVariants}, esperado=${expected.productGroups}.`,
+  );
 }
 if (usedFirstImages.size !== byFirstImage.size) {
-  throw new Error(`Cobertura do mapa incompleta: usadas=${usedFirstImages.size}, mapa=${byFirstImage.size}.`);
+  throw new Error(
+    `Cobertura do mapa incompleta: usadas=${usedFirstImages.size}, mapa=${byFirstImage.size}.`,
+  );
 }
 
 const planImages = plan.products.reduce(
-  (sum, product) => sum + product.variants.reduce((inner, variant) => inner + variant.images.length, 0),
+  (sum, product) =>
+    sum + product.variants.reduce((inner, variant) => inner + variant.images.length, 0),
   0,
 );
 if (planImages !== Number(expected.productImages)) {
@@ -151,7 +181,9 @@ plan.batchKey = `${plan.batchKey}:approved-prices-20260911`;
 plan.summary = {
   ...plan.summary,
   priceBreakdown: Object.fromEntries(
-    [...priceBreakdown.entries()].sort((a, b) => Number(a[0]) - Number(b[0])).map(([price, count]) => [Number(price).toFixed(2), count]),
+    [...priceBreakdown.entries()]
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([price, count]) => [Number(price).toFixed(2), count]),
   ),
 };
 plan.warnings = [
