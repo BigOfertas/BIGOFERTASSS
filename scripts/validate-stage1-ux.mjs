@@ -64,7 +64,8 @@ check(
     productImages.includes("=w${safeSize}-h${safeSize}-s-no-gm") &&
     productImages.includes("originalExternal, 768") &&
     productImages.includes("originalExternal, 256") &&
-    catalog.includes("buildOptimizedExternalImageUrl(item.image_external_url, 768)"),
+    catalog.includes("buildOptimizedExternalImageUrl(externalSource, 768)") &&
+    catalog.includes("buildResponsiveExternalImageSrcSet(externalSource)"),
 );
 
 check(
