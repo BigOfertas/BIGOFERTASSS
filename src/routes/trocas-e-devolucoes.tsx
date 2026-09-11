@@ -8,7 +8,8 @@ export const Route = createFileRoute("/trocas-e-devolucoes")({
   head: () =>
     buildPageHead({
       title: "Trocas e Devoluções",
-      description: "Veja como solicitar atendimento para troca, devolução, reembolso ou problema com uma peça comprada na DropBox.",
+      description:
+        "Veja como solicitar atendimento para troca, devolução, reembolso ou problema com uma peça comprada na DropBox.",
       path: "/trocas-e-devolucoes",
     }),
   component: ExchangesPage,
