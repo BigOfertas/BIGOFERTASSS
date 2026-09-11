@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import type { Json } from "@/integrations/supabase/types";
-import { buildR2PublicImageUrl } from "@/lib/product-images";
+import { buildOptimizedExternalImageUrl, buildR2PublicImageUrl } from "@/lib/product-images";
 
 export const CATALOG_DEFAULT_PAGE_SIZE = 24;
 export const CATALOG_PAGE_SIZES = [12, 24, 48] as const;
@@ -145,6 +145,8 @@ export function parseCatalogPage(value: Json): CatalogPage {
       displayImageUrl:
         (item.image_card_storage_key ? buildR2PublicImageUrl(item.image_card_storage_key) : null) ??
         (item.image_storage_key ? buildR2PublicImageUrl(item.image_storage_key) : null) ??
+        buildOptimizedExternalImageUrl(item.image_external_url, 768) ??
+        buildOptimizedExternalImageUrl(item.fallback_image_url, 768) ??
         item.image_external_url ??
         item.fallback_image_url,
     })),
