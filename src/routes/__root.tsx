@@ -12,6 +12,7 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import glassLegacyCss from "../glass-legacy.css?url";
+import sportThemeCss from "../sport-theme.css?url";
 import { AuthProvider } from "../lib/auth";
 import Footer from "../components/layout/Footer";
 import { CartProvider } from "../context/CartContext";
@@ -118,6 +119,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://lh3.googleusercontent.com" },
       { rel: "dns-prefetch", href: "https://lh3.googleusercontent.com" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600..900&display=swap",
+      },
       ...(R2_IMAGE_ORIGIN
         ? [
             { rel: "preconnect", href: R2_IMAGE_ORIGIN },
@@ -126,6 +133,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         : []),
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: glassLegacyCss },
+      { rel: "stylesheet", href: sportThemeCss },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),

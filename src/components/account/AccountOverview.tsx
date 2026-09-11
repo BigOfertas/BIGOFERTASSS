@@ -13,7 +13,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AccountSecurityPanel } from "@/components/account/AccountSecurityPanel";
 import type { AccountSection } from "@/components/account/AccountDashboard";
-import { LiquidGlassCard } from "@/components/ui/liquid-glass-card";
 import { BRAND } from "@/config/brand";
 import {
   fetchCustomerAccount,
@@ -113,93 +112,117 @@ export function AccountOverview({ email, onNavigate, onSignOut }: AccountOvervie
     {
       section: "afiliados",
       title: "Afiliados",
-      description: "Conheça a área de indicações, comissões e saques da sua conta.",
-      meta: "Conhecer o programa",
+      description: "Acesse indicações, comissões, saques e os recursos do programa.",
+      meta: "Abrir área de afiliados",
       icon: BadgePercent,
     },
   ];
 
   return (
-    <div className="bg-transparent py-8 sm:py-10">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <header className="mb-7 flex flex-col gap-3 border-b border-white/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="display-kicker">Área do cliente</p>
-            <h1 className="display-title mt-2">
-              {firstName ? `Olá, ${firstName}` : "Minha conta"}
-            </h1>
-            <p className="section-copy mt-3 max-w-2xl">
-              Encontre rapidamente o que precisa para acompanhar suas compras e manter seus dados em
-              dia.
-            </p>
-          </div>
-
-          {!loading ? (
-            <div
-              className={`glass-card inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-xs font-bold ${
-                complete ? "text-emerald-700" : "text-amber-700"
-              }`}
-            >
-              {complete ? (
-                <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-              )}
-              {complete ? "Conta pronta para comprar" : "Complete seus dados"}
+    <div className="bg-transparent py-7 sm:py-10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section className="account-command-hero rounded-[1.8rem] px-5 py-7 text-white sm:px-8 sm:py-9 lg:px-10 lg:py-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] lg:items-end">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-red-300">
+                Área do cliente
+              </p>
+              <h1 className="sport-heading mt-3 max-w-[11ch] text-5xl text-white sm:text-6xl lg:text-7xl">
+                {firstName ? `Olá, ${firstName}.` : "Sua conta. Seu controle."}
+              </h1>
+              <p className="mt-5 max-w-xl text-sm leading-6 text-white/62 sm:text-[15px] sm:leading-7">
+                Pedidos, endereços, dados pessoais e afiliados em um painel mais direto para você
+                encontrar o que precisa sem perder tempo.
+              </p>
             </div>
-          ) : null}
-        </header>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => onNavigate("dados")}
+                className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 text-left transition hover:bg-white/[0.11]"
+              >
+                <span className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-white/55">
+                  {complete ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-300" aria-hidden="true" />
+                  ) : (
+                    <ShieldCheck className="h-4 w-4 text-amber-300" aria-hidden="true" />
+                  )}
+                  Cadastro
+                </span>
+                <strong className="mt-2 block text-sm font-extrabold text-white">
+                  {loading ? "Carregando..." : complete ? "Tudo em dia" : "Precisa de revisão"}
+                </strong>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigate("enderecos")}
+                className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 text-left transition hover:bg-white/[0.11]"
+              >
+                <span className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-white/55">
+                  <MapPin className="h-4 w-4 text-red-300" aria-hidden="true" />
+                  Entrega
+                </span>
+                <strong className="mt-2 block text-sm font-extrabold text-white">
+                  {loading
+                    ? "Carregando..."
+                    : addresses.length === 0
+                      ? "Cadastre um endereço"
+                      : `${addresses.length} ${addresses.length === 1 ? "endereço salvo" : "endereços salvos"}`}
+                </strong>
+              </button>
+            </div>
+          </div>
+        </section>
 
         {errorMessage ? (
           <div
             role="alert"
-            className="mb-5 rounded-xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-700 shadow-sm"
+            className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm"
           >
             {errorMessage}
           </div>
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="mt-8 grid gap-7 lg:grid-cols-[minmax(0,1fr)_320px]">
           <section className="min-w-0">
-            <div className="mb-4">
-              <h2 className="text-lg font-extrabold tracking-[-0.03em] text-gray-950">
-                O que você quer fazer?
-              </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                As funções mais usadas da sua conta estão aqui.
-              </p>
+            <div className="mb-4 flex items-end justify-between gap-4">
+              <div>
+                <p className="display-kicker">Acesso rápido</p>
+                <h2 className="sport-heading mt-2 text-3xl text-gray-950 sm:text-4xl">
+                  O que você quer fazer?
+                </h2>
+              </div>
+              <span className="hidden text-xs font-semibold text-gray-400 sm:block">
+                Tudo em poucos cliques
+              </span>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {actions.map(({ section, title, description, meta, icon: Icon }) => (
-                <LiquidGlassCard
+                <button
                   key={section}
-                  as="button"
                   type="button"
                   onClick={() => onNavigate(section)}
-                  interactive
-                  blurIntensity="lg"
-                  shadowIntensity="md"
-                  glowIntensity="sm"
-                  borderRadius="22px"
-                  className="group min-h-52 w-full p-5 text-left"
+                  className="account-action-card group min-h-52 w-full rounded-[1.45rem] p-5 text-left sm:p-6"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/80 bg-red-50/75 text-red-600 shadow-sm">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-600 shadow-sm">
                       <Icon className="h-5 w-5" aria-hidden="true" />
                     </span>
                     <ChevronRight
-                      className="h-5 w-5 text-gray-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-gray-500 motion-reduce:transition-none"
+                      className="h-5 w-5 text-gray-300 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-red-500 motion-reduce:transition-none"
                       aria-hidden="true"
                     />
                   </div>
 
-                  <h3 className="mt-5 text-base font-extrabold tracking-[-0.025em] text-gray-950">
-                    {title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-gray-600">{description}</p>
-                  <p className="mt-4 text-xs font-semibold text-gray-500">{meta}</p>
-                </LiquidGlassCard>
+                  <h3 className="sport-heading mt-6 text-[1.7rem] text-gray-950">{title}</h3>
+                  <p className="mt-2 max-w-sm text-sm leading-6 text-gray-600">{description}</p>
+                  <p className="mt-5 text-xs font-black uppercase tracking-[0.1em] text-gray-400">
+                    {meta}
+                  </p>
+                </button>
               ))}
             </div>
 
@@ -208,39 +231,50 @@ export function AccountOverview({ email, onNavigate, onSignOut }: AccountOvervie
             </div>
           </section>
 
-          <aside className="glass-panel h-fit rounded-[1.4rem] p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-gray-400">
-              Conta conectada
-            </p>
+          <aside className="account-profile-card h-fit overflow-hidden rounded-[1.45rem] lg:sticky lg:top-28">
+            <div className="p-5 sm:p-6">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
+                Conta conectada
+              </p>
 
-            <div className="mt-4 flex items-center gap-3">
-              <span className="glass-card flex h-11 w-11 flex-none items-center justify-center rounded-full text-gray-700">
-                <UserRound className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-extrabold tracking-[-0.02em] text-gray-950">
-                  {profile?.full_name || `Cliente ${BRAND.officialName}`}
-                </p>
-                <p className="mt-0.5 truncate text-xs text-gray-500">{email}</p>
+              <div className="mt-5 flex items-center gap-3">
+                <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-gray-950 text-white shadow-md">
+                  <UserRound className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-extrabold text-gray-950">
+                    {profile?.full_name || `Cliente ${BRAND.officialName}`}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-gray-500">{email}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 border-t border-gray-100 pt-5">
+                <div className="flex items-start gap-2.5 text-sm text-gray-600">
+                  <Mail className="mt-0.5 h-4 w-4 flex-none text-gray-400" aria-hidden="true" />
+                  <span className="break-all">{email}</span>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-2">
+                <button
+                  type="button"
+                  onClick={() => onNavigate("dados")}
+                  className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-gray-950 px-4 text-sm font-black text-white transition hover:bg-red-600"
+                >
+                  Gerenciar meus dados
+                </button>
+                <button
+                  type="button"
+                  disabled={signingOut}
+                  onClick={() => void handleSignOut()}
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-700 transition hover:border-red-200 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
+                  {signingOut ? "Saindo..." : "Sair da conta"}
+                </button>
               </div>
             </div>
-
-            <div className="mt-5 border-t border-white/70 pt-4">
-              <div className="flex items-start gap-2.5 text-sm text-gray-600">
-                <Mail className="mt-0.5 h-4 w-4 flex-none text-gray-400" aria-hidden="true" />
-                <span className="break-all">{email}</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              disabled={signingOut}
-              onClick={() => void handleSignOut()}
-              className="glass-card mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold text-gray-700 transition hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
-            >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-              {signingOut ? "Saindo..." : "Sair da conta"}
-            </button>
           </aside>
         </div>
       </div>
