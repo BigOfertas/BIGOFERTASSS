@@ -33,6 +33,8 @@ const FOOTER_ROUTES = new Set([
   "/contato",
 ]);
 
+const INITIAL_BOOT_SPLASH_MS = 2500;
+
 const R2_IMAGE_ORIGIN = (() => {
   const baseUrl = getR2PublicBaseUrl();
   if (!baseUrl) return null;
@@ -149,7 +151,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body style={{ background: "#ffffff" }}>
         {children}
         <Scripts />
       </body>
@@ -157,14 +159,65 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function InitialBootSplash() {
+  return (
+    <div
+      data-initial-boot-splash
+      aria-label="Carregando loja"
+      role="status"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 2147483647,
+        display: "grid",
+        placeItems: "center",
+        background: "#ffffff",
+      }}
+    >
+      <svg width="42" height="42" viewBox="0 0 42 42" aria-hidden="true">
+        <circle cx="21" cy="21" r="16" fill="none" stroke="#e5e7eb" strokeWidth="4" />
+        <path
+          d="M21 5a16 16 0 0 1 16 16"
+          fill="none"
+          stroke="#e71919"
+          strokeWidth="4"
+          strokeLinecap="round"
+        >
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            from="0 21 21"
+            to="360 21 21"
+            dur="0.72s"
+            repeatCount="indefinite"
+          />
+        </path>
+      </svg>
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [storefrontHydrated, setStorefrontHydrated] = useState(false);
+  const [initialBootSplashVisible, setInitialBootSplashVisible] = useState(true);
   const showStorefrontFooter = FOOTER_ROUTES.has(pathname) || pathname.startsWith("/product/");
 
   useEffect(() => {
     setStorefrontHydrated(true);
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const timer = window.setTimeout(() => {
+      setInitialBootSplashVisible(false);
+      document.body.style.overflow = previousOverflow;
+    }, INITIAL_BOOT_SPLASH_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+      document.body.style.overflow = previousOverflow;
+    };
   }, []);
 
   return (
@@ -180,6 +233,7 @@ function RootComponent() {
           <CursorFollower />
           <CookieConsent />
           <Toaster position="top-center" richColors />
+          {initialBootSplashVisible ? <InitialBootSplash /> : null}
         </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
