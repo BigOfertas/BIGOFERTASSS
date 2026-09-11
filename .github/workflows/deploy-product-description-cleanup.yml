@@ -1,0 +1,35 @@
+name: Deploy Product Description Cleanup
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy-product-description-cleanup.yml"
+      - "scripts/deploy-product-description-cleanup.mjs"
+      - "supabase/migrations/20260911102000_remove_generic_product_description_sentence.sql"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-product-description-cleanup-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Validate migration runner syntax
+        run: node --check scripts/deploy-product-description-cleanup.mjs
+
+      - name: Apply cleanup and verify all products
+        run: node scripts/deploy-product-description-cleanup.mjs

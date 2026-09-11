@@ -137,7 +137,6 @@ function descriptionFor(name, proposal, commercialType, uniformLabel) {
     parts.push(`Versão ${commercialLabel(commercialType)}.`);
   if (proposal.season) parts.push(`Temporada ${proposal.season}.`);
   if (proposal.brand) parts.push(`Marca ${titleCaseEntity(proposal.brand)}.`);
-  parts.push("Disponível com as opções de tamanho e personalização configuradas pela BIGofertas.");
   if (uniformLabel) parts.push(`Uniforme: ${uniformLabel}.`);
   return parts.join(" ");
 }

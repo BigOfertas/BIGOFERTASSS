@@ -22,7 +22,6 @@ function buildDescription(product, team) {
   const parts = [`${product.name}.`, `Time: ${team}.`, "Liga: NBA.", "Produto de basquete."];
   if (product.season) parts.push(`Temporada ${product.season}.`);
   if (product.brand) parts.push(`Marca ${product.brand}.`);
-  parts.push("Disponível com as opções de tamanho e personalização configuradas pela BIGofertas.");
   return parts.join(" ");
 }
 

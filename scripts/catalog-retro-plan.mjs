@@ -216,7 +216,7 @@ const normalized = {
       ...product,
       sourceTitle: identity.sourceTitle,
       name,
-      description: `${name}. Versão Retrô. Disponível com as opções de tamanho e personalização configuradas pela BIGofertas.`,
+      description: `${name}. Versão Retrô.`,
       category: { name: "Camisas Retrô", slug: "retro" },
       competition: null,
       league: null,
