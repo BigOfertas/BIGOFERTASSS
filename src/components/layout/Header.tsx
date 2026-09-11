@@ -1,19 +1,37 @@
 import React from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Menu, Search, ShoppingCart, User, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import {
+  BadgePercent,
+  MapPin,
+  Menu,
+  Package,
+  Search,
+  ShieldCheck,
+  ShoppingCart,
+  User,
+  UserRound,
+  X,
+} from "lucide-react";
 
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { Input } from "@/components/ui/input";
+import {
+  MobileLiquidMorphMenu,
+  type MobileLiquidMorphMenuItem,
+} from "@/components/ui/mobile-liquid-morph-menu";
 import { BRAND } from "@/config/brand";
 import { useCart } from "@/context/CartContext";
 import { useCatalogSearchSuggestions } from "@/hooks/useCatalogSearchSuggestions";
 import { useAuth } from "@/lib/auth";
-import CategoryNav from "./CategoryNav";
+import CategoryNav, { categoryLinks } from "./CategoryNav";
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
+
+type MobilePanel = "categories" | "account" | null;
+type AccountMenuSection = "pedidos" | "enderecos" | "dados" | "afiliados" | "seguranca";
 
 function SearchBox({
   query,
@@ -146,21 +164,125 @@ const Header: React.FC = () => {
   const { totalItems } = useCart();
   const { user, isOwner } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const mobileHeaderRef = React.useRef<HTMLDivElement | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [mobilePanel, setMobilePanel] = React.useState<MobilePanel>(null);
 
   const accountDestination = isOwner ? "/admin" : user ? "/conta" : "/login";
   const accountTopLabel = isOwner ? "Painel" : user ? "Minha" : "Acessar";
   const accountBottomLabel = isOwner ? "Admin" : "Conta";
 
-  const closeNavigation = () => setMobileMenuOpen(false);
+  const closeNavigation = React.useCallback(() => setMobilePanel(null), []);
+
+  React.useEffect(() => {
+    if (!mobilePanel) return;
+
+    const handleOutside = (event: PointerEvent) => {
+      if (
+        mobileHeaderRef.current &&
+        !mobileHeaderRef.current.contains(event.target as Node)
+      ) {
+        setMobilePanel(null);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleOutside);
+    return () => document.removeEventListener("pointerdown", handleOutside);
+  }, [mobilePanel]);
+
+  React.useEffect(() => {
+    setMobilePanel(null);
+  }, [location.pathname]);
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
     const query = searchQuery.trim();
     void navigate({ to: "/products", search: query ? { q: query } : {} });
-    setMobileMenuOpen(false);
+    setMobilePanel(null);
   };
+
+  function handleMobileCategory(category: (typeof categoryLinks)[number]) {
+    setMobilePanel(null);
+
+    if (category.href === "/") {
+      if (location.pathname === "/") {
+        const launches = document.getElementById("lancamentos");
+        if (launches) {
+          launches.scrollIntoView({ behavior: "smooth", block: "start" });
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+        return;
+      }
+
+      void navigate({ to: "/" });
+      return;
+    }
+
+    void navigate({
+      to: "/products",
+      search: category.search ?? {},
+    });
+  }
+
+  function handleAccountSection(section: AccountMenuSection) {
+    setMobilePanel(null);
+
+    if (!user) {
+      void navigate({ to: "/login" });
+      return;
+    }
+
+    if (section === "seguranca") {
+      void navigate({ to: "/conta", search: {} });
+      window.setTimeout(() => {
+        document.getElementById("seguranca")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 180);
+      return;
+    }
+
+    void navigate({
+      to: "/conta",
+      search: { secao: section },
+    });
+  }
+
+  const categoryMenuItems: MobileLiquidMorphMenuItem[] = categoryLinks.map((category) => ({
+    label: category.name,
+    onClick: () => handleMobileCategory(category),
+  }));
+
+  const accountMenuItems: MobileLiquidMorphMenuItem[] = [
+    {
+      label: "Meus pedidos",
+      icon: Package,
+      onClick: () => handleAccountSection("pedidos"),
+    },
+    {
+      label: "Endereços",
+      icon: MapPin,
+      onClick: () => handleAccountSection("enderecos"),
+    },
+    {
+      label: "Dados pessoais",
+      icon: UserRound,
+      onClick: () => handleAccountSection("dados"),
+    },
+    {
+      label: "Afiliados",
+      icon: BadgePercent,
+      onClick: () => handleAccountSection("afiliados"),
+    },
+    {
+      label: "Segurança",
+      icon: ShieldCheck,
+      onClick: () => handleAccountSection("seguranca"),
+    },
+  ];
 
   return (
     <header className="glass-header sticky top-0 z-50">
@@ -220,16 +342,24 @@ const Header: React.FC = () => {
         <CategoryNav />
       </div>
 
-      <div className="md:hidden">
+      <div ref={mobileHeaderRef} className="md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             type="button"
-            onClick={() => setMobileMenuOpen((open) => !open)}
-            aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
-            aria-expanded={mobileMenuOpen}
-            className="header-action -ml-1 h-10 w-10 text-gray-900 active:text-red-600"
+            onClick={() =>
+              setMobilePanel((current) => (current === "categories" ? null : "categories"))
+            }
+            aria-label={mobilePanel === "categories" ? "Fechar menu" : "Abrir menu de categorias"}
+            aria-expanded={mobilePanel === "categories"}
+            className={`header-action -ml-1 h-10 w-10 transition-colors ${
+              mobilePanel === "categories" ? "bg-red-600 text-white" : "text-gray-900"
+            }`}
           >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {mobilePanel === "categories" ? (
+              <X className="h-5.5 w-5.5" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
           </button>
 
           <Link
@@ -244,18 +374,33 @@ const Header: React.FC = () => {
           </Link>
 
           <div className="-mr-1 flex items-center gap-2">
-            <Link
-              to={accountDestination}
-              aria-label={
-                isOwner ? "Abrir painel administrativo" : user ? "Abrir conta" : "Acessar conta"
-              }
-              className="header-action h-10 w-10 text-gray-900 active:text-red-600"
+            <button
+              type="button"
+              aria-label={user ? "Abrir opções da conta" : "Acessar conta"}
+              aria-expanded={user ? mobilePanel === "account" : undefined}
+              onClick={() => {
+                if (!user) {
+                  closeNavigation();
+                  void navigate({ to: "/login" });
+                  return;
+                }
+
+                setMobilePanel((current) => (current === "account" ? null : "account"));
+              }}
+              className={`header-action h-10 w-10 transition-colors ${
+                mobilePanel === "account" ? "bg-red-600 text-white" : "text-gray-900"
+              }`}
             >
-              <User className="h-5.5 w-5.5" />
-            </Link>
+              {mobilePanel === "account" ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <User className="h-5.5 w-5.5" />
+              )}
+            </button>
             <Link
               to="/cart"
               aria-label={`Carrinho com ${totalItems} item(ns)`}
+              onClick={closeNavigation}
               className="header-action relative h-10 w-10 text-gray-900 active:text-red-600"
             >
               <ShoppingCart className="h-5.5 w-5.5" />
@@ -278,7 +423,18 @@ const Header: React.FC = () => {
           />
         </div>
 
-        {mobileMenuOpen ? <CategoryNav mobile onNavigate={closeNavigation} /> : null}
+        <MobileLiquidMorphMenu
+          open={mobilePanel === "categories"}
+          title="Todas as categorias"
+          items={categoryMenuItems}
+          origin="left"
+        />
+        <MobileLiquidMorphMenu
+          open={mobilePanel === "account"}
+          title="Minha conta"
+          items={accountMenuItems}
+          origin="right"
+        />
       </div>
     </header>
   );
