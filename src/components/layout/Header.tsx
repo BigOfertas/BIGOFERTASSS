@@ -349,7 +349,9 @@ const Header: React.FC = () => {
             aria-label={mobilePanel === "categories" ? "Fechar menu" : "Abrir menu de categorias"}
             aria-expanded={mobilePanel === "categories"}
             className={`header-action -ml-1 h-10 w-10 transition-colors ${
-              mobilePanel === "categories" ? "bg-red-600 text-white" : "text-gray-900"
+              mobilePanel === "categories"
+                ? "bg-[#202124] text-white ring-1 ring-red-600/20"
+                : "text-gray-900"
             }`}
           >
             {mobilePanel === "categories" ? (
@@ -385,7 +387,9 @@ const Header: React.FC = () => {
                 setMobilePanel((current) => (current === "account" ? null : "account"));
               }}
               className={`header-action h-10 w-10 transition-colors ${
-                mobilePanel === "account" ? "bg-red-600 text-white" : "text-gray-900"
+                mobilePanel === "account"
+                  ? "bg-[#202124] text-white ring-1 ring-red-600/20"
+                  : "text-gray-900"
               }`}
             >
               {mobilePanel === "account" ? (
