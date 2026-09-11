@@ -43,6 +43,7 @@ jobs:
             supabase/functions/r2-image-presign/index.ts \
             supabase/functions/site-asset-presign/index.ts \
             scripts/generate-home-launches-static.mjs \
+            scripts/inject-home-image-preload.mjs \
             scripts/validate-image-loading-performance.mjs \
             scripts/validate-stage1-ux.mjs \
             package.json
@@ -59,35 +60,60 @@ jobs:
       - name: Validate application build
         run: bun run build
 
-      - name: Validate Hostinger prerender build
+      - name: Validate Hostinger build and early product image preload
         run: bun run build:hostinger
 
-      - name: Verify homepage products are present before hydration
+      - name: Verify homepage image starts before JavaScript discovery
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
+          import json
           from pathlib import Path
-          html = Path("dist/client/index.html").read_text(encoding="utf-8")
-          checks = {
-              "product_cards": html.count("data-product-card"),
-              "srcset": html.lower().count("srcset="),
-              "product_links": html.count("/product/"),
-              "high_priority": html.lower().count("fetchpriority"),
-              "google_images": html.count("googleusercontent.com"),
-              "r2_images": html.count("img.bigofertas.net"),
-          }
-          print("PRERENDER_IMAGE_MARKUP", checks)
-          if checks["product_cards"] < 1:
-              raise SystemExit("No prerendered product cards found")
-          if checks["srcset"] < 1:
-              raise SystemExit("No responsive srcset found in prerendered homepage")
-          if checks["product_links"] < 1:
-              raise SystemExit("No prerendered product links found")
-          print("HOMEPAGE_PRODUCT_IMAGES_PRERENDERED")
+
+          html_path = Path("dist/client/index.html")
+          metadata_path = Path(".tmp/home-product-image-preload.json")
+          generated_path = Path("src/generated/home-launches.ts")
+
+          if not html_path.is_file():
+              raise SystemExit("Hostinger index.html was not generated")
+          if not metadata_path.is_file():
+              raise SystemExit("Homepage product image preload metadata was not generated")
+          if not generated_path.is_file():
+              raise SystemExit("Homepage launch snapshot source was not generated")
+
+          html = html_path.read_text(encoding="utf-8")
+          metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+          generated = generated_path.read_text(encoding="utf-8")
+
+          marker = 'data-home-product-image-preload="true"'
+          if html.count(marker) != 1:
+              raise SystemExit(f"Expected exactly one early product image preload, found {html.count(marker)}")
+          if 'rel="preload"' not in html or 'as="image"' not in html:
+              raise SystemExit("Early homepage product image preload is missing rel=preload/as=image")
+          if 'fetchpriority="high"' not in html:
+              raise SystemExit("Early homepage product image preload is missing high fetch priority")
+          if 'imagesizes="' not in html:
+              raise SystemExit("Early homepage product image preload is missing responsive sizes")
+          if not isinstance(metadata.get("href"), str) or not metadata["href"].startswith("https://"):
+              raise SystemExit("Early homepage product image preload href is invalid")
+          if metadata["href"].replace("&", "&amp;") not in html:
+              raise SystemExit("Generated preload href was not injected into the Hostinger HTML")
+          if '"items": [' not in generated or generated.count('"id":') < 1:
+              raise SystemExit("Build-time homepage product snapshot is empty")
+          if metadata.get("srcSet") and 'imagesrcset="' not in html:
+              raise SystemExit("Responsive preload metadata exists but imagesrcset was not injected")
+
+          print(
+              "EARLY_HOMEPAGE_IMAGE_PRELOAD_OK",
+              {
+                  "responsive": bool(metadata.get("srcSet")),
+                  "snapshot_products": generated.count('"id":'),
+              },
+          )
           PY
 
-      - name: Restore generated source and commit formatter output
+      - name: Restore generated fallback and commit formatter output
         shell: bash
         run: |
           set -euo pipefail
@@ -108,6 +134,7 @@ jobs:
             supabase/functions/r2-image-presign/index.ts \
             supabase/functions/site-asset-presign/index.ts \
             scripts/generate-home-launches-static.mjs \
+            scripts/inject-home-image-preload.mjs \
             scripts/validate-image-loading-performance.mjs \
             scripts/validate-stage1-ux.mjs \
             package.json
