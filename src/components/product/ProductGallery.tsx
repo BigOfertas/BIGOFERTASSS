@@ -117,6 +117,24 @@ export default function ProductGallery({
     move(deltaX < 0 ? 1 : -1);
   };
 
+  const handleNavigationPointerDown = (
+    event: React.PointerEvent<HTMLButtonElement>,
+    direction: -1 | 1,
+  ) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    move(direction);
+  };
+
+  const handleNavigationClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    direction: -1 | 1,
+  ) => {
+    event.stopPropagation();
+    if (event.detail === 0) move(direction);
+  };
+
   return (
     <section aria-label={`Galeria de ${productName}`}>
       <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm sm:aspect-[4/5]">
@@ -178,7 +196,9 @@ export default function ProductGallery({
           <>
             <button
               type="button"
-              onClick={() => move(-1)}
+              data-gallery-nav="previous"
+              onPointerDown={(event) => handleNavigationPointerDown(event, -1)}
+              onClick={(event) => handleNavigationClick(event, -1)}
               className="absolute left-2 top-1/2 z-30 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white sm:block"
               aria-label="Imagem anterior"
             >
@@ -186,7 +206,9 @@ export default function ProductGallery({
             </button>
             <button
               type="button"
-              onClick={() => move(1)}
+              data-gallery-nav="next"
+              onPointerDown={(event) => handleNavigationPointerDown(event, 1)}
+              onClick={(event) => handleNavigationClick(event, 1)}
               className="absolute right-2 top-1/2 z-30 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white sm:block"
               aria-label="Próxima imagem"
             >
@@ -308,7 +330,9 @@ export default function ProductGallery({
               <>
                 <button
                   type="button"
-                  onClick={() => move(-1)}
+                  data-gallery-viewer-nav="previous"
+                  onPointerDown={(event) => handleNavigationPointerDown(event, -1)}
+                  onClick={(event) => handleNavigationClick(event, -1)}
                   className="absolute left-3 top-1/2 z-[110] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
                   aria-label="Imagem anterior"
                 >
@@ -316,7 +340,9 @@ export default function ProductGallery({
                 </button>
                 <button
                   type="button"
-                  onClick={() => move(1)}
+                  data-gallery-viewer-nav="next"
+                  onPointerDown={(event) => handleNavigationPointerDown(event, 1)}
+                  onClick={(event) => handleNavigationClick(event, 1)}
                   className="absolute right-3 top-1/2 z-[110] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
                   aria-label="Próxima imagem"
                 >
