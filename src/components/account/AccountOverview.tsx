@@ -131,7 +131,8 @@ export function AccountOverview({ email, onNavigate, onSignOut }: AccountOvervie
                 {firstName ? `Olá, ${firstName}.` : "Sua conta. Seu controle."}
               </h1>
               <p className="mt-5 max-w-xl text-sm leading-6 text-white/62 sm:text-[15px] sm:leading-7">
-                Pedidos, endereços, dados pessoais e afiliados em um painel mais direto para você encontrar o que precisa sem perder tempo.
+                Pedidos, endereços, dados pessoais e afiliados em um painel mais direto para você
+                encontrar o que precisa sem perder tempo.
               </p>
             </div>
 
