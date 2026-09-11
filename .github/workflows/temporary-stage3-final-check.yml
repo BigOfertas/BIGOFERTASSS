@@ -73,3 +73,6 @@ jobs:
             exit 1
           fi
           echo "STAGE3_HOSTINGER_BRAND_OK"
+
+      - name: Confirm final check revision
+        run: echo STAGE3_FINAL_CHECK_REVISION_2
