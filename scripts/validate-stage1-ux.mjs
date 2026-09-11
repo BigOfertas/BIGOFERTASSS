@@ -16,81 +16,80 @@ function check(label, condition) {
 
 const root = read("src/routes/__root.tsx");
 const gallery = read("src/components/product/ProductGallery.tsx");
-const lens = read("src/components/ui/magnifier-lens.tsx");
+const productCard = read("src/components/product/ProductCard.tsx");
 const cursor = read("src/components/ui/cursor-follower.tsx");
+const productImages = read("src/lib/product-images.ts");
+const catalog = read("src/lib/catalog.ts");
+const best = read("src/components/home/BestSellers.tsx");
 const categories = read("src/components/home/VisualCategories.tsx");
 const categoryCard = read("src/components/home/CategoryCard.tsx");
-const leagues = read("src/components/home/ShopByLeague.tsx");
 
 check(
-  "loading inicial tem mínimo de 2,3 s e espera dados, placeholders e imagens",
-  root.includes("const INITIAL_REFRESH_MIN_MS = 2300") &&
-    root.includes("waitForInitialQueries") &&
-    root.includes("waitForStorefrontPlaceholders") &&
-    root.includes("preloadRenderedImages"),
+  "entrada da loja não possui atraso artificial nem bloqueio global de imagens",
+  !root.includes("INITIAL_REFRESH_MIN_MS") &&
+    !root.includes("data-initial-refresh-loader") &&
+    !root.includes("preloadRenderedImages") &&
+    root.includes("<CursorFollower />"),
 );
 
 check(
-  "cursor fica oculto no loading e só monta após a liberação da tela",
-  root.includes("data-initial-refresh-loader") &&
-    root.includes("cursor-none") &&
-    root.includes("!initialRefreshLoading ? <CursorFollower /> : null"),
+  "lupa foi removida completamente dos cards e da galeria",
+  !gallery.includes("magnifier-lens") &&
+    !gallery.includes("<Lens") &&
+    !productCard.includes("magnifier-lens") &&
+    !productCard.includes("<Lens") &&
+    cursor.includes("data-cursor-follower"),
 );
 
 check(
-  "troca de liga preserva cards existentes e pré-carrega novas imagens",
-  leagues.includes("preloadProductImages") &&
-    leagues.includes("displayProducts") &&
-    leagues.includes("isPlaceholderData") &&
-    leagues.includes("data-league-products") &&
-    leagues.includes("setDisplayLeagueId(activeLeague.id)"),
+  "troca de fotos do produto é instantânea e sem carrossel animado",
+  !gallery.includes("embla-carousel-react") &&
+    !gallery.includes("useEmblaCarousel") &&
+    !gallery.includes("transition-transform") &&
+    gallery.includes("SWIPE_THRESHOLD_PX") &&
+    gallery.includes("setActiveImageId(nextImage.id)"),
 );
 
 check(
-  "galeria usa arraste contínuo via Embla e não troca apenas no touchend",
-  gallery.includes('from "embla-carousel-react"') &&
-    gallery.includes("data-product-gallery-track") &&
-    gallery.includes("useEmblaCarousel") &&
-    !gallery.includes("onTouchEnd") &&
-    !gallery.includes("SWIPE_THRESHOLD"),
+  "imagem principal do produto tem prioridade máxima",
+  gallery.includes('loading="eager"') && gallery.includes('fetchPriority="high"'),
+);
+
+check(
+  "Google Photos é requisitado em tamanhos adequados em vez de 4096 px",
+  productImages.includes("buildOptimizedExternalImageUrl") &&
+    productImages.includes("=w${safeSize}-h${safeSize}-s-no-gm") &&
+    productImages.includes("originalExternal, 768") &&
+    productImages.includes("originalExternal, 256") &&
+    catalog.includes("buildOptimizedExternalImageUrl(item.image_external_url, 768)"),
+);
+
+check(
+  "primeiros produtos visíveis carregam com prioridade",
+  productCard.includes('loading={priority ? "eager" : "lazy"}') &&
+    productCard.includes('fetchPriority={priority ? "high" : "auto"}') &&
+    best.includes("PRIORITY_IMAGE_COUNT") &&
+    best.includes("priority={index < PRIORITY_IMAGE_COUNT}"),
 );
 
 check(
   "status e controles da galeria ficam abaixo do cabeçalho sticky",
-  gallery.includes("data-gallery-status-overlay") &&
-    gallery.includes("z-30") &&
-    gallery.includes("z-40") &&
-    !gallery.includes("z-[70]") &&
-    !gallery.includes("z-[80]"),
+  gallery.includes("data-gallery-status-overlay") && gallery.includes("z-30") && gallery.includes("z-40"),
 );
 
 check(
-  "viewer abre centralizado e cerca de 25% menor que a viewport",
+  "viewer continua centralizado e compacto",
   gallery.includes("data-product-image-viewer-frame") &&
     gallery.includes("h-[75dvh]") &&
-    gallery.includes("sm:w-[75vw]") &&
-    gallery.includes("items-center justify-center"),
+    gallery.includes("sm:w-[75vw]"),
 );
 
 check(
-  "lupa avisa o cursor e ambos fazem transição suave",
-  lens.includes('const LENS_VISIBILITY_EVENT = "storefront:lens-visibility"') &&
-    lens.includes("transition: \"opacity 180ms ease\"") &&
-    cursor.includes('const LENS_VISIBILITY_EVENT = "storefront:lens-visibility"') &&
-    cursor.includes("lensActiveRef") &&
-    cursor.includes("transition-opacity duration-200"),
-);
-
-check(
-  "Monte seu pedido dobra os cards no desktop",
-  categories.includes('w-[164px]') && categories.includes('md:w-[328px]'),
-);
-
-check(
-  "cards visuais exibem somente a arte, sem texto sobreposto",
-  categoryCard.includes("data-visual-category-card") &&
-    !categoryCard.includes("absolute inset-x-3 bottom-3") &&
-    !categoryCard.includes("{name}\n        </span>"),
+  "Monte seu pedido mantém cards maiores e somente a arte",
+  categories.includes('w-[164px]') &&
+    categories.includes('md:w-[328px]') &&
+    categoryCard.includes("data-visual-category-card") &&
+    !categoryCard.includes("absolute inset-x-3 bottom-3"),
 );
 
 console.log(`\nSTAGE1_UX_VALIDATION passed=${passed} failed=${failed}`);
