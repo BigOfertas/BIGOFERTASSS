@@ -1,4 +1,5 @@
 # Validation-only workflow. It never deploys the storefront.
+# Chromium/Playwright checks were intentionally removed; this branch is gated by source rules, regressions, lint and production build.
 name: Validate Stage 1 UX
 
 on:
