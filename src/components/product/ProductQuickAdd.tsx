@@ -23,7 +23,6 @@ interface ProductQuickAddProps {
   productSlug?: string | null;
   productName: string;
   imageUrl: string | null;
-  commercialType?: string | null;
 }
 
 interface QuickAddData {
@@ -31,23 +30,8 @@ interface QuickAddData {
   config: ProductPurchaseConfig;
 }
 
-function resolveQuickAddVariant(
-  detail: ProductDetailData,
-  commercialType?: string | null,
-): ProductVariantWithValues | null {
-  const normalizedType = commercialType?.trim().toLowerCase() ?? "";
-  const matchingCommercialVariant = normalizedType
-    ? detail.variants.find(
-        (variant) => variant.catalog_variant_code?.trim().toLowerCase() === normalizedType,
-      )
-    : null;
-
-  return (
-    matchingCommercialVariant ??
-    detail.variants.find((variant) => variant.is_default) ??
-    detail.variants[0] ??
-    null
-  );
+function resolveQuickAddVariant(detail: ProductDetailData): ProductVariantWithValues | null {
+  return detail.variants.find((variant) => variant.is_default) ?? detail.variants[0] ?? null;
 }
 
 function variantOptions(
@@ -76,7 +60,6 @@ export function ProductQuickAdd({
   productSlug,
   productName,
   imageUrl,
-  commercialType,
 }: ProductQuickAddProps) {
   const { addToCart } = useCart();
   const [open, setOpen] = useState(false);
@@ -114,10 +97,7 @@ export function ProductQuickAdd({
     };
   }, [data, loading, open, productId, productSlug]);
 
-  const variant = useMemo(
-    () => (data ? resolveQuickAddVariant(data.detail, commercialType) : null),
-    [commercialType, data],
-  );
+  const variant = useMemo(() => (data ? resolveQuickAddVariant(data.detail) : null), [data]);
 
   const addWithSize = (size: string | null) => {
     if (!data || !variant) {
