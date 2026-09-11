@@ -110,17 +110,21 @@ async function runDesktop(browser) {
 
   const nextButton = gallery.getByRole("button", { name: "Próxima imagem" }).first();
   if ((await nextButton.count()) > 0) {
-    const beforeSrc = await mainImage.getAttribute("src");
+    const activeButton = gallery.locator("[data-active-image-id]").first();
+    const beforeId = await activeButton.getAttribute("data-active-image-id");
     await nextButton.click();
 
-    let afterSrc = beforeSrc;
+    let afterId = beforeId;
     const deadline = Date.now() + 1_500;
-    while (Date.now() < deadline && afterSrc === beforeSrc) {
+    while (Date.now() < deadline && afterId === beforeId) {
       await page.waitForTimeout(25);
-      afterSrc = await gallery.locator("img").first().getAttribute("src");
+      afterId = await gallery
+        .locator("[data-active-image-id]")
+        .first()
+        .getAttribute("data-active-image-id");
     }
 
-    assert(beforeSrc !== afterSrc, "botão troca a foto imediatamente, sem animação de deslize");
+    assert(beforeId !== afterId, "botão troca a foto imediatamente, sem animação de deslize");
   } else {
     console.log("PASS - produto de teste tem uma imagem; ausência de slide validada estruturalmente");
   }
