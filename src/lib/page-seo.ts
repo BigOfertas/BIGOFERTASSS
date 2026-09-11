@@ -24,7 +24,10 @@ export function buildPageHead({ title, description, path, noindex = false }: Pag
     meta: [
       { title: resolvedTitle },
       { name: "description", content: description },
-      { name: "robots", content: noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large" },
+      {
+        name: "robots",
+        content: noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large",
+      },
       { property: "og:title", content: resolvedTitle },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
