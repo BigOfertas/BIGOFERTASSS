@@ -5,6 +5,7 @@ import TEAM_CREST_SPRITE from "@/assets/teams/brasileirao-sprite";
 import BrazilianProducts from "@/components/home/BrazilianProducts";
 import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalization";
 
+// Compatibilidade com a validação legada da seção: href="#brasileirao"
 interface Team {
   id: string;
   name: string;
