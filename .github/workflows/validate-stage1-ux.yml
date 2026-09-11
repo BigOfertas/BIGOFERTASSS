@@ -54,7 +54,6 @@ jobs:
             src/components/home/ProductCardPlaceholder.tsx \
             src/components/product/ProductCard.tsx \
             src/components/product/ProductGallery.tsx \
-            src/components/ui/magnifier-lens.tsx \
             src/components/ui/cursor-follower.tsx \
             scripts/validate-stage1-ux.mjs \
             scripts/validate-stage1-browser.mjs \
@@ -70,7 +69,6 @@ jobs:
             src/components/home/ProductCardPlaceholder.tsx \
             src/components/product/ProductCard.tsx \
             src/components/product/ProductGallery.tsx \
-            src/components/ui/magnifier-lens.tsx \
             src/components/ui/cursor-follower.tsx \
             scripts/validate-stage1-ux.mjs \
             scripts/validate-stage1-browser.mjs \
