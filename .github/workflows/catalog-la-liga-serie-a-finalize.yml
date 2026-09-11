@@ -16,8 +16,8 @@ concurrency:
 
 jobs:
   finalize:
-    runs-on: ubuntu-slim
-    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: production
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -139,6 +139,11 @@ jobs:
             --snapshot .artifacts/la-liga-serie-a/protected-before.json \
             --root .artifacts/la-liga-serie-a/reconciled \
             --output .artifacts/la-liga-serie-a/database-verification.json
+
+      - name: Install Playwright for storefront verification
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
 
       - name: Verify products live on bigofertas.net
         run: |
