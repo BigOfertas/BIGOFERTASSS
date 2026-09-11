@@ -26,6 +26,7 @@ const r2 = read("supabase/functions/_shared/r2.ts");
 const productPresign = read("supabase/functions/r2-image-presign/index.ts");
 const sitePresign = read("supabase/functions/site-asset-presign/index.ts");
 const generator = read("scripts/generate-home-launches-static.mjs");
+const injector = read("scripts/inject-home-image-preload.mjs");
 const packageJson = read("package.json");
 
 check(
@@ -62,16 +63,26 @@ check(
 );
 
 check(
-  "Hostinger gera snapshot dos lançamentos antes do build e o HTML usa esse snapshot",
-  packageJson.includes(
-    '"build:hostinger": "node scripts/generate-home-launches-static.mjs && vite build --config vite.hostinger.config.ts"',
-  ) &&
+  "Hostinger gera snapshot antes do build e evita nova espera de dados após hidratação",
+  packageJson.includes("node scripts/generate-home-launches-static.mjs") &&
     generator.includes("storefront_launch_products") &&
     generator.includes("src\", \"generated\", \"home-launches.ts") &&
     home.includes('homeLaunchesSnapshot from "@/generated/home-launches"') &&
     home.includes("STATIC_HOME_LAUNCHES") &&
     home.includes("<BestSellers initialData={STATIC_HOME_LAUNCHES} />") &&
     bestSellers.includes("initialDataUpdatedAt: initialData ? 0 : undefined"),
+);
+
+check(
+  "primeira imagem da home entra no HTML como preload responsivo antes do JavaScript",
+  packageJson.includes("node scripts/inject-home-image-preload.mjs") &&
+    generator.includes("home-product-image-preload.json") &&
+    injector.includes('rel="preload"') &&
+    injector.includes('as="image"') &&
+    injector.includes('fetchpriority="high"') &&
+    injector.includes("imagesrcset") &&
+    injector.includes("imagesizes") &&
+    injector.includes("data-home-product-image-preload"),
 );
 
 check(
