@@ -35,19 +35,19 @@ const ShopByLeague: React.FC = () => {
     liga: activeLeague.slug,
     commercialType: "torcedor",
     pageSize: 48,
-    sort: "newest",
+    sort: "featured",
   });
   const jogadorQuery = useCatalogProducts({
     liga: activeLeague.slug,
     commercialType: "jogador",
     pageSize: 48,
-    sort: "newest",
+    sort: "featured",
   });
 
   const incomingProducts = useMemo(() => {
-    const candidates = [...(torcedorQuery.data?.items ?? []), ...(jogadorQuery.data?.items ?? [])]
-      .filter(isStandardHomeJersey)
-      .sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at));
+    const candidates = [...(torcedorQuery.data?.items ?? []), ...(jogadorQuery.data?.items ?? [])].filter(
+      isStandardHomeJersey,
+    );
 
     return selectVariedProducts(candidates, SHOWCASE_SIZE);
   }, [jogadorQuery.data?.items, torcedorQuery.data?.items]);
