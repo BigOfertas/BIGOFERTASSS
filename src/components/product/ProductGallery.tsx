@@ -64,13 +64,16 @@ export default function ProductGallery({
   const move = useCallback(
     (direction: -1 | 1) => {
       if (usableImages.length < 2) return;
-      const nextIndex = (activeIndex + direction + usableImages.length) % usableImages.length;
-      const nextImage = usableImages[nextIndex];
-      if (!nextImage) return;
       setZoomed(false);
-      setActiveImageId(nextImage.id);
+      setActiveImageId((currentId) => {
+        const currentIndex = usableImages.findIndex((image) => image.id === currentId);
+        const normalizedIndex = currentIndex >= 0 ? currentIndex : 0;
+        const nextIndex =
+          (normalizedIndex + direction + usableImages.length) % usableImages.length;
+        return usableImages[nextIndex]?.id ?? currentId;
+      });
     },
-    [activeIndex, usableImages],
+    [usableImages],
   );
 
   useEffect(() => {
@@ -120,6 +123,7 @@ export default function ProductGallery({
         {activeImage ? (
           <button
             type="button"
+            data-active-image-id={activeImage.id}
             onClick={() => setViewerOpen(true)}
             onPointerDown={handlePointerDown}
             onPointerUp={handlePointerUp}
@@ -131,15 +135,21 @@ export default function ProductGallery({
           >
             <img
               key={activeImage.id}
-              src={activeImage.url}
+              src={activeImage.cardUrl}
               alt={activeImage.alt}
-              width={1200}
-              height={1500}
+              width={768}
+              height={960}
               sizes="(max-width: 1023px) 92vw, 600px"
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              onError={() => markFailed(activeImage.id)}
+              onError={(event) => {
+                if (event.currentTarget.src !== activeImage.url) {
+                  event.currentTarget.src = activeImage.url;
+                  return;
+                }
+                markFailed(activeImage.id);
+              }}
               className="h-full w-full object-contain"
             />
           </button>
