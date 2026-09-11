@@ -68,9 +68,10 @@ const BrazilianTeams: React.FC = () => {
     <section className="overflow-hidden bg-transparent py-8 sm:py-10 lg:py-12">
       {desktopBanner || mobileBanner ? (
         <div className="mx-auto mb-8 max-w-[1920px]">
-          <a
-            href="#brasileirao"
-            aria-label="Ir para produtos do Brasileirão"
+          <Link
+            to="/products"
+            search={{ campeonato: "brasileirao", sort: "featured" }}
+            aria-label="Ver todos os produtos do futebol brasileiro"
             className="block overflow-hidden bg-gray-100"
           >
             <picture>
@@ -96,7 +97,7 @@ const BrazilianTeams: React.FC = () => {
                 />
               ) : null}
             </picture>
-          </a>
+          </Link>
         </div>
       ) : null}
 
