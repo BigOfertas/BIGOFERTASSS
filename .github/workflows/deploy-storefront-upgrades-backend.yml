@@ -13,6 +13,7 @@ on:
       - "scripts/deploy-kids-purchase-sizes.mjs"
       - "scripts/deploy-catalog-filter-key-fix.mjs"
       - "scripts/deploy-owner-order-history-cutoff.mjs"
+      - "scripts/deploy-second-owner.mjs"
       - "scripts/audit-stage2-patches.mjs"
       - "supabase/migrations/20260904213000_storefront_personalization.sql"
       - "supabase/migrations/20260904213500_catalog_commercial_type.sql"
@@ -35,6 +36,7 @@ on:
       - "supabase/migrations/20260911061000_stage2_patch_reconciliation.sql"
       - "supabase/migrations/20260911114500_final_storefront_refinements.sql"
       - "supabase/migrations/20260911172000_fix_affiliate_signup_referral_ambiguity.sql"
+      - "supabase/migrations/20260911183000_add_second_owner.sql"
   workflow_dispatch:
 
 permissions:
@@ -81,3 +83,6 @@ jobs:
 
       - name: Hide existing owner order history
         run: node scripts/deploy-owner-order-history-cutoff.mjs
+
+      - name: Ensure second owner is live
+        run: node scripts/deploy-second-owner.mjs
