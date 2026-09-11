@@ -1,0 +1,107 @@
+name: Temporary Image Performance Validate
+
+on:
+  push:
+    branches:
+      - image-loading-performance-20260911
+    paths:
+      - ".github/workflows/temporary-image-performance-validate.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout performance branch
+        uses: actions/checkout@v7
+        with:
+          ref: image-loading-performance-20260911
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Format touched files
+        run: |
+          bunx prettier --write \
+            src/lib/product-images.ts \
+            src/lib/catalog.ts \
+            src/lib/home-launches.ts \
+            src/components/product/ProductCard.tsx \
+            src/components/product/CatalogProductGrid.tsx \
+            src/components/product/ProductGallery.tsx \
+            src/components/home/BestSellers.tsx \
+            src/routes/index.tsx \
+            src/routes/__root.tsx \
+            supabase/functions/_shared/r2.ts \
+            supabase/functions/r2-image-presign/index.ts \
+            supabase/functions/site-asset-presign/index.ts \
+            scripts/validate-image-loading-performance.mjs
+
+      - name: Validate image performance rules
+        run: node scripts/validate-image-loading-performance.mjs
+
+      - name: Validate prior storefront regressions
+        run: node scripts/validate-stage1-ux.mjs && node scripts/validate-stage2-commerce.mjs
+
+      - name: Lint storefront
+        run: bun run lint
+
+      - name: Validate application build
+        run: bun run build
+
+      - name: Validate Hostinger prerender build
+        run: bun run build:hostinger
+
+      - name: Verify homepage products are present before hydration
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUTPUT=""
+          for candidate in .output/public dist/client dist/public dist; do
+            if [ -f "$candidate/index.html" ]; then
+              OUTPUT="$candidate"
+              break
+            fi
+          done
+          if [ -z "$OUTPUT" ]; then
+            echo "Static index.html not found" >&2
+            exit 1
+          fi
+          grep -F -q 'data-product-card' "$OUTPUT/index.html"
+          grep -E -q 'srcset=|srcSet=' "$OUTPUT/index.html"
+          grep -F -q '=w320-h320-s-no-gm' "$OUTPUT/index.html"
+          echo "HOMEPAGE_PRODUCT_IMAGES_PRERENDERED"
+
+      - name: Commit formatter output
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add \
+            src/lib/product-images.ts \
+            src/lib/catalog.ts \
+            src/lib/home-launches.ts \
+            src/components/product/ProductCard.tsx \
+            src/components/product/CatalogProductGrid.tsx \
+            src/components/product/ProductGallery.tsx \
+            src/components/home/BestSellers.tsx \
+            src/routes/index.tsx \
+            src/routes/__root.tsx \
+            supabase/functions/_shared/r2.ts \
+            supabase/functions/r2-image-presign/index.ts \
+            supabase/functions/site-asset-presign/index.ts \
+            scripts/validate-image-loading-performance.mjs
+          if git diff --cached --quiet; then
+            echo "NO_FORMAT_CHANGES"
+            exit 0
+          fi
+          git commit -m "style: format image performance changes"
+          git push origin HEAD:image-loading-performance-20260911
