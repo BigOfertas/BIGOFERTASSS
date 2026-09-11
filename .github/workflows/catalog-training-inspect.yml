@@ -1,0 +1,55 @@
+name: Inspect Training Kit Source
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/catalog-training-inspect.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-training-source-inspection
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Validate collector
+        run: node --check scripts/google-photos-collector.mjs
+      - name: Install Playwright
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+      - name: Collect training kit album read-only
+        run: |
+          node scripts/google-photos-collector.mjs \
+            --url "https://photos.google.com/share/AF1QipOgOTgEvIcox403uBvAqPHDKPT7a4xmHo1LbRMV1-8Y1_tyi4K3BXtqMy7rs9sC2A?key=SmZabDhRZ0lxV2czNjg2c3plMENkdDFhdlJTTkd3" \
+            --label "CONJUNTOS DE TREINO / KIT" \
+            --expected-min-images 1 \
+            --max-scrolls 500 \
+            --out .artifacts/training-source
+      - name: Print exact source inventory
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const d=JSON.parse(fs.readFileSync('.artifacts/training-source/collector.json','utf8'));
+          console.log(`TRAINING_SOURCE_INVENTORY groups=${d.groups?.length??0} images=${(d.groups||[]).reduce((n,g)=>n+(g.images?.length||0),0)}`);
+          for (const [i,g] of (d.groups||[]).entries()) console.log(`TRAINING_GROUP index=${i+1} images=${g.images?.length||0} title=${JSON.stringify(g.title)}`);
+          NODE
+      - name: Upload source inspection evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-source-inspection-${{ github.run_id }}
+          path: .artifacts/training-source/
+          if-no-files-found: error
+          retention-days: 30
