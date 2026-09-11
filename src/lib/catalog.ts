@@ -7,6 +7,7 @@ export const CATALOG_DEFAULT_PAGE_SIZE = 24;
 export const CATALOG_PAGE_SIZES = [12, 24, 48] as const;
 
 export const catalogSortSchema = z.enum([
+  "featured",
   "newest",
   "price_asc",
   "price_desc",
@@ -168,7 +169,7 @@ export function normalizeCatalogQuery(
 
   return {
     ...query,
-    sort: query.sort ?? "newest",
+    sort: query.sort ?? "featured",
     page: Math.max(1, query.page ?? 1),
     pageSize: pageSize ?? CATALOG_DEFAULT_PAGE_SIZE,
   };

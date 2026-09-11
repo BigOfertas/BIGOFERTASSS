@@ -160,10 +160,11 @@ function ProductsPage() {
           <label className="hidden items-center gap-2 text-xs font-bold uppercase text-gray-500 md:flex">
             Ordenar
             <select
-              value={search.sort ?? "newest"}
+              value={search.sort ?? "featured"}
               onChange={(event) => updateSearch({ sort: event.target.value as CatalogSort })}
               className="h-10 rounded-md border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-900"
             >
+              <option value="featured">Destaques</option>
               <option value="newest">Mais recentes</option>
               <option value="price_asc">Menor preço</option>
               <option value="price_desc">Maior preço</option>
@@ -216,10 +217,11 @@ function ProductsPage() {
           <label className="flex h-11 items-center rounded-md border border-gray-200 bg-white px-3">
             <span className="sr-only">Ordenar</span>
             <select
-              value={search.sort ?? "newest"}
+              value={search.sort ?? "featured"}
               onChange={(event) => updateSearch({ sort: event.target.value as CatalogSort })}
               className="h-full w-full bg-transparent text-xs font-bold text-gray-800 outline-none"
             >
+              <option value="featured">Destaques</option>
               <option value="newest">Mais recentes</option>
               <option value="price_asc">Menor preço</option>
               <option value="price_desc">Maior preço</option>

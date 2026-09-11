@@ -69,6 +69,10 @@ const migrations = [
     "stage2_purchase_customization_policy_20260911",
     "supabase/migrations/20260911051000_stage2_purchase_customization_policy.sql",
   ],
+  [
+    "stage2_storefront_priority_20260911",
+    "supabase/migrations/20260911054000_stage2_storefront_priority.sql",
+  ],
 ];
 
 function migrationSql(file) {
@@ -287,7 +291,12 @@ select
     from public.product_purchase_settings s
     where s.commercial_type <> 'calcao'
       and (not s.personalization_enabled or not s.phrase_enabled)
-  ) as non_shorts_personalization_policy;
+  ) as non_shorts_personalization_policy,
+  exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'storefront_product_priority'
+  ) as stage2_storefront_priority_rpc;
 `);
 
 console.log("STOREFRONT_UPGRADE_BACKEND_VERIFICATION");
@@ -326,6 +335,7 @@ const required = [
   "stage2_purchase_policy_trigger",
   "shorts_purchase_policy",
   "non_shorts_personalization_policy",
+  "stage2_storefront_priority_rpc",
 ];
 
 if (!required.every((key) => verification?.[key] === true)) {
