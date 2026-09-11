@@ -69,7 +69,7 @@ export function ProductQuickAdd({
   const [lastAddedSize, setLastAddedSize] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open || data || loading) return;
+    if (!open || data) return;
 
     let active = true;
     setLoading(true);
@@ -95,7 +95,7 @@ export function ProductQuickAdd({
     return () => {
       active = false;
     };
-  }, [data, loading, open, productId, productSlug]);
+  }, [data, open, productId, productSlug]);
 
   const variant = useMemo(() => (data ? resolveQuickAddVariant(data.detail) : null), [data]);
 
