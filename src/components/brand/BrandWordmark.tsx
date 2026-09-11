@@ -1,16 +1,17 @@
 import { BRAND } from "@/config/brand";
+import "@/brand.css";
 
-const DROPBOX_LOGO_SRC = "/assets/branding/dropbox-logo.png";
+const DROPBOX_WORDMARK_SRC = "/assets/branding/dropbox-wordmark.png";
 
 export function BrandWordmark({ className = "" }: { className?: string }) {
   return (
     <img
-      src={DROPBOX_LOGO_SRC}
+      src={DROPBOX_WORDMARK_SRC}
       alt={BRAND.officialName}
-      width={190}
-      height={64}
+      width={1100}
+      height={190}
       decoding="async"
-      className={`mx-auto block h-10 w-auto max-w-full object-contain ${className}`}
+      className={`dropbox-wordmark ${className}`}
     />
   );
 }
