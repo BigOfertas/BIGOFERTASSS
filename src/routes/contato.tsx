@@ -9,7 +9,8 @@ export const Route = createFileRoute("/contato")({
   head: () =>
     buildPageHead({
       title: "Contato",
-      description: "Fale com a DropBox pelos canais oficiais para dúvidas sobre produtos, pedidos, entrega e atendimento pós-compra.",
+      description:
+        "Fale com a DropBox pelos canais oficiais para dúvidas sobre produtos, pedidos, entrega e atendimento pós-compra.",
       path: "/contato",
     }),
   component: ContactPage,
