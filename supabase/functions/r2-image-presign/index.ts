@@ -126,18 +126,29 @@ Deno.serve(async (request) => {
         createImageUploadUrl(objectKeys.thumb, contentType),
       ]);
 
-      const requiredHeaders = { "Content-Type": contentType };
       return jsonResponse(request, {
         imageId: image.id,
         objectKey: objectKeys.main,
         uploadUrl: main.uploadUrl,
         expiresIn: main.expiresIn,
         method: "PUT",
-        requiredHeaders,
+        requiredHeaders: main.requiredHeaders,
         derivativeUploads: {
-          main: { objectKey: objectKeys.main, uploadUrl: main.uploadUrl, requiredHeaders },
-          card: { objectKey: objectKeys.card, uploadUrl: card.uploadUrl, requiredHeaders },
-          thumb: { objectKey: objectKeys.thumb, uploadUrl: thumb.uploadUrl, requiredHeaders },
+          main: {
+            objectKey: objectKeys.main,
+            uploadUrl: main.uploadUrl,
+            requiredHeaders: main.requiredHeaders,
+          },
+          card: {
+            objectKey: objectKeys.card,
+            uploadUrl: card.uploadUrl,
+            requiredHeaders: card.requiredHeaders,
+          },
+          thumb: {
+            objectKey: objectKeys.thumb,
+            uploadUrl: thumb.uploadUrl,
+            requiredHeaders: thumb.requiredHeaders,
+          },
         },
       });
     } catch (signError) {
