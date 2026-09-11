@@ -59,7 +59,11 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-5 py-10 md:px-8 md:py-12 lg:px-10 lg:py-14">
         <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-4 lg:gap-9">
           <div>
-            <Link to="/" className="inline-flex w-fit" aria-label={`${BRAND.officialName} - Início`}>
+            <Link
+              to="/"
+              className="inline-flex w-fit"
+              aria-label={`${BRAND.officialName} - Início`}
+            >
               <img
                 src="/assets/branding/dropbox-wordmark-footer.png"
                 alt={BRAND.officialName}
