@@ -32,9 +32,10 @@ const FOOTER_ROUTES = new Set([
 ]);
 
 const INITIAL_REFRESH_MIN_MS = 2300;
-const INITIAL_QUERY_WAIT_MS = 2600;
-const INITIAL_PLACEHOLDER_WAIT_MS = 2200;
-const INITIAL_IMAGE_WAIT_MS = 1800;
+const INITIAL_READINESS_MAX_MS = 3200;
+const INITIAL_QUERY_WAIT_MS = 2200;
+const INITIAL_PLACEHOLDER_WAIT_MS = 2400;
+const INITIAL_IMAGE_WAIT_MS = 550;
 
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => {
@@ -200,12 +201,18 @@ function RootComponent() {
     document.documentElement.dataset.initialRefreshLoading = "true";
 
     const finishInitialLoading = async () => {
-      await sleep(150);
-      await Promise.all([
+      await sleep(100);
+
+      const readiness = Promise.allSettled([
         waitForInitialQueries(queryClient, INITIAL_QUERY_WAIT_MS),
-        document.fonts?.ready ?? Promise.resolve(),
+        waitForStorefrontPlaceholders(INITIAL_PLACEHOLDER_WAIT_MS),
+        Promise.race([document.fonts?.ready ?? Promise.resolve(), sleep(1600)]),
       ]);
-      await waitForStorefrontPlaceholders(INITIAL_PLACEHOLDER_WAIT_MS);
+      const readinessBudget = Math.max(
+        0,
+        INITIAL_READINESS_MAX_MS - (performance.now() - startedAt) - INITIAL_IMAGE_WAIT_MS,
+      );
+      await Promise.race([readiness, sleep(readinessBudget)]);
       await preloadRenderedImages(INITIAL_IMAGE_WAIT_MS);
 
       const remaining = INITIAL_REFRESH_MIN_MS - (performance.now() - startedAt);
@@ -233,10 +240,10 @@ function RootComponent() {
           <div className="relative min-h-screen overflow-x-clip">
             <div
               aria-hidden={initialRefreshLoading ? true : undefined}
-              className={`flex min-h-screen flex-col transition-[filter,transform] duration-200 ease-out ${
+              className={`flex min-h-screen flex-col transition-[filter] duration-200 ease-out ${
                 initialRefreshLoading
-                  ? "pointer-events-none select-none scale-[1.01] blur-[22px]"
-                  : "scale-100 blur-0"
+                  ? "pointer-events-none select-none blur-[22px]"
+                  : "blur-0"
               }`}
             >
               <div className="min-h-0 flex-1">
