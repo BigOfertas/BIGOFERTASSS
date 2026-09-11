@@ -25,6 +25,8 @@ const root = read("src/routes/__root.tsx");
 const r2 = read("supabase/functions/_shared/r2.ts");
 const productPresign = read("supabase/functions/r2-image-presign/index.ts");
 const sitePresign = read("supabase/functions/site-asset-presign/index.ts");
+const generator = read("scripts/generate-home-launches-static.mjs");
+const packageJson = read("package.json");
 
 check(
   "Google Photos possui srcset responsivo 320/480/640/768",
@@ -60,11 +62,16 @@ check(
 );
 
 check(
-  "home busca lançamentos no loader e entrega initialData ao React Query",
-  home.includes("loader: () => fetchHomeLaunchProducts()") &&
-    home.includes("const initialLaunches = Route.useLoaderData()") &&
-    home.includes("<BestSellers initialData={initialLaunches} />") &&
-    bestSellers.includes("initialData,"),
+  "Hostinger gera snapshot dos lançamentos antes do build e o HTML usa esse snapshot",
+  packageJson.includes(
+    '"build:hostinger": "node scripts/generate-home-launches-static.mjs && vite build --config vite.hostinger.config.ts"',
+  ) &&
+    generator.includes("storefront_launch_products") &&
+    generator.includes("src\", \"generated\", \"home-launches.ts") &&
+    home.includes('homeLaunchesSnapshot from "@/generated/home-launches"') &&
+    home.includes("STATIC_HOME_LAUNCHES") &&
+    home.includes("<BestSellers initialData={STATIC_HOME_LAUNCHES} />") &&
+    bestSellers.includes("initialDataUpdatedAt: initialData ? 0 : undefined"),
 );
 
 check(
