@@ -2,20 +2,12 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Eye, EyeOff, KeyRound, Loader2, MailCheck, ShieldCheck } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
-import { BrandWordmark } from "@/components/brand/BrandWordmark";
+import { AuthSplitShell } from "@/components/ui/auth-split-shell";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
-
-function Brand() {
-  return (
-    <Link to="/" className="brand-lockup px-5 py-2 text-2xl">
-      <BrandWordmark />
-    </Link>
-  );
-}
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -107,9 +99,9 @@ function LoginPage() {
 
   if (loading) {
     return (
-      <main className="app-shell flex min-h-screen items-center justify-center px-4">
-        <div className="glass-card rounded-2xl px-6 py-5 text-center text-muted-foreground">
-          <Loader2 className="mx-auto h-6 w-6 animate-spin" aria-hidden="true" />
+      <main className="auth-split-page flex min-h-[100dvh] items-center justify-center px-4">
+        <div className="auth-form-card rounded-2xl px-6 py-5 text-center text-gray-500">
+          <Loader2 className="mx-auto h-6 w-6 animate-spin text-red-600" aria-hidden="true" />
           <p className="mt-3 text-sm">Carregando sua conta...</p>
         </div>
       </main>
@@ -118,65 +110,40 @@ function LoginPage() {
 
   if (user) {
     return (
-      <main className="app-shell hidden min-h-screen items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm">
-          <div className="mb-8 text-center">
-            <Brand />
-            <h1 className="display-title-sm mt-6">Sua conta</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Você já está conectado.</p>
-          </div>
+      <AuthSplitShell
+        mode="signin"
+        eyebrow="Área do cliente"
+        title="Sua conta já está conectada"
+        description="Estamos direcionando você para sua área da DropBox."
+      >
+        <div className="auth-form-card rounded-[1.6rem] p-6">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-gray-400">E-mail conectado</p>
+          <p className="mt-2 break-all text-sm font-bold text-gray-900">{user.email ?? "Conta autenticada"}</p>
 
-          <div className="glass-panel space-y-4 rounded-[1.5rem] p-6">
-            <div className="glass-card rounded-xl px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                E-mail conectado
-              </p>
-              <p className="mt-1 break-all text-sm font-medium text-foreground">
-                {user.email ?? "Conta autenticada"}
-              </p>
-            </div>
-
+          <div className="mt-5 space-y-2.5">
             <Link
               to={isOwner ? "/admin" : "/conta"}
-              className="premium-action inline-flex h-11 w-full items-center justify-center rounded-xl px-4 text-sm font-bold transition hover:brightness-[0.96] active:scale-[0.99]"
+              className="premium-action flex h-12 w-full items-center justify-center rounded-2xl px-4 text-sm font-black"
             >
               {isOwner ? "Abrir painel administrativo" : "Abrir minha conta"}
             </Link>
-
-            <Link
-              to="/"
-              className="glass-card inline-flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-semibold text-foreground"
-            >
-              Voltar à loja
-            </Link>
-
             <button
               type="button"
               onClick={() => void handleSignOut()}
               disabled={signingOut}
-              className="glass-card inline-flex h-10 w-full items-center justify-center rounded-xl px-4 text-sm font-semibold text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-11 w-full rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
             >
-              {signingOut ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saindo...
-                </>
-              ) : (
-                "Sair para entrar com outra conta"
-              )}
+              {signingOut ? "Saindo..." : "Sair e entrar com outra conta"}
             </button>
-
-            {errorMessage ? (
-              <p
-                role="alert"
-                className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-              >
-                {errorMessage}
-              </p>
-            ) : null}
           </div>
+
+          {errorMessage ? (
+            <p role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {errorMessage}
+            </p>
+          ) : null}
         </div>
-      </main>
+      </AuthSplitShell>
     );
   }
 
@@ -189,116 +156,113 @@ function LoginPage() {
       : null;
 
     return (
-      <main className="app-shell flex min-h-screen items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm">
-          <div className="mb-8 text-center">
-            <Brand />
+      <AuthSplitShell
+        mode="signin"
+        eyebrow="Proteção da conta"
+        title="Confirme que é você"
+        description="Sua senha foi validada. Agora conclua a verificação em duas etapas."
+        footer={
+          <button
+            type="button"
+            onClick={resetTwoFactorStep}
+            className="inline-flex items-center gap-2 text-sm font-bold text-gray-500 transition hover:text-red-600"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar e usar outra conta
+          </button>
+        }
+      >
+        <form
+          onSubmit={(event) => void handleVerifySecurityCode(event)}
+          className="auth-form-card rounded-[1.7rem] p-5 sm:p-6"
+        >
+          <div className="mb-5 flex items-start gap-3 rounded-2xl bg-emerald-50 px-4 py-3 text-emerald-800">
+            <ShieldCheck className="mt-0.5 h-5 w-5 flex-none" aria-hidden="true" />
+            <div>
+              <p className="text-sm font-black">Código enviado</p>
+              <p className="mt-1 text-xs leading-5 text-emerald-700">
+                Enviamos o código de segurança para <strong>{maskedEmail}</strong>.
+              </p>
+            </div>
           </div>
 
-          <form
-            onSubmit={(event) => void handleVerifySecurityCode(event)}
-            className="glass-panel space-y-5 rounded-[1.5rem] p-6"
+          <label htmlFor="securityCode" className="block text-sm font-bold text-gray-800">
+            Código de 6 dígitos
+            <div className="auth-input-wrap relative mt-1.5 rounded-2xl">
+              <MailCheck className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                id="securityCode"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                autoFocus
+                maxLength={6}
+                value={securityCode}
+                onChange={(event) => {
+                  setSecurityCode(event.target.value.replace(/\D/g, "").slice(0, 6));
+                  if (errorMessage) setErrorMessage("");
+                }}
+                className="h-12 w-full rounded-2xl bg-transparent pl-11 pr-4 text-center text-xl font-black tracking-[0.3em] outline-none"
+                placeholder="000000"
+              />
+            </div>
+          </label>
+
+          <p className="mt-2 text-xs leading-5 text-gray-400">
+            {expiresLabel ? `Este código expira por volta de ${expiresLabel}.` : "O código expira em 10 minutos."}
+          </p>
+
+          {errorMessage ? (
+            <p role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {errorMessage}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={verifyingCode || securityCode.length !== 6}
+            className="premium-action mt-5 inline-flex h-12 w-full items-center justify-center rounded-2xl px-4 text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <div className="text-center">
-              <span className="glass-card mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-emerald-700">
-                <ShieldCheck className="h-7 w-7" aria-hidden="true" />
-              </span>
-              <h1 className="display-title-sm mt-4">Verificação em duas etapas</h1>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Sua senha foi confirmada. Enviamos um código de segurança para{" "}
-                <strong className="text-foreground">{maskedEmail}</strong>.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="securityCode" className="text-sm font-semibold text-foreground">
-                Código de 6 dígitos
-              </label>
-              <div className="relative">
-                <MailCheck className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
-                <input
-                  id="securityCode"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  autoFocus
-                  maxLength={6}
-                  value={securityCode}
-                  onChange={(event) => {
-                    setSecurityCode(event.target.value.replace(/\D/g, "").slice(0, 6));
-                    if (errorMessage) setErrorMessage("");
-                  }}
-                  className="glass-input h-12 w-full rounded-xl pl-10 pr-3 text-center text-xl font-black tracking-[0.32em] text-foreground outline-none focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
-                  placeholder="000000"
-                />
-              </div>
-              <p className="text-xs leading-5 text-muted-foreground">
-                {expiresLabel
-                  ? `Este código expira por volta de ${expiresLabel}.`
-                  : "O código expira em 10 minutos."}
-              </p>
-            </div>
-
-            {errorMessage ? (
-              <p
-                role="alert"
-                className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-              >
-                {errorMessage}
-              </p>
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={verifyingCode || securityCode.length !== 6}
-              className="premium-action inline-flex h-11 w-full items-center justify-center rounded-xl px-4 text-sm font-bold transition hover:brightness-[0.96] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {verifyingCode ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Confirmando...
-                </>
-              ) : (
-                <>
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  Confirmar e entrar
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={resetTwoFactorStep}
-              className="inline-flex h-10 w-full items-center justify-center text-sm font-semibold text-gray-500 transition hover:text-gray-900"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar e usar outra conta
-            </button>
-          </form>
-        </div>
-      </main>
+            {verifyingCode ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Confirmando...
+              </>
+            ) : (
+              <>
+                <KeyRound className="mr-2 h-4 w-4" />
+                Confirmar e entrar
+              </>
+            )}
+          </button>
+        </form>
+      </AuthSplitShell>
     );
   }
 
   return (
-    <main className="app-shell flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <Brand />
-          <p className="display-kicker mt-6">Área do cliente</p>
-          <h1 className="display-title-sm mt-2">Entrar</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Acesse sua conta para continuar.</p>
-        </div>
-
-        <form
-          onSubmit={(event) => void handleSubmit(event)}
-          aria-busy={submitting}
-          className="glass-panel space-y-4 rounded-[1.5rem] p-6"
-        >
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-semibold text-foreground">
-              E-mail
-            </label>
+    <AuthSplitShell
+      mode="signin"
+      eyebrow="Área do cliente"
+      title="Entre na sua conta"
+      description="Use o e-mail e a senha cadastrados na DropBox para acompanhar seus pedidos e gerenciar sua conta."
+      footer={
+        <p className="text-sm text-gray-500">
+          Ainda não tem uma conta?{" "}
+          <Link to="/cadastro" className="font-black text-red-600 transition hover:text-red-700 hover:underline">
+            Criar conta
+          </Link>
+        </p>
+      }
+    >
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        aria-busy={submitting}
+        className="auth-form-card space-y-4 rounded-[1.7rem] p-5 sm:p-6"
+      >
+        <label htmlFor="email" className="block text-sm font-bold text-gray-800">
+          E-mail
+          <div className="auth-input-wrap mt-1.5 rounded-2xl">
             <input
               id="email"
               type="email"
@@ -310,97 +274,73 @@ function LoginPage() {
                 setEmail(event.target.value);
                 if (errorMessage) setErrorMessage("");
               }}
-              className="glass-input flex h-11 w-full rounded-xl px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
+              className="h-12 w-full rounded-2xl bg-transparent px-4 text-sm outline-none placeholder:text-gray-400"
               placeholder="seuemail@exemplo.com"
             />
           </div>
+        </label>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <label htmlFor="password" className="text-sm font-semibold text-foreground">
-                Senha
-              </label>
-              <Link
-                to="/esqueci-senha"
-                className="text-xs font-semibold text-red-600 underline-offset-4 transition hover:text-red-700 hover:underline"
-              >
-                Esqueci minha senha
-              </Link>
-            </div>
-
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(event) => {
-                  setPassword(event.target.value);
-                  if (errorMessage) setErrorMessage("");
-                }}
-                className="glass-input flex h-11 w-full rounded-xl px-3 py-2 pr-11 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-red-600 focus:ring-2 focus:ring-red-600/10"
-                placeholder="Sua senha"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((visible) => !visible)}
-                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                aria-pressed={showPassword}
-                className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground transition hover:text-foreground"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4.5 w-4.5" aria-hidden="true" />
-                ) : (
-                  <Eye className="h-4.5 w-4.5" aria-hidden="true" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {errorMessage ? (
-            <p
-              role="alert"
-              className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            >
-              {errorMessage}
-            </p>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="premium-action inline-flex h-11 w-full items-center justify-center rounded-xl px-4 text-sm font-bold transition hover:brightness-[0.96] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Entrando...
-              </>
-            ) : (
-              "Entrar"
-            )}
-          </button>
-
-          <p className="text-center text-xs leading-5 text-muted-foreground">
-            O acesso só é liberado depois da confirmação do e-mail.
-          </p>
-
-          <p className="text-center text-sm text-muted-foreground">
-            Ainda não tem uma conta?{" "}
+        <label htmlFor="password" className="block text-sm font-bold text-gray-800">
+          <span className="flex items-center justify-between gap-3">
+            <span>Senha</span>
             <Link
-              to="/cadastro"
-              className="font-semibold text-red-600 underline-offset-4 hover:underline"
+              to="/esqueci-senha"
+              className="text-xs font-bold text-red-600 transition hover:text-red-700 hover:underline"
             >
-              Criar conta
+              Esqueci minha senha
             </Link>
-          </p>
-        </form>
+          </span>
+          <div className="auth-input-wrap relative mt-1.5 rounded-2xl">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                if (errorMessage) setErrorMessage("");
+              }}
+              className="h-12 w-full rounded-2xl bg-transparent px-4 pr-12 text-sm outline-none placeholder:text-gray-400"
+              placeholder="Sua senha"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              aria-pressed={showPassword}
+              className="absolute right-0 top-0 flex h-12 w-12 items-center justify-center text-gray-400 transition hover:text-gray-900"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+        </label>
 
-        <p className="mt-4 text-center text-xs leading-relaxed text-muted-foreground">
-          Você pode voltar à loja a qualquer momento sem perder o carrinho salvo neste navegador.
+        {errorMessage ? (
+          <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {errorMessage}
+          </p>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="premium-action inline-flex h-12 w-full items-center justify-center rounded-2xl px-4 text-sm font-black transition hover:brightness-[0.96] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Entrando...
+            </>
+          ) : (
+            "Entrar"
+          )}
+        </button>
+
+        <p className="text-center text-xs leading-5 text-gray-400">
+          O acesso é liberado após a confirmação do e-mail cadastrado.
         </p>
-      </div>
-    </main>
+      </form>
+    </AuthSplitShell>
   );
 }
