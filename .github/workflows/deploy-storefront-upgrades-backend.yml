@@ -26,6 +26,7 @@ on:
       - "supabase/migrations/20260909234000_product_purchase_sizes_override.sql"
       - "supabase/migrations/20260910043000_catalog_filter_key_canonical.sql"
       - "supabase/migrations/20260910143538_hide_existing_owner_order_history.sql"
+      - "supabase/migrations/20260911051000_stage2_purchase_customization_policy.sql"
   workflow_dispatch:
 
 permissions:
