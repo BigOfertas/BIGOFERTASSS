@@ -64,20 +64,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          OUTPUT=""
-          for candidate in .output/public dist/client dist/public dist; do
-            if [ -f "$candidate/index.html" ]; then
-              OUTPUT="$candidate"
-              break
-            fi
-          done
-          if [ -z "$OUTPUT" ]; then
-            echo "Static index.html not found" >&2
-            exit 1
-          fi
+          OUTPUT="dist/client"
+          test -f "$OUTPUT/index.html"
           grep -F -q 'data-product-card' "$OUTPUT/index.html"
-          grep -E -q 'srcset=|srcSet=' "$OUTPUT/index.html"
+          grep -F -q 'srcset=' "$OUTPUT/index.html"
           grep -F -q '=w320-h320-s-no-gm' "$OUTPUT/index.html"
+          grep -F -q '=w480-h480-s-no-gm' "$OUTPUT/index.html"
+          grep -F -q '=w640-h640-s-no-gm' "$OUTPUT/index.html"
+          grep -F -q '=w768-h768-s-no-gm' "$OUTPUT/index.html"
           echo "HOMEPAGE_PRODUCT_IMAGES_PRERENDERED"
 
       - name: Commit formatter output
