@@ -64,16 +64,17 @@ check(
   ].every((route) => !footerRoutes.includes(route)),
 );
 check(
-  "F5 não impõe atraso artificial nem pré-carregamento global bloqueante",
-  !root.includes("INITIAL_REFRESH_MIN_MS") &&
-    !root.includes("initialRefreshLoading") &&
-    !root.includes("preloadRenderedImages") &&
-    !root.includes("data-initial-refresh-loader"),
+  "F5 cobre a primeira pintura por 2,5s sem pré-carregamento global bloqueante",
+  root.includes("const INITIAL_BOOT_SPLASH_MS = 2500") &&
+    root.includes("initialBootSplashVisible") &&
+    root.includes("data-initial-boot-splash") &&
+    root.includes("<InitialBootSplash />") &&
+    !root.includes("preloadRenderedImages"),
 );
 check(
   "cursor integrado monta diretamente com a aplicação",
   root.includes("<CursorFollower />") &&
-    !root.includes("!initialRefreshLoading ? <CursorFollower /> : null"),
+    !root.includes("!initialBootSplashVisible ? <CursorFollower /> : null"),
 );
 const routeFooterUsers = routeFiles("src/routes").filter(
   (file) => file !== "src/routes/__root.tsx" && /<Footer\b|import\s+Footer\b/.test(read(file)),
@@ -109,11 +110,16 @@ check(
     !/useCatalogProducts\(\{\s*liga: displayLeague\.slug,\s*pageSize:/s.test(leagues),
 );
 check(
-  "troca de liga preserva os cards até a nova liga estar pronta",
-  leagues.includes("displayProducts") &&
-    leagues.includes("isPlaceholderData") &&
-    leagues.includes("setDisplayLeagueId(activeLeague.id)") &&
-    leagues.includes("data-league-products"),
+  "troca de liga pré-carrega todas as ligas e troca direto do cache",
+  leagues.includes('from "@tanstack/react-query"') &&
+    leagues.includes("useQueries") &&
+    leagues.includes("LEAGUES.flatMap") &&
+    leagues.includes("catalogProductsQueryOptions") &&
+    leagues.includes("activeLeagueIndex * 2") &&
+    leagues.includes("data-league-products={activeLeague.id}") &&
+    !leagues.includes("setDisplayLeagueId") &&
+    !leagues.includes("setDisplayProducts") &&
+    !leagues.includes("isPlaceholderData"),
 );
 check(
   "regra positiva da home aceita somente Camisa I II III nos tipos permitidos",
