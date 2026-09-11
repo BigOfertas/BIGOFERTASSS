@@ -267,7 +267,9 @@ export function ProductQuickAdd({
                 </div>
               ) : detailError && !detail ? (
                 <div className="mt-3 space-y-2">
-                  <p className="text-[11px] font-semibold leading-4 text-amber-700">{detailError}</p>
+                  <p className="text-[11px] font-semibold leading-4 text-amber-700">
+                    {detailError}
+                  </p>
                   <Link
                     to="/product/$id"
                     params={productParams}
