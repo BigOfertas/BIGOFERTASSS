@@ -10,15 +10,18 @@ import Header from "@/components/layout/Header";
 import PromoBanner from "@/components/layout/PromoBanner";
 import { BRAND } from "@/config/brand";
 import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalization";
+import { fetchHomeLaunchProducts } from "@/lib/home-launches";
 
 const TOP_BANNER_DESKTOP = "/assets/promos/top-banner-desktop.webp";
 const TOP_BANNER_MOBILE = "/assets/promos/top-banner-mobile.webp";
 
 export const Route = createFileRoute("/")({
+  loader: () => fetchHomeLaunchProducts(),
   component: Index,
 });
 
 function Index() {
+  const initialLaunches = Route.useLoaderData();
   const { data: personalization } = useStorefrontPersonalization();
 
   const topDesktop = personalization?.top_banner_desktop?.url ?? TOP_BANNER_DESKTOP;
@@ -72,7 +75,7 @@ function Index() {
       </div>
 
       <main className="flex-grow overflow-x-hidden">
-        <BestSellers />
+        <BestSellers initialData={initialLaunches} />
         <VisualCategories />
 
         {ambientDesktop || ambientMobile ? (
