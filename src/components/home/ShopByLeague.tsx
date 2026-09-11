@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
 import ProductCard from "@/components/product/ProductCard";
@@ -25,40 +25,10 @@ const SHOWCASE_SIZE = 15;
 const INITIAL_PLACEHOLDER_COUNT = 5;
 const DEFAULT_LEAGUE = LEAGUES[0]!;
 
-const sleep = (ms: number) =>
-  new Promise<void>((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
-
-async function preloadProductImages(products: CatalogListItem[]) {
-  const urls = [
-    ...new Set(products.map((product) => product.displayImageUrl).filter((url): url is string => !!url)),
-  ];
-  if (urls.length === 0) return;
-
-  const preload = Promise.allSettled(
-    urls.map(
-      (url) =>
-        new Promise<void>((resolve) => {
-          const image = new Image();
-          image.decoding = "async";
-          image.onload = () => resolve();
-          image.onerror = () => resolve();
-          image.src = url;
-          if (image.complete) resolve();
-        }),
-    ),
-  );
-
-  await Promise.race([preload, sleep(1800)]);
-}
-
 const ShopByLeague: React.FC = () => {
   const [activeLeagueId, setActiveLeagueId] = useState(DEFAULT_LEAGUE.id);
   const [displayLeagueId, setDisplayLeagueId] = useState(DEFAULT_LEAGUE.id);
   const [displayProducts, setDisplayProducts] = useState<CatalogListItem[]>([]);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const transitionTokenRef = useRef(0);
 
   const activeLeague = LEAGUES.find((league) => league.id === activeLeagueId) ?? DEFAULT_LEAGUE;
   const torcedorQuery = useCatalogProducts({
@@ -93,35 +63,9 @@ const ShopByLeague: React.FC = () => {
 
   useEffect(() => {
     if (incomingLoading) return;
-    if (displayLeagueId === activeLeague.id && displayProducts.length > 0) return;
-
-    const token = ++transitionTokenRef.current;
-    let cancelled = false;
-
-    const commitLeague = async () => {
-      await preloadProductImages(incomingProducts);
-      if (cancelled || token !== transitionTokenRef.current) return;
-
-      if (displayProducts.length > 0) {
-        setIsTransitioning(true);
-        await sleep(120);
-      }
-      if (cancelled || token !== transitionTokenRef.current) return;
-
-      setDisplayLeagueId(activeLeague.id);
-      setDisplayProducts(incomingProducts);
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-          if (!cancelled && token === transitionTokenRef.current) setIsTransitioning(false);
-        });
-      });
-    };
-
-    void commitLeague();
-    return () => {
-      cancelled = true;
-    };
-  }, [activeLeague.id, displayLeagueId, displayProducts.length, incomingLoading, incomingProducts]);
+    setDisplayLeagueId(activeLeague.id);
+    setDisplayProducts(incomingProducts);
+  }, [activeLeague.id, incomingLoading, incomingProducts]);
 
   const handleLeagueChange = (id: string) => {
     if (id === activeLeagueId) return;
@@ -161,12 +105,7 @@ const ShopByLeague: React.FC = () => {
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
-          <div
-            data-league-products={displayLeagueId}
-            className={`relative transition-all duration-150 ease-out motion-reduce:transform-none motion-reduce:transition-none ${
-              isTransitioning ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"
-            }`}
-          >
+          <div data-league-products={displayLeagueId} className="relative">
             <ProductCarousel
               key={showInitialPlaceholders ? "league-loading" : displayLeagueId}
               itemCount={showInitialPlaceholders ? INITIAL_PLACEHOLDER_COUNT : displayProducts.length}
