@@ -11,6 +11,7 @@ interface ProductCardProps {
   price: number;
   promotionalPrice?: number | null;
   imageUrl?: string | null;
+  imageSrcSet?: string | null;
   time?: string | null;
   commercialType?: string | null;
   className?: string;
@@ -34,6 +35,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   price,
   promotionalPrice,
   imageUrl,
+  imageSrcSet,
   time,
   commercialType,
   className = "",
@@ -74,6 +76,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           {showImage ? (
             <img
               src={imageUrl ?? undefined}
+              srcSet={imageSrcSet ?? undefined}
               alt={name}
               loading={priority ? "eager" : "lazy"}
               fetchPriority={priority ? "high" : "auto"}
