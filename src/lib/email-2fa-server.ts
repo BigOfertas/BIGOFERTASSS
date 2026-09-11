@@ -302,7 +302,7 @@ async function supabasePasswordGrant(
 
     if (source.includes("email_not_confirmed") || source.includes("email not confirmed")) {
       throw new EmailTwoFactorError(
-        "Confirme seu e-mail antes de entrar. Use o link enviado pela BIGofertas.",
+        "Confirme seu e-mail antes de entrar. Use o link enviado pela DropBox.",
         403,
         "EMAIL_NOT_CONFIRMED",
       );
@@ -331,7 +331,7 @@ async function supabasePasswordGrant(
   const emailConfirmedAt = (user as { email_confirmed_at?: unknown }).email_confirmed_at;
   if (typeof emailConfirmedAt !== "string" || !emailConfirmedAt) {
     throw new EmailTwoFactorError(
-      "Confirme seu e-mail antes de entrar. Use o link enviado pela BIGofertas.",
+      "Confirme seu e-mail antes de entrar. Use o link enviado pela DropBox.",
       403,
       "EMAIL_NOT_CONFIRMED",
     );
@@ -593,7 +593,7 @@ async function sendTwoFactorEmail(input: {
   const title =
     input.purpose === "enroll"
       ? "Confirme a ativação da verificação em duas etapas"
-      : "Confirme seu acesso à BIGofertas";
+      : "Confirme seu acesso à DropBox";
 
   try {
     await sendResendTemplate({

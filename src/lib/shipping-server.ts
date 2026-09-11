@@ -1,5 +1,5 @@
 const SUPERFRETE_API_URL = "https://api.superfrete.com/api/v0/calculator";
-const SUPERFRETE_USER_AGENT = "BIGofertas/1.0 (contato@bigofertas.net)";
+const SUPERFRETE_USER_AGENT = "DropBox/1.0 (contato@bigofertas.net)";
 
 export const SHIPPING_CONFIG = {
   correiosOriginPostalCode: "59655000",

@@ -90,7 +90,9 @@ function SearchBox({
                             className="h-full w-full object-contain p-1"
                           />
                         ) : (
-                          <span className="text-[8px] font-black text-red-200">BIG</span>
+                          <span className="text-[8px] font-black text-red-200">
+                            {BRAND.shortMark}
+                          </span>
                         )}
                       </div>
                       <div className="min-w-0 flex-1">

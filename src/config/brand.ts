@@ -3,7 +3,7 @@ const readPublicBrandValue = (value: string | undefined, fallback: string) => {
   return normalized || fallback;
 };
 
-const officialName = readPublicBrandValue(import.meta.env.VITE_BRAND_NAME, "BIGofertas");
+const officialName = readPublicBrandValue(import.meta.env.VITE_BRAND_NAME, "DropBox");
 const domain = readPublicBrandValue(import.meta.env.VITE_BRAND_DOMAIN, "bigofertas.net");
 const siteUrl = readPublicBrandValue(
   import.meta.env.VITE_BRAND_SITE_URL,

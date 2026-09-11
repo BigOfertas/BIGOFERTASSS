@@ -1,5 +1,5 @@
 const RESEND_EMAILS_URL = "https://api.resend.com/emails";
-const DEFAULT_FROM = "BIGofertas <contato@bigofertas.net>";
+const DEFAULT_FROM = "DropBox <contato@bigofertas.net>";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CORREIOS_TRACKING_URL =
   "https://www.correios.com.br/home-page-2024/rastreamento/acompanhe-seu-objeto";
@@ -402,7 +402,7 @@ async function sendEmail(event: NotificationEvent, prepared: PreparedEmail) {
       authorization: `Bearer ${requiredEnv("RESEND_API_KEY")}`,
       "content-type": "application/json",
       accept: "application/json",
-      "user-agent": "BIGofertas/1.0",
+      "user-agent": "DropBox/1.0",
       "Idempotency-Key": `notification/${event.idempotency_key}`,
     },
     body: JSON.stringify({
