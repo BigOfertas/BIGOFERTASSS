@@ -44,7 +44,8 @@ async function readOnly(query) {
     signal: AbortSignal.timeout(30_000),
   });
   const text = await response.text();
-  if (!response.ok) throw new Error(`READ_ONLY_QUERY_HTTP_${response.status}: ${text.slice(0, 1000)}`);
+  if (!response.ok)
+    throw new Error(`READ_ONLY_QUERY_HTTP_${response.status}: ${text.slice(0, 1000)}`);
   const payload = JSON.parse(text);
   return Array.isArray(payload) ? payload[0] : payload;
 }
