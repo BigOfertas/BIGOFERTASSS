@@ -7,7 +7,8 @@ export const Route = createFileRoute("/producao-e-envio")({
   head: () =>
     buildPageHead({
       title: "Produção e Envio",
-      description: "Entenda os prazos de preparação, transporte, previsão total e acompanhamento dos pedidos da DropBox.",
+      description:
+        "Entenda os prazos de preparação, transporte, previsão total e acompanhamento dos pedidos da DropBox.",
       path: "/producao-e-envio",
     }),
   component: ShippingInfoPage,
