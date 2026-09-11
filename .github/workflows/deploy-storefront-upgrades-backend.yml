@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/deploy-storefront-upgrades-backend.yml"
       - "scripts/deploy-storefront-upgrade-migrations.mjs"
+      - "scripts/deploy-final-storefront-refinements.mjs"
       - "scripts/deploy-home-launches-top10.mjs"
       - "scripts/deploy-kids-purchase-sizes.mjs"
       - "scripts/deploy-catalog-filter-key-fix.mjs"
@@ -31,6 +32,7 @@ on:
       - "supabase/migrations/20260911054000_stage2_storefront_priority.sql"
       - "supabase/migrations/20260911055500_stage2_storefront_priority_security_fix.sql"
       - "supabase/migrations/20260911061000_stage2_patch_reconciliation.sql"
+      - "supabase/migrations/20260911114500_final_storefront_refinements.sql"
   workflow_dispatch:
 
 permissions:
@@ -56,6 +58,9 @@ jobs:
 
       - name: Deploy storefront upgrade migrations
         run: node scripts/deploy-storefront-upgrade-migrations.mjs
+
+      - name: Deploy final storefront refinements
+        run: node scripts/deploy-final-storefront-refinements.mjs
 
       - name: Audit Stage 2 product patches
         run: node scripts/audit-stage2-patches.mjs

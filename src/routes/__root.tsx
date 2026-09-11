@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import glassLegacyCss from "../glass-legacy.css?url";
@@ -151,7 +151,12 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const [storefrontHydrated, setStorefrontHydrated] = useState(false);
   const showStorefrontFooter = FOOTER_ROUTES.has(pathname) || pathname.startsWith("/product/");
+
+  useEffect(() => {
+    setStorefrontHydrated(true);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -161,7 +166,7 @@ function RootComponent() {
             <div className="min-h-0 flex-1">
               <Outlet />
             </div>
-            {showStorefrontFooter ? <Footer /> : null}
+            {storefrontHydrated && showStorefrontFooter ? <Footer /> : null}
           </div>
           <CursorFollower />
           <Toaster position="top-center" richColors />
