@@ -11,6 +11,11 @@ interface CategoryLink {
 
 export const categoryLinks: CategoryLink[] = [
   { name: "INÍCIO", href: "/" },
+  {
+    name: "FEMININO",
+    href: "/products",
+    search: { commercialType: "feminino", sort: "featured" },
+  },
   { name: "KIDS", href: "/products", search: { category: "infantil" } },
   {
     name: "KITS DE TREINO",
