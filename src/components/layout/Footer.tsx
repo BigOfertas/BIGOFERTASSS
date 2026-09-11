@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
+import { COOKIE_PREFERENCES_EVENT } from "@/components/privacy/CookieConsent";
 import { BRAND } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
 
@@ -201,6 +202,15 @@ export default function Footer() {
                 <Link to="/privacidade" className="hover:text-white">
                   Privacidade
                 </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new Event(COOKIE_PREFERENCES_EVENT))}
+                  className="text-left hover:text-white"
+                >
+                  Preferências de cookies
+                </button>
               </li>
               <li>
                 <Link to="/termos-de-compra" className="hover:text-white">
