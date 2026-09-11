@@ -31,6 +31,54 @@ const FOOTER_ROUTES = new Set([
   "/contato",
 ]);
 
+const INITIAL_REFRESH_MIN_MS = 2300;
+const INITIAL_QUERY_WAIT_MS = 2600;
+const INITIAL_IMAGE_WAIT_MS = 1800;
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+
+async function waitForInitialQueries(queryClient: QueryClient, timeoutMs: number) {
+  const deadline = performance.now() + timeoutMs;
+  let idleSince: number | null = null;
+
+  while (performance.now() < deadline) {
+    if (queryClient.isFetching() === 0) {
+      idleSince ??= performance.now();
+      if (performance.now() - idleSince >= 180) return;
+    } else {
+      idleSince = null;
+    }
+    await sleep(50);
+  }
+}
+
+async function preloadRenderedImages(timeoutMs: number) {
+  const sources = Array.from(document.images)
+    .map((image) => image.currentSrc || image.src)
+    .filter((source): source is string => Boolean(source));
+  const uniqueSources = [...new Set(sources)];
+  if (uniqueSources.length === 0) return;
+
+  const preload = Promise.allSettled(
+    uniqueSources.map(
+      (source) =>
+        new Promise<void>((resolve) => {
+          const image = new Image();
+          image.decoding = "async";
+          image.onload = () => resolve();
+          image.onerror = () => resolve();
+          image.src = source;
+          if (image.complete) resolve();
+        }),
+    ),
+  );
+
+  await Promise.race([preload, sleep(timeoutMs)]);
+}
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -136,19 +184,37 @@ function RootComponent() {
   const showStorefrontFooter = FOOTER_ROUTES.has(pathname) || pathname.startsWith("/product/");
 
   useEffect(() => {
+    let cancelled = false;
+    const startedAt = performance.now();
     const previousOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
+    document.documentElement.dataset.initialRefreshLoading = "true";
 
-    const timer = window.setTimeout(() => {
+    const finishInitialLoading = async () => {
+      await sleep(150);
+      await Promise.all([
+        waitForInitialQueries(queryClient, INITIAL_QUERY_WAIT_MS),
+        document.fonts?.ready ?? Promise.resolve(),
+      ]);
+      await preloadRenderedImages(INITIAL_IMAGE_WAIT_MS);
+
+      const remaining = INITIAL_REFRESH_MIN_MS - (performance.now() - startedAt);
+      if (remaining > 0) await sleep(remaining);
+      if (cancelled) return;
+
       setInitialRefreshLoading(false);
-      document.documentElement.style.overflow = previousOverflow;
-    }, 1000);
-
-    return () => {
-      window.clearTimeout(timer);
+      delete document.documentElement.dataset.initialRefreshLoading;
       document.documentElement.style.overflow = previousOverflow;
     };
-  }, []);
+
+    void finishInitialLoading();
+
+    return () => {
+      cancelled = true;
+      delete document.documentElement.dataset.initialRefreshLoading;
+      document.documentElement.style.overflow = previousOverflow;
+    };
+  }, [queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -174,7 +240,7 @@ function RootComponent() {
                 data-initial-refresh-loader
                 role="status"
                 aria-label="Carregando"
-                className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/30 backdrop-blur-2xl"
+                className="fixed inset-0 z-[9999] flex cursor-none items-center justify-center bg-background/30 backdrop-blur-2xl"
               >
                 <LoaderCircle
                   aria-hidden="true"
@@ -184,7 +250,7 @@ function RootComponent() {
               </div>
             ) : null}
           </div>
-          <CursorFollower />
+          {!initialRefreshLoading ? <CursorFollower /> : null}
           <Toaster position="top-center" richColors />
         </CartProvider>
       </AuthProvider>
