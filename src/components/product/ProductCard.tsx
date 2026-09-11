@@ -78,7 +78,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               height={640}
               sizes="(max-width: 639px) 48vw, (max-width: 1023px) 31vw, 260px"
               onError={() => setImageFailed(true)}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain !object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center font-bold italic uppercase text-gray-300">
