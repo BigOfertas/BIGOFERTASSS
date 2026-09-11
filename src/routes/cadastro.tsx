@@ -461,11 +461,7 @@ function RegisterPage() {
                   className="absolute right-0 top-0 flex h-[54px] w-12 items-center justify-center text-gray-400 transition hover:text-gray-900"
                   aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
               <span
