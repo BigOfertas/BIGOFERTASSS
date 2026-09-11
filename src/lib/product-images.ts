@@ -9,6 +9,7 @@ type RuntimeProductImage = Omit<ProductImage, "storage_key"> & {
 };
 
 const GOOGLE_MEDIA_HOST_RE = /(^|\.)(googleusercontent\.com|usercontent\.google\.com|ggpht\.com)$/i;
+export const PRODUCT_CARD_RESPONSIVE_WIDTHS = [320, 480, 640, 768] as const;
 
 function runtimeImage(image: ProductImage): RuntimeProductImage {
   return image as unknown as RuntimeProductImage;
@@ -39,6 +40,16 @@ function normalizedExternalUrl(rawValue: string | null | undefined) {
   }
 }
 
+function isGoogleMediaUrl(rawValue: string | null | undefined) {
+  const external = normalizedExternalUrl(rawValue);
+  if (!external) return false;
+  try {
+    return GOOGLE_MEDIA_HOST_RE.test(new URL(external).hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function buildOptimizedExternalImageUrl(rawValue: string | null | undefined, size = 1600) {
   const external = normalizedExternalUrl(rawValue);
   if (!external) return null;
@@ -56,6 +67,38 @@ export function buildOptimizedExternalImageUrl(rawValue: string | null | undefin
   } catch {
     return external;
   }
+}
+
+export function buildResponsiveExternalImageSrcSet(
+  rawValue: string | null | undefined,
+  widths: readonly number[] = PRODUCT_CARD_RESPONSIVE_WIDTHS,
+) {
+  if (!isGoogleMediaUrl(rawValue)) return null;
+
+  const candidates = [...new Set(widths.map((width) => Math.round(width)))]
+    .filter((width) => width >= 160 && width <= 2400)
+    .sort((left, right) => left - right)
+    .flatMap((width) => {
+      const url = buildOptimizedExternalImageUrl(rawValue, width);
+      return url ? [`${url} ${width}w`] : [];
+    });
+
+  return candidates.length > 0 ? candidates.join(", ") : null;
+}
+
+export function buildR2DerivativeSrcSet(input: {
+  thumbStorageKey?: string | null;
+  cardStorageKey?: string | null;
+}) {
+  const candidates = [
+    input.thumbStorageKey
+      ? { url: buildR2PublicImageUrl(input.thumbStorageKey), width: 280 }
+      : null,
+    input.cardStorageKey ? { url: buildR2PublicImageUrl(input.cardStorageKey), width: 760 } : null,
+  ].filter((candidate): candidate is { url: string; width: number } => Boolean(candidate?.url));
+
+  if (candidates.length < 2) return null;
+  return candidates.map((candidate) => `${candidate.url} ${candidate.width}w`).join(", ");
 }
 
 export function getR2PublicBaseUrl() {
@@ -134,6 +177,7 @@ export interface ProductGalleryItem {
   id: string;
   url: string;
   cardUrl: string;
+  cardSrcSet: string | null;
   thumbUrl: string;
   alt: string;
   variantId: string | null;
@@ -177,6 +221,12 @@ export function getProductGalleryItems(
       : runtime.thumb_storage_key
         ? buildR2PublicImageUrl(runtime.thumb_storage_key)
         : null;
+    const cardSrcSet = originalExternal
+      ? buildResponsiveExternalImageSrcSet(originalExternal)
+      : buildR2DerivativeSrcSet({
+          thumbStorageKey: runtime.thumb_storage_key,
+          cardStorageKey: runtime.card_storage_key,
+        });
 
     seen.add(url);
     return [
@@ -184,6 +234,7 @@ export function getProductGalleryItems(
         id: image.id,
         url,
         cardUrl: cardUrl ?? url,
+        cardSrcSet,
         thumbUrl: thumbUrl ?? cardUrl ?? url,
         alt: image.alt_text?.trim() || product.name,
         variantId: image.variant_id,
@@ -198,6 +249,7 @@ export function getProductGalleryItems(
       id: "legacy-image",
       url: legacyImage,
       cardUrl: buildOptimizedExternalImageUrl(product.image_url, 768) ?? legacyImage,
+      cardSrcSet: buildResponsiveExternalImageSrcSet(product.image_url),
       thumbUrl: buildOptimizedExternalImageUrl(product.image_url, 256) ?? legacyImage,
       alt: product.name,
       variantId: null,
