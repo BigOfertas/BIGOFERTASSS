@@ -64,28 +64,15 @@ check(
   ].every((route) => !footerRoutes.includes(route)),
 );
 check(
-  "F5 mantém carregamento visual mínimo de 2,3 segundos e aguarda conteúdo inicial",
-  root.includes("const [initialRefreshLoading, setInitialRefreshLoading] = useState(true)") &&
-    root.includes("const INITIAL_REFRESH_MIN_MS = 2300") &&
-    root.includes("waitForInitialQueries") &&
-    root.includes("preloadRenderedImages") &&
-    root.includes('document.documentElement.style.overflow = "hidden"') &&
-    root.includes("!initialRefreshLoading && showStorefrontFooter"),
+  "F5 não impõe atraso artificial nem pré-carregamento global bloqueante",
+  !root.includes("INITIAL_REFRESH_MIN_MS") &&
+    !root.includes("initialRefreshLoading") &&
+    !root.includes("preloadRenderedImages") &&
+    !root.includes("data-initial-refresh-loader"),
 );
 check(
-  "carregamento do F5 usa blur forte, cursor oculto e somente ícone rotativo sobre o site",
-  root.includes("data-initial-refresh-loader") &&
-    root.includes('aria-label="Carregando"') &&
-    root.includes("blur-[22px]") &&
-    root.includes("backdrop-blur-2xl") &&
-    root.includes("cursor-none") &&
-    root.includes("<LoaderCircle") &&
-    root.includes("animate-spin") &&
-    root.includes("[animation-duration:1.1s]") &&
-    !root.includes("Carregando...") &&
-    root.includes('className="relative min-h-screen overflow-x-clip"') &&
-    root.includes('className="min-h-0 flex-1"') &&
-    root.includes("!initialRefreshLoading ? <CursorFollower /> : null"),
+  "cursor integrado monta diretamente com a aplicação",
+  root.includes("<CursorFollower />") && !root.includes("!initialRefreshLoading ? <CursorFollower /> : null"),
 );
 const routeFooterUsers = routeFiles("src/routes").filter(
   (file) => file !== "src/routes/__root.tsx" && /<Footer\b|import\s+Footer\b/.test(read(file)),
@@ -121,9 +108,8 @@ check(
     !/useCatalogProducts\(\{\s*liga: displayLeague\.slug,\s*pageSize:/s.test(leagues),
 );
 check(
-  "troca de liga pré-carrega imagens e preserva os cards até a nova liga estar pronta",
-  leagues.includes("preloadProductImages") &&
-    leagues.includes("displayProducts") &&
+  "troca de liga preserva os cards até a nova liga estar pronta",
+  leagues.includes("displayProducts") &&
     leagues.includes("isPlaceholderData") &&
     leagues.includes("setDisplayLeagueId(activeLeague.id)") &&
     leagues.includes("data-league-products"),
