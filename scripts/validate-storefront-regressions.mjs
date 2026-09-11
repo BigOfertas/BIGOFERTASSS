@@ -72,7 +72,8 @@ check(
 );
 check(
   "cursor integrado monta diretamente com a aplicação",
-  root.includes("<CursorFollower />") && !root.includes("!initialRefreshLoading ? <CursorFollower /> : null"),
+  root.includes("<CursorFollower />") &&
+    !root.includes("!initialRefreshLoading ? <CursorFollower /> : null"),
 );
 const routeFooterUsers = routeFiles("src/routes").filter(
   (file) => file !== "src/routes/__root.tsx" && /<Footer\b|import\s+Footer\b/.test(read(file)),

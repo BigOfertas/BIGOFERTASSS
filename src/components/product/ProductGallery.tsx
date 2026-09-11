@@ -47,7 +47,8 @@ export default function ProductGallery({
     : 0;
 
   useEffect(() => {
-    const nextImage = usableImages.find((image) => image.id === preferredImageId) ?? usableImages[0];
+    const nextImage =
+      usableImages.find((image) => image.id === preferredImageId) ?? usableImages[0];
     if (!nextImage) {
       setActiveImageId(null);
       return;
@@ -68,8 +69,7 @@ export default function ProductGallery({
       setActiveImageId((currentId) => {
         const currentIndex = usableImages.findIndex((image) => image.id === currentId);
         const normalizedIndex = currentIndex >= 0 ? currentIndex : 0;
-        const nextIndex =
-          (normalizedIndex + direction + usableImages.length) % usableImages.length;
+        const nextIndex = (normalizedIndex + direction + usableImages.length) % usableImages.length;
         return usableImages[nextIndex]?.id ?? currentId;
       });
     },
@@ -127,10 +127,7 @@ export default function ProductGallery({
     move(direction);
   };
 
-  const handleNavigationClick = (
-    event: React.MouseEvent<HTMLButtonElement>,
-    direction: -1 | 1,
-  ) => {
+  const handleNavigationClick = (event: React.MouseEvent<HTMLButtonElement>, direction: -1 | 1) => {
     event.stopPropagation();
     if (event.detail === 0) move(direction);
   };
