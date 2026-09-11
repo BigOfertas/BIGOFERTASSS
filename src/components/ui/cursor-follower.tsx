@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 const INTERACTIVE_SELECTOR =
   'a, button, img, input, textarea, select, [role="button"], [data-cursor-interactive]';
+const LENS_VISIBILITY_EVENT = "storefront:lens-visibility";
 
 export const Component = () => {
   const dotRef = useRef<HTMLDivElement>(null);
@@ -13,6 +14,7 @@ export const Component = () => {
   const borderDotPosition = useRef({ x: -100, y: -100 });
   const animationFrame = useRef<number | null>(null);
   const hasPointerPosition = useRef(false);
+  const lensActiveRef = useRef(false);
 
   useEffect(() => {
     const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -102,7 +104,7 @@ export const Component = () => {
         ensureAnimation();
       }
 
-      setVisible(true);
+      if (!lensActiveRef.current) setVisible(true);
     };
 
     const handlePointerOver = (event: PointerEvent) => {
@@ -121,18 +123,28 @@ export const Component = () => {
       if (!event.relatedTarget) setVisible(false);
     };
 
+    const handleLensVisibility = (event: Event) => {
+      const customEvent = event as CustomEvent<{ active?: boolean }>;
+      const active = customEvent.detail?.active === true;
+      lensActiveRef.current = active;
+      setInteractive(false);
+      setVisible(!active && hasPointerPosition.current);
+    };
+
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
     document.addEventListener("pointerover", handlePointerOver, {
       passive: true,
     });
     document.addEventListener("pointerout", handlePointerOut, { passive: true });
     window.addEventListener("mouseout", handleWindowOut, { passive: true });
+    window.addEventListener(LENS_VISIBILITY_EVENT, handleLensVisibility);
 
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
       document.removeEventListener("pointerover", handlePointerOver);
       document.removeEventListener("pointerout", handlePointerOut);
       window.removeEventListener("mouseout", handleWindowOut);
+      window.removeEventListener(LENS_VISIBILITY_EVENT, handleLensVisibility);
       if (animationFrame.current !== null) {
         window.cancelAnimationFrame(animationFrame.current);
       }
@@ -140,13 +152,19 @@ export const Component = () => {
   }, []);
 
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[10000]">
+    <div
+      aria-hidden="true"
+      data-cursor-follower
+      className="pointer-events-none fixed inset-0 z-[10000]"
+    >
       <div
         ref={dotRef}
-        className="absolute size-2 rounded-full bg-black opacity-0 will-change-transform dark:bg-white"
+        data-cursor-dot
+        className="absolute size-2 rounded-full bg-black opacity-0 transition-opacity duration-200 will-change-transform dark:bg-white"
       />
       <div
         ref={borderRef}
+        data-cursor-border
         className="absolute size-7 rounded-full border border-black opacity-0 transition-[width,height,opacity] duration-300 will-change-transform dark:border-white"
       />
     </div>
