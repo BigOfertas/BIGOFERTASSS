@@ -46,15 +46,18 @@ export default function VisualCategories() {
 
   return (
     <section className="bg-transparent py-9 sm:py-11 lg:py-14">
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+      <div className="mx-auto max-w-[1800px] px-4 lg:px-8">
         <div className="mb-7 text-center sm:mb-8">
           <p className="display-kicker">Escolha seu estilo</p>
           <h2 className="display-title mt-2">Monte seu pedido</h2>
         </div>
 
-        <div className="custom-scrollbar flex gap-4 overflow-x-auto pb-3 md:grid md:grid-cols-4 md:gap-5 md:overflow-visible md:pb-0 xl:grid-cols-7">
+        <div className="custom-scrollbar flex gap-4 overflow-x-auto pb-3 md:gap-6 md:pb-4">
           {categories.map((category) => (
-            <div key={category.slot} className="aspect-[2/3] w-[164px] flex-shrink-0 md:w-auto">
+            <div
+              key={category.slot}
+              className="aspect-[2/3] w-[164px] flex-shrink-0 md:w-[328px]"
+            >
               <CategoryCard
                 name={category.name}
                 image={data?.[category.slot]?.url ?? null}
