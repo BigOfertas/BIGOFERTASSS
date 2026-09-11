@@ -41,7 +41,9 @@ function readConsentCookie(): CookieConsentState | null {
   if (!raw) return null;
 
   try {
-    const parsed = JSON.parse(decodeURIComponent(raw.slice(prefix.length))) as Partial<CookieConsentState>;
+    const parsed = JSON.parse(
+      decodeURIComponent(raw.slice(prefix.length)),
+    ) as Partial<CookieConsentState>;
     if (
       parsed.necessary !== true ||
       typeof parsed.preferences !== "boolean" ||
@@ -256,7 +258,10 @@ export function CookieConsent() {
             <p className="mt-1 text-xs leading-relaxed text-gray-500 sm:text-sm">
               Usamos armazenamento necessário para o funcionamento da loja. Você pode aceitar,
               recusar os recursos opcionais ou escolher suas preferências. Veja nossa{" "}
-              <Link to="/privacidade" className="font-bold text-gray-900 underline underline-offset-2">
+              <Link
+                to="/privacidade"
+                className="font-bold text-gray-900 underline underline-offset-2"
+              >
                 Política de Privacidade
               </Link>
               .
