@@ -61,7 +61,7 @@ const faqData: FAQItem[] = [
     id: 8,
     emoji: "📞",
     question: "Como entrar em contato?",
-    answer: `WhatsApp: ${BRAND.whatsappDisplay}\nE-mail: ${BRAND.contactEmail}`,
+    answer: `WhatsApp: ${BRAND.whatsappDisplay}\nE-mail: use a página de contato para falar com a ${BRAND.officialName}.`,
   },
   {
     id: 9,
