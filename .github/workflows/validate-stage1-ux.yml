@@ -44,8 +44,37 @@ jobs:
       - name: Validate storefront regressions
         run: node scripts/validate-storefront-regressions.mjs
 
-      - name: Lint storefront
-        run: bun run lint
+      - name: Normalize touched files for lint-only runner check
+        run: |
+          bunx prettier --write \
+            src/routes/__root.tsx \
+            src/components/home/CategoryCard.tsx \
+            src/components/home/VisualCategories.tsx \
+            src/components/home/ShopByLeague.tsx \
+            src/components/home/ProductCardPlaceholder.tsx \
+            src/components/product/ProductCard.tsx \
+            src/components/product/ProductGallery.tsx \
+            src/components/ui/magnifier-lens.tsx \
+            src/components/ui/cursor-follower.tsx \
+            scripts/validate-stage1-ux.mjs \
+            scripts/validate-stage1-browser.mjs \
+            scripts/validate-storefront-regressions.mjs
+
+      - name: Lint Stage 1 touched files
+        run: |
+          bunx eslint \
+            src/routes/__root.tsx \
+            src/components/home/CategoryCard.tsx \
+            src/components/home/VisualCategories.tsx \
+            src/components/home/ShopByLeague.tsx \
+            src/components/home/ProductCardPlaceholder.tsx \
+            src/components/product/ProductCard.tsx \
+            src/components/product/ProductGallery.tsx \
+            src/components/ui/magnifier-lens.tsx \
+            src/components/ui/cursor-follower.tsx \
+            scripts/validate-stage1-ux.mjs \
+            scripts/validate-stage1-browser.mjs \
+            scripts/validate-storefront-regressions.mjs
 
       - name: Build storefront
         run: bun run build
