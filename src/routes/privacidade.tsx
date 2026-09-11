@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { InstitutionalPage, InstitutionalSection } from "@/components/content/InstitutionalPage";
+import { COOKIE_PREFERENCES_EVENT } from "@/components/privacy/CookieConsent";
 import { BRAND } from "@/config/brand";
 
 export const Route = createFileRoute("/privacidade")({ component: PrivacyPage });
@@ -23,6 +24,25 @@ function PrivacyPage() {
           realizar entregas, enviar comunicações sobre o pedido, prestar suporte e cumprir
           obrigações aplicáveis à operação da loja.
         </p>
+      </InstitutionalSection>
+      <InstitutionalSection title="Cookies e tecnologias semelhantes">
+        <p>
+          A loja utiliza armazenamento necessário para manter recursos essenciais, como segurança,
+          sessão, carrinho e registro das suas preferências de privacidade. Recursos opcionais de
+          preferências, análise e marketing só ficam autorizados de acordo com a escolha feita no
+          painel de cookies.
+        </p>
+        <p>
+          Você pode alterar essa escolha quando quiser. Cookies estritamente necessários continuam
+          ativos porque são usados para o funcionamento básico e seguro do site.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event(COOKIE_PREFERENCES_EVENT))}
+          className="inline-flex min-h-10 items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-extrabold text-gray-900 transition-colors hover:bg-gray-50"
+        >
+          Revisar preferências de cookies
+        </button>
       </InstitutionalSection>
       <InstitutionalSection title="Serviços necessários à compra">
         <p>
