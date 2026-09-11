@@ -86,7 +86,6 @@ function descriptionFor(product, options, team, commercialType) {
   parts.push(`Versão ${commercialLabel(commercialType)}.`);
   if (product.season) parts.push(`Temporada ${product.season}.`);
   if (product.brand) parts.push(`Marca ${product.brand}.`);
-  parts.push("Disponível com as opções configuradas pela BIGofertas.");
   return parts.join(" ");
 }
 
