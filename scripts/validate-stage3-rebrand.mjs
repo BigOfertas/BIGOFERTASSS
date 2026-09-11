@@ -17,6 +17,12 @@ function check(label, condition) {
 const env = read(".env");
 const brand = read("src/config/brand.ts");
 const header = read("src/components/layout/Header.tsx");
+const footer = read("src/components/layout/Footer.tsx");
+const faq = read("src/components/home/FAQ.tsx");
+const contact = read("src/routes/contato.tsx");
+const privacy = read("src/routes/privacidade.tsx");
+const root = read("src/routes/__root.tsx");
+const favicon = read("public/favicon.svg");
 const email2fa = read("src/lib/email-2fa-server.ts");
 const notificationEmail = read("src/lib/notification-email-server.ts");
 const server = read("src/server.ts");
@@ -77,8 +83,8 @@ check(
 );
 
 const articleSources = [
-  read("src/components/home/FAQ.tsx"),
-  read("src/routes/privacidade.tsx"),
+  faq,
+  privacy,
   read("src/routes/termos-de-compra.tsx"),
   read("src/lib/product-seo.ts"),
   read("src/components/product/ProductSeo.tsx"),
@@ -90,6 +96,32 @@ check(
     articleSources.includes("a ${BRAND.officialName}") &&
     !articleSources.includes("no ${BRAND.officialName}") &&
     !articleSources.includes("o ${BRAND.officialName}"),
+);
+
+check(
+  "domínio legado do e-mail não é exibido como texto na interface pública",
+  contact.includes("Enviar e-mail para a DropBox") &&
+    privacy.includes("enviar mensagem para a DropBox") &&
+    faq.includes("use a página de contato") &&
+    footer.includes("Fale por e-mail") &&
+    !contact.includes(">{BRAND.contactEmail}<") &&
+    !privacy.includes(">{BRAND.contactEmail}<") &&
+    !footer.includes("\n                {BRAND.contactEmail}\n"),
+);
+
+check(
+  "mailto operacional continua preservado sem inventar endereço novo",
+  contact.includes('href={`mailto:${BRAND.contactEmail}`}') &&
+    privacy.includes('href={`mailto:${BRAND.contactEmail}`}') &&
+    footer.includes('href={`mailto:${BRAND.contactEmail}`}'),
+);
+
+check(
+  "favicon público foi substituído por identidade DropBox",
+  root.includes('{ rel: "icon", href: "/favicon.svg", type: "image/svg+xml" }') &&
+    !root.includes('/favicon.ico') &&
+    favicon.includes('aria-label="DropBox"') &&
+    favicon.includes('fill="#dc2626"'),
 );
 
 console.log(`\nSTAGE3_REBRAND_VALIDATION passed=${passed} failed=${failed}`);
