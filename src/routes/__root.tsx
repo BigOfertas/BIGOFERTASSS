@@ -33,6 +33,7 @@ const FOOTER_ROUTES = new Set([
 
 const INITIAL_REFRESH_MIN_MS = 2300;
 const INITIAL_QUERY_WAIT_MS = 2600;
+const INITIAL_PLACEHOLDER_WAIT_MS = 2200;
 const INITIAL_IMAGE_WAIT_MS = 1800;
 
 const sleep = (ms: number) =>
@@ -51,6 +52,14 @@ async function waitForInitialQueries(queryClient: QueryClient, timeoutMs: number
     } else {
       idleSince = null;
     }
+    await sleep(50);
+  }
+}
+
+async function waitForStorefrontPlaceholders(timeoutMs: number) {
+  const deadline = performance.now() + timeoutMs;
+  while (performance.now() < deadline) {
+    if (!document.querySelector("[data-product-card-placeholder]")) return;
     await sleep(50);
   }
 }
@@ -196,6 +205,7 @@ function RootComponent() {
         waitForInitialQueries(queryClient, INITIAL_QUERY_WAIT_MS),
         document.fonts?.ready ?? Promise.resolve(),
       ]);
+      await waitForStorefrontPlaceholders(INITIAL_PLACEHOLDER_WAIT_MS);
       await preloadRenderedImages(INITIAL_IMAGE_WAIT_MS);
 
       const remaining = INITIAL_REFRESH_MIN_MS - (performance.now() - startedAt);
