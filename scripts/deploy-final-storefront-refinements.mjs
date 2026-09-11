@@ -38,8 +38,11 @@ async function jsonRequest(url, init = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-const history = await jsonRequest(`${apiBase}/database/migrations`, { timeout: 20_000 });
-const alreadyApplied = Array.isArray(history) && history.some((item) => item?.name === migrationName);
+const history = await jsonRequest(`${apiBase}/database/migrations`, {
+  timeout: 20_000,
+});
+const alreadyApplied =
+  Array.isArray(history) && history.some((item) => item?.name === migrationName);
 
 if (!alreadyApplied) {
   console.log(`Applying ${migrationName}...`);
@@ -53,9 +56,30 @@ if (!alreadyApplied) {
 }
 
 const targetCodes = [
-  "P000801","P000810","P000847","P000898","P000906","P000925","P000940","P000973",
-  "P001078","P001148","P001187","P001249","P001274","P001373","P001462","P002087",
-  "P002129","P002218","P002280","P002374","P002392","P002417","P002443","P002493",
+  "P000801",
+  "P000810",
+  "P000847",
+  "P000898",
+  "P000906",
+  "P000925",
+  "P000940",
+  "P000973",
+  "P001078",
+  "P001148",
+  "P001187",
+  "P001249",
+  "P001274",
+  "P001373",
+  "P001462",
+  "P002087",
+  "P002129",
+  "P002218",
+  "P002280",
+  "P002374",
+  "P002392",
+  "P002417",
+  "P002443",
+  "P002493",
 ];
 const sqlCodes = targetCodes.map((code) => `'${code}'`).join(",");
 
@@ -95,7 +119,9 @@ const verificationPayload = await jsonRequest(`${apiBase}/database/query/read-on
   }),
 });
 
-const verification = Array.isArray(verificationPayload) ? verificationPayload[0] : verificationPayload;
+const verification = Array.isArray(verificationPayload)
+  ? verificationPayload[0]
+  : verificationPayload;
 console.log("FINAL_STOREFRONT_REFINEMENTS_VERIFICATION");
 console.log(JSON.stringify(verification, null, 2));
 
