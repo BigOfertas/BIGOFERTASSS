@@ -46,6 +46,41 @@ jobs:
           console.log(`TRAINING_SOURCE_INVENTORY groups=${d.groups?.length??0} images=${(d.groups||[]).reduce((n,g)=>n+(g.images?.length||0),0)}`);
           for (const [i,g] of (d.groups||[]).entries()) console.log(`TRAINING_GROUP index=${i+1} images=${g.images?.length||0} title=${JSON.stringify(g.title)}`);
           NODE
+      - name: Build visual contact sheets for kit classification
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { chromium } from 'playwright';
+          const groups=JSON.parse(fs.readFileSync('.artifacts/training-source/groups.json','utf8')).slice(1);
+          const out='.artifacts/training-source/contact-sheets';
+          fs.mkdirSync(out,{recursive:true});
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1800,height:1200}});
+          const small=(u)=>String(u).replace(/=w\d+-h\d+-s-no-gm$/,'=w700-h700-s-no-gm');
+          const esc=(s)=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+          for(let start=0; start<groups.length; start+=8){
+            const chunk=groups.slice(start,start+8);
+            const cards=chunk.map((g,j)=>{
+              const absolute=start+j+2;
+              const imgs=g.images.slice(0,4).map(u=>`<img src="${esc(small(u))}" />`).join('');
+              return `<section><h2>#${absolute} · ${esc(g.title)} · ${g.images.length} imagens</h2><div class="imgs">${imgs}</div></section>`;
+            }).join('');
+            const html=`<!doctype html><html><head><meta charset="utf-8"><style>
+              *{box-sizing:border-box} body{margin:0;padding:22px;font-family:Arial,sans-serif;background:#fff;color:#111}
+              section{break-inside:avoid;margin:0 0 20px;border:2px solid #111;padding:10px;border-radius:8px}
+              h2{font-size:20px;margin:0 0 10px}.imgs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+              img{width:100%;height:300px;object-fit:contain;background:#f3f3f3;border:1px solid #ccc}
+            </style></head><body>${cards}</body></html>`;
+            await page.setContent(html,{waitUntil:'domcontentloaded'});
+            await page.waitForFunction(()=>[...document.images].every(i=>i.complete),null,{timeout:90000});
+            await page.waitForTimeout(1500);
+            const n=String(Math.floor(start/8)+1).padStart(2,'0');
+            await page.screenshot({path:path.join(out,`sheet-${n}.png`),fullPage:true});
+          }
+          await browser.close();
+          console.log(`TRAINING_CONTACT_SHEETS_OK groups=${groups.length} sheets=${Math.ceil(groups.length/8)}`);
+          NODE
       - name: Upload source inspection evidence
         uses: actions/upload-artifact@v4
         with:
