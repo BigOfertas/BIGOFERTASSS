@@ -203,7 +203,9 @@ export function AccountOverview({ email, onNavigate, onSignOut }: AccountOvervie
               ))}
             </div>
 
-            <AccountSecurityPanel email={email} />
+            <div id="seguranca" className="scroll-mt-40">
+              <AccountSecurityPanel email={email} />
+            </div>
           </section>
 
           <aside className="glass-panel h-fit rounded-[1.4rem] p-5">
