@@ -1,0 +1,84 @@
+name: Validate Stage 1 UX
+
+on:
+  push:
+    branches:
+      - stage1-ux-fixes-20260911
+    paths:
+      - "src/**"
+      - "scripts/validate-stage1-ux.mjs"
+      - "scripts/validate-stage1-browser.mjs"
+      - "scripts/validate-storefront-regressions.mjs"
+      - ".github/workflows/validate-stage1-ux.yml"
+      - "package.json"
+      - "bun.lock"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-stage1-ux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate Stage 1 source rules
+        run: node scripts/validate-stage1-ux.mjs
+
+      - name: Validate storefront regressions
+        run: node scripts/validate-storefront-regressions.mjs
+
+      - name: Lint storefront
+        run: bun run lint
+
+      - name: Build storefront
+        run: bun run build
+
+      - name: Install Chromium test runtime
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Start local storefront
+        run: |
+          mkdir -p .artifacts/stage1-browser
+          nohup bun run dev -- --host 127.0.0.1 --port 4173 > .artifacts/stage1-browser/vite.log 2>&1 &
+          echo $! > .artifacts/stage1-browser/vite.pid
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then
+              echo "VITE_STAGE1_READY"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat .artifacts/stage1-browser/vite.log
+          exit 1
+
+      - name: Validate Stage 1 in Chromium
+        env:
+          STAGE1_BASE_URL: http://127.0.0.1:4173
+        run: node scripts/validate-stage1-browser.mjs
+
+      - name: Upload Chromium evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage1-ux-browser-${{ github.run_id }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: .artifacts/stage1-browser/
