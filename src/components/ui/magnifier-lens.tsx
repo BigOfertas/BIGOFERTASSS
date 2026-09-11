@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 interface LensProps {
   children: React.ReactNode;
@@ -16,6 +16,7 @@ interface LensProps {
 }
 
 const FINE_POINTER_QUERY = "(hover: hover) and (pointer: fine)";
+const LENS_VISIBILITY_EVENT = "storefront:lens-visibility";
 
 const Lens: React.FC<LensProps> = ({
   children,
@@ -30,6 +31,7 @@ const Lens: React.FC<LensProps> = ({
 }) => {
   const boundsRef = useRef<DOMRect | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const lensActiveRef = useRef(false);
 
   const canUseLens = (event?: React.PointerEvent<HTMLDivElement>) => {
     if (typeof window === "undefined" || isStatic) return false;
@@ -37,9 +39,25 @@ const Lens: React.FC<LensProps> = ({
     return window.matchMedia(FINE_POINTER_QUERY).matches;
   };
 
+  const announceLensVisibility = (active: boolean) => {
+    if (lensActiveRef.current === active) return;
+    lensActiveRef.current = active;
+    window.dispatchEvent(new CustomEvent(LENS_VISIBILITY_EVENT, { detail: { active } }));
+  };
+
   const setLensVisible = (visible: boolean) => {
     if (overlayRef.current) overlayRef.current.style.opacity = visible ? "1" : "0";
+    announceLensVisibility(visible);
   };
+
+  useEffect(
+    () => () => {
+      if (lensActiveRef.current) {
+        window.dispatchEvent(new CustomEvent(LENS_VISIBILITY_EVENT, { detail: { active: false } }));
+      }
+    },
+    [],
+  );
 
   const updateFocusPosition = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!canUseLens(event)) return;
@@ -63,6 +81,7 @@ const Lens: React.FC<LensProps> = ({
 
   return (
     <div
+      data-magnifier-lens
       className={`relative overflow-hidden ${!isStatic ? "cursor-none" : ""} ${className}`}
       style={rootStyle}
       onPointerEnter={(event) => {
@@ -93,6 +112,7 @@ const Lens: React.FC<LensProps> = ({
         className="pointer-events-none absolute inset-0 z-50"
         style={{
           opacity: initiallyVisible ? 1 : 0,
+          transition: "opacity 180ms ease",
           willChange: "opacity, clip-path",
         }}
       >
