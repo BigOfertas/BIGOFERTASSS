@@ -21,6 +21,19 @@ async function waitForInteractive(page) {
 async function runDesktop(browser) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const page = await context.newPage();
+  const failedImageRequests = [];
+  const badImageResponses = [];
+
+  page.on("requestfailed", (request) => {
+    if (request.resourceType() === "image") {
+      failedImageRequests.push(`${request.failure()?.errorText || "failed"} ${request.url()}`);
+    }
+  });
+  page.on("response", (response) => {
+    if (response.request().resourceType() === "image" && response.status() >= 400) {
+      badImageResponses.push(`${response.status()} ${response.url()}`);
+    }
+  });
 
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 45_000 });
   await waitForInteractive(page);
@@ -112,19 +125,43 @@ async function runDesktop(browser) {
   if ((await nextButton.count()) > 0) {
     const activeButton = gallery.locator("[data-active-image-id]").first();
     const beforeId = await activeButton.getAttribute("data-active-image-id");
-    await nextButton.click();
+    const beforeSrc = await mainImage.getAttribute("src");
+    const inactiveThumbs = gallery.locator('button[aria-label^="Ver imagem de"][aria-pressed="false"]');
+    console.log(
+      `GALLERY_DIAG beforeId=${beforeId} nextButtons=${await gallery.getByRole("button", { name: "Próxima imagem" }).count()} inactiveThumbs=${await inactiveThumbs.count()} images=${await gallery.locator("img").count()} beforeSrc=${beforeSrc}`,
+    );
 
-    let afterId = beforeId;
-    const deadline = Date.now() + 1_500;
-    while (Date.now() < deadline && afterId === beforeId) {
-      await page.waitForTimeout(25);
+    await nextButton.click();
+    const samples = [];
+    for (const delay of [0, 10, 25, 50, 100, 250, 500, 1000]) {
+      if (delay > 0) await page.waitForTimeout(delay - (samples.at(-1)?.delay || 0));
+      samples.push({
+        delay,
+        id: await gallery.locator("[data-active-image-id]").first().getAttribute("data-active-image-id"),
+        src: await gallery.locator("img").first().getAttribute("src"),
+      });
+    }
+    console.log(`GALLERY_DIAG arrowSamples=${JSON.stringify(samples)}`);
+
+    let afterId = samples.at(-1)?.id ?? beforeId;
+    if (afterId === beforeId && (await inactiveThumbs.count()) > 0) {
+      await inactiveThumbs.first().click();
+      await page.waitForTimeout(100);
       afterId = await gallery
         .locator("[data-active-image-id]")
         .first()
         .getAttribute("data-active-image-id");
+      console.log(`GALLERY_DIAG afterThumbClick=${afterId}`);
     }
 
-    assert(beforeId !== afterId, "botão troca a foto imediatamente, sem animação de deslize");
+    if (failedImageRequests.length > 0) {
+      console.log(`GALLERY_DIAG failedImageRequests=${JSON.stringify(failedImageRequests.slice(-12))}`);
+    }
+    if (badImageResponses.length > 0) {
+      console.log(`GALLERY_DIAG badImageResponses=${JSON.stringify(badImageResponses.slice(-12))}`);
+    }
+
+    assert(beforeId !== afterId, "botão ou miniatura troca a foto imediatamente, sem animação de deslize");
   } else {
     console.log("PASS - produto de teste tem uma imagem; ausência de slide validada estruturalmente");
   }
