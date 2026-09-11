@@ -11,6 +11,7 @@ on:
       - "scripts/deploy-kids-purchase-sizes.mjs"
       - "scripts/deploy-catalog-filter-key-fix.mjs"
       - "scripts/deploy-owner-order-history-cutoff.mjs"
+      - "scripts/audit-stage2-patches.mjs"
       - "supabase/migrations/20260904213000_storefront_personalization.sql"
       - "supabase/migrations/20260904213500_catalog_commercial_type.sql"
       - "supabase/migrations/20260905004500_affiliate_self_service_links.sql"
@@ -27,6 +28,7 @@ on:
       - "supabase/migrations/20260910043000_catalog_filter_key_canonical.sql"
       - "supabase/migrations/20260910143538_hide_existing_owner_order_history.sql"
       - "supabase/migrations/20260911051000_stage2_purchase_customization_policy.sql"
+      - "supabase/migrations/20260911054000_stage2_storefront_priority.sql"
   workflow_dispatch:
 
 permissions:
@@ -52,6 +54,9 @@ jobs:
 
       - name: Deploy storefront upgrade migrations
         run: node scripts/deploy-storefront-upgrade-migrations.mjs
+
+      - name: Audit Stage 2 product patches
+        run: node scripts/audit-stage2-patches.mjs
 
       - name: Deploy canonical catalog filter keys
         run: node scripts/deploy-catalog-filter-key-fix.mjs
