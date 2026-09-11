@@ -1,6 +1,8 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 
 import { BRAND } from "@/config/brand";
+
+const FAQ_EXIT_DURATION_MS = 150;
 
 interface FAQItem {
   id: number;
@@ -96,7 +98,7 @@ const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={`h-5 w-5 flex-shrink-0 transform text-red-600 transition-transform duration-300 ease-in-out motion-reduce:transition-none ${
+    className={`h-5 w-5 flex-shrink-0 transform-gpu text-red-600 transition-transform duration-150 ease-out motion-reduce:transition-none ${
       isOpen ? "rotate-180" : "rotate-0"
     }`}
   >
@@ -112,6 +114,28 @@ interface FAQRowProps {
 
 const FAQRow = memo(function FAQRow({ item, isOpen, onToggle }: FAQRowProps) {
   const answerId = `faq-answer-${item.id}`;
+  const [answerMounted, setAnswerMounted] = useState(isOpen);
+  const [answerVisible, setAnswerVisible] = useState(false);
+
+  useEffect(() => {
+    let frame: number | undefined;
+    let timeout: number | undefined;
+
+    if (isOpen) {
+      setAnswerMounted(true);
+      frame = window.requestAnimationFrame(() => setAnswerVisible(true));
+    } else if (answerMounted) {
+      setAnswerVisible(false);
+      timeout = window.setTimeout(() => setAnswerMounted(false), FAQ_EXIT_DURATION_MS);
+    }
+
+    return () => {
+      if (frame !== undefined) window.cancelAnimationFrame(frame);
+      if (timeout !== undefined) window.clearTimeout(timeout);
+    };
+  }, [answerMounted, isOpen]);
+
+  const answerActive = isOpen && answerVisible;
 
   return (
     <div className="glass-card overflow-hidden rounded-[1.25rem]">
@@ -136,19 +160,22 @@ const FAQRow = memo(function FAQRow({ item, isOpen, onToggle }: FAQRowProps) {
         <ChevronIcon isOpen={isOpen} />
       </button>
 
-      <div
-        id={answerId}
-        aria-hidden={!isOpen}
-        className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${
-          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        }`}
-      >
-        <div className="min-h-0 overflow-hidden">
-          <div className="whitespace-pre-wrap border-t border-white/70 bg-white/35 px-4 py-4 text-xs leading-relaxed text-gray-600 md:px-5 md:py-5 md:text-sm">
+      {answerMounted ? (
+        <div
+          id={answerId}
+          aria-hidden={!isOpen}
+          className={`transform-gpu border-t border-white/70 bg-white/35 transition-[transform,opacity] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+            answerActive ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0"
+          }`}
+          style={{ contain: "paint" }}
+        >
+          <div className="whitespace-pre-wrap px-4 py-4 text-xs leading-relaxed text-gray-600 md:px-5 md:py-5 md:text-sm">
             {item.answer}
           </div>
         </div>
-      </div>
+      ) : (
+        <div id={answerId} hidden />
+      )}
     </div>
   );
 });
