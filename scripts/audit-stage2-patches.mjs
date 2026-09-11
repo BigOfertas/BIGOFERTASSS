@@ -42,7 +42,7 @@ function frozenWindbreaker(row) {
   const source = normalizeCatalogText(
     [row.name, row.category, row.campeonato, row.liga, row.time].filter(Boolean).join(" "),
   );
-  return /\b(CORTA VENTO|WINDBREAKER)\b/.test(source);
+  return /\b(CORTA[- ]?VENTO|WINDBREAKER)\b/.test(source);
 }
 
 const rows = await readOnly(`
