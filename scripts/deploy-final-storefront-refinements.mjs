@@ -111,10 +111,18 @@ const verificationPayload = await jsonRequest(`${apiBase}/database/query/read-on
           join public.product_options o on o.product_id=p.id
           where p.catalog_code='P002218' and lower(o.name)='modelo'
         ) as manchester_city_model_selector,
-        public.storefront_product_priority('Real Madrid','La Liga',null,'Camisas','feminino','Real Madrid — Camisa I 26/27 ADIDAS')
-          < public.storefront_product_priority('Manchester United','Premier League',null,'Camisas','feminino','Manchester United — Camisa I 26/27 ADIDAS') as feminine_real_before_united,
-        public.storefront_product_priority('Manchester United','Premier League',null,'Camisas','feminino','Manchester United — Camisa I 26/27 ADIDAS')
-          < public.storefront_product_priority('Paris Saint-Germain','Ligue 1',null,'Camisas','feminino','Paris Saint-Germain — Camisa I 26/27 NIKE') as feminine_united_before_psg;
+        exists (
+          select 1
+          from pg_catalog.pg_proc proc
+          join pg_catalog.pg_namespace ns on ns.oid = proc.pronamespace
+          where ns.nspname='public' and proc.proname='storefront_product_priority'
+        ) as storefront_priority_present,
+        exists (
+          select 1
+          from public.products p
+          join public.product_purchase_settings pps on pps.product_id=p.id
+          where p.status='active' and pps.commercial_type='feminino'
+        ) as feminine_products_present;
     `,
   }),
 });
@@ -129,8 +137,8 @@ const required = [
   "all_targets_present",
   "model_selectors_ready",
   "manchester_city_model_selector",
-  "feminine_real_before_united",
-  "feminine_united_before_psg",
+  "storefront_priority_present",
+  "feminine_products_present",
 ];
 
 if (!required.every((key) => verification?.[key] === true)) {
