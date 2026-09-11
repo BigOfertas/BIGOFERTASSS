@@ -77,6 +77,10 @@ const migrations = [
     "stage2_storefront_priority_security_fix_20260911",
     "supabase/migrations/20260911055500_stage2_storefront_priority_security_fix.sql",
   ],
+  [
+    "stage2_patch_reconciliation_20260911",
+    "supabase/migrations/20260911061000_stage2_patch_reconciliation.sql",
+  ],
 ];
 
 function migrationSql(file) {
