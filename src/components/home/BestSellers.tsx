@@ -21,6 +21,7 @@ const BestSellers: React.FC<BestSellersProps> = ({ initialData }) => {
     staleTime: 5 * 60_000,
     queryFn: fetchHomeLaunchProducts,
     initialData,
+    initialDataUpdatedAt: initialData ? 0 : undefined,
   });
   const launchProducts = (data?.items ?? []).slice(0, SHOWCASE_SIZE);
 
