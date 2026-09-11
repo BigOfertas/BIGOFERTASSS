@@ -120,6 +120,7 @@ check(
   "favicon público foi substituído por identidade DropBox",
   root.includes('{ rel: "icon", href: "/favicon.svg", type: "image/svg+xml" }') &&
     !root.includes('/favicon.ico') &&
+    !fs.existsSync("public/favicon.ico") &&
     favicon.includes('aria-label="DropBox"') &&
     favicon.includes('fill="#dc2626"'),
 );
