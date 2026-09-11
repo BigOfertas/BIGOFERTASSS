@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 
 const INTERACTIVE_SELECTOR =
   'a, button, img, input, textarea, select, [role="button"], [data-cursor-interactive]';
-const LENS_VISIBILITY_EVENT = "storefront:lens-visibility";
 
 export const Component = () => {
   const dotRef = useRef<HTMLDivElement>(null);
@@ -14,7 +13,6 @@ export const Component = () => {
   const borderDotPosition = useRef({ x: -100, y: -100 });
   const animationFrame = useRef<number | null>(null);
   const hasPointerPosition = useRef(false);
-  const lensActiveRef = useRef(false);
 
   useEffect(() => {
     const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -104,7 +102,7 @@ export const Component = () => {
         ensureAnimation();
       }
 
-      if (!lensActiveRef.current) setVisible(true);
+      setVisible(true);
     };
 
     const handlePointerOver = (event: PointerEvent) => {
@@ -123,28 +121,18 @@ export const Component = () => {
       if (!event.relatedTarget) setVisible(false);
     };
 
-    const handleLensVisibility = (event: Event) => {
-      const customEvent = event as CustomEvent<{ active?: boolean }>;
-      const active = customEvent.detail?.active === true;
-      lensActiveRef.current = active;
-      setInteractive(false);
-      setVisible(!active && hasPointerPosition.current);
-    };
-
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
     document.addEventListener("pointerover", handlePointerOver, {
       passive: true,
     });
     document.addEventListener("pointerout", handlePointerOut, { passive: true });
     window.addEventListener("mouseout", handleWindowOut, { passive: true });
-    window.addEventListener(LENS_VISIBILITY_EVENT, handleLensVisibility);
 
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
       document.removeEventListener("pointerover", handlePointerOver);
       document.removeEventListener("pointerout", handlePointerOut);
       window.removeEventListener("mouseout", handleWindowOut);
-      window.removeEventListener(LENS_VISIBILITY_EVENT, handleLensVisibility);
       if (animationFrame.current !== null) {
         window.cancelAnimationFrame(animationFrame.current);
       }
