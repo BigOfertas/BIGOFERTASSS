@@ -45,9 +45,10 @@ const ShopByLeague: React.FC = () => {
   });
 
   const incomingProducts = useMemo(() => {
-    const candidates = [...(torcedorQuery.data?.items ?? []), ...(jogadorQuery.data?.items ?? [])].filter(
-      isStandardHomeJersey,
-    );
+    const candidates = [
+      ...(torcedorQuery.data?.items ?? []),
+      ...(jogadorQuery.data?.items ?? []),
+    ].filter(isStandardHomeJersey);
 
     return selectVariedProducts(candidates, SHOWCASE_SIZE);
   }, [jogadorQuery.data?.items, torcedorQuery.data?.items]);

@@ -29,7 +29,9 @@ async function readOnly(query) {
 
 function patchCodes(value) {
   if (!Array.isArray(value)) return [];
-  return [...new Set(value.flatMap((item) => (typeof item?.code === "string" ? [item.code] : [])))].sort();
+  return [
+    ...new Set(value.flatMap((item) => (typeof item?.code === "string" ? [item.code] : []))),
+  ].sort();
 }
 
 function sameCodes(left, right) {

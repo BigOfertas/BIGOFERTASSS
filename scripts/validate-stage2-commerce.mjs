@@ -27,9 +27,7 @@ const patchAudit = read("scripts/audit-stage2-patches.mjs");
 const migration = read(
   "supabase/migrations/20260911051000_stage2_purchase_customization_policy.sql",
 );
-const priorityMigration = read(
-  "supabase/migrations/20260911054000_stage2_storefront_priority.sql",
-);
+const priorityMigration = read("supabase/migrations/20260911054000_stage2_storefront_priority.sql");
 
 check(
   "card possui ação direta de carrinho ao lado do preço",

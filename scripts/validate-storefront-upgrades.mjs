@@ -212,8 +212,9 @@ check(
     brazilProducts.includes("ProductCardPlaceholder"),
 );
 check(
-  "card inteiro abre o produto e não repete CTA",
-  productCard.includes("className={`group block h-full") &&
+  "card mantém navegação ao produto e quick add separado sem CTA repetido",
+  productCard.includes("data-product-card") &&
+    productCard.includes("<ProductQuickAdd") &&
     productCard.includes('to="/product/$id"') &&
     !productCard.includes("Ver produto") &&
     !productCard.includes("Ver detalhes"),
