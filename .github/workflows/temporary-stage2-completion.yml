@@ -75,12 +75,6 @@ jobs:
               '''  "non_shorts_personalization_policy",\n];''',
               '''  "non_shorts_personalization_policy",\n  "stage2_storefront_priority_rpc",\n];''',
           )
-
-          replace_required(
-              ".github/workflows/deploy-storefront-upgrades-backend.yml",
-              '''      - "supabase/migrations/20260911051000_stage2_purchase_customization_policy.sql"''',
-              '''      - "supabase/migrations/20260911051000_stage2_purchase_customization_policy.sql"\n      - "supabase/migrations/20260911054000_stage2_storefront_priority.sql"''',
-          )
           PY
 
       - name: Format changed source
@@ -115,7 +109,7 @@ jobs:
           set -euo pipefail
           git config user.name "BigOfertas"
           git config user.email "contato@bigofertas.net"
-          git add src scripts .github/workflows/deploy-storefront-upgrades-backend.yml supabase/migrations/20260911054000_stage2_storefront_priority.sql
+          git add src scripts supabase/migrations/20260911054000_stage2_storefront_priority.sql
           if git diff --cached --quiet; then
             echo "NO_STAGE2_COMPLETION_CHANGES"
             exit 0
