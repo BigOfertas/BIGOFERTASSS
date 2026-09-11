@@ -15,6 +15,7 @@ import glassLegacyCss from "../glass-legacy.css?url";
 import { AuthProvider } from "../lib/auth";
 import Footer from "../components/layout/Footer";
 import { CartProvider } from "../context/CartContext";
+import { CookieConsent } from "@/components/privacy/CookieConsent";
 import { Toaster } from "@/components/ui/sonner";
 import { Component as CursorFollower } from "@/components/ui/cursor-follower";
 import { BRAND } from "@/config/brand";
@@ -169,6 +170,7 @@ function RootComponent() {
             {storefrontHydrated && showStorefrontFooter ? <Footer /> : null}
           </div>
           <CursorFollower />
+          <CookieConsent />
           <Toaster position="top-center" richColors />
         </CartProvider>
       </AuthProvider>
