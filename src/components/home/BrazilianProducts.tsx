@@ -14,25 +14,25 @@ const BrazilianProducts: React.FC = () => {
     campeonato: "brasileirao",
     commercialType: "torcedor",
     pageSize: 48,
-    sort: "newest",
+    sort: "featured",
   });
   const championshipJogadorQuery = useCatalogProducts({
     campeonato: "brasileirao",
     commercialType: "jogador",
     pageSize: 48,
-    sort: "newest",
+    sort: "featured",
   });
   const legacyTorcedorQuery = useCatalogProducts({
     liga: "brasileirao",
     commercialType: "torcedor",
     pageSize: 48,
-    sort: "newest",
+    sort: "featured",
   });
   const legacyJogadorQuery = useCatalogProducts({
     liga: "brasileirao",
     commercialType: "jogador",
     pageSize: 48,
-    sort: "newest",
+    sort: "featured",
   });
 
   const brazilianProducts = useMemo(() => {
@@ -41,9 +41,7 @@ const BrazilianProducts: React.FC = () => {
       ...(championshipJogadorQuery.data?.items ?? []),
       ...(legacyTorcedorQuery.data?.items ?? []),
       ...(legacyJogadorQuery.data?.items ?? []),
-    ]
-      .filter(isStandardHomeJersey)
-      .sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at));
+    ].filter(isStandardHomeJersey);
 
     return selectVariedProducts(candidates, SHOWCASE_SIZE);
   }, [
