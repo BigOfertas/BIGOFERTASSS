@@ -42,7 +42,8 @@ jobs:
             supabase/functions/_shared/r2.ts \
             supabase/functions/r2-image-presign/index.ts \
             supabase/functions/site-asset-presign/index.ts \
-            scripts/validate-image-loading-performance.mjs
+            scripts/validate-image-loading-performance.mjs \
+            scripts/validate-stage1-ux.mjs
 
       - name: Validate image performance rules
         run: node scripts/validate-image-loading-performance.mjs
@@ -98,7 +99,8 @@ jobs:
             supabase/functions/_shared/r2.ts \
             supabase/functions/r2-image-presign/index.ts \
             supabase/functions/site-asset-presign/index.ts \
-            scripts/validate-image-loading-performance.mjs
+            scripts/validate-image-loading-performance.mjs \
+            scripts/validate-stage1-ux.mjs
           if git diff --cached --quiet; then
             echo "NO_FORMAT_CHANGES"
             exit 0
