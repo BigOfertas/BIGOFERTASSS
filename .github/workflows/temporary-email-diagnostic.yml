@@ -32,6 +32,43 @@ jobs:
           curl -fsS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/config/auth" > /tmp/auth-config.json
           jq '{site_url,external_email_enabled,mailer_autoconfirm,smtp_configured:((((.smtp_host // "")|length)>0) and (((.smtp_admin_email // "")|length)>0)),smtp_host:(.smtp_host // null),smtp_port:(.smtp_port // null),smtp_admin_email:(.smtp_admin_email // null),smtp_sender_name:(.smtp_sender_name // null),rate_limit_email_sent:(.rate_limit_email_sent // null)}' /tmp/auth-config.json
 
+      - name: Test configured SMTP credentials and sender without sending mail
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, smtplib, ssl
+          cfg=json.load(open('/tmp/auth-config.json'))
+          host=cfg.get('smtp_host') or ''
+          port=int(cfg.get('smtp_port') or 0)
+          user=cfg.get('smtp_user') or ''
+          password=cfg.get('smtp_pass') or ''
+          sender=cfg.get('smtp_admin_email') or ''
+          result={'smtp_credentials_available_to_management_api': bool(user and password)}
+          if not (host and port and user and password and sender):
+              result['smtp_runtime_probe']='skipped_missing_returned_credentials'
+              print(json.dumps(result))
+              raise SystemExit(0)
+          try:
+              if port == 465:
+                  client=smtplib.SMTP_SSL(host, port, timeout=15, context=ssl.create_default_context())
+              else:
+                  client=smtplib.SMTP(host, port, timeout=15)
+                  client.ehlo()
+                  client.starttls(context=ssl.create_default_context())
+              client.login(user, password)
+              code, message = client.mail(sender)
+              result['smtp_login_ok']=True
+              result['mail_from_code']=int(code)
+              result['mail_from_accepted']=200 <= int(code) < 300
+              client.rset()
+              client.quit()
+          except Exception as exc:
+              result['smtp_login_ok']=False
+              result['error_type']=type(exc).__name__
+          print(json.dumps(result))
+          PY
+
       - name: Check required Edge Function secrets exist
         shell: bash
         run: |
