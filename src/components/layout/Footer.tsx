@@ -75,7 +75,7 @@ export default function Footer() {
                 className="flex items-center gap-3 hover:text-red-500"
               >
                 <Mail className="h-4 w-4" />
-                {BRAND.contactEmail}
+                Fale por e-mail
               </a>
               <a
                 href={BRAND.whatsappUrl}

@@ -55,7 +55,7 @@ export async function sendResendTemplate(input: {
         authorization: `Bearer ${apiKey}`,
         "content-type": "application/json",
         accept: "application/json",
-        "user-agent": "BIGofertas/1.0",
+        "user-agent": "DropBox/1.0",
         "Idempotency-Key": idempotencyKey,
       },
       body: JSON.stringify({

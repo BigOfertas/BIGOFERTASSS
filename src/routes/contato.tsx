@@ -20,7 +20,7 @@ function ContactPage() {
           >
             <Mail className="h-5 w-5 text-red-600" aria-hidden="true" />
             <strong className="mt-3 block text-gray-950">E-mail</strong>
-            <span className="mt-1 block break-all text-sm text-gray-600">{BRAND.contactEmail}</span>
+            <span className="mt-1 block text-sm text-gray-600">Enviar e-mail para a DropBox</span>
           </a>
           <a
             href={BRAND.whatsappUrl}

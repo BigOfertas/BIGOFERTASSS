@@ -31,6 +31,9 @@ jobs:
       - name: Validate static Hostinger architecture
         run: node scripts/validate-hostinger-static.mjs
 
+      - name: Validate DropBox rebrand
+        run: node scripts/validate-stage3-rebrand.mjs
+
       - name: Build Hostinger SPA
         run: bun run build:hostinger
 
@@ -55,6 +58,17 @@ jobs:
           echo "HOSTINGER_OUTPUT=$OUTPUT" >> "$GITHUB_ENV"
           echo "Static output: $OUTPUT"
           find "$OUTPUT" -maxdepth 2 -type f | sort | head -200
+
+      - name: Verify DropBox public shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F -q "DropBox" "$HOSTINGER_OUTPUT/index.html"
+          if grep -E -q "BIGofertas|BigOfertas|BIGOFERTAS" "$HOSTINGER_OUTPUT/index.html"; then
+            echo "Legacy BIGofertas wordmark found in Hostinger index.html." >&2
+            exit 1
+          fi
+          echo "DROPBOX_PUBLIC_SHELL_OK"
 
       - name: Verify public Supabase configuration in bundle
         shell: bash

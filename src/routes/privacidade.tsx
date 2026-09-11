@@ -43,7 +43,7 @@ function PrivacyPage() {
             className="font-bold text-red-600 hover:underline"
             href={`mailto:${BRAND.contactEmail}`}
           >
-            {BRAND.contactEmail}
+            enviar mensagem para a DropBox
           </a>
         </p>
       </InstitutionalSection>

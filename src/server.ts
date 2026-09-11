@@ -38,7 +38,7 @@ type ServerEntry = {
   ) => Promise<Response> | Response;
 };
 
-const DEFAULT_RESEND_FROM = "BIGofertas <contato@bigofertas.net>";
+const DEFAULT_RESEND_FROM = "DropBox <contato@bigofertas.net>";
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 

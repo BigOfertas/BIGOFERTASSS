@@ -1,7 +1,7 @@
 import { corsHeaders } from "../_shared/http.ts";
 
 const RESEND_EMAILS_URL = "https://api.resend.com/emails";
-const DEFAULT_FROM = "BIGofertas <contato@bigofertas.net>";
+const DEFAULT_FROM = "DropBox <contato@bigofertas.net>";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CODE_PATTERN = /^\d{6}$/;
@@ -215,7 +215,7 @@ async function passwordGrant(email: string, password: string): Promise<SupabaseP
 
     if (source.includes("email_not_confirmed") || source.includes("email not confirmed")) {
       throw new EmailTwoFactorError(
-        "Confirme seu e-mail antes de entrar. Use o link enviado pela BIGofertas.",
+        "Confirme seu e-mail antes de entrar. Use o link enviado pela DropBox.",
         403,
         "EMAIL_NOT_CONFIRMED",
       );
@@ -244,7 +244,7 @@ async function passwordGrant(email: string, password: string): Promise<SupabaseP
   const confirmedAt = (user as { email_confirmed_at?: unknown }).email_confirmed_at;
   if (typeof confirmedAt !== "string" || !confirmedAt) {
     throw new EmailTwoFactorError(
-      "Confirme seu e-mail antes de entrar. Use o link enviado pela BIGofertas.",
+      "Confirme seu e-mail antes de entrar. Use o link enviado pela DropBox.",
       403,
       "EMAIL_NOT_CONFIRMED",
     );
@@ -457,7 +457,7 @@ async function sendCode(input: {
   const title =
     input.purpose === "enroll"
       ? "Confirme a ativação da verificação em duas etapas"
-      : "Confirme seu acesso à BIGofertas";
+      : "Confirme seu acesso à DropBox";
 
   let upstream: Response;
   try {
@@ -467,7 +467,7 @@ async function sendCode(input: {
         authorization: `Bearer ${apiKey}`,
         "content-type": "application/json",
         accept: "application/json",
-        "user-agent": "BIGofertas/1.0",
+        "user-agent": "DropBox/1.0",
         "Idempotency-Key": `email-2fa/${input.purpose}/${input.challengeId}`,
       },
       body: JSON.stringify({

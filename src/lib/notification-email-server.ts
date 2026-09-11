@@ -55,7 +55,7 @@ type PreparedEmail = {
   variables: Record<string, ResendTemplateVariable>;
 };
 
-const DEFAULT_RESEND_FROM = "BIGofertas <contato@bigofertas.net>";
+const DEFAULT_RESEND_FROM = "DropBox <contato@bigofertas.net>";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CORREIOS_TRACKING_URL =
   "https://www.correios.com.br/home-page-2024/rastreamento/acompanhe-seu-objeto";

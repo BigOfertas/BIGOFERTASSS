@@ -45,6 +45,9 @@ jobs:
       - name: Validate static Hostinger architecture
         run: node scripts/validate-hostinger-static.mjs
 
+      - name: Validate DropBox rebrand
+        run: node scripts/validate-stage3-rebrand.mjs
+
       - name: Build Hostinger SPA
         run: bun run build:hostinger
 
@@ -68,6 +71,17 @@ jobs:
 
           echo "HOSTINGER_OUTPUT=$OUTPUT" >> "$GITHUB_ENV"
           echo "Static output: $OUTPUT"
+
+      - name: Verify DropBox public shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F -q "DropBox" "$HOSTINGER_OUTPUT/index.html"
+          if grep -E -q "BIGofertas|BigOfertas|BIGOFERTAS" "$HOSTINGER_OUTPUT/index.html"; then
+            echo "Legacy BIGofertas wordmark found in production bundle shell." >&2
+            exit 1
+          fi
+          echo "DROPBOX_PUBLIC_SHELL_OK"
 
       - name: Verify public Supabase configuration in bundle
         shell: bash
@@ -156,11 +170,11 @@ jobs:
             "$HOSTINGER_SSH_USER@$HOSTINGER_SSH_HOST" \
             'set -eu; TARGET="$HOME/domains/bigofertas.net/public_html"; test -f "$TARGET/index.html"; test -f "$TARGET/.htaccess"; test -d "$TARGET/media"; echo HOSTINGER_DEPLOY_OK'
 
-      - name: Verify production hard-refresh shell
+      - name: Verify production hard-refresh shell and DropBox brand
         shell: bash
         run: |
           set -euo pipefail
-          for path in / /products /login; do
+          for path in / /products /login /cadastro /cart; do
             body="$(mktemp)"
             curl --fail --silent --show-error --location --retry 3 --retry-delay 2 \
               "https://bigofertas.net${path}?refresh_shell_check=${GITHUB_RUN_ID}" \
@@ -170,6 +184,16 @@ jobs:
               rm -f "$body"
               exit 1
             fi
+            if ! grep -F -q "DropBox" "$body"; then
+              echo "DropBox brand not found in production HTML for ${path}." >&2
+              rm -f "$body"
+              exit 1
+            fi
+            if grep -E -q "BIGofertas|BigOfertas|BIGOFERTAS" "$body"; then
+              echo "Legacy BIGofertas wordmark found in production HTML for ${path}." >&2
+              rm -f "$body"
+              exit 1
+            fi
             rm -f "$body"
           done
-          echo "HOSTINGER_REFRESH_SHELL_PRODUCTION_OK"
+          echo "DROPBOX_PRODUCTION_BRAND_OK"
