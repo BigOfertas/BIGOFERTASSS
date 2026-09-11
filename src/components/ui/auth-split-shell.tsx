@@ -153,7 +153,8 @@ export function AuthSplitShell({
                     Conta DropBox
                   </span>
                   <span className="text-[11px] font-black uppercase tracking-[0.16em] text-white/55">
-                    {String(activeSlide + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+                    {String(activeSlide + 1).padStart(2, "0")} /{" "}
+                    {String(slides.length).padStart(2, "0")}
                   </span>
                 </div>
 
@@ -169,7 +170,10 @@ export function AuthSplitShell({
                   </p>
 
                   {slides.length > 1 ? (
-                    <div className="mt-7 flex items-center gap-2" aria-label="Imagens da área de acesso">
+                    <div
+                      className="mt-7 flex items-center gap-2"
+                      aria-label="Imagens da área de acesso"
+                    >
                       {slides.map((slide, index) => (
                         <button
                           key={slide.slot}
@@ -202,7 +206,8 @@ export function AuthSplitShell({
                   {sideTitle}
                 </h2>
                 <p className="mt-5 max-w-lg text-[15px] leading-7 text-white/62">
-                  Acompanhe pedidos, mantenha seus dados organizados e acesse os recursos da sua conta.
+                  Acompanhe pedidos, mantenha seus dados organizados e acesse os recursos da sua
+                  conta.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-2.5">
                   {fallbackHighlights.map(({ icon: Icon, label }) => (
