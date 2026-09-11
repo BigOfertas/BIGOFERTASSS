@@ -37,12 +37,16 @@ check(
 );
 
 check(
-  "quick add abre aba animada e carrega produto/configuração somente ao abrir",
+  "quick add abre aba animada e carrega produto/configuração somente ao abrir sem spinner infinito",
   quickAdd.includes("<Popover") &&
     quickAdd.includes("data-product-quick-add-panel") &&
     quickAdd.includes("fetchProductDetail(productSlug || productId)") &&
     quickAdd.includes("fetchProductPurchaseConfig(productId)") &&
-    quickAdd.includes("if (!open || data || loading) return"),
+    quickAdd.includes("if (!open) return") &&
+    quickAdd.includes("QUICK_ADD_TIMEOUT_MS") &&
+    quickAdd.includes("withTimeout") &&
+    quickAdd.includes("configLoading") &&
+    quickAdd.includes("detailLoading"),
 );
 
 check(
