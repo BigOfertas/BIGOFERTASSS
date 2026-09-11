@@ -17,6 +17,7 @@ import { parseCatalogPage } from "@/lib/catalog";
 const TOP_BANNER_DESKTOP = "/assets/promos/top-banner-desktop.webp";
 const TOP_BANNER_MOBILE = "/assets/promos/top-banner-mobile.webp";
 const STATIC_HOME_LAUNCHES = parseCatalogPage(homeLaunchesSnapshot as unknown as Json);
+const AFFILIATE_DESTINATION = "/conta?secao=afiliados";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -62,6 +63,7 @@ function Index() {
           style={{ aspectRatio: "1920/550" }}
           images={[heroDesktop]}
           altText={`Campanha ${BRAND.officialName}`}
+          href={AFFILIATE_DESTINATION}
           priority
         />
       </div>
@@ -71,6 +73,7 @@ function Index() {
           style={{ aspectRatio: "1080/1067" }}
           images={[heroMobile]}
           altText={`Campanha ${BRAND.officialName}`}
+          href={AFFILIATE_DESTINATION}
           priority
         />
       </div>
