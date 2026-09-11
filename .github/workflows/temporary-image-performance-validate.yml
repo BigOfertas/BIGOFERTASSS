@@ -64,12 +64,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          OUTPUT="dist/client"
-          test -f "$OUTPUT/index.html"
-          grep -F -q 'data-product-card' "$OUTPUT/index.html"
-          grep -F -q 'srcset=' "$OUTPUT/index.html"
-          grep -F -q 'fetchpriority="high"' "$OUTPUT/index.html"
-          echo "HOMEPAGE_PRODUCT_IMAGES_PRERENDERED"
+          python - <<'PY'
+          from pathlib import Path
+          html = Path("dist/client/index.html").read_text(encoding="utf-8")
+          checks = {
+              "product_cards": html.count("data-product-card"),
+              "srcset": html.lower().count("srcset="),
+              "product_links": html.count("/product/"),
+              "high_priority": html.lower().count("fetchpriority"),
+              "google_images": html.count("googleusercontent.com"),
+              "r2_images": html.count("img.bigofertas.net"),
+          }
+          print("PRERENDER_IMAGE_MARKUP", checks)
+          if checks["product_cards"] < 1:
+              raise SystemExit("No prerendered product cards found")
+          if checks["srcset"] < 1:
+              raise SystemExit("No responsive srcset found in prerendered homepage")
+          if checks["product_links"] < 1:
+              raise SystemExit("No prerendered product links found")
+          print("HOMEPAGE_PRODUCT_IMAGES_PRERENDERED")
+          PY
 
       - name: Commit formatter output
         shell: bash
