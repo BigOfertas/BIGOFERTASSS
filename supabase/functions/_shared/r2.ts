@@ -10,6 +10,8 @@ export const ALLOWED_IMAGE_MIME_TYPES = [
 
 export type AllowedImageMimeType = (typeof ALLOWED_IMAGE_MIME_TYPES)[number];
 
+export const R2_IMMUTABLE_IMAGE_CACHE_CONTROL = "public, max-age=31536000, immutable";
+
 const EXTENSION_BY_MIME: Record<AllowedImageMimeType, string> = {
   "image/webp": "webp",
   "image/avif": "avif",
@@ -130,15 +132,17 @@ export async function createImageUploadUrl(objectKey: string, contentType: Allow
     accessKeyId,
     secretAccessKey,
   });
+  const requiredHeaders = {
+    "Content-Type": contentType,
+    "Cache-Control": R2_IMMUTABLE_IMAGE_CACHE_CONTROL,
+  };
 
   const signedRequest = await client.sign(
     new Request(
       `${r2Url}/${encodeURIComponent(bucket)}/${encodeObjectKey(objectKey)}?X-Amz-Expires=${expiresIn}`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": contentType,
-        },
+        headers: requiredHeaders,
       },
     ),
     {
@@ -146,7 +150,7 @@ export async function createImageUploadUrl(objectKey: string, contentType: Allow
     },
   );
 
-  return { uploadUrl: signedRequest.url.toString(), expiresIn };
+  return { uploadUrl: signedRequest.url.toString(), expiresIn, requiredHeaders };
 }
 
 export async function headProductImage(objectKey: string) {
@@ -162,6 +166,7 @@ export async function headProductImage(objectKey: string) {
   return {
     byteSize: result.ContentLength ?? null,
     contentType: result.ContentType?.toLowerCase() ?? null,
+    cacheControl: result.CacheControl ?? null,
     etag: result.ETag?.replace(/^"|"$/g, "") ?? null,
   };
 }
