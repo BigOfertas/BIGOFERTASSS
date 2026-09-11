@@ -179,10 +179,7 @@ const Header: React.FC = () => {
     if (!mobilePanel) return;
 
     const handleOutside = (event: PointerEvent) => {
-      if (
-        mobileHeaderRef.current &&
-        !mobileHeaderRef.current.contains(event.target as Node)
-      ) {
+      if (mobileHeaderRef.current && !mobileHeaderRef.current.contains(event.target as Node)) {
         setMobilePanel(null);
       }
     };

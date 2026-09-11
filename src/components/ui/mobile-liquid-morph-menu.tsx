@@ -56,9 +56,7 @@ export function MobileLiquidMorphMenu({
                     onClick={item.onClick}
                     tabIndex={open ? 0 : -1}
                     className={`group flex min-h-11 items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.055] px-3 py-2.5 text-left text-[12px] font-extrabold leading-4 tracking-[-0.01em] text-[#f7f1ed] transition duration-200 active:scale-[0.98] active:bg-white/10 motion-reduce:transition-none ${
-                      items.length % 2 === 1 && index === items.length - 1
-                        ? "col-span-2"
-                        : ""
+                      items.length % 2 === 1 && index === items.length - 1 ? "col-span-2" : ""
                     }`}
                   >
                     {Icon ? (

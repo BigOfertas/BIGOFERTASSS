@@ -178,7 +178,8 @@ function RegisterPage() {
         title="Agora confirme seu e-mail"
         description={
           <>
-            Enviamos uma confirmação para <strong className="text-gray-900">{email.trim()}</strong>. Sua conta só poderá ser acessada depois dessa confirmação.
+            Enviamos uma confirmação para <strong className="text-gray-900">{email.trim()}</strong>.
+            Sua conta só poderá ser acessada depois dessa confirmação.
           </>
         }
         footer={
@@ -191,7 +192,9 @@ function RegisterPage() {
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
             <MailCheck className="h-7 w-7" />
           </span>
-          <h2 className="mt-4 text-lg font-black tracking-[-0.025em] text-gray-950">E-mail de confirmação enviado</h2>
+          <h2 className="mt-4 text-lg font-black tracking-[-0.025em] text-gray-950">
+            E-mail de confirmação enviado
+          </h2>
           <p className="mt-2 text-sm leading-6 text-gray-500">
             Abra a mensagem da DropBox e use o link de confirmação para liberar seu acesso.
           </p>
@@ -235,7 +238,10 @@ function RegisterPage() {
       footer={
         <p className="text-sm text-gray-500">
           Já tem conta?{" "}
-          <Link to="/login" className="font-black text-red-600 transition hover:text-red-700 hover:underline">
+          <Link
+            to="/login"
+            className="font-black text-red-600 transition hover:text-red-700 hover:underline"
+          >
             Entrar
           </Link>
         </p>
@@ -281,7 +287,10 @@ function RegisterPage() {
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="auth-form-card space-y-4 rounded-[1.7rem] p-5 sm:p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="auth-form-card space-y-4 rounded-[1.7rem] p-5 sm:p-6"
+      >
         <label className="block text-sm font-bold text-gray-800">
           Nome
           <div className="auth-input-wrap mt-1.5 rounded-2xl">
@@ -315,7 +324,9 @@ function RegisterPage() {
             />
           </div>
           {phone && !phoneValid ? (
-            <span className="mt-1.5 block text-xs text-amber-700">Informe um telefone com um DDD brasileiro válido.</span>
+            <span className="mt-1.5 block text-xs text-amber-700">
+              Informe um telefone com um DDD brasileiro válido.
+            </span>
           ) : null}
         </label>
 
@@ -356,7 +367,9 @@ function RegisterPage() {
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
-          <span className={`mt-1.5 block text-xs ${password && !passwordValid ? "text-amber-700" : "text-gray-400"}`}>
+          <span
+            className={`mt-1.5 block text-xs ${password && !passwordValid ? "text-amber-700" : "text-gray-400"}`}
+          >
             Pelo menos 8 caracteres.
           </span>
         </label>
@@ -389,7 +402,10 @@ function RegisterPage() {
         </label>
 
         {errorMessage ? (
-          <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p
+            role="alert"
+            className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          >
             {errorMessage}
           </p>
         ) : null}

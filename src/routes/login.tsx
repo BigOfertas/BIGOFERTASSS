@@ -117,8 +117,12 @@ function LoginPage() {
         description="Estamos direcionando você para sua área da DropBox."
       >
         <div className="auth-form-card rounded-[1.6rem] p-6">
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-gray-400">E-mail conectado</p>
-          <p className="mt-2 break-all text-sm font-bold text-gray-900">{user.email ?? "Conta autenticada"}</p>
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-gray-400">
+            E-mail conectado
+          </p>
+          <p className="mt-2 break-all text-sm font-bold text-gray-900">
+            {user.email ?? "Conta autenticada"}
+          </p>
 
           <div className="mt-5 space-y-2.5">
             <Link
@@ -138,7 +142,10 @@ function LoginPage() {
           </div>
 
           {errorMessage ? (
-            <p role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p
+              role="alert"
+              className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
               {errorMessage}
             </p>
           ) : null}
@@ -209,11 +216,16 @@ function LoginPage() {
           </label>
 
           <p className="mt-2 text-xs leading-5 text-gray-400">
-            {expiresLabel ? `Este código expira por volta de ${expiresLabel}.` : "O código expira em 10 minutos."}
+            {expiresLabel
+              ? `Este código expira por volta de ${expiresLabel}.`
+              : "O código expira em 10 minutos."}
           </p>
 
           {errorMessage ? (
-            <p role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p
+              role="alert"
+              className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
               {errorMessage}
             </p>
           ) : null}
@@ -249,7 +261,10 @@ function LoginPage() {
       footer={
         <p className="text-sm text-gray-500">
           Ainda não tem uma conta?{" "}
-          <Link to="/cadastro" className="font-black text-red-600 transition hover:text-red-700 hover:underline">
+          <Link
+            to="/cadastro"
+            className="font-black text-red-600 transition hover:text-red-700 hover:underline"
+          >
             Criar conta
           </Link>
         </p>
@@ -317,7 +332,10 @@ function LoginPage() {
         </label>
 
         {errorMessage ? (
-          <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p
+            role="alert"
+            className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          >
             {errorMessage}
           </p>
         ) : null}

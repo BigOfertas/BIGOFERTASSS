@@ -28,7 +28,8 @@ const benefits = [
   {
     icon: BadgePercent,
     title: "Área de afiliados",
-    description: "Acesse indicações, comissões e recursos do programa quando disponíveis na sua conta.",
+    description:
+      "Acesse indicações, comissões e recursos do programa quando disponíveis na sua conta.",
   },
   {
     icon: ShieldCheck,
@@ -72,11 +73,15 @@ export function AuthSplitShell({
           </div>
 
           <div className="mb-7">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-red-600">{eyebrow}</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-red-600">
+              {eyebrow}
+            </p>
             <h1 className="mt-2 text-[2.15rem] font-black leading-[1.02] tracking-[-0.045em] text-gray-950 sm:text-[2.65rem]">
               {title}
             </h1>
-            <p className="mt-3 max-w-md text-sm leading-6 text-gray-500 sm:text-[15px]">{description}</p>
+            <p className="mt-3 max-w-md text-sm leading-6 text-gray-500 sm:text-[15px]">
+              {description}
+            </p>
           </div>
 
           {children}
@@ -96,30 +101,37 @@ export function AuthSplitShell({
           </div>
 
           <div className="relative z-10 my-auto max-w-xl py-10">
-            <p className="text-sm font-bold uppercase tracking-[0.13em] text-red-300">Conta DropBox</p>
+            <p className="text-sm font-bold uppercase tracking-[0.13em] text-red-300">
+              Conta DropBox
+            </p>
             <h2 className="mt-4 max-w-lg text-5xl font-black leading-[0.97] tracking-[-0.055em] xl:text-6xl">
               {sideTitle}
             </h2>
             <p className="mt-5 max-w-lg text-[15px] leading-7 text-white/65">{sideDescription}</p>
 
             <div className="mt-9 grid grid-cols-2 gap-3">
-              {benefits.map(({ icon: Icon, title: benefitTitle, description: benefitDescription }) => (
-                <div
-                  key={benefitTitle}
-                  className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-md"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-500/15 text-red-300">
-                    <Icon className="h-4.5 w-4.5" aria-hidden="true" />
-                  </span>
-                  <h3 className="mt-4 text-sm font-extrabold tracking-[-0.02em]">{benefitTitle}</h3>
-                  <p className="mt-1.5 text-xs leading-5 text-white/50">{benefitDescription}</p>
-                </div>
-              ))}
+              {benefits.map(
+                ({ icon: Icon, title: benefitTitle, description: benefitDescription }) => (
+                  <div
+                    key={benefitTitle}
+                    className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-md"
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-500/15 text-red-300">
+                      <Icon className="h-4.5 w-4.5" aria-hidden="true" />
+                    </span>
+                    <h3 className="mt-4 text-sm font-extrabold tracking-[-0.02em]">
+                      {benefitTitle}
+                    </h3>
+                    <p className="mt-1.5 text-xs leading-5 text-white/50">{benefitDescription}</p>
+                  </div>
+                ),
+              )}
             </div>
           </div>
 
           <div className="relative z-10 border-t border-white/10 pt-5 text-xs leading-5 text-white/45">
-            Use apenas os dados cadastrados diretamente na DropBox. Não utilizamos login por Google ou outras redes sociais.
+            Use apenas os dados cadastrados diretamente na DropBox. Não utilizamos login por Google
+            ou outras redes sociais.
           </div>
         </div>
       </aside>
