@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 
 import bannerInferiorAsset from "@/assets/promos/banner-promo-inferior.png.asset.json";
 import BestSellers from "@/components/home/BestSellers";
@@ -18,6 +18,7 @@ const TOP_BANNER_DESKTOP = "/assets/promos/top-banner-desktop.webp";
 const TOP_BANNER_MOBILE = "/assets/promos/top-banner-mobile.webp";
 const STATIC_HOME_LAUNCHES = parseCatalogPage(homeLaunchesSnapshot as unknown as Json);
 const AFFILIATE_DESTINATION = "/conta?secao=afiliados";
+const BRAZIL_CATALOG_SEARCH = { campeonato: "brasileirao", sort: "featured" } as const;
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -82,42 +83,51 @@ function Index() {
         <BestSellers initialData={STATIC_HOME_LAUNCHES} />
         <VisualCategories />
 
-        {ambientDesktop || ambientMobile ? (
-          <div className="mx-auto my-2 w-full max-w-[1920px] overflow-hidden bg-gray-100">
-            <picture>
-              {ambientMobile ? <source media="(max-width: 767px)" srcSet={ambientMobile} /> : null}
-              <img
-                src={ambientDesktop ?? ambientMobile ?? undefined}
-                alt={`Arte promocional ${BRAND.officialName}`}
-                loading="lazy"
-                decoding="async"
-                width={1920}
-                height={208}
-                className="hidden h-auto w-full object-cover md:block"
-              />
-              {ambientMobile ? (
+        <Link
+          to="/products"
+          search={BRAZIL_CATALOG_SEARCH}
+          aria-label="Ver todos os produtos brasileiros"
+          className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+        >
+          {ambientDesktop || ambientMobile ? (
+            <div className="mx-auto my-2 w-full max-w-[1920px] overflow-hidden bg-gray-100">
+              <picture>
+                {ambientMobile ? (
+                  <source media="(max-width: 767px)" srcSet={ambientMobile} />
+                ) : null}
                 <img
-                  src={ambientMobile}
+                  src={ambientDesktop ?? ambientMobile ?? undefined}
                   alt={`Arte promocional ${BRAND.officialName}`}
                   loading="lazy"
                   decoding="async"
-                  width={1080}
-                  height={443}
-                  className="h-auto w-full object-cover md:hidden"
+                  width={1920}
+                  height={208}
+                  className="hidden h-auto w-full object-cover md:block"
                 />
-              ) : null}
-            </picture>
-          </div>
-        ) : (
-          <div
-            aria-hidden="true"
-            className="ambient-band mx-auto my-2 flex min-h-28 w-full items-center justify-center overflow-hidden py-7 max-md:min-h-32 max-md:py-9 md:min-h-36 md:py-10 lg:min-h-40"
-          >
-            <span className="select-none font-black tracking-[-0.08em] text-gray-900/[0.035] text-[clamp(3.5rem,12vw,10rem)]">
-              {BRAND.shortMark}
-            </span>
-          </div>
-        )}
+                {ambientMobile ? (
+                  <img
+                    src={ambientMobile}
+                    alt={`Arte promocional ${BRAND.officialName}`}
+                    loading="lazy"
+                    decoding="async"
+                    width={1080}
+                    height={443}
+                    className="h-auto w-full object-cover md:hidden"
+                  />
+                ) : null}
+              </picture>
+            </div>
+          ) : (
+            <div
+              aria-hidden="true"
+              className="ambient-band mx-auto my-2 flex min-h-28 w-full items-center justify-center overflow-hidden py-7 max-md:min-h-32 max-md:py-9 md:min-h-36 md:py-10 lg:min-h-40"
+            >
+              <span className="select-none font-black tracking-[-0.08em] text-gray-900/[0.035] text-[clamp(3.5rem,12vw,10rem)]">
+                {BRAND.shortMark}
+              </span>
+            </div>
+          )}
+        </Link>
 
         <BrazilianTeams />
         <ShopByLeague />
