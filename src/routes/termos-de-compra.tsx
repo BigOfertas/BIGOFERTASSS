@@ -2,8 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { InstitutionalPage, InstitutionalSection } from "@/components/content/InstitutionalPage";
 import { BRAND } from "@/config/brand";
+import { buildPageHead } from "@/lib/page-seo";
 
-export const Route = createFileRoute("/termos-de-compra")({ component: PurchaseTermsPage });
+export const Route = createFileRoute("/termos-de-compra")({
+  head: () =>
+    buildPageHead({
+      title: "Termos de Compra",
+      description: "Consulte as condições de produtos, preço, pagamento, produção, entrega e alterações de pedidos realizados na DropBox.",
+      path: "/termos-de-compra",
+    }),
+  component: PurchaseTermsPage,
+});
 
 function PurchaseTermsPage() {
   return (
