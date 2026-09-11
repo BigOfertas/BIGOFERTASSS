@@ -74,7 +74,9 @@ check(
   migration.includes("UPDATE public.product_purchase_settings") &&
     migration.includes("commercial_type <> 'calcao'") &&
     migration.includes("WHEN commercial_type = 'calcao' THEN '[]'::jsonb") &&
-    migration.includes("CREATE OR REPLACE FUNCTION public.enforce_product_purchase_customization_policy") &&
+    migration.includes(
+      "CREATE OR REPLACE FUNCTION public.enforce_product_purchase_customization_policy",
+    ) &&
     migration.includes("CREATE TRIGGER enforce_product_purchase_customization_policy"),
 );
 

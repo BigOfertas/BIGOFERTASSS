@@ -1,14 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type ProductCommercialType =
-  | "torcedor"
-  | "feminino"
-  | "jogador"
-  | "retro"
-  | "infantil"
-  | "calcao"
-  | "basquete"
-  | "other";
+  "torcedor" | "feminino" | "jogador" | "retro" | "infantil" | "calcao" | "basquete" | "other";
 
 export type PurchaseCustomization = {
   size: string | null;
