@@ -7,6 +7,7 @@ on:
     paths:
       - "supabase/functions/**"
       - "supabase/config.toml"
+      - ".github/workflows/deploy-supabase-functions.yml"
   workflow_dispatch:
 
 permissions:
@@ -27,6 +28,9 @@ jobs:
         uses: supabase/setup-cli@v3
         with:
           version: latest
+
+      - name: Apply DropBox transactional sender
+        run: supabase secrets set --project-ref "$SUPABASE_PROJECT_ID" 'RESEND_FROM=DropBox <contato@bigofertas.net>'
 
       - name: Deploy Edge Functions
         run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
