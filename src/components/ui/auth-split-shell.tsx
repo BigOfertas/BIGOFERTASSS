@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BadgePercent, Package, ShieldCheck } from "lucide-react";
+import { ArrowLeft, BadgePercent, Package, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
@@ -99,27 +99,64 @@ export function AuthSplitShell({
 
   return (
     <main className="auth-split-page min-h-[100dvh] w-full text-gray-950 lg:grid lg:grid-cols-[minmax(420px,0.86fr)_minmax(0,1.14fr)]">
-      <section className="auth-form-column flex min-h-[100dvh] items-center justify-center px-4 py-8 sm:px-8 lg:px-12 lg:py-10">
+      <section className="auth-form-column flex min-h-[100dvh] items-start justify-center px-4 py-4 sm:px-8 sm:py-6 lg:items-center lg:px-12 lg:py-10">
         <div className="auth-enter w-full max-w-[460px]">
-          <div className="mb-8 flex items-center justify-between gap-4">
+          <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
             <Link
               to="/"
-              className="brand-lockup h-11 w-40 px-3 text-lg sm:h-12 sm:w-44"
+              className="auth-brand-link flex h-12 w-[138px] items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white px-3 shadow-sm sm:h-13 sm:w-[150px]"
               aria-label="DropBox - Início"
             >
-              <BrandWordmark />
+              <BrandWordmark className="max-h-10" />
             </Link>
             <Link
               to="/"
-              className="text-[11px] font-black uppercase tracking-[0.16em] text-gray-400 transition hover:text-red-600"
+              className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-gray-400 transition hover:text-red-600 sm:text-[11px]"
             >
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
               Voltar à loja
             </Link>
           </div>
 
-          <div className="mb-7">
+          <div className="auth-mobile-showcase relative mb-5 h-[132px] overflow-hidden rounded-[1.25rem] bg-neutral-950 text-white shadow-sm lg:hidden sm:h-[150px]">
+            {currentSlide?.image ? (
+              <>
+                <img
+                  key={`mobile-${activeSlide}-${currentSlide.image}`}
+                  src={currentSlide.image}
+                  alt=""
+                  width={920}
+                  height={360}
+                  decoding="async"
+                  className="auth-mobile-showcase-image absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="auth-mobile-showcase-vignette absolute inset-0" aria-hidden="true" />
+                <div className="relative z-10 flex h-full flex-col justify-end p-4 sm:p-5">
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-200">
+                    {currentSlide.kicker}
+                  </p>
+                  <p className="sport-heading mt-1 max-w-[18ch] text-[1.6rem] leading-[0.9] text-white sm:text-[1.85rem]">
+                    {currentSlide.title}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="auth-mobile-showcase-fallback flex h-full items-end p-4 sm:p-5">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-200">
+                    Conta DropBox
+                  </p>
+                  <p className="sport-heading mt-1 text-[1.8rem] leading-none text-white">
+                    {sideTitle}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mb-5 sm:mb-6 lg:mb-7">
             <p className="display-kicker">{eyebrow}</p>
-            <h1 className="sport-heading mt-2 text-[2.7rem] text-gray-950 sm:text-[3.45rem]">
+            <h1 className="sport-heading mt-2 text-[2.55rem] leading-[0.9] text-gray-950 sm:text-[3.35rem] lg:text-[3.45rem]">
               {title}
             </h1>
             <p className="mt-3 max-w-md text-sm leading-6 text-gray-500 sm:text-[15px]">
