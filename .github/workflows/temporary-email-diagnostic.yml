@@ -29,65 +29,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsS \
-            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
-            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/config/auth" \
-            > /tmp/auth-config.json
-
-          jq '{
-            site_url,
-            external_email_enabled,
-            mailer_autoconfirm,
-            smtp_configured: (((.smtp_host // "") | length) > 0 and ((.smtp_admin_email // "") | length) > 0),
-            smtp_host: (.smtp_host // null),
-            smtp_port: (.smtp_port // null),
-            smtp_admin_email: (.smtp_admin_email // null),
-            smtp_sender_name: (.smtp_sender_name // null),
-            rate_limit_email_sent: (.rate_limit_email_sent // null)
-          }' /tmp/auth-config.json
+          curl -fsS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/config/auth" > /tmp/auth-config.json
+          jq '{site_url,external_email_enabled,mailer_autoconfirm,smtp_configured:((((.smtp_host // "")|length)>0) and (((.smtp_admin_email // "")|length)>0)),smtp_host:(.smtp_host // null),smtp_port:(.smtp_port // null),smtp_admin_email:(.smtp_admin_email // null),smtp_sender_name:(.smtp_sender_name // null),rate_limit_email_sent:(.rate_limit_email_sent // null)}' /tmp/auth-config.json
 
       - name: Check required Edge Function secrets exist
         shell: bash
         run: |
           set -euo pipefail
           supabase secrets list --project-ref "$SUPABASE_PROJECT_ID" --output json > /tmp/secrets.json
-          node <<'NODE'
-          const fs = require('fs');
-          const payload = JSON.parse(fs.readFileSync('/tmp/secrets.json', 'utf8'));
-          const rows = Array.isArray(payload) ? payload : (payload.secrets || []);
-          const names = new Set(rows.map((row) => row.name).filter(Boolean));
-          const required = ['RESEND_API_KEY','RESEND_FROM','EMAIL_2FA_SECRET','PUBLIC_SITE_URL','APP_ALLOWED_ORIGINS'];
-          console.log(JSON.stringify(Object.fromEntries(required.map((name) => [name, names.has(name)])), null, 2));
-NODE
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('/tmp/secrets.json','utf8'));const rows=Array.isArray(p)?p:(p.secrets||[]);const names=new Set(rows.map(r=>r.name).filter(Boolean));const req=['RESEND_API_KEY','RESEND_FROM','EMAIL_2FA_SECRET','PUBLIC_SITE_URL','APP_ALLOWED_ORIGINS'];console.log(JSON.stringify(Object.fromEntries(req.map(n=>[n,names.has(n)])),null,2));"
 
       - name: Inspect public email DNS
         shell: bash
         run: |
           set -euo pipefail
-          python3 <<'PY'
-          import json, urllib.parse, urllib.request
-
-          checks = [
-              ('bigofertas.net', 'TXT'),
-              ('bigofertas.net', 'MX'),
-              ('send.bigofertas.net', 'TXT'),
-              ('send.bigofertas.net', 'MX'),
-              ('_dmarc.bigofertas.net', 'TXT'),
-              ('resend._domainkey.bigofertas.net', 'TXT'),
-              ('resend._domainkey.bigofertas.net', 'CNAME'),
-          ]
-
-          for name, rtype in checks:
-              params = urllib.parse.urlencode({'name': name, 'type': rtype})
-              req = urllib.request.Request(
-                  f'https://dns.google/resolve?{params}',
-                  headers={'accept': 'application/dns-json', 'user-agent': 'DropBox-email-diagnostic/1.0'},
-              )
-              try:
-                  with urllib.request.urlopen(req, timeout=15) as response:
-                      data = json.load(response)
-                  answers = [item.get('data') for item in data.get('Answer', []) if item.get('data')]
-                  print(json.dumps({'name': name, 'type': rtype, 'status': data.get('Status'), 'answers': answers}, ensure_ascii=False))
-              except Exception as exc:
-                  print(json.dumps({'name': name, 'type': rtype, 'error': type(exc).__name__}, ensure_ascii=False))
-PY
+          for q in 'bigofertas.net TXT' 'bigofertas.net MX' 'send.bigofertas.net TXT' 'send.bigofertas.net MX' '_dmarc.bigofertas.net TXT' 'resend._domainkey.bigofertas.net TXT' 'resend._domainkey.bigofertas.net CNAME'; do
+            set -- $q
+            NAME="$1"; TYPE="$2"
+            echo "### $NAME $TYPE"
+            curl -fsS -G -H 'accept: application/dns-json' --data-urlencode "name=$NAME" --data-urlencode "type=$TYPE" https://dns.google/resolve | jq '{Status,Answer:[(.Answer // [])[]?.data]}'
+          done
