@@ -4,20 +4,23 @@ import { useQuery } from "@tanstack/react-query";
 import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
-import type { Json } from "@/integrations/supabase/types";
-import { parseCatalogPage } from "@/lib/catalog";
-import { callSupabaseRpc } from "@/lib/supabase-rpc";
+import { fetchHomeLaunchProducts } from "@/lib/home-launches";
+import type { CatalogPage } from "@/lib/catalog";
 
 const SHOWCASE_SIZE = 10;
 const LOADING_SIZE = 5;
-const PRIORITY_IMAGE_COUNT = 5;
+const PRIORITY_IMAGE_COUNT = 1;
 
-const BestSellers: React.FC = () => {
+interface BestSellersProps {
+  initialData?: CatalogPage;
+}
+
+const BestSellers: React.FC<BestSellersProps> = ({ initialData }) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["home", "launches", "top-10"],
     staleTime: 5 * 60_000,
-    queryFn: async () =>
-      parseCatalogPage(await callSupabaseRpc<Json>("storefront_launch_products")),
+    queryFn: fetchHomeLaunchProducts,
+    initialData,
   });
   const launchProducts = (data?.items ?? []).slice(0, SHOWCASE_SIZE);
 
@@ -36,6 +39,7 @@ const BestSellers: React.FC = () => {
           price={product.price}
           promotionalPrice={product.promotional_price}
           imageUrl={product.displayImageUrl}
+          imageSrcSet={product.displayImageSrcSet}
           time={product.time}
           commercialType={product.commercial_type}
           priority={index < PRIORITY_IMAGE_COUNT}
