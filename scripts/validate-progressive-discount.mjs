@@ -88,7 +88,9 @@ const checks = [
     footer.includes("Formas de pagamento") &&
       footer.includes("PEDIDO ACOMPANHADO") &&
       footer.includes("PAGAMENTO ONLINE") &&
-      footer.includes("INFINITEPAY") &&
+      ["pix.svg", "elo.svg", "mastercard.svg", "amex.svg", "visa.svg", "infinitepay.svg"].every(
+        (asset) => footer.includes(`/assets/payments/${asset}`),
+      ) &&
       !footer.includes("HTTPS ativo") &&
       !/reclame\s*aqui/i.test(footer) &&
       !/google\s*site\s*seguro/i.test(footer),
