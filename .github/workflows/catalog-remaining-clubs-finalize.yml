@@ -1,0 +1,231 @@
+name: Finalize Remaining Club Groups
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/catalog-remaining-clubs-finalize.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-remaining-clubs-finalize-production
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Validate finalization code
+        run: |
+          node --check scripts/catalog-reconcile-existing-products.mjs
+          node --check scripts/catalog-batch-guard.mjs
+          node --check scripts/apply-normalized-catalog-plan.mjs
+          node --check scripts/catalog-pdf-remaining-verify.mjs
+          node --check scripts/catalog-batch-public-verify.mjs
+
+      - name: Fetch pinned verified remaining-clubs source
+        run: |
+          set -euo pipefail
+          mkdir -p .artifacts/remaining-clubs/source
+          URL="https://raw.githubusercontent.com/BigOfertas/catalog-worker-temp/d11c2ce082fd05cfdac19265fd8485cde109fade/published/remaining-clubs-plan.json"
+          curl -fsSL "$URL" -o .artifacts/remaining-clubs/source/merged.json
+          sha256sum .artifacts/remaining-clubs/source/merged.json | tee .artifacts/remaining-clubs/source/merged.sha256
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const p = '.artifacts/remaining-clubs/source/merged.json';
+          const d = JSON.parse(fs.readFileSync(p, 'utf8'));
+          const expected = { albums: 78, products: 508, variants: 659, images: 3261 };
+          for (const [key, value] of Object.entries(expected)) {
+            if (Number(d?.summary?.[key]) !== value) throw new Error(`Source ${key}: esperado ${value}, recebido ${d?.summary?.[key]}`);
+          }
+          const expectedGroups = new Map([
+            ['premier-league', 18],
+            ['bundesliga', 18],
+            ['ligue-1', 12],
+            ['mls', 12],
+            ['outros-times', 18],
+          ]);
+          for (const [group, count] of expectedGroups) {
+            const got = (d.albums || []).filter((a) => a.group === group).length;
+            if (got !== count) throw new Error(`${group}: esperado ${count} álbuns, recebido ${got}`);
+          }
+          const zero = (d.albums || []).filter((a) => Number(a.products) === 0);
+          const expectedZero = new Set([
+            'premier-league|Brentford',
+            'bundesliga|Bochum',
+            'bundesliga|Freiburg',
+            'bundesliga|Hoffenheim',
+            'bundesliga|Mainz',
+            'bundesliga|Wolfsburg',
+            'ligue-1|Brest',
+            'ligue-1|Montpellier',
+            'ligue-1|Nantes',
+            'ligue-1|Nice',
+            'ligue-1|Reims',
+            'ligue-1|Rennes',
+          ]);
+          const zeroIds = new Set(zero.map((a) => `${a.group}|${a.team}`));
+          if (zeroIds.size !== expectedZero.size || [...expectedZero].some((id) => !zeroIds.has(id))) {
+            throw new Error(`Álbuns sem produto divergentes: ${[...zeroIds].join(', ')}`);
+          }
+          const sourceKeys = (d.products || []).map((x) => String(x.sourceKey || '').trim());
+          if (sourceKeys.some((x) => !x) || new Set(sourceKeys).size !== sourceKeys.length) throw new Error('sourceKey ausente ou duplicada no source final.');
+          const allowedTypes = new Set(['torcedor', 'jogador', 'feminino', 'infantil']);
+          const invalid = [];
+          for (const product of d.products || []) {
+            if (!allowedTypes.has(String(product.commercialType || '').toLowerCase())) invalid.push(`${product.name}:product:${product.commercialType}`);
+            for (const variant of product.variants || []) {
+              if (!allowedTypes.has(String(variant.commercialType || '').toLowerCase())) invalid.push(`${product.name}:variant:${variant.commercialType}`);
+            }
+          }
+          if (invalid.length) throw new Error(`Categoria/tipo fora do escopo (adulto bloqueado ou desconhecido): ${invalid.slice(0,10).join(' | ')}`);
+          console.log(`REMAINING_SOURCE_PINNED_OK albums=${d.summary.albums} products=${d.summary.products} variants=${d.summary.variants} images=${d.summary.images} crestOnly=${zero.length}`);
+          NODE
+
+      - name: Split and validate five logical group plans
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const root = '.artifacts/remaining-clubs';
+          const source = JSON.parse(fs.readFileSync(`${root}/source/merged.json`, 'utf8'));
+          const defs = [
+            { key:'premier-league', name:'Premier League', products:193, variants:254, images:1259, match:p=>p.competition==='Premier League'||p.league==='Premier League' },
+            { key:'bundesliga', name:'Bundesliga', products:68, variants:91, images:452, match:p=>p.competition==='Bundesliga'||p.league==='Bundesliga' },
+            { key:'ligue-1', name:'Ligue 1', products:47, variants:63, images:312, match:p=>p.competition==='Ligue 1'||p.league==='Ligue 1' },
+            { key:'mls', name:'MLS Soccer', products:29, variants:35, images:172, match:p=>p.competition==='MLS'||p.league==='MLS' },
+            { key:'outros-times', name:'Outros Times', products:171, variants:216, images:1066, match:p=>p.league==='Outros Times' },
+          ];
+          const membership = new Map();
+          for (const p of source.products) membership.set(p.sourceKey, defs.filter((d)=>d.match(p)).map((d)=>d.key));
+          const badMembership = [...membership.entries()].filter(([, groups]) => groups.length !== 1);
+          if (badMembership.length) throw new Error(`Produtos sem grupo único: ${badMembership.slice(0,10).map(([key,g])=>`${key}:${g.join('+')}`).join(' | ')}`);
+          let totalProducts=0,totalVariants=0,totalImages=0;
+          for (const def of defs) {
+            const products = source.products.filter(def.match);
+            const variants = products.reduce((n,p)=>n+(p.variants?.length??0),0);
+            const images = products.reduce((n,p)=>n+(p.variants??[]).reduce((m,v)=>m+(v.images?.length??0),0),0);
+            if (products.length!==def.products||variants!==def.variants||images!==def.images) {
+              throw new Error(`${def.name}: source mismatch products=${products.length}/${def.products} variants=${variants}/${def.variants} images=${images}/${def.images}`);
+            }
+            const out = {
+              schemaVersion: source.schemaVersion ?? 1,
+              batchKey: `final-${def.key}-20260911`,
+              pdfGroupId: def.key,
+              pdfGroupName: def.name,
+              products,
+              summary: { products: products.length, variants, images },
+            };
+            fs.writeFileSync(`${root}/source/${def.key}.json`, `${JSON.stringify(out,null,2)}\n`, 'utf8');
+            totalProducts+=products.length; totalVariants+=variants; totalImages+=images;
+            console.log(`REMAINING_GROUP_SOURCE_OK group=${def.key} products=${products.length} variants=${variants} images=${images}`);
+          }
+          if (totalProducts!==508||totalVariants!==659||totalImages!==3261) throw new Error(`Totais split inválidos ${totalProducts}/${totalVariants}/${totalImages}`);
+          NODE
+
+      - name: Reconcile all five groups against production without duplication
+        run: |
+          set -euo pipefail
+          mkdir -p .artifacts/remaining-clubs/reconciled .artifacts/remaining-clubs/reports
+          for key in premier-league bundesliga ligue-1 mls outros-times; do
+            node scripts/catalog-reconcile-existing-products.mjs \
+              --input ".artifacts/remaining-clubs/source/${key}.json" \
+              --output ".artifacts/remaining-clubs/reconciled/${key}.json" \
+              --report ".artifacts/remaining-clubs/reports/${key}-reconcile.json"
+          done
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const expected = new Map([
+            ['premier-league',[193,254,1259]], ['bundesliga',[68,91,452]], ['ligue-1',[47,63,312]], ['mls',[29,35,172]], ['outros-times',[171,216,1066]],
+          ]);
+          for (const [key,[ep,ev,ei]] of expected) {
+            const report = JSON.parse(fs.readFileSync(`.artifacts/remaining-clubs/reports/${key}-reconcile.json`,'utf8'));
+            if (Number(report.skippedExisting)!==0) throw new Error(`${key}: reconciliação ambígua/legada ignorou ${report.skippedExisting} produto(s).`);
+            const plan = JSON.parse(fs.readFileSync(`.artifacts/remaining-clubs/reconciled/${key}.json`,'utf8'));
+            const v = plan.products.reduce((n,p)=>n+(p.variants?.length??0),0);
+            const i = plan.products.reduce((n,p)=>n+(p.variants??[]).reduce((m,x)=>m+(x.images?.length??0),0),0);
+            if (plan.products.length!==ep||v!==ev||i!==ei) throw new Error(`${key}: reconciled mismatch ${plan.products.length}/${v}/${i}, esperado ${ep}/${ev}/${ei}`);
+            console.log(`REMAINING_RECONCILE_OK group=${key} products=${plan.products.length} variants=${v} images=${i} adopted=${report.adoptedExisting}`);
+          }
+          NODE
+
+      - name: Snapshot protected business data
+        run: |
+          node scripts/catalog-batch-guard.mjs snapshot \
+            --out .artifacts/remaining-clubs/protected-before.json
+
+      - name: Publish Premier League atomically
+        run: node scripts/apply-normalized-catalog-plan.mjs --plan .artifacts/remaining-clubs/reconciled/premier-league.json --stock 999
+
+      - name: Publish Bundesliga atomically
+        run: node scripts/apply-normalized-catalog-plan.mjs --plan .artifacts/remaining-clubs/reconciled/bundesliga.json --stock 999
+
+      - name: Publish Ligue 1 atomically
+        run: node scripts/apply-normalized-catalog-plan.mjs --plan .artifacts/remaining-clubs/reconciled/ligue-1.json --stock 999
+
+      - name: Publish MLS atomically
+        run: node scripts/apply-normalized-catalog-plan.mjs --plan .artifacts/remaining-clubs/reconciled/mls.json --stock 999
+
+      - name: Publish Outros Times atomically
+        run: node scripts/apply-normalized-catalog-plan.mjs --plan .artifacts/remaining-clubs/reconciled/outros-times.json --stock 999
+
+      - name: Verify exact combined database result and protected data
+        run: |
+          node scripts/catalog-pdf-remaining-verify.mjs \
+            --snapshot .artifacts/remaining-clubs/protected-before.json \
+            --root .artifacts/remaining-clubs/reconciled \
+            --output .artifacts/remaining-clubs/database-verification.json
+
+      - name: Build and verify per-group database evidence
+        run: |
+          set -euo pipefail
+          for key in premier-league bundesliga ligue-1 mls outros-times; do
+            mkdir -p ".artifacts/remaining-clubs/verify-roots/${key}"
+            cp ".artifacts/remaining-clubs/reconciled/${key}.json" ".artifacts/remaining-clubs/verify-roots/${key}/${key}.json"
+            node scripts/catalog-pdf-remaining-verify.mjs \
+              --snapshot .artifacts/remaining-clubs/protected-before.json \
+              --root ".artifacts/remaining-clubs/verify-roots/${key}" \
+              --output ".artifacts/remaining-clubs/${key}-database-verification.json"
+          done
+
+      - name: Install Playwright for storefront verification
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Verify Premier League live on bigofertas.net
+        run: node scripts/catalog-batch-public-verify.mjs --verification .artifacts/remaining-clubs/premier-league-database-verification.json --base-url https://bigofertas.net --launch-count 10
+
+      - name: Verify Bundesliga live on bigofertas.net
+        run: node scripts/catalog-batch-public-verify.mjs --verification .artifacts/remaining-clubs/bundesliga-database-verification.json --base-url https://bigofertas.net --launch-count 0
+
+      - name: Verify Ligue 1 live on bigofertas.net
+        run: node scripts/catalog-batch-public-verify.mjs --verification .artifacts/remaining-clubs/ligue-1-database-verification.json --base-url https://bigofertas.net --launch-count 0
+
+      - name: Verify MLS live on bigofertas.net
+        run: node scripts/catalog-batch-public-verify.mjs --verification .artifacts/remaining-clubs/mls-database-verification.json --base-url https://bigofertas.net --launch-count 0
+
+      - name: Verify Outros Times live on bigofertas.net
+        run: node scripts/catalog-batch-public-verify.mjs --verification .artifacts/remaining-clubs/outros-times-database-verification.json --base-url https://bigofertas.net --launch-count 0
+
+      - name: Upload final remaining-clubs evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: remaining-clubs-final-${{ github.run_id }}
+          retention-days: 30
+          if-no-files-found: warn
+          path: .artifacts/remaining-clubs/
