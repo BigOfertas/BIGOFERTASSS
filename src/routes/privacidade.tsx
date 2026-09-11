@@ -9,7 +9,8 @@ export const Route = createFileRoute("/privacidade")({
   head: () =>
     buildPageHead({
       title: "Política de Privacidade",
-      description: "Entenda como a DropBox usa dados de cadastro, pedidos, entrega, atendimento e preferências de privacidade.",
+      description:
+        "Entenda como a DropBox usa dados de cadastro, pedidos, entrega, atendimento e preferências de privacidade.",
       path: "/privacidade",
     }),
   component: PrivacyPage,
