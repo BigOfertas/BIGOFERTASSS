@@ -1,0 +1,146 @@
+name: Temporary Stage 3 Apply
+
+on:
+  push:
+    branches:
+      - stage3-dropbox-rebrand-20260911
+    paths:
+      - ".github/workflows/temporary-stage3-apply.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Stage 3 branch
+        uses: actions/checkout@v7
+        with:
+          ref: stage3-dropbox-rebrand-20260911
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Apply DropBox public rebrand
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              ".env": [
+                  ('VITE_BRAND_NAME="BIGofertas"', 'VITE_BRAND_NAME="DropBox"'),
+              ],
+              "src/config/brand.ts": [
+                  ('VITE_BRAND_NAME, "BIGofertas"', 'VITE_BRAND_NAME, "DropBox"'),
+              ],
+              "src/components/layout/Header.tsx": [
+                  ('<span className="text-[8px] font-black text-red-200">BIG</span>', '<span className="text-[8px] font-black text-red-200">{BRAND.shortMark}</span>'),
+              ],
+              "src/lib/email-2fa-server.ts": [
+                  ('Use o link enviado pela BIGofertas.', 'Use o link enviado pela DropBox.'),
+                  ('Confirme seu acesso à BIGofertas', 'Confirme seu acesso à DropBox'),
+              ],
+              "src/lib/notification-email-server.ts": [
+                  ('BIGofertas <contato@bigofertas.net>', 'DropBox <contato@bigofertas.net>'),
+              ],
+              "src/lib/resend-server.ts": [
+                  ('BIGofertas/1.0', 'DropBox/1.0'),
+              ],
+              "src/lib/shipping-server.ts": [
+                  ('BIGofertas/1.0 (contato@bigofertas.net)', 'DropBox/1.0 (contato@bigofertas.net)'),
+              ],
+              "src/server.ts": [
+                  ('BIGofertas <contato@bigofertas.net>', 'DropBox <contato@bigofertas.net>'),
+              ],
+              "supabase/functions/.env.example": [
+                  ('RESEND_FROM=BIGofertas <contato@bigofertas.net>', 'RESEND_FROM=DropBox <contato@bigofertas.net>'),
+              ],
+              "supabase/functions/auth-email-2fa/index.ts": [
+                  ('BIGofertas <contato@bigofertas.net>', 'DropBox <contato@bigofertas.net>'),
+                  ('Use o link enviado pela BIGofertas.', 'Use o link enviado pela DropBox.'),
+                  ('Confirme seu acesso à BIGofertas', 'Confirme seu acesso à DropBox'),
+                  ('BIGofertas/1.0', 'DropBox/1.0'),
+              ],
+              "supabase/functions/notifications-process/index.ts": [
+                  ('BIGofertas <contato@bigofertas.net>', 'DropBox <contato@bigofertas.net>'),
+                  ('BIGofertas/1.0', 'DropBox/1.0'),
+              ],
+              "supabase/functions/shipping-quote/index.ts": [
+                  ('BIGofertas/1.0 (contato@bigofertas.net)', 'DropBox/1.0 (contato@bigofertas.net)'),
+              ],
+          }
+
+          for filename, pairs in replacements.items():
+              path = Path(filename)
+              text = path.read_text(encoding="utf-8")
+              for old, new in pairs:
+                  if old not in text and new not in text:
+                      raise SystemExit(f"Expected brand string not found in {filename}: {old}")
+                  text = text.replace(old, new)
+              path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Format touched TypeScript
+        run: |
+          bunx prettier --write \
+            src/config/brand.ts \
+            src/components/layout/Header.tsx \
+            src/lib/email-2fa-server.ts \
+            src/lib/notification-email-server.ts \
+            src/lib/resend-server.ts \
+            src/lib/shipping-server.ts \
+            src/server.ts \
+            supabase/functions/auth-email-2fa/index.ts \
+            supabase/functions/notifications-process/index.ts \
+            supabase/functions/shipping-quote/index.ts \
+            scripts/validate-stage3-rebrand.mjs
+
+      - name: Validate Stage 3 rebrand
+        run: node scripts/validate-stage3-rebrand.mjs
+
+      - name: Validate existing brand guard
+        run: node scripts/validate-brand-identity.mjs
+
+      - name: Validate previous storefront phases
+        run: node scripts/validate-stage1-ux.mjs && node scripts/validate-stage2-commerce.mjs
+
+      - name: Lint storefront
+        run: bun run lint
+
+      - name: Build production storefront
+        run: bun run build
+
+      - name: Commit Stage 3 rebrand
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add \
+            .env \
+            src/config/brand.ts \
+            src/components/layout/Header.tsx \
+            src/lib/email-2fa-server.ts \
+            src/lib/notification-email-server.ts \
+            src/lib/resend-server.ts \
+            src/lib/shipping-server.ts \
+            src/server.ts \
+            supabase/functions/.env.example \
+            supabase/functions/auth-email-2fa/index.ts \
+            supabase/functions/notifications-process/index.ts \
+            supabase/functions/shipping-quote/index.ts \
+            scripts/validate-stage3-rebrand.mjs
+          if git diff --cached --quiet; then
+            echo "NO_STAGE3_REBRAND_CHANGES"
+            exit 0
+          fi
+          git commit -m "feat: rebrand storefront to DropBox"
+          git push origin HEAD:stage3-dropbox-rebrand-20260911
