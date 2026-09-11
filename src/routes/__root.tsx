@@ -8,8 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { LoaderCircle } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import glassLegacyCss from "../glass-legacy.css?url";
@@ -30,64 +29,6 @@ const FOOTER_ROUTES = new Set([
   "/producao-e-envio",
   "/contato",
 ]);
-
-const INITIAL_REFRESH_MIN_MS = 2300;
-const INITIAL_READINESS_MAX_MS = 3200;
-const INITIAL_QUERY_WAIT_MS = 2200;
-const INITIAL_PLACEHOLDER_WAIT_MS = 2400;
-const INITIAL_IMAGE_WAIT_MS = 550;
-
-const sleep = (ms: number) =>
-  new Promise<void>((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
-
-async function waitForInitialQueries(queryClient: QueryClient, timeoutMs: number) {
-  const deadline = performance.now() + timeoutMs;
-  let idleSince: number | null = null;
-
-  while (performance.now() < deadline) {
-    if (queryClient.isFetching() === 0) {
-      idleSince ??= performance.now();
-      if (performance.now() - idleSince >= 180) return;
-    } else {
-      idleSince = null;
-    }
-    await sleep(50);
-  }
-}
-
-async function waitForStorefrontPlaceholders(timeoutMs: number) {
-  const deadline = performance.now() + timeoutMs;
-  while (performance.now() < deadline) {
-    if (!document.querySelector("[data-product-card-placeholder]")) return;
-    await sleep(50);
-  }
-}
-
-async function preloadRenderedImages(timeoutMs: number) {
-  const sources = Array.from(document.images)
-    .map((image) => image.currentSrc || image.src)
-    .filter((source): source is string => Boolean(source));
-  const uniqueSources = [...new Set(sources)];
-  if (uniqueSources.length === 0) return;
-
-  const preload = Promise.allSettled(
-    uniqueSources.map(
-      (source) =>
-        new Promise<void>((resolve) => {
-          const image = new Image();
-          image.decoding = "async";
-          image.onload = () => resolve();
-          image.onerror = () => resolve();
-          image.src = source;
-          if (image.complete) resolve();
-        }),
-    ),
-  );
-
-  await Promise.race([preload, sleep(timeoutMs)]);
-}
 
 function NotFoundComponent() {
   return (
@@ -190,84 +131,19 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const [initialRefreshLoading, setInitialRefreshLoading] = useState(true);
   const showStorefrontFooter = FOOTER_ROUTES.has(pathname) || pathname.startsWith("/product/");
-
-  useEffect(() => {
-    let cancelled = false;
-    const startedAt = performance.now();
-    const previousOverflow = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = "hidden";
-    document.documentElement.dataset.initialRefreshLoading = "true";
-
-    const finishInitialLoading = async () => {
-      await sleep(100);
-
-      const readiness = Promise.allSettled([
-        waitForInitialQueries(queryClient, INITIAL_QUERY_WAIT_MS),
-        waitForStorefrontPlaceholders(INITIAL_PLACEHOLDER_WAIT_MS),
-        Promise.race([document.fonts?.ready ?? Promise.resolve(), sleep(1600)]),
-      ]);
-      const readinessBudget = Math.max(
-        0,
-        INITIAL_READINESS_MAX_MS - (performance.now() - startedAt) - INITIAL_IMAGE_WAIT_MS,
-      );
-      await Promise.race([readiness, sleep(readinessBudget)]);
-      await preloadRenderedImages(INITIAL_IMAGE_WAIT_MS);
-
-      const remaining = INITIAL_REFRESH_MIN_MS - (performance.now() - startedAt);
-      if (remaining > 0) await sleep(remaining);
-      if (cancelled) return;
-
-      setInitialRefreshLoading(false);
-      delete document.documentElement.dataset.initialRefreshLoading;
-      document.documentElement.style.overflow = previousOverflow;
-    };
-
-    void finishInitialLoading();
-
-    return () => {
-      cancelled = true;
-      delete document.documentElement.dataset.initialRefreshLoading;
-      document.documentElement.style.overflow = previousOverflow;
-    };
-  }, [queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
-          <div className="relative min-h-screen overflow-x-clip">
-            <div
-              aria-hidden={initialRefreshLoading ? true : undefined}
-              className={`flex min-h-screen flex-col transition-[filter] duration-200 ease-out ${
-                initialRefreshLoading
-                  ? "pointer-events-none select-none blur-[22px]"
-                  : "blur-0"
-              }`}
-            >
-              <div className="min-h-0 flex-1">
-                <Outlet />
-              </div>
-              {!initialRefreshLoading && showStorefrontFooter ? <Footer /> : null}
+          <div className="relative flex min-h-screen flex-col overflow-x-clip">
+            <div className="min-h-0 flex-1">
+              <Outlet />
             </div>
-
-            {initialRefreshLoading ? (
-              <div
-                data-initial-refresh-loader
-                role="status"
-                aria-label="Carregando"
-                className="fixed inset-0 z-[9999] flex cursor-none items-center justify-center bg-background/30 backdrop-blur-2xl"
-              >
-                <LoaderCircle
-                  aria-hidden="true"
-                  className="size-11 animate-spin text-foreground [animation-duration:1.1s]"
-                  strokeWidth={1.8}
-                />
-              </div>
-            ) : null}
+            {showStorefrontFooter ? <Footer /> : null}
           </div>
-          {!initialRefreshLoading ? <CursorFollower /> : null}
+          <CursorFollower />
           <Toaster position="top-center" richColors />
         </CartProvider>
       </AuthProvider>
