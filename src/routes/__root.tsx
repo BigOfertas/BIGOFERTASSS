@@ -209,10 +209,12 @@ function RootComponent() {
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const elapsedSinceNavigationStart = performance.now();
+    const remainingSplashMs = Math.max(0, INITIAL_BOOT_SPLASH_MS - elapsedSinceNavigationStart);
     const timer = window.setTimeout(() => {
       setInitialBootSplashVisible(false);
       document.body.style.overflow = previousOverflow;
-    }, INITIAL_BOOT_SPLASH_MS);
+    }, remainingSplashMs);
 
     return () => {
       window.clearTimeout(timer);
