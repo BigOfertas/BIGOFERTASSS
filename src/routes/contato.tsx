@@ -3,8 +3,17 @@ import { Mail, MessageCircle } from "lucide-react";
 
 import { InstitutionalPage, InstitutionalSection } from "@/components/content/InstitutionalPage";
 import { BRAND } from "@/config/brand";
+import { buildPageHead } from "@/lib/page-seo";
 
-export const Route = createFileRoute("/contato")({ component: ContactPage });
+export const Route = createFileRoute("/contato")({
+  head: () =>
+    buildPageHead({
+      title: "Contato",
+      description: "Fale com a DropBox pelos canais oficiais para dúvidas sobre produtos, pedidos, entrega e atendimento pós-compra.",
+      path: "/contato",
+    }),
+  component: ContactPage,
+});
 
 function ContactPage() {
   return (
