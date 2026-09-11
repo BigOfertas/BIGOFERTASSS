@@ -352,7 +352,7 @@ function RegisterPage() {
                 type={showConfirmPassword ? "text" : "password"}
                 autoComplete="new-password"
                 value={confirmPassword}
-                onChange={(event) => setShowConfirmPassword(event.target.value)}
+                onChange={(event) => setConfirmPassword(event.target.value)}
                 className={`${inputClass} pr-11`}
                 placeholder="Digite a senha novamente"
               />

@@ -65,6 +65,10 @@ const migrations = [
     "catalog_public_rpc_security_fix_20260909",
     "supabase/migrations/20260909220000_catalog_public_rpc_security_fix.sql",
   ],
+  [
+    "stage2_purchase_customization_policy_20260911",
+    "supabase/migrations/20260911051000_stage2_purchase_customization_policy.sql",
+  ],
 ];
 
 function migrationSql(file) {
@@ -262,7 +266,28 @@ select
     cross join lateral jsonb_array_elements(s.patch_catalog) p(value)
     where s.singleton = true
       and p.value->>'code' = 'champions-league-multiple-winner'
-  ) as global_patch_matrix;
+  ) as global_patch_matrix,
+  exists (
+    select 1 from pg_catalog.pg_trigger t
+    join pg_catalog.pg_class c on c.oid = t.tgrelid
+    join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relname = 'product_purchase_settings'
+      and t.tgname = 'enforce_product_purchase_customization_policy'
+      and not t.tgisinternal
+  ) as stage2_purchase_policy_trigger,
+  not exists (
+    select 1
+    from public.product_purchase_settings s
+    where s.commercial_type = 'calcao'
+      and (s.personalization_enabled or s.phrase_enabled or s.patches <> '[]'::jsonb)
+  ) as shorts_purchase_policy,
+  not exists (
+    select 1
+    from public.product_purchase_settings s
+    where s.commercial_type <> 'calcao'
+      and (not s.personalization_enabled or not s.phrase_enabled)
+  ) as non_shorts_personalization_policy;
 `);
 
 console.log("STOREFRONT_UPGRADE_BACKEND_VERIFICATION");
@@ -298,6 +323,9 @@ const required = [
   "affiliate_deactivate_rpc",
   "signup_phone_trigger",
   "global_patch_matrix",
+  "stage2_purchase_policy_trigger",
+  "shorts_purchase_policy",
+  "non_shorts_personalization_policy",
 ];
 
 if (!required.every((key) => verification?.[key] === true)) {
