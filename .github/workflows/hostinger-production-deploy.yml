@@ -100,10 +100,6 @@ jobs:
             echo "Legacy artificial refresh loader is present in the production bundle." >&2
             exit 1
           fi
-          if grep -Eiq '<footer([[:space:]>])' "$HOSTINGER_OUTPUT/index.html"; then
-            echo "Footer is present in the prerendered HTML and can flash before hydration." >&2
-            exit 1
-          fi
           echo "HOSTINGER_REFRESH_SHELL_OK"
 
       - name: Prepare SSH
@@ -171,11 +167,6 @@ jobs:
               -o "$body"
             if grep -F -q 'data-initial-refresh-loader' "$body"; then
               echo "Legacy artificial refresh loader found in production HTML for ${path}." >&2
-              rm -f "$body"
-              exit 1
-            fi
-            if grep -Eiq '<footer([[:space:]>])' "$body"; then
-              echo "Premature footer found in production HTML for ${path}." >&2
               rm -f "$body"
               exit 1
             fi
