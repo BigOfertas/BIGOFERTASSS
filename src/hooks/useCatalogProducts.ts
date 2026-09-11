@@ -25,12 +25,11 @@ function catalogFilterArgs(query: CatalogQuery) {
   };
 }
 
-export function useCatalogProducts(query: CatalogQuery = {}) {
+export function catalogProductsQueryOptions(query: CatalogQuery = {}) {
   const normalized = normalizeCatalogQuery(query);
 
-  return useQuery({
-    queryKey: ["catalog", "page-v3", normalized],
-    placeholderData: keepPreviousData,
+  return {
+    queryKey: ["catalog", "page-v3", normalized] as const,
     queryFn: async () => {
       const data = await callSupabaseRpc<Json>("catalog_products_page_v3", {
         ...catalogFilterArgs(normalized),
@@ -42,6 +41,13 @@ export function useCatalogProducts(query: CatalogQuery = {}) {
       return parseCatalogPage(data);
     },
     staleTime: 30_000,
+  };
+}
+
+export function useCatalogProducts(query: CatalogQuery = {}) {
+  return useQuery({
+    ...catalogProductsQueryOptions(query),
+    placeholderData: keepPreviousData,
   });
 }
 
