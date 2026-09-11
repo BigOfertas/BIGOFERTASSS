@@ -93,6 +93,7 @@ const ShopByLeague: React.FC = () => {
 
   useEffect(() => {
     if (incomingLoading) return;
+    if (displayLeagueId === activeLeague.id && displayProducts.length > 0) return;
 
     const token = ++transitionTokenRef.current;
     let cancelled = false;
@@ -120,7 +121,7 @@ const ShopByLeague: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [activeLeague.id, displayProducts.length, incomingLoading, incomingProducts]);
+  }, [activeLeague.id, displayLeagueId, displayProducts.length, incomingLoading, incomingProducts]);
 
   const handleLeagueChange = (id: string) => {
     if (id === activeLeagueId) return;
