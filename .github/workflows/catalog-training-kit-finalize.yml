@@ -1,0 +1,200 @@
+name: Finalize Training Kit Catalog
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/catalog-training-kit-finalize.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-training-kit-production
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+      TRAINING_ALBUM_URL: https://photos.google.com/share/AF1QipOgOTgEvIcox403uBvAqPHDKPT7a4xmHo1LbRMV1-8Y1_tyi4K3BXtqMy7rs9sC2A?key=SmZabDhRZ0lxV2czNjg2c3plMENkdDFhdlJTTkd3
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Validate training finalization code
+        run: |
+          node --check scripts/google-photos-collector.mjs
+          node --check scripts/google-photos-assimilator.mjs
+          node --check scripts/google-photos-assimilator-runner.mjs
+          node --check scripts/catalog-pdf-apparel-plan.mjs
+          node --check scripts/catalog-training-price-plan.mjs
+          node --check scripts/catalog-reconcile-existing-products.mjs
+          node --check scripts/apply-normalized-catalog-plan.mjs
+          node --check scripts/catalog-batch-guard.mjs
+          node --check scripts/catalog-batch-public-verify.mjs
+          node -e "JSON.parse(require('fs').readFileSync('catalog-jobs/apparel-batch/training-price-map.json','utf8')); console.log('TRAINING_PRICE_MAP_JSON_OK')"
+
+      - name: Ensure catalog backend prerequisites are live
+        run: |
+          node scripts/deploy-storefront-upgrade-migrations.mjs
+          node scripts/deploy-home-launches-top10.mjs
+          node scripts/deploy-kids-purchase-sizes.mjs
+
+      - name: Snapshot protected business data
+        run: |
+          mkdir -p .artifacts/training-kit
+          node scripts/catalog-batch-guard.mjs snapshot \
+            --out .artifacts/training-kit/protected-before.json
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save --package-lock=false playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Collect complete Training Kit source
+        run: |
+          node scripts/google-photos-collector.mjs \
+            --url "$TRAINING_ALBUM_URL" \
+            --label "CONJUNTOS DE TREINO / KIT" \
+            --expected-min-images 300 \
+            --max-scrolls 500 \
+            --out .artifacts/training-kit/collector
+
+      - name: Assimilate every visual group
+        run: |
+          node scripts/google-photos-assimilator-runner.mjs \
+            --input .artifacts/training-kit/collector/collector.json \
+            --out .artifacts/training-kit/assimilation
+
+      - name: Normalize base Training Kit plan
+        run: |
+          node scripts/catalog-pdf-apparel-plan.mjs \
+            --collector .artifacts/training-kit/collector/collector.json \
+            --output .artifacts/training-kit/base-plan.json \
+            --source-group "CONJUNTOS DE TREINO / KIT" \
+            --price 339.9 \
+            --stock 999 \
+            --validate-urls
+
+      - name: Apply approved per-version Training Kit prices
+        run: |
+          node scripts/catalog-training-price-plan.mjs \
+            --plan .artifacts/training-kit/base-plan.json \
+            --collector .artifacts/training-kit/collector/collector.json \
+            --map catalog-jobs/apparel-batch/training-price-map.json \
+            --output .artifacts/training-kit/priced-plan.json
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const p=JSON.parse(fs.readFileSync('.artifacts/training-kit/priced-plan.json','utf8'));
+          const expected={products:28,variants:52,images:299};
+          for(const [k,v] of Object.entries(expected)) if(Number(p.summary?.[k])!==v) throw new Error(`${k}: esperado ${v}, recebido ${p.summary?.[k]}`);
+          const breakdown=p.summary?.priceBreakdown||{};
+          if(Number(breakdown['339.90'])!==44||Number(breakdown['389.90'])!==8) throw new Error(`priceBreakdown inválido: ${JSON.stringify(breakdown)}`);
+          const prices=p.products.flatMap(x=>x.variants.map(v=>Number(v.price)));
+          if(prices.some(v=>![339.9,389.9].some(x=>Math.abs(x-v)<0.001))) throw new Error('Preço não aprovado encontrado no lote de treino.');
+          console.log(`TRAINING_PLAN_EXACT_OK products=${p.summary.products} variants=${p.summary.variants} images=${p.summary.images} price33990=${breakdown['339.90']} price38990=${breakdown['389.90']}`);
+          NODE
+
+      - name: Reconcile against production without duplication
+        run: |
+          node scripts/catalog-reconcile-existing-products.mjs \
+            --input .artifacts/training-kit/priced-plan.json \
+            --output .artifacts/training-kit/reconciled-plan.json \
+            --report .artifacts/training-kit/reconcile-report.json
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const report=JSON.parse(fs.readFileSync('.artifacts/training-kit/reconcile-report.json','utf8'));
+          const plan=JSON.parse(fs.readFileSync('.artifacts/training-kit/reconciled-plan.json','utf8'));
+          if(Number(report.skippedExisting)!==0) throw new Error(`Reconciliação pulou ${report.skippedExisting} produto(s).`);
+          const variants=plan.products.reduce((n,p)=>n+(p.variants?.length||0),0);
+          const images=plan.products.reduce((n,p)=>n+(p.variants||[]).reduce((m,v)=>m+(v.images?.length||0),0),0);
+          if(plan.products.length!==28||variants!==52||images!==299) throw new Error(`Plano reconciliado divergente: ${plan.products.length}/${variants}/${images}`);
+          console.log(`TRAINING_RECONCILE_OK products=28 variants=52 images=299 adopted=${report.adoptedExisting} skipped=0`);
+          NODE
+
+      - name: Publish Training Kit atomically
+        run: |
+          node scripts/apply-normalized-catalog-plan.mjs \
+            --plan .artifacts/training-kit/reconciled-plan.json \
+            --stock 999
+
+      - name: Verify exact database result and protected data
+        run: |
+          node scripts/catalog-batch-guard.mjs verify \
+            --snapshot .artifacts/training-kit/protected-before.json \
+            --plan .artifacts/training-kit/reconciled-plan.json \
+            --out .artifacts/training-kit/database-verification.json
+
+      - name: Verify exact Training Kit prices in production database
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const plan=JSON.parse(fs.readFileSync('.artifacts/training-kit/reconciled-plan.json','utf8'));
+          const project=process.env.SUPABASE_PROJECT_ID;
+          const token=process.env.SUPABASE_ACCESS_TOKEN;
+          const esc=(s)=>`'${String(s).replaceAll("'","''")}'`;
+          const keys=plan.products.map(p=>p.sourceKey);
+          const query=`
+            select p.catalog_source_key, p.catalog_code, p.price,
+                   v.catalog_variant_code, v.name as variant_name, v.price_override
+            from public.products p
+            join public.product_variants v on v.product_id=p.id
+            where p.catalog_source_key in (${keys.map(esc).join(',')})
+              and p.status::text='active'
+              and v.status::text='active'
+            order by p.catalog_source_key, v.sort_order;
+          `;
+          const response=await fetch(`https://api.supabase.com/v1/projects/${encodeURIComponent(project)}/database/query/read-only`,{
+            method:'POST',headers:{authorization:`Bearer ${token}`,'content-type':'application/json',accept:'application/json'},
+            body:JSON.stringify({query}),signal:AbortSignal.timeout(120000)
+          });
+          const text=await response.text();
+          if(!response.ok) throw new Error(`Supabase HTTP ${response.status}: ${text.slice(0,1000)}`);
+          const rows=text?JSON.parse(text):[];
+          const expected=new Map();
+          for(const p of plan.products) for(const v of p.variants) expected.set(`${p.sourceKey}|${v.code}`,Number(v.price));
+          if(rows.length!==expected.size) throw new Error(`Variações no banco=${rows.length}, esperado=${expected.size}`);
+          const counts=new Map();
+          for(const row of rows){
+            const key=`${row.catalog_source_key}|${row.catalog_variant_code}`;
+            const want=expected.get(key);
+            const got=Number(row.price_override);
+            if(!Number.isFinite(want)||Math.abs(want-got)>0.001) throw new Error(`Preço divergente ${key}: ${got} != ${want}`);
+            counts.set(got,(counts.get(got)||0)+1);
+          }
+          if((counts.get(339.9)||0)!==44||(counts.get(389.9)||0)!==8) throw new Error(`Buckets de preço divergentes: ${JSON.stringify(Object.fromEntries(counts))}`);
+          fs.writeFileSync('.artifacts/training-kit/price-verification.json',JSON.stringify({rows:rows.length,price33990:counts.get(339.9)||0,price38990:counts.get(389.9)||0},null,2));
+          console.log(`TRAINING_PRICE_DB_OK variants=${rows.length} price33990=${counts.get(339.9)||0} price38990=${counts.get(389.9)||0}`);
+          NODE
+
+      - name: Verify Training Kit live on bigofertas.net
+        run: |
+          node scripts/catalog-batch-public-verify.mjs \
+            --verification .artifacts/training-kit/database-verification.json \
+            --base-url https://bigofertas.net \
+            --launch-count 0
+
+      - name: Final Training Kit marker
+        run: |
+          echo "TRAINING_KIT_FINAL_COMPLETE"
+          echo "CORTA_VENTO_FROZEN_UNTOUCHED"
+
+      - name: Upload final Training Kit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-kit-final-${{ github.run_id }}
+          path: .artifacts/training-kit/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
