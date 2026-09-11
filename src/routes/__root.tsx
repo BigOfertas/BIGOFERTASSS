@@ -18,6 +18,7 @@ import { CartProvider } from "../context/CartContext";
 import { Toaster } from "@/components/ui/sonner";
 import { Component as CursorFollower } from "@/components/ui/cursor-follower";
 import { BRAND } from "@/config/brand";
+import { getR2PublicBaseUrl } from "@/lib/product-images";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 const FOOTER_ROUTES = new Set([
@@ -29,6 +30,17 @@ const FOOTER_ROUTES = new Set([
   "/producao-e-envio",
   "/contato",
 ]);
+
+const R2_IMAGE_ORIGIN = (() => {
+  const baseUrl = getR2PublicBaseUrl();
+  if (!baseUrl) return null;
+
+  try {
+    return new URL(baseUrl).origin;
+  } catch {
+    return null;
+  }
+})();
 
 function NotFoundComponent() {
   return (
@@ -105,8 +117,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://lh3.googleusercontent.com" },
       { rel: "dns-prefetch", href: "https://lh3.googleusercontent.com" },
-      { rel: "preconnect", href: "https://img.bigofertas.net" },
-      { rel: "dns-prefetch", href: "https://img.bigofertas.net" },
+      ...(R2_IMAGE_ORIGIN
+        ? [
+            { rel: "preconnect", href: R2_IMAGE_ORIGIN },
+            { rel: "dns-prefetch", href: R2_IMAGE_ORIGIN },
+          ]
+        : []),
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: glassLegacyCss },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
