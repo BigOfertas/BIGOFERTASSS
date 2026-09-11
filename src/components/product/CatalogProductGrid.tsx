@@ -8,6 +8,7 @@ type MobileColumns = 1 | 2;
 
 const DESKTOP_STORAGE_KEY = "bigofertas.catalog.desktopColumns";
 const MOBILE_STORAGE_KEY = "bigofertas.catalog.mobileColumns";
+const PRIORITY_IMAGE_COUNT = 6;
 
 const desktopGridClass: Record<DesktopColumns, string> = {
   2: "lg:grid-cols-2",
@@ -157,7 +158,7 @@ export function CatalogProductGrid({
           </div>
         ) : (
           <div className={`grid ${gridClass} gap-4 md:gap-6`}>
-            {products.map((product) => (
+            {products.map((product, index) => (
               <ProductCard
                 key={product.id}
                 id={product.id}
@@ -168,6 +169,7 @@ export function CatalogProductGrid({
                 imageUrl={product.displayImageUrl}
                 time={product.time}
                 commercialType={product.commercial_type}
+                priority={index < PRIORITY_IMAGE_COUNT}
               />
             ))}
           </div>
