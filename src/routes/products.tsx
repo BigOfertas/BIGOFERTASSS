@@ -71,7 +71,8 @@ export const Route = createFileRoute("/products")({
   head: () =>
     buildPageHead({
       title: "Produtos",
-      description: "Explore o catálogo DropBox com camisas de futebol, retrô, seleções, kits de treino, corta-ventos e outros artigos esportivos.",
+      description:
+        "Explore o catálogo DropBox com camisas de futebol, retrô, seleções, kits de treino, corta-ventos e outros artigos esportivos.",
       path: "/products",
     }),
   component: ProductsPage,
