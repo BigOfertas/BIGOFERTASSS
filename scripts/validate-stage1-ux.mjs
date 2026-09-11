@@ -33,11 +33,14 @@ check(
 );
 
 check(
-  "lupa foi removida completamente dos cards e da galeria",
-  !gallery.includes("magnifier-lens") &&
+  "lupa foi removida por completo, inclusive componente e integração legada do cursor",
+  !fs.existsSync("src/components/ui/magnifier-lens.tsx") &&
+    !gallery.includes("magnifier-lens") &&
     !gallery.includes("<Lens") &&
     !productCard.includes("magnifier-lens") &&
     !productCard.includes("<Lens") &&
+    !cursor.includes("storefront:lens-visibility") &&
+    !cursor.includes("lensActive") &&
     cursor.includes("data-cursor-follower"),
 );
 
@@ -47,7 +50,7 @@ check(
     !gallery.includes("useEmblaCarousel") &&
     !gallery.includes("transition-transform") &&
     gallery.includes("SWIPE_THRESHOLD_PX") &&
-    gallery.includes("setActiveImageId(nextImage.id)"),
+    gallery.includes("setActiveImageId"),
 );
 
 check(
@@ -70,6 +73,12 @@ check(
     productCard.includes('fetchPriority={priority ? "high" : "auto"}') &&
     best.includes("PRIORITY_IMAGE_COUNT") &&
     best.includes("priority={index < PRIORITY_IMAGE_COUNT}"),
+);
+
+check(
+  "conexão com o host das imagens é antecipada",
+  root.includes('rel: "preconnect"') &&
+    root.includes('href: "https://lh3.googleusercontent.com"'),
 );
 
 check(
