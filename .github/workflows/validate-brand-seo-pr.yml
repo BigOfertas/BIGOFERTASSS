@@ -1,0 +1,49 @@
+name: Validate Brand SEO PR
+
+on:
+  push:
+    branches:
+      - homepage-boot-and-league-cache-20260911
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate brand and SEO assets
+        run: |
+          test -f public/assets/branding/dropbox-wordmark.png
+          test -f public/assets/branding/dropbox-wordmark-footer.png
+          test -f public/favicon.png
+          test -f public/apple-touch-icon.png
+          test -f public/og-image.jpg
+          test -f public/sitemap.xml
+          grep -q 'dropbox-wordmark.png' src/components/brand/BrandWordmark.tsx
+          grep -q 'dropbox-wordmark-footer.png' src/components/layout/Footer.tsx
+          ! grep -q 'dropbox-footer.svg' src/components/layout/Footer.tsx
+          grep -q '/favicon.png' src/routes/__root.tsx
+          grep -q 'og:image' src/routes/__root.tsx
+          grep -q 'Sitemap: https://bigofertas.net/sitemap.xml' public/robots.txt
+          grep -q 'https://bigofertas.net/products' public/sitemap.xml
+
+      - name: Validate storefront regressions
+        run: node scripts/validate-storefront-regressions.mjs
+
+      - name: Lint storefront
+        run: bun run lint
+
+      - name: Validate TypeScript and production build
+        run: bun run build
