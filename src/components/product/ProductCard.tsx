@@ -128,7 +128,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
             productSlug={slug}
             productName={name}
             imageUrl={imageUrl ?? null}
-            commercialType={commercialType}
           />
         </div>
       </div>
