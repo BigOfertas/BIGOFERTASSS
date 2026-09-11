@@ -8,6 +8,8 @@ type RuntimeProductImage = Omit<ProductImage, "storage_key"> & {
   image_source?: "r2" | "google_photos" | "external" | string | null;
 };
 
+const GOOGLE_MEDIA_HOST_RE = /(^|\.)(googleusercontent\.com|usercontent\.google\.com|ggpht\.com)$/i;
+
 function runtimeImage(image: ProductImage): RuntimeProductImage {
   return image as unknown as RuntimeProductImage;
 }
@@ -37,6 +39,28 @@ function normalizedExternalUrl(rawValue: string | null | undefined) {
   }
 }
 
+export function buildOptimizedExternalImageUrl(
+  rawValue: string | null | undefined,
+  size = 1600,
+) {
+  const external = normalizedExternalUrl(rawValue);
+  if (!external) return null;
+
+  try {
+    const url = new URL(external);
+    if (!GOOGLE_MEDIA_HOST_RE.test(url.hostname)) return external;
+
+    const safeSize = Math.min(2400, Math.max(160, Math.round(size)));
+    const pathname = url.pathname
+      .replace(/=w\d+(?:-h\d+)?[^/?#]*/i, "")
+      .replace(/=s\d+[^/?#]*/i, "");
+    url.pathname = `${pathname}=w${safeSize}-h${safeSize}-s-no-gm`;
+    return url.toString();
+  } catch {
+    return external;
+  }
+}
+
 export function getR2PublicBaseUrl() {
   return normalizedBaseUrl(import.meta.env["VITE_R2_PUBLIC_BASE_URL"]);
 }
@@ -58,9 +82,9 @@ export function buildR2PublicImageUrl(
   return `${baseUrl}/${encodeR2ObjectKey(normalizedKey)}`;
 }
 
-export function getProductImageSourceUrl(image: ProductImage) {
+export function getProductImageSourceUrl(image: ProductImage, size = 1600) {
   const runtime = runtimeImage(image);
-  const external = normalizedExternalUrl(runtime.external_url);
+  const external = buildOptimizedExternalImageUrl(runtime.external_url, size);
   if (external) return external;
   return buildR2PublicImageUrl(runtime.storage_key);
 }
@@ -93,7 +117,10 @@ export function getPrimaryProductImageUrl(
 ) {
   const preferredImage = getPreferredProductImage(images);
   return (
-    (preferredImage ? getProductImageSourceUrl(preferredImage) : null) ?? product.image_url ?? null
+    (preferredImage ? getProductImageSourceUrl(preferredImage, 1200) : null) ??
+    buildOptimizedExternalImageUrl(product.image_url, 1200) ??
+    product.image_url ??
+    null
   );
 }
 
@@ -137,17 +164,19 @@ export function getProductGalleryItems(
   const seen = new Set<string>();
   const gallery = orderedImages.flatMap((image) => {
     const runtime = runtimeImage(image);
-    const url = getProductImageSourceUrl(image);
+    const originalExternal = normalizedExternalUrl(runtime.external_url);
+    const url = originalExternal
+      ? buildOptimizedExternalImageUrl(originalExternal, 1600)
+      : buildR2PublicImageUrl(runtime.storage_key);
     if (!url || seen.has(url)) return [];
 
-    const isExternal = Boolean(normalizedExternalUrl(runtime.external_url));
-    const cardUrl = isExternal
-      ? url
+    const cardUrl = originalExternal
+      ? buildOptimizedExternalImageUrl(originalExternal, 768)
       : runtime.card_storage_key
         ? buildR2PublicImageUrl(runtime.card_storage_key)
         : null;
-    const thumbUrl = isExternal
-      ? url
+    const thumbUrl = originalExternal
+      ? buildOptimizedExternalImageUrl(originalExternal, 256)
       : runtime.thumb_storage_key
         ? buildR2PublicImageUrl(runtime.thumb_storage_key)
         : null;
@@ -166,12 +195,13 @@ export function getProductGalleryItems(
     ];
   });
 
-  if (product.image_url && !seen.has(product.image_url)) {
+  const legacyImage = buildOptimizedExternalImageUrl(product.image_url, 1600) ?? product.image_url;
+  if (legacyImage && !seen.has(legacyImage)) {
     gallery.push({
       id: "legacy-image",
-      url: product.image_url,
-      cardUrl: product.image_url,
-      thumbUrl: product.image_url,
+      url: legacyImage,
+      cardUrl: buildOptimizedExternalImageUrl(product.image_url, 768) ?? legacyImage,
+      thumbUrl: buildOptimizedExternalImageUrl(product.image_url, 256) ?? legacyImage,
       alt: product.name,
       variantId: null,
       isPrimary: gallery.length === 0,

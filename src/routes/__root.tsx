@@ -8,8 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { LoaderCircle } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import glassLegacyCss from "../glass-legacy.css?url";
@@ -104,6 +103,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "preconnect", href: "https://lh3.googleusercontent.com" },
+      { rel: "dns-prefetch", href: "https://lh3.googleusercontent.com" },
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: glassLegacyCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
@@ -132,57 +133,17 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const [initialRefreshLoading, setInitialRefreshLoading] = useState(true);
   const showStorefrontFooter = FOOTER_ROUTES.has(pathname) || pathname.startsWith("/product/");
-
-  useEffect(() => {
-    const previousOverflow = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = "hidden";
-
-    const timer = window.setTimeout(() => {
-      setInitialRefreshLoading(false);
-      document.documentElement.style.overflow = previousOverflow;
-    }, 1000);
-
-    return () => {
-      window.clearTimeout(timer);
-      document.documentElement.style.overflow = previousOverflow;
-    };
-  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
-          <div className="relative min-h-screen overflow-x-clip">
-            <div
-              aria-hidden={initialRefreshLoading ? true : undefined}
-              className={`flex min-h-screen flex-col transition-[filter,transform] duration-200 ease-out ${
-                initialRefreshLoading
-                  ? "pointer-events-none select-none scale-[1.01] blur-[22px]"
-                  : "scale-100 blur-0"
-              }`}
-            >
-              <div className="min-h-0 flex-1">
-                <Outlet />
-              </div>
-              {!initialRefreshLoading && showStorefrontFooter ? <Footer /> : null}
+          <div className="relative flex min-h-screen flex-col overflow-x-clip">
+            <div className="min-h-0 flex-1">
+              <Outlet />
             </div>
-
-            {initialRefreshLoading ? (
-              <div
-                data-initial-refresh-loader
-                role="status"
-                aria-label="Carregando"
-                className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/30 backdrop-blur-2xl"
-              >
-                <LoaderCircle
-                  aria-hidden="true"
-                  className="size-11 animate-spin text-foreground [animation-duration:1.1s]"
-                  strokeWidth={1.8}
-                />
-              </div>
-            ) : null}
+            {showStorefrontFooter ? <Footer /> : null}
           </div>
           <CursorFollower />
           <Toaster position="top-center" richColors />

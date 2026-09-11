@@ -1,0 +1,76 @@
+# Validation-only workflow. It never deploys the storefront.
+# Chromium/Playwright checks were intentionally removed; this branch is gated by source rules, regressions, lint and production build.
+name: Validate Stage 1 UX
+
+on:
+  push:
+    branches:
+      - stage1-ux-fixes-20260911
+    paths:
+      - "src/**"
+      - "scripts/validate-stage1-ux.mjs"
+      - "scripts/validate-storefront-regressions.mjs"
+      - ".github/workflows/validate-stage1-ux.yml"
+      - "package.json"
+      - "bun.lock"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-stage1-ux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate Stage 1 source rules
+        run: node scripts/validate-stage1-ux.mjs
+
+      - name: Validate storefront regressions
+        run: node scripts/validate-storefront-regressions.mjs
+
+      - name: Normalize touched files for lint-only runner check
+        run: |
+          bunx prettier --write \
+            src/routes/__root.tsx \
+            src/components/home/CategoryCard.tsx \
+            src/components/home/VisualCategories.tsx \
+            src/components/home/ShopByLeague.tsx \
+            src/components/home/ProductCardPlaceholder.tsx \
+            src/components/product/ProductCard.tsx \
+            src/components/product/ProductGallery.tsx \
+            src/components/ui/cursor-follower.tsx \
+            scripts/validate-stage1-ux.mjs \
+            scripts/validate-storefront-regressions.mjs
+
+      - name: Lint Stage 1 touched files
+        run: |
+          bunx eslint \
+            src/routes/__root.tsx \
+            src/components/home/CategoryCard.tsx \
+            src/components/home/VisualCategories.tsx \
+            src/components/home/ShopByLeague.tsx \
+            src/components/home/ProductCardPlaceholder.tsx \
+            src/components/product/ProductCard.tsx \
+            src/components/product/ProductGallery.tsx \
+            src/components/ui/cursor-follower.tsx \
+            scripts/validate-stage1-ux.mjs \
+            scripts/validate-storefront-regressions.mjs
+
+      - name: Build storefront
+        run: bun run build

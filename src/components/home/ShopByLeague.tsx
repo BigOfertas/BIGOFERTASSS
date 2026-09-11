@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
+import type { CatalogListItem } from "@/lib/catalog";
 import { isStandardHomeJersey, selectVariedProducts } from "@/lib/home-product-selection";
 
 interface League {
@@ -21,28 +22,29 @@ const LEAGUES: League[] = [
 ];
 
 const SHOWCASE_SIZE = 15;
+const INITIAL_PLACEHOLDER_COUNT = 5;
 const DEFAULT_LEAGUE = LEAGUES[0]!;
 
 const ShopByLeague: React.FC = () => {
   const [activeLeagueId, setActiveLeagueId] = useState(DEFAULT_LEAGUE.id);
   const [displayLeagueId, setDisplayLeagueId] = useState(DEFAULT_LEAGUE.id);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [displayProducts, setDisplayProducts] = useState<CatalogListItem[]>([]);
 
-  const displayLeague = LEAGUES.find((league) => league.id === displayLeagueId) ?? DEFAULT_LEAGUE;
+  const activeLeague = LEAGUES.find((league) => league.id === activeLeagueId) ?? DEFAULT_LEAGUE;
   const torcedorQuery = useCatalogProducts({
-    liga: displayLeague.slug,
+    liga: activeLeague.slug,
     commercialType: "torcedor",
     pageSize: 48,
     sort: "newest",
   });
   const jogadorQuery = useCatalogProducts({
-    liga: displayLeague.slug,
+    liga: activeLeague.slug,
     commercialType: "jogador",
     pageSize: 48,
     sort: "newest",
   });
 
-  const products = useMemo(() => {
+  const incomingProducts = useMemo(() => {
     const candidates = [...(torcedorQuery.data?.items ?? []), ...(jogadorQuery.data?.items ?? [])]
       .filter(isStandardHomeJersey)
       .sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at));
@@ -50,19 +52,27 @@ const ShopByLeague: React.FC = () => {
     return selectVariedProducts(candidates, SHOWCASE_SIZE);
   }, [jogadorQuery.data?.items, torcedorQuery.data?.items]);
 
-  const isLoading = torcedorQuery.isLoading || jogadorQuery.isLoading;
+  const incomingLoading =
+    torcedorQuery.isLoading ||
+    jogadorQuery.isLoading ||
+    torcedorQuery.isFetching ||
+    jogadorQuery.isFetching ||
+    torcedorQuery.isPlaceholderData ||
+    jogadorQuery.isPlaceholderData;
   const error = torcedorQuery.error ?? jogadorQuery.error;
-  const placeholderCount = Math.max(0, SHOWCASE_SIZE - products.length);
+
+  useEffect(() => {
+    if (incomingLoading) return;
+    setDisplayLeagueId(activeLeague.id);
+    setDisplayProducts(incomingProducts);
+  }, [activeLeague.id, incomingLoading, incomingProducts]);
 
   const handleLeagueChange = (id: string) => {
-    if (id === activeLeagueId || isTransitioning) return;
-    setIsTransitioning(true);
+    if (id === activeLeagueId) return;
     setActiveLeagueId(id);
-    window.setTimeout(() => {
-      setDisplayLeagueId(id);
-      setIsTransitioning(false);
-    }, 150);
   };
+
+  const showInitialPlaceholders = displayProducts.length === 0;
 
   return (
     <section className="overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14">
@@ -95,11 +105,12 @@ const ShopByLeague: React.FC = () => {
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
-          <div
-            className={`relative transition-all duration-150 ease-in-out motion-reduce:transform-none motion-reduce:transition-none ${isTransitioning ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`}
-          >
-            <ProductCarousel key={displayLeagueId} itemCount={SHOWCASE_SIZE}>
-              {products.map((product) => (
+          <div data-league-products={displayLeagueId} className="relative">
+            <ProductCarousel
+              key={showInitialPlaceholders ? "league-loading" : displayLeagueId}
+              itemCount={showInitialPlaceholders ? INITIAL_PLACEHOLDER_COUNT : displayProducts.length}
+            >
+              {displayProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   id={product.id}
@@ -112,12 +123,11 @@ const ShopByLeague: React.FC = () => {
                   commercialType={product.commercial_type}
                 />
               ))}
-              {Array.from({ length: placeholderCount }).map((_, index) => (
-                <ProductCardPlaceholder
-                  key={`${displayLeagueId}-placeholder-${index}`}
-                  loading={isLoading}
-                />
-              ))}
+              {showInitialPlaceholders
+                ? Array.from({ length: INITIAL_PLACEHOLDER_COUNT }).map((_, index) => (
+                    <ProductCardPlaceholder key={`league-placeholder-${index}`} loading />
+                  ))
+                : null}
             </ProductCarousel>
           </div>
         </div>

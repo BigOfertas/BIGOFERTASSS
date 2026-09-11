@@ -140,13 +140,19 @@ export const Component = () => {
   }, []);
 
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[10000]">
+    <div
+      aria-hidden="true"
+      data-cursor-follower
+      className="pointer-events-none fixed inset-0 z-[10000]"
+    >
       <div
         ref={dotRef}
-        className="absolute size-2 rounded-full bg-black opacity-0 will-change-transform dark:bg-white"
+        data-cursor-dot
+        className="absolute size-2 rounded-full bg-black opacity-0 transition-opacity duration-200 will-change-transform dark:bg-white"
       />
       <div
         ref={borderRef}
+        data-cursor-border
         className="absolute size-7 rounded-full border border-black opacity-0 transition-[width,height,opacity] duration-300 will-change-transform dark:border-white"
       />
     </div>

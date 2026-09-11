@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageOff, Maximize2, X, ZoomIn, ZoomOut } from "lucide-react";
 
-import Lens from "@/components/ui/magnifier-lens";
 import type { ProductGalleryItem } from "@/lib/product-images";
 
 interface ProductGalleryProps {
@@ -10,8 +9,13 @@ interface ProductGalleryProps {
   unavailable?: boolean;
 }
 
-const SWIPE_THRESHOLD = 42;
-const SLIDE_DURATION_MS = 280;
+const SWIPE_THRESHOLD_PX = 48;
+
+type PointerStart = {
+  id: number;
+  x: number;
+  y: number;
+};
 
 export default function ProductGallery({
   images,
@@ -26,16 +30,13 @@ export default function ProductGallery({
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
   const [viewerOpen, setViewerOpen] = useState(false);
   const [zoomed, setZoomed] = useState(false);
-  const [slideDirection, setSlideDirection] = useState<-1 | 1>(1);
-  const touchStartX = useRef<number | null>(null);
-  const mainFrameRef = useRef<HTMLDivElement>(null);
-  const viewerFrameRef = useRef<HTMLDivElement>(null);
-  const lastAnimatedImageIdRef = useRef<string | null>(preferredImageId);
+  const pointerStartRef = useRef<PointerStart | null>(null);
 
   const usableImages = useMemo(
     () => images.filter((image) => !failedImageIds.has(image.id)),
     [failedImageIds, images],
   );
+
   const activeImage =
     usableImages.find((image) => image.id === activeImageId) ?? usableImages[0] ?? null;
   const activeIndex = activeImage
@@ -46,32 +47,33 @@ export default function ProductGallery({
     : 0;
 
   useEffect(() => {
-    setActiveImageId(preferredImageId);
-    lastAnimatedImageIdRef.current = preferredImageId;
-  }, [preferredImageId]);
+    const nextImage = usableImages.find((image) => image.id === preferredImageId) ?? usableImages[0];
+    if (!nextImage) {
+      setActiveImageId(null);
+      return;
+    }
+    if (!usableImages.some((image) => image.id === activeImageId)) {
+      setActiveImageId(nextImage.id);
+    }
+  }, [activeImageId, preferredImageId, usableImages]);
 
   useEffect(() => {
     if (!viewerOpen) setZoomed(false);
   }, [viewerOpen]);
 
-  useEffect(() => {
-    for (const image of usableImages) {
-      const preloader = new Image();
-      preloader.decoding = "async";
-      preloader.src = image.url;
-      void preloader.decode().catch(() => undefined);
-    }
-  }, [usableImages]);
-
   const move = useCallback(
     (direction: -1 | 1) => {
       if (usableImages.length < 2) return;
-      const nextIndex = (activeIndex + direction + usableImages.length) % usableImages.length;
-      setSlideDirection(direction);
-      setActiveImageId(usableImages[nextIndex]?.id ?? null);
       setZoomed(false);
+      setActiveImageId((currentId) => {
+        const currentIndex = usableImages.findIndex((image) => image.id === currentId);
+        const normalizedIndex = currentIndex >= 0 ? currentIndex : 0;
+        const nextIndex =
+          (normalizedIndex + direction + usableImages.length) % usableImages.length;
+        return usableImages[nextIndex]?.id ?? currentId;
+      });
     },
-    [activeIndex, usableImages],
+    [usableImages],
   );
 
   useEffect(() => {
@@ -85,92 +87,89 @@ export default function ProductGallery({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [move, viewerOpen]);
 
-  useEffect(() => {
-    if (!activeImage || lastAnimatedImageIdRef.current === activeImage.id) return;
-    lastAnimatedImageIdRef.current = activeImage.id;
-
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reducedMotion) return;
-
-    const animateFrame = (element: HTMLDivElement | null) => {
-      if (!element) return;
-      element.getAnimations().forEach((animation) => animation.cancel());
-      element.animate(
-        [
-          {
-            opacity: 0.45,
-            transform: `translate3d(${slideDirection * 34}px, 0, 0) scale(0.99)`,
-          },
-          { opacity: 1, transform: "translate3d(0, 0, 0) scale(1)" },
-        ],
-        {
-          duration: SLIDE_DURATION_MS,
-          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-        },
-      );
-    };
-
-    requestAnimationFrame(() => {
-      animateFrame(mainFrameRef.current);
-      if (viewerOpen) animateFrame(viewerFrameRef.current);
-    });
-  }, [activeImage, slideDirection, viewerOpen]);
-
   const markFailed = (imageId: string) => {
     setFailedImageIds((current) => new Set(current).add(imageId));
   };
 
-  const selectImage = (imageId: string, index: number) => {
-    if (imageId === activeImage?.id) return;
-    setSlideDirection(index < activeIndex ? -1 : 1);
-    setActiveImageId(imageId);
+  const selectImage = (imageId: string) => {
+    if (imageId === activeImage?.id || failedImageIds.has(imageId)) return;
     setZoomed(false);
+    setActiveImageId(imageId);
   };
 
-  const onTouchStart = (event: React.TouchEvent) => {
-    touchStartX.current = event.touches[0]?.clientX ?? null;
+  const handlePointerDown = (event: React.PointerEvent<HTMLElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    pointerStartRef.current = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
   };
 
-  const onTouchEnd = (event: React.TouchEvent) => {
-    const start = touchStartX.current;
-    const end = event.changedTouches[0]?.clientX ?? null;
-    touchStartX.current = null;
-    if (start === null || end === null) return;
-    const distance = end - start;
-    if (Math.abs(distance) < SWIPE_THRESHOLD) return;
-    move(distance > 0 ? -1 : 1);
+  const handlePointerUp = (event: React.PointerEvent<HTMLElement>) => {
+    const start = pointerStartRef.current;
+    pointerStartRef.current = null;
+    if (!start || start.id !== event.pointerId || usableImages.length < 2) return;
+
+    const deltaX = event.clientX - start.x;
+    const deltaY = event.clientY - start.y;
+    if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+    move(deltaX < 0 ? 1 : -1);
+  };
+
+  const handleNavigationPointerDown = (
+    event: React.PointerEvent<HTMLButtonElement>,
+    direction: -1 | 1,
+  ) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    move(direction);
+  };
+
+  const handleNavigationClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    direction: -1 | 1,
+  ) => {
+    event.stopPropagation();
+    if (event.detail === 0) move(direction);
   };
 
   return (
     <section aria-label={`Galeria de ${productName}`}>
-      <div
-        className="relative flex aspect-square touch-pan-y items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm sm:aspect-[4/5]"
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-      >
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm sm:aspect-[4/5]">
         {activeImage ? (
           <button
             type="button"
+            data-active-image-id={activeImage.id}
             onClick={() => setViewerOpen(true)}
-            className="group h-full w-full cursor-zoom-in"
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={() => {
+              pointerStartRef.current = null;
+            }}
+            className="h-full w-full touch-pan-y"
             aria-label={`Ampliar imagem ${activeIndex + 1} de ${productName}`}
           >
-            <div ref={mainFrameRef} className="h-full w-full">
-              <Lens zoomFactor={2.5} lensSize={180} className="h-full w-full rounded-none">
-                <img
-                  key={activeImage.id}
-                  src={activeImage.url}
-                  alt={activeImage.alt}
-                  width={1200}
-                  height={1500}
-                  sizes="(max-width: 1023px) 92vw, 600px"
-                  fetchPriority="high"
-                  decoding="async"
-                  onError={() => markFailed(activeImage.id)}
-                  className="h-full w-full object-contain"
-                />
-              </Lens>
-            </div>
+            <img
+              key={activeImage.id}
+              src={activeImage.cardUrl}
+              alt={activeImage.alt}
+              width={768}
+              height={960}
+              sizes="(max-width: 1023px) 92vw, 600px"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              onError={(event) => {
+                if (event.currentTarget.src !== activeImage.url) {
+                  event.currentTarget.src = activeImage.url;
+                  return;
+                }
+                markFailed(activeImage.id);
+              }}
+              className="h-full w-full object-contain"
+            />
           </button>
         ) : (
           <div className="flex flex-col items-center gap-3 px-6 text-center text-gray-400">
@@ -180,7 +179,10 @@ export default function ProductGallery({
         )}
 
         {activeImage ? (
-          <div className="pointer-events-none absolute left-3 top-3 z-[70] flex items-center gap-2">
+          <div
+            data-gallery-status-overlay
+            className="pointer-events-none absolute left-3 top-3 z-30 flex items-center gap-2"
+          >
             <span className="rounded-full bg-black/75 px-2.5 py-1 text-xs font-bold text-white sm:hidden">
               {activeIndex + 1} / {usableImages.length}
             </span>
@@ -194,16 +196,20 @@ export default function ProductGallery({
           <>
             <button
               type="button"
-              onClick={() => move(-1)}
-              className="absolute left-2 top-1/2 z-[70] hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-800 shadow transition hover:bg-white sm:block"
+              data-gallery-nav="previous"
+              onPointerDown={(event) => handleNavigationPointerDown(event, -1)}
+              onClick={(event) => handleNavigationClick(event, -1)}
+              className="absolute left-2 top-1/2 z-30 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white sm:block"
               aria-label="Imagem anterior"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               type="button"
-              onClick={() => move(1)}
-              className="absolute right-2 top-1/2 z-[70] hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-800 shadow transition hover:bg-white sm:block"
+              data-gallery-nav="next"
+              onPointerDown={(event) => handleNavigationPointerDown(event, 1)}
+              onClick={(event) => handleNavigationClick(event, 1)}
+              className="absolute right-2 top-1/2 z-30 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white sm:block"
               aria-label="Próxima imagem"
             >
               <ChevronRight className="h-5 w-5" />
@@ -212,7 +218,7 @@ export default function ProductGallery({
         ) : null}
 
         {unavailable ? (
-          <div className="absolute inset-0 z-[80] flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
+          <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
             <span className="rounded-full bg-black px-6 py-2 font-black uppercase tracking-tight text-white">
               Combinação indisponível
             </span>
@@ -222,7 +228,7 @@ export default function ProductGallery({
 
       {images.length > 1 ? (
         <div className="mt-4 hidden grid-cols-4 gap-3 sm:grid sm:grid-cols-5">
-          {images.map((image, index) => {
+          {images.map((image) => {
             const failed = failedImageIds.has(image.id);
             const active = activeImage?.id === image.id;
 
@@ -230,13 +236,13 @@ export default function ProductGallery({
               <button
                 key={image.id}
                 type="button"
-                onClick={() => selectImage(image.id, index)}
-                className={`flex aspect-square items-center justify-center overflow-hidden rounded-md border bg-gray-50 transition-colors ${
+                onClick={() => selectImage(image.id)}
+                className={`flex aspect-square items-center justify-center overflow-hidden rounded-md border bg-gray-50 ${
                   active
                     ? "border-red-600 ring-1 ring-red-600"
                     : "border-gray-200 hover:border-gray-400"
                 }`}
-                aria-label={`Ver imagem ${index + 1} de ${productName}`}
+                aria-label={`Ver imagem de ${productName}`}
                 aria-pressed={active}
               >
                 {!failed ? (
@@ -262,12 +268,12 @@ export default function ProductGallery({
 
       {viewerOpen && activeImage ? (
         <div
-          className="fixed inset-0 z-[100] flex flex-col bg-black/95"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4 sm:p-8"
           role="dialog"
           aria-modal="true"
           aria-label={`Visualização ampliada de ${productName}`}
         >
-          <div className="relative z-[120] flex items-center justify-between px-4 py-3 text-white">
+          <div className="absolute inset-x-0 top-0 z-[120] flex items-center justify-between px-4 py-3 text-white sm:px-6 sm:py-4">
             <span className="text-sm font-bold">
               {activeIndex + 1} / {usableImages.length}
             </span>
@@ -292,52 +298,52 @@ export default function ProductGallery({
           </div>
 
           <div
-            className="relative min-h-0 flex-1 touch-pan-y overflow-hidden"
-            onTouchStart={onTouchStart}
-            onTouchEnd={onTouchEnd}
+            data-product-image-viewer-frame
+            className="relative h-[75dvh] w-[92vw] max-w-[1100px] overflow-hidden sm:w-[75vw]"
           >
             <button
               type="button"
               onClick={() => setZoomed((current) => !current)}
-              className="absolute inset-0 h-full w-full"
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={() => {
+                pointerStartRef.current = null;
+              }}
+              className="flex h-full w-full touch-pan-y items-center justify-center overflow-hidden"
               aria-label={zoomed ? "Reduzir zoom" : "Aumentar zoom"}
             >
-              <div ref={viewerFrameRef} className="h-full w-full">
-                <Lens
-                  zoomFactor={zoomed ? 3.25 : 2.5}
-                  lensSize={220}
-                  className="h-full w-full rounded-none"
-                >
-                  <img
-                    key={`viewer-${activeImage.id}`}
-                    src={activeImage.url}
-                    alt={activeImage.alt}
-                    width={1600}
-                    height={2000}
-                    decoding="sync"
-                    onError={() => markFailed(activeImage.id)}
-                    className={`h-full w-full object-contain transition-transform duration-200 ease-out motion-reduce:transition-none ${
-                      zoomed ? "scale-[1.75]" : "scale-100"
-                    }`}
-                  />
-                </Lens>
-              </div>
+              <img
+                key={`viewer-${activeImage.id}`}
+                src={activeImage.url}
+                alt={activeImage.alt}
+                width={1600}
+                height={2000}
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+                onError={() => markFailed(activeImage.id)}
+                className={`h-full w-full object-contain ${zoomed ? "scale-[1.55]" : "scale-100"}`}
+              />
             </button>
 
             {usableImages.length > 1 && !zoomed ? (
               <>
                 <button
                   type="button"
-                  onClick={() => move(-1)}
-                  className="absolute left-3 top-1/2 z-[110] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+                  data-gallery-viewer-nav="previous"
+                  onPointerDown={(event) => handleNavigationPointerDown(event, -1)}
+                  onClick={(event) => handleNavigationClick(event, -1)}
+                  className="absolute left-3 top-1/2 z-[110] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
                   aria-label="Imagem anterior"
                 >
                   <ChevronLeft className="h-6 w-6" />
                 </button>
                 <button
                   type="button"
-                  onClick={() => move(1)}
-                  className="absolute right-3 top-1/2 z-[110] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+                  data-gallery-viewer-nav="next"
+                  onPointerDown={(event) => handleNavigationPointerDown(event, 1)}
+                  onClick={(event) => handleNavigationClick(event, 1)}
+                  className="absolute right-3 top-1/2 z-[110] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
                   aria-label="Próxima imagem"
                 >
                   <ChevronRight className="h-6 w-6" />

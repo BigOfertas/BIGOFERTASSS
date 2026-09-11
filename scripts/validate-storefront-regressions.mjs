@@ -64,25 +64,15 @@ check(
   ].every((route) => !footerRoutes.includes(route)),
 );
 check(
-  "F5 mantém carregamento visual por um segundo antes de liberar o site",
-  root.includes("const [initialRefreshLoading, setInitialRefreshLoading] = useState(true)") &&
-    root.includes("window.setTimeout") &&
-    root.includes("}, 1000)") &&
-    root.includes('document.documentElement.style.overflow = "hidden"') &&
-    root.includes("!initialRefreshLoading && showStorefrontFooter"),
+  "F5 não impõe atraso artificial nem pré-carregamento global bloqueante",
+  !root.includes("INITIAL_REFRESH_MIN_MS") &&
+    !root.includes("initialRefreshLoading") &&
+    !root.includes("preloadRenderedImages") &&
+    !root.includes("data-initial-refresh-loader"),
 );
 check(
-  "carregamento do F5 usa blur forte e somente ícone rotativo sobre o site",
-  root.includes("data-initial-refresh-loader") &&
-    root.includes('aria-label="Carregando"') &&
-    root.includes("blur-[22px]") &&
-    root.includes("backdrop-blur-2xl") &&
-    root.includes("<LoaderCircle") &&
-    root.includes("animate-spin") &&
-    root.includes("[animation-duration:1.1s]") &&
-    !root.includes("Carregando...") &&
-    root.includes('className="relative min-h-screen overflow-x-clip"') &&
-    root.includes('className="min-h-0 flex-1"'),
+  "cursor integrado monta diretamente com a aplicação",
+  root.includes("<CursorFollower />") && !root.includes("!initialRefreshLoading ? <CursorFollower /> : null"),
 );
 const routeFooterUsers = routeFiles("src/routes").filter(
   (file) => file !== "src/routes/__root.tsx" && /<Footer\b|import\s+Footer\b/.test(read(file)),
@@ -116,6 +106,13 @@ check(
     leagues.includes('commercialType: "jogador"') &&
     leagues.includes("isStandardHomeJersey") &&
     !/useCatalogProducts\(\{\s*liga: displayLeague\.slug,\s*pageSize:/s.test(leagues),
+);
+check(
+  "troca de liga preserva os cards até a nova liga estar pronta",
+  leagues.includes("displayProducts") &&
+    leagues.includes("isPlaceholderData") &&
+    leagues.includes("setDisplayLeagueId(activeLeague.id)") &&
+    leagues.includes("data-league-products"),
 );
 check(
   "regra positiva da home aceita somente Camisa I II III nos tipos permitidos",

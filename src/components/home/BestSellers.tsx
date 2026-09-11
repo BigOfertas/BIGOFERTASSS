@@ -10,11 +10,12 @@ import { callSupabaseRpc } from "@/lib/supabase-rpc";
 
 const SHOWCASE_SIZE = 10;
 const LOADING_SIZE = 5;
+const PRIORITY_IMAGE_COUNT = 5;
 
 const BestSellers: React.FC = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["home", "launches", "top-10"],
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
     queryFn: async () =>
       parseCatalogPage(await callSupabaseRpc<Json>("storefront_launch_products")),
   });
@@ -26,7 +27,7 @@ const BestSellers: React.FC = () => {
     ? Array.from({ length: LOADING_SIZE }).map((_, index) => (
         <ProductCardPlaceholder key={`launch-loading-${index}`} loading />
       ))
-    : launchProducts.map((product) => (
+    : launchProducts.map((product, index) => (
         <ProductCard
           key={product.id}
           id={product.id}
@@ -37,6 +38,7 @@ const BestSellers: React.FC = () => {
           imageUrl={product.displayImageUrl}
           time={product.time}
           commercialType={product.commercial_type}
+          priority={index < PRIORITY_IMAGE_COUNT}
         />
       ));
 
