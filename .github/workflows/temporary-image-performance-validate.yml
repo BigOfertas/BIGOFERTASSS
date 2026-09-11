@@ -42,8 +42,10 @@ jobs:
             supabase/functions/_shared/r2.ts \
             supabase/functions/r2-image-presign/index.ts \
             supabase/functions/site-asset-presign/index.ts \
+            scripts/generate-home-launches-static.mjs \
             scripts/validate-image-loading-performance.mjs \
-            scripts/validate-stage1-ux.mjs
+            scripts/validate-stage1-ux.mjs \
+            package.json
 
       - name: Validate image performance rules
         run: node scripts/validate-image-loading-performance.mjs
@@ -85,10 +87,11 @@ jobs:
           print("HOMEPAGE_PRODUCT_IMAGES_PRERENDERED")
           PY
 
-      - name: Commit formatter output
+      - name: Restore generated source and commit formatter output
         shell: bash
         run: |
           set -euo pipefail
+          git checkout -- src/generated/home-launches.ts
           git config user.name "BigOfertas"
           git config user.email "contato@bigofertas.net"
           git add \
@@ -104,8 +107,10 @@ jobs:
             supabase/functions/_shared/r2.ts \
             supabase/functions/r2-image-presign/index.ts \
             supabase/functions/site-asset-presign/index.ts \
+            scripts/generate-home-launches-static.mjs \
             scripts/validate-image-loading-performance.mjs \
-            scripts/validate-stage1-ux.mjs
+            scripts/validate-stage1-ux.mjs \
+            package.json
           if git diff --cached --quiet; then
             echo "NO_FORMAT_CHANGES"
             exit 0
