@@ -1,7 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type ProductCommercialType =
-  "torcedor" | "feminino" | "jogador" | "retro" | "infantil" | "calcao" | "basquete" | "other";
+  | "torcedor"
+  | "feminino"
+  | "jogador"
+  | "retro"
+  | "infantil"
+  | "calcao"
+  | "basquete"
+  | "other";
 
 export type PurchaseCustomization = {
   size: string | null;
@@ -95,6 +102,16 @@ function normalizeConfig(value: unknown): ProductPurchaseConfig {
   const commercialType = allowedTypes.includes(row.commercialType as ProductCommercialType)
     ? (row.commercialType as ProductCommercialType)
     : "other";
+  const isShorts = commercialType === "calcao";
+  const patches = Array.isArray(row.patches)
+    ? row.patches.flatMap((item) => {
+        const patch = record(item);
+        return typeof patch.code === "string" && typeof patch.label === "string"
+          ? [{ code: patch.code, label: patch.label, price: numberValue(patch.price, 15) }]
+          : [];
+      })
+    : [];
+
   return {
     sizes: Array.isArray(row.sizes)
       ? row.sizes.filter((item): item is string => typeof item === "string")
@@ -109,16 +126,9 @@ function normalizeConfig(value: unknown): ProductPurchaseConfig {
     deliveryMaxBusinessDays: numberValue(row.deliveryMaxBusinessDays, 25),
     commercialType,
     sizeEnabled: row.sizeEnabled !== false,
-    personalizationEnabled: row.personalizationEnabled !== false,
-    phraseEnabled: row.phraseEnabled !== false,
-    patches: Array.isArray(row.patches)
-      ? row.patches.flatMap((item) => {
-          const patch = record(item);
-          return typeof patch.code === "string" && typeof patch.label === "string"
-            ? [{ code: patch.code, label: patch.label, price: numberValue(patch.price, 15) }]
-            : [];
-        })
-      : [],
+    personalizationEnabled: !isShorts && row.personalizationEnabled !== false,
+    phraseEnabled: !isShorts && row.phraseEnabled !== false,
+    patches: isShorts ? [] : patches,
   };
 }
 
@@ -149,6 +159,12 @@ export function validatePurchaseCustomization(
 ) {
   if (config.sizeEnabled && (!customization.size || !config.sizes.includes(customization.size))) {
     return "Escolha o tamanho da peça.";
+  }
+  if (!config.personalizationEnabled && customization.personalization) {
+    return "Este produto não aceita personalização de nome e número.";
+  }
+  if (!config.phraseEnabled && customization.phrase) {
+    return "Este produto não aceita frase personalizada.";
   }
   if (customization.personalization && customization.phrase) {
     return "Escolha personalização comum ou frase personalizada.";
