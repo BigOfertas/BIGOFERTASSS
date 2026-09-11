@@ -1,0 +1,129 @@
+:root {
+  --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+  --sport-shadow-sm: 0 10px 24px rgba(15, 23, 42, 0.08);
+  --sport-shadow-md: 0 18px 44px rgba(15, 23, 42, 0.12);
+  --sport-shadow-lg: 0 28px 70px rgba(15, 23, 42, 0.16);
+}
+
+h1,
+h2,
+h3,
+h4,
+.display-title,
+.display-title-sm {
+  font-family: var(--font-display);
+  font-stretch: condensed;
+}
+
+.display-title {
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 0.92;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75), 0 8px 22px rgba(15, 23, 42, 0.08);
+}
+
+.display-title-sm {
+  font-weight: 850;
+  letter-spacing: -0.025em;
+  line-height: 0.94;
+}
+
+.display-kicker {
+  letter-spacing: 0.19em;
+  font-weight: 900;
+}
+
+.sport-heading {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 0.92;
+  text-wrap: balance;
+}
+
+.account-command-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(17, 24, 39, 0.9);
+  background:
+    linear-gradient(122deg, rgba(8, 8, 10, 0.99), rgba(20, 20, 24, 0.98) 58%, rgba(75, 8, 8, 0.97)),
+    #0b0b0d;
+  box-shadow: var(--sport-shadow-lg);
+  isolation: isolate;
+}
+
+.account-command-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(239, 68, 68, 0.33), transparent 28%),
+    linear-gradient(115deg, transparent 0 58%, rgba(255, 255, 255, 0.035) 58% 61%, transparent 61% 100%);
+}
+
+.account-command-hero::after {
+  content: "DROPBOX";
+  position: absolute;
+  right: -0.03em;
+  bottom: -0.28em;
+  z-index: -1;
+  font-family: var(--font-display);
+  font-size: clamp(5rem, 11vw, 9rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  color: rgba(255, 255, 255, 0.035);
+  pointer-events: none;
+}
+
+.account-action-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  background: linear-gradient(155deg, #ffffff, #fbfbfc 58%, #f4f5f7);
+  box-shadow: var(--sport-shadow-sm);
+  transition:
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.account-action-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -2rem -3.5rem auto;
+  width: 7rem;
+  height: 7rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.1), transparent 68%);
+  pointer-events: none;
+}
+
+.account-action-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(220, 38, 38, 0.22);
+  box-shadow: var(--sport-shadow-md);
+}
+
+.account-profile-card {
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  background: #ffffff;
+  box-shadow: var(--sport-shadow-sm);
+}
+
+.account-profile-card::before {
+  content: "";
+  display: block;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, #dc2626, #ef4444 55%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-action-card,
+  .account-action-card:hover {
+    transform: none;
+    transition: none;
+  }
+}
