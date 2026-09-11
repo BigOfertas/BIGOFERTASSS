@@ -1,15 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  ChevronDown,
-  CreditCard,
-  Mail,
-  MessageCircle,
-  PackageCheck,
-  WalletCards,
-} from "lucide-react";
+import { ChevronDown, CreditCard, Mail, MessageCircle, PackageCheck } from "lucide-react";
 
-import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { COOKIE_PREFERENCES_EVENT } from "@/components/privacy/CookieConsent";
 import { BRAND } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
@@ -24,7 +16,14 @@ const trustItems = [
   { icon: MessageCircle, title: "ATENDIMENTO", description: "Suporte pelos canais oficiais." },
 ] as const;
 
-const paymentMethods = ["PIX", "VISA", "MASTERCARD", "ELO", "AMEX"] as const;
+const paymentMethods = [
+  { name: "Pix", src: "/assets/payments/pix.svg" },
+  { name: "Elo", src: "/assets/payments/elo.svg" },
+  { name: "Mastercard", src: "/assets/payments/mastercard.svg" },
+  { name: "American Express", src: "/assets/payments/amex.svg" },
+  { name: "Visa", src: "/assets/payments/visa.svg" },
+  { name: "InfinitePay", src: "/assets/payments/infinitepay.svg" },
+] as const;
 
 export default function Footer() {
   const { user, isOwner } = useAuth();
@@ -62,10 +61,17 @@ export default function Footer() {
           <div>
             <Link
               to="/"
-              className="inline-flex w-fit items-baseline text-3xl font-black italic tracking-tighter text-white"
+              className="inline-flex w-fit rounded-xl"
               aria-label={`${BRAND.officialName} - Início`}
             >
-              <BrandWordmark />
+              <img
+                src="/assets/branding/dropbox-footer.svg"
+                alt={BRAND.officialName}
+                width={160}
+                height={103}
+                decoding="async"
+                className="block w-40 max-w-full rounded-xl bg-white object-contain"
+              />
             </Link>
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-gray-400">
               Camisas e artigos esportivos com compra online e atendimento pelos canais oficiais.
@@ -245,16 +251,19 @@ export default function Footer() {
           <div className="mt-4 flex flex-wrap gap-2" aria-label="Formas de pagamento">
             {paymentMethods.map((method) => (
               <span
-                key={method}
-                className="inline-flex min-h-9 items-center rounded-lg border border-white/15 bg-white px-3 py-1.5 text-[11px] font-black tracking-wide text-gray-900"
+                key={method.name}
+                className="inline-flex h-9 min-w-14 items-center justify-center rounded-lg border border-white/15 bg-white px-2.5 py-1.5"
+                title={method.name}
               >
-                {method}
+                <img
+                  src={method.src}
+                  alt={method.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-5 w-auto max-w-[86px] object-contain"
+                />
               </span>
             ))}
-            <span className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-[11px] font-black tracking-wide text-emerald-300">
-              <WalletCards className="h-4 w-4" aria-hidden="true" />
-              INFINITEPAY
-            </span>
           </div>
         </section>
 
