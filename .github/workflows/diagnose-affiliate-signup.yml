@@ -26,24 +26,28 @@ jobs:
           if (!ref || !token) throw new Error('Missing Supabase CI credentials');
 
           const end = new Date();
-          const start = new Date(end.getTime() - 2 * 60 * 60 * 1000);
+          const start = new Date(end.getTime() - 3 * 60 * 60 * 1000);
           const sql = `
             select
               timestamp,
-              source_name,
+              source,
+              severity_text,
               event_message,
               log_attributes['request.method'] as method,
               log_attributes['request.path'] as path,
-              log_attributes['response.status_code'] as status_code
+              log_attributes['response.status_code'] as status_code,
+              log_attributes['error'] as error,
+              log_attributes['msg'] as msg
             from logs
             where
               log_attributes['request.path'] = '/auth/v1/signup'
               or positionCaseInsensitive(event_message, 'signup') > 0
               or positionCaseInsensitive(event_message, 'database error saving new user') > 0
+              or positionCaseInsensitive(event_message, 'saving new user') > 0
               or positionCaseInsensitive(event_message, 'affiliate') > 0
               or positionCaseInsensitive(event_message, 'phone') > 0
             order by timestamp desc
-            limit 300
+            limit 500
           `;
           const qs = new URLSearchParams({
             sql,
@@ -56,8 +60,10 @@ jobs:
           );
           const text = await response.text();
           console.log(`LOG_QUERY_HTTP_${response.status}`);
-          console.log(text.slice(0, 30000));
-          if (!response.ok) process.exit(10);
+          console.log(text.slice(0, 50000));
+          let payload = null;
+          try { payload = JSON.parse(text); } catch {}
+          if (!response.ok || (payload && !Array.isArray(payload) && payload.error)) process.exit(10);
           NODE
 
       - name: Inspect affiliate signup database structure
