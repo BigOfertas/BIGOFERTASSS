@@ -69,6 +69,9 @@ jobs:
       - name: Deploy final storefront refinements
         run: node scripts/deploy-final-storefront-refinements.mjs
 
+      - name: Ensure second owner is live
+        run: node scripts/deploy-second-owner.mjs
+
       - name: Audit Stage 2 product patches
         run: node scripts/audit-stage2-patches.mjs
 
@@ -83,6 +86,3 @@ jobs:
 
       - name: Hide existing owner order history
         run: node scripts/deploy-owner-order-history-cutoff.mjs
-
-      - name: Ensure second owner is live
-        run: node scripts/deploy-second-owner.mjs
