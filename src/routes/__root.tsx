@@ -120,7 +120,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR">
       <head>
         <HeadContent />
       </head>
@@ -133,27 +133,22 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 60_000,
-        refetchOnWindowFocus: false,
-      },
-    },
-  });
+  const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const showFooter = FOOTER_ROUTES.has(pathname);
+  const showStorefrontFooter = FOOTER_ROUTES.has(pathname) || pathname.startsWith("/product/");
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
-          <div className="min-h-screen bg-background text-foreground">
-            <Outlet />
-            {showFooter ? <Footer /> : null}
+          <div className="relative flex min-h-screen flex-col overflow-x-clip">
+            <div className="min-h-0 flex-1">
+              <Outlet />
+            </div>
+            {showStorefrontFooter ? <Footer /> : null}
           </div>
-          <Toaster />
           <CursorFollower />
+          <Toaster position="top-center" richColors />
         </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
