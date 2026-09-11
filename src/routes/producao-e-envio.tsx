@@ -1,8 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { InstitutionalPage, InstitutionalSection } from "@/components/content/InstitutionalPage";
+import { buildPageHead } from "@/lib/page-seo";
 
-export const Route = createFileRoute("/producao-e-envio")({ component: ShippingInfoPage });
+export const Route = createFileRoute("/producao-e-envio")({
+  head: () =>
+    buildPageHead({
+      title: "Produção e Envio",
+      description: "Entenda os prazos de preparação, transporte, previsão total e acompanhamento dos pedidos da DropBox.",
+      path: "/producao-e-envio",
+    }),
+  component: ShippingInfoPage,
+});
 
 function ShippingInfoPage() {
   return (
