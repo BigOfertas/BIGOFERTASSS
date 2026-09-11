@@ -461,7 +461,11 @@ function RegisterPage() {
                   className="absolute right-0 top-0 flex h-[54px] w-12 items-center justify-center text-gray-400 transition hover:text-gray-900"
                   aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
               <span
@@ -491,11 +495,17 @@ function RegisterPage() {
                   className="absolute right-0 top-0 flex h-[54px] w-12 items-center justify-center text-gray-400 transition hover:text-gray-900"
                   aria-label={showConfirmPassword ? "Ocultar confirmação" : "Mostrar confirmação"}
                 >
-                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
               {confirmPassword && !passwordsMatch ? (
-                <span className="mt-1.5 block text-xs text-amber-700">As senhas não coincidem.</span>
+                <span className="mt-1.5 block text-xs text-amber-700">
+                  As senhas não coincidem.
+                </span>
               ) : null}
             </label>
 
