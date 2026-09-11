@@ -18,25 +18,22 @@ async function waitForInteractive(page) {
   );
 }
 
+async function waitForDesktopHydration(page) {
+  await page.mouse.move(321, 241);
+  await page.waitForFunction(() => {
+    const dot = document.querySelector("[data-cursor-dot]");
+    return dot instanceof HTMLElement && dot.style.transform.includes("translate3d(321px, 241px");
+  }, null, { timeout: 5_000 });
+  console.log("PASS - React está hidratado antes dos testes interativos da galeria");
+}
+
 async function runDesktop(browser) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const page = await context.newPage();
-  const failedImageRequests = [];
-  const badImageResponses = [];
-
-  page.on("requestfailed", (request) => {
-    if (request.resourceType() === "image") {
-      failedImageRequests.push(`${request.failure()?.errorText || "failed"} ${request.url()}`);
-    }
-  });
-  page.on("response", (response) => {
-    if (response.request().resourceType() === "image" && response.status() >= 400) {
-      badImageResponses.push(`${response.status()} ${response.url()}`);
-    }
-  });
 
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 45_000 });
   await waitForInteractive(page);
+  await waitForDesktopHydration(page);
 
   const firstLaunchImage = page.locator('#lancamentos [data-product-card] img').first();
   await firstLaunchImage.waitFor({ state: "visible", timeout: 12_000 });
@@ -47,10 +44,11 @@ async function runDesktop(browser) {
       image.addEventListener("error", resolve, { once: true });
     });
   });
-  const launchReady = await firstLaunchImage.evaluate(
-    (image) => image.complete && image.naturalWidth > 0,
+  assert(
+    await firstLaunchImage.evaluate((image) => image.complete && image.naturalWidth > 0),
+    "primeira imagem de produto carrega de verdade na entrada da loja",
   );
-  assert(launchReady, "primeira imagem de produto carrega de verdade na entrada da loja");
+
   const launchSrc = (await firstLaunchImage.getAttribute("src")) || "";
   if (/googleusercontent\.com/i.test(launchSrc)) {
     assert(
@@ -58,7 +56,7 @@ async function runDesktop(browser) {
       "card Google Photos usa imagem compacta de 768 px em vez da original de 4096 px",
     );
   } else {
-    console.log("PASS - primeiro card usa derivado R2/local e não depende do original Google 4096 px");
+    console.log("PASS - primeiro card usa derivado R2/local em vez do original Google de 4096 px");
   }
 
   const visualSection = page
@@ -71,8 +69,10 @@ async function runDesktop(browser) {
     Boolean(visualBox && visualBox.width >= 310),
     `cards de Monte seu pedido dobram no desktop (${Math.round(visualBox?.width || 0)} px)`,
   );
-  const visualText = (await firstVisualCard.textContent())?.trim() || "";
-  assert(visualText === "", "cards de Monte seu pedido não têm texto sobreposto à arte");
+  assert(
+    ((await firstVisualCard.textContent())?.trim() || "") === "",
+    "cards de Monte seu pedido não têm texto sobreposto à arte",
+  );
 
   const leagueSection = page
     .locator("section")
@@ -99,6 +99,7 @@ async function runDesktop(browser) {
     timeout: 45_000,
   });
   await waitForInteractive(page);
+  await waitForDesktopHydration(page);
 
   const gallery = page.locator('section[aria-label^="Galeria de"]');
   await gallery.waitFor({ state: "visible", timeout: 10_000 });
@@ -111,57 +112,27 @@ async function runDesktop(browser) {
     "cursor integrado permanece ativo na página do produto",
   );
 
-  const mainImage = gallery.locator("img").first();
+  const mainImage = gallery.locator("[data-active-image-id] img").first();
   await mainImage.waitFor({ state: "visible", timeout: 8_000 });
-  const transitionDuration = await mainImage.evaluate(
-    (image) => getComputedStyle(image).transitionDuration,
-  );
   assert(
-    transitionDuration === "0s",
+    (await mainImage.evaluate((image) => getComputedStyle(image).transitionDuration)) === "0s",
     "imagem do produto não possui animação CSS ao trocar de foto",
   );
 
-  const nextButton = gallery.getByRole("button", { name: "Próxima imagem" }).first();
+  const nextButton = gallery.locator('[data-gallery-nav="next"]');
   if ((await nextButton.count()) > 0) {
     const activeButton = gallery.locator("[data-active-image-id]").first();
     const beforeId = await activeButton.getAttribute("data-active-image-id");
-    const beforeSrc = await mainImage.getAttribute("src");
-    const inactiveThumbs = gallery.locator('button[aria-label^="Ver imagem de"][aria-pressed="false"]');
-    console.log(
-      `GALLERY_DIAG beforeId=${beforeId} nextButtons=${await gallery.getByRole("button", { name: "Próxima imagem" }).count()} inactiveThumbs=${await inactiveThumbs.count()} images=${await gallery.locator("img").count()} beforeSrc=${beforeSrc}`,
-    );
-
     await nextButton.click();
-    const samples = [];
-    for (const delay of [0, 10, 25, 50, 100, 250, 500, 1000]) {
-      if (delay > 0) await page.waitForTimeout(delay - (samples.at(-1)?.delay || 0));
-      samples.push({
-        delay,
-        id: await gallery.locator("[data-active-image-id]").first().getAttribute("data-active-image-id"),
-        src: await gallery.locator("img").first().getAttribute("src"),
-      });
-    }
-    console.log(`GALLERY_DIAG arrowSamples=${JSON.stringify(samples)}`);
-
-    let afterId = samples.at(-1)?.id ?? beforeId;
-    if (afterId === beforeId && (await inactiveThumbs.count()) > 0) {
-      await inactiveThumbs.first().click();
-      await page.waitForTimeout(100);
-      afterId = await gallery
-        .locator("[data-active-image-id]")
-        .first()
-        .getAttribute("data-active-image-id");
-      console.log(`GALLERY_DIAG afterThumbClick=${afterId}`);
-    }
-
-    if (failedImageRequests.length > 0) {
-      console.log(`GALLERY_DIAG failedImageRequests=${JSON.stringify(failedImageRequests.slice(-12))}`);
-    }
-    if (badImageResponses.length > 0) {
-      console.log(`GALLERY_DIAG badImageResponses=${JSON.stringify(badImageResponses.slice(-12))}`);
-    }
-
-    assert(beforeId !== afterId, "botão ou miniatura troca a foto imediatamente, sem animação de deslize");
+    await page.waitForFunction(
+      (previousId) =>
+        document.querySelector("[data-active-image-id]")?.getAttribute("data-active-image-id") !==
+        previousId,
+      beforeId,
+      { timeout: 1_500 },
+    );
+    const afterId = await activeButton.getAttribute("data-active-image-id");
+    assert(beforeId !== afterId, "seta troca a foto imediatamente, sem animação de deslize");
   } else {
     console.log("PASS - produto de teste tem uma imagem; ausência de slide validada estruturalmente");
   }
