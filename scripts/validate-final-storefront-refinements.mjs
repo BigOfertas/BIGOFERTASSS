@@ -72,7 +72,8 @@ check(
   deploy.includes('migrationName = "final_storefront_refinements_20260911"') &&
     deploy.includes("manchester_city_model_selector") &&
     deploy.includes("model_selectors_ready") &&
-    deploy.includes("feminine_real_before_united"),
+    deploy.includes("storefront_priority_present") &&
+    deploy.includes("feminine_products_present"),
 );
 
 check(
