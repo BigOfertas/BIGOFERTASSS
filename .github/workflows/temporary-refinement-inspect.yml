@@ -1,0 +1,49 @@
+name: Temporary Refinement Inspect
+
+on:
+  push:
+    branches:
+      - fix-brand-safe-r2-preconnect-20260911
+    paths:
+      - ".github/workflows/temporary-refinement-inspect.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Inspect target product and feminine catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          import fs from 'node:fs';
+          const env = fs.readFileSync('.env','utf8');
+          const get = (name) => env.match(new RegExp(`^${name}=["']?([^"'\\n]+)`, 'm'))?.[1]?.trim();
+          const url = get('VITE_SUPABASE_URL');
+          const key = get('VITE_SUPABASE_PUBLISHABLE_KEY');
+          const headers = { apikey:key, authorization:`Bearer ${key}`, 'content-type':'application/json' };
+          async function rpc(name, body) {
+            const r = await fetch(`${url}/rest/v1/rpc/${name}`, { method:'POST', headers, body:JSON.stringify(body) });
+            const text = await r.text();
+            if (!r.ok) throw new Error(`${name} ${r.status}: ${text.slice(0,500)}`);
+            return JSON.parse(text);
+          }
+          const detail = await rpc('storefront_product_detail_v2', { p_identifier:'manchester-city-conjunto-infantil-24-25-puma-p002218' });
+          console.log('TARGET_PRODUCT');
+          console.log(JSON.stringify({
+            product: detail?.product && {id:detail.product.id,name:detail.product.name,slug:detail.product.slug},
+            options: detail?.options,
+            variants: detail?.variants,
+            images: detail?.images?.map(i => ({id:i.id,variant_id:i.variant_id,is_primary:i.is_primary,sort_order:i.sort_order,alt_text:i.alt_text,image_source:i.image_source}))
+          }, null, 2));
+          const feminine = await rpc('catalog_products_page_v3', {
+            p_query:null,p_category:null,p_campeonato:null,p_liga:null,p_time:null,p_season:null,p_brand:null,p_audience:null,p_commercial_type:'feminino',p_min_price:null,p_max_price:null,p_sort:'featured',p_page:1,p_page_size:24
+          });
+          console.log('FEMININE_FIRST_PAGE');
+          console.log(JSON.stringify((feminine.items ?? []).map(x => ({name:x.name,time:x.time,liga:x.liga,commercial_type:x.commercial_type})), null, 2));
+          console.log(`FEMININE_TOTAL=${feminine.total}`);
+          NODE
