@@ -10,8 +10,6 @@ export const ALLOWED_IMAGE_MIME_TYPES = [
 
 export type AllowedImageMimeType = (typeof ALLOWED_IMAGE_MIME_TYPES)[number];
 
-export const R2_IMMUTABLE_IMAGE_CACHE_CONTROL = "public, max-age=31536000, immutable";
-
 const EXTENSION_BY_MIME: Record<AllowedImageMimeType, string> = {
   "image/webp": "webp",
   "image/avif": "avif",
@@ -132,9 +130,12 @@ export async function createImageUploadUrl(objectKey: string, contentType: Allow
     accessKeyId,
     secretAccessKey,
   });
+
+  // Keep browser PUT headers aligned with the bucket CORS policy. Cache metadata must not
+  // be a required browser header, otherwise both product and storefront uploads are blocked
+  // by the R2 preflight when only Content-Type is allowed.
   const requiredHeaders = {
     "Content-Type": contentType,
-    "Cache-Control": R2_IMMUTABLE_IMAGE_CACHE_CONTROL,
   };
 
   const signedRequest = await client.sign(
