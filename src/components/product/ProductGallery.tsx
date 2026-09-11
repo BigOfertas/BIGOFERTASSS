@@ -10,6 +10,7 @@ interface ProductGalleryProps {
 }
 
 const SWIPE_THRESHOLD_PX = 48;
+const NEXT_IMAGE_PREFETCH_DELAY_MS = 150;
 
 type PointerStart = {
   id: number;
@@ -27,6 +28,7 @@ export default function ProductGallery({
     [images],
   );
   const [activeImageId, setActiveImageId] = useState<string | null>(preferredImageId);
+  const [loadedImageId, setLoadedImageId] = useState<string | null>(null);
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
   const [viewerOpen, setViewerOpen] = useState(false);
   const [zoomed, setZoomed] = useState(false);
@@ -61,6 +63,23 @@ export default function ProductGallery({
   useEffect(() => {
     if (!viewerOpen) setZoomed(false);
   }, [viewerOpen]);
+
+  useEffect(() => {
+    if (!activeImage || loadedImageId !== activeImage.id || usableImages.length < 2) return;
+
+    const nextImage = usableImages[(activeIndex + 1) % usableImages.length];
+    if (!nextImage || nextImage.id === activeImage.id) return;
+
+    const timer = window.setTimeout(() => {
+      const preloader = new Image();
+      preloader.decoding = "async";
+      preloader.sizes = "(max-width: 1023px) 92vw, 600px";
+      if (nextImage.cardSrcSet) preloader.srcset = nextImage.cardSrcSet;
+      preloader.src = nextImage.cardUrl;
+    }, NEXT_IMAGE_PREFETCH_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [activeImage, activeIndex, loadedImageId, usableImages]);
 
   const move = useCallback(
     (direction: -1 | 1) => {
@@ -151,6 +170,7 @@ export default function ProductGallery({
             <img
               key={activeImage.id}
               src={activeImage.cardUrl}
+              srcSet={activeImage.cardSrcSet ?? undefined}
               alt={activeImage.alt}
               width={768}
               height={960}
@@ -158,8 +178,10 @@ export default function ProductGallery({
               loading="eager"
               fetchPriority="high"
               decoding="async"
+              onLoad={() => setLoadedImageId(activeImage.id)}
               onError={(event) => {
                 if (event.currentTarget.src !== activeImage.url) {
+                  event.currentTarget.srcset = "";
                   event.currentTarget.src = activeImage.url;
                   return;
                 }

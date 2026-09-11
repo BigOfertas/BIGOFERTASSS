@@ -88,7 +88,10 @@ Deno.serve(async (request) => {
     if (insertError) throw new Error(insertError.message);
 
     try {
-      const { uploadUrl, expiresIn } = await createImageUploadUrl(objectKey, contentType);
+      const { uploadUrl, expiresIn, requiredHeaders } = await createImageUploadUrl(
+        objectKey,
+        contentType,
+      );
       return jsonResponse(request, {
         uploadId: upload.id,
         slotKey,
@@ -96,7 +99,7 @@ Deno.serve(async (request) => {
         uploadUrl,
         expiresIn,
         method: "PUT",
-        requiredHeaders: { "Content-Type": contentType },
+        requiredHeaders,
       });
     } catch (error) {
       await supabase.from("site_asset_uploads").update({ status: "failed" }).eq("id", upload.id);

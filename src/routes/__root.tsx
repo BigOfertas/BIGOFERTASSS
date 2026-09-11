@@ -105,6 +105,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://lh3.googleusercontent.com" },
       { rel: "dns-prefetch", href: "https://lh3.googleusercontent.com" },
+      { rel: "preconnect", href: "https://img.bigofertas.net" },
+      { rel: "dns-prefetch", href: "https://img.bigofertas.net" },
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: glassLegacyCss },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },

@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 import type { Json } from "@/integrations/supabase/types";
-import { buildOptimizedExternalImageUrl, buildR2PublicImageUrl } from "@/lib/product-images";
+import {
+  buildOptimizedExternalImageUrl,
+  buildR2DerivativeSrcSet,
+  buildR2PublicImageUrl,
+  buildResponsiveExternalImageSrcSet,
+} from "@/lib/product-images";
 
 export const CATALOG_DEFAULT_PAGE_SIZE = 24;
 export const CATALOG_PAGE_SIZES = [12, 24, 48] as const;
@@ -57,6 +62,7 @@ export interface CatalogListItem {
   image_source: string | null;
   fallback_image_url: string | null;
   displayImageUrl: string | null;
+  displayImageSrcSet: string | null;
 }
 
 export interface CatalogPage {
@@ -141,16 +147,33 @@ export function parseCatalogPage(value: Json): CatalogPage {
   const parsed = catalogPageSchema.parse(value);
   return {
     ...parsed,
-    items: parsed.items.map((item) => ({
-      ...item,
-      displayImageUrl:
-        (item.image_card_storage_key ? buildR2PublicImageUrl(item.image_card_storage_key) : null) ??
-        (item.image_storage_key ? buildR2PublicImageUrl(item.image_storage_key) : null) ??
-        buildOptimizedExternalImageUrl(item.image_external_url, 768) ??
-        buildOptimizedExternalImageUrl(item.fallback_image_url, 768) ??
+    items: parsed.items.map((item) => {
+      const r2Card = item.image_card_storage_key
+        ? buildR2PublicImageUrl(item.image_card_storage_key)
+        : null;
+      const r2Main = item.image_storage_key ? buildR2PublicImageUrl(item.image_storage_key) : null;
+      const externalSource = item.image_external_url ?? item.fallback_image_url;
+      const displayImageUrl =
+        r2Card ??
+        r2Main ??
+        buildOptimizedExternalImageUrl(externalSource, 768) ??
         item.image_external_url ??
-        item.fallback_image_url,
-    })),
+        item.fallback_image_url;
+      const displayImageSrcSet = r2Card
+        ? buildR2DerivativeSrcSet({
+            thumbStorageKey: item.image_thumb_storage_key,
+            cardStorageKey: item.image_card_storage_key,
+          })
+        : r2Main
+          ? null
+          : buildResponsiveExternalImageSrcSet(externalSource);
+
+      return {
+        ...item,
+        displayImageUrl,
+        displayImageSrcSet,
+      };
+    }),
   };
 }
 

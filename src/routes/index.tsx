@@ -9,10 +9,14 @@ import VisualCategories from "@/components/home/VisualCategories";
 import Header from "@/components/layout/Header";
 import PromoBanner from "@/components/layout/PromoBanner";
 import { BRAND } from "@/config/brand";
+import homeLaunchesSnapshot from "@/generated/home-launches";
 import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalization";
+import type { Json } from "@/integrations/supabase/types";
+import { parseCatalogPage } from "@/lib/catalog";
 
 const TOP_BANNER_DESKTOP = "/assets/promos/top-banner-desktop.webp";
 const TOP_BANNER_MOBILE = "/assets/promos/top-banner-mobile.webp";
+const STATIC_HOME_LAUNCHES = parseCatalogPage(homeLaunchesSnapshot as unknown as Json);
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -72,7 +76,7 @@ function Index() {
       </div>
 
       <main className="flex-grow overflow-x-hidden">
-        <BestSellers />
+        <BestSellers initialData={STATIC_HOME_LAUNCHES} />
         <VisualCategories />
 
         {ambientDesktop || ambientMobile ? (

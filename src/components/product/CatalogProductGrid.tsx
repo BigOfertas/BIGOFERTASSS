@@ -8,7 +8,7 @@ type MobileColumns = 1 | 2;
 
 const DESKTOP_STORAGE_KEY = "bigofertas.catalog.desktopColumns";
 const MOBILE_STORAGE_KEY = "bigofertas.catalog.mobileColumns";
-const PRIORITY_IMAGE_COUNT = 6;
+const PRIORITY_IMAGE_COUNT = 2;
 
 const desktopGridClass: Record<DesktopColumns, string> = {
   2: "lg:grid-cols-2",
@@ -167,6 +167,7 @@ export function CatalogProductGrid({
                 price={product.price}
                 promotionalPrice={product.promotional_price}
                 imageUrl={product.displayImageUrl}
+                imageSrcSet={product.displayImageSrcSet}
                 time={product.time}
                 commercialType={product.commercial_type}
                 priority={index < PRIORITY_IMAGE_COUNT}

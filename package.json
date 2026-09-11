@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "build:hostinger": "vite build --config vite.hostinger.config.ts",
+    "build:hostinger": "node scripts/generate-home-launches-static.mjs && vite build --config vite.hostinger.config.ts && node scripts/inject-home-image-preload.mjs",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
