@@ -104,7 +104,7 @@ export function AuthSplitShell({
           <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
             <Link
               to="/"
-              className="auth-brand-link flex h-12 w-[138px] items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white px-3 shadow-sm sm:h-13 sm:w-[150px]"
+              className="auth-brand-link flex h-12 w-[138px] items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white px-3 shadow-sm sm:h-[52px] sm:w-[150px]"
               aria-label="DropBox - Início"
             >
               <BrandWordmark className="max-h-10" />
@@ -130,7 +130,10 @@ export function AuthSplitShell({
                   decoding="async"
                   className="auth-mobile-showcase-image absolute inset-0 h-full w-full object-cover"
                 />
-                <div className="auth-mobile-showcase-vignette absolute inset-0" aria-hidden="true" />
+                <div
+                  className="auth-mobile-showcase-vignette absolute inset-0"
+                  aria-hidden="true"
+                />
                 <div className="relative z-10 flex h-full flex-col justify-end p-4 sm:p-5">
                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-200">
                     {currentSlide.kicker}
