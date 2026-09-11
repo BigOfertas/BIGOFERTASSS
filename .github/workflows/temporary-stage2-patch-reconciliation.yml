@@ -33,7 +33,7 @@ jobs:
       - name: Generate static reconciliation migration
         run: node scripts/generate-stage2-patch-reconciliation.mjs
 
-      - name: Register reconciliation migration in deploy pipeline
+      - name: Register reconciliation migration in deploy script
         shell: bash
         run: |
           set -euo pipefail
@@ -48,15 +48,6 @@ jobs:
               deploy.write_text(text.replace(old, new), encoding="utf-8")
           elif new not in text:
               raise SystemExit("deploy migration insertion point not found")
-
-          workflow = Path(".github/workflows/deploy-storefront-upgrades-backend.yml")
-          text = workflow.read_text(encoding="utf-8")
-          old = '      - "supabase/migrations/20260911055500_stage2_storefront_priority_security_fix.sql"'
-          new = old + '\n      - "supabase/migrations/20260911061000_stage2_patch_reconciliation.sql"'
-          if old in text and "20260911061000_stage2_patch_reconciliation.sql" not in text:
-              workflow.write_text(text.replace(old, new), encoding="utf-8")
-          elif "20260911061000_stage2_patch_reconciliation.sql" not in text:
-              raise SystemExit("workflow migration insertion point not found")
           PY
 
       - name: Validate generated migration and source
@@ -88,8 +79,7 @@ jobs:
             supabase/migrations/20260911061000_stage2_patch_reconciliation.sql \
             scripts/generate-stage2-patch-reconciliation.mjs \
             scripts/audit-stage2-patches.mjs \
-            scripts/deploy-storefront-upgrade-migrations.mjs \
-            .github/workflows/deploy-storefront-upgrades-backend.yml
+            scripts/deploy-storefront-upgrade-migrations.mjs
           if git diff --cached --quiet; then
             echo "NO_PATCH_RECONCILIATION_CHANGES"
             exit 0
