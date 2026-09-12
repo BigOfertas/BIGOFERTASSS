@@ -2,6 +2,7 @@ import { Check, Loader2, ShoppingCart } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
+import { SizeGuideDialog } from "@/components/product/SizeGuideDialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useCart } from "@/context/CartContext";
 import type { CartOptionSnapshot } from "@/lib/cart";
@@ -258,7 +259,10 @@ export function ProductQuickAdd({
         ) : config ? (
           config.sizeEnabled ? (
             <fieldset>
-              <legend className="mb-2 text-xs font-bold text-gray-700">Escolha o tamanho</legend>
+              <legend className="text-xs font-bold text-gray-700">Escolha o tamanho</legend>
+              <div className="mb-2 mt-1 flex justify-end">
+                <SizeGuideDialog commercialType={config.commercialType} compact />
+              </div>
               <div className="grid grid-cols-4 gap-2" data-product-quick-add-sizes>
                 {sizes.map((size) => {
                   const added = lastAddedSize === size;
