@@ -1,6 +1,6 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, CalendarDays, Package, RefreshCw, ShoppingBag } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import {
@@ -9,6 +9,7 @@ import {
   getOrderItemImageUrl,
   type OrderSummary,
 } from "@/lib/orders";
+import { hasPendingCelebration, type CelebrationOrder } from "@/lib/post-purchase";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -43,6 +44,8 @@ function OrdersSkeleton() {
 }
 
 export function CustomerOrders() {
+  const navigate = useNavigate();
+  const redirectingRef = useRef(false);
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -52,13 +55,28 @@ export function CustomerOrders() {
     setErrorMessage("");
 
     try {
-      setOrders(await fetchMyOrders());
+      const loadedOrders = await fetchMyOrders();
+      setOrders(loadedOrders);
+
+      const newestUnseenPaidOrder = loadedOrders.find((summary) =>
+        hasPendingCelebration(summary.order as CelebrationOrder),
+      );
+
+      if (newestUnseenPaidOrder && !redirectingRef.current) {
+        redirectingRef.current = true;
+        await navigate({
+          to: "/conta/pedidos/$orderNumber",
+          params: { orderNumber: newestUnseenPaidOrder.order.public_number },
+          search: { celebrate: "1" },
+          replace: true,
+        });
+      }
     } catch {
       setErrorMessage("Não foi possível carregar seus pedidos agora. Tente novamente.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     void loadOrders();
@@ -170,6 +188,7 @@ export function CustomerOrders() {
                 <Link
                   to="/conta/pedidos/$orderNumber"
                   params={{ orderNumber: order.public_number }}
+                  search={{}}
                   className="mt-0 inline-flex h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-4 text-sm font-bold text-gray-800 transition hover:border-red-600 hover:bg-red-50 hover:text-red-700 sm:mt-3 motion-reduce:transition-none"
                 >
                   Ver detalhes
