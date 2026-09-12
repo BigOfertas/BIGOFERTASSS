@@ -14,21 +14,43 @@ type CheckoutErrorPayload = {
   code?: unknown;
 };
 
+const CHECKOUT_REQUEST_TIMEOUT_MS = 65_000;
+
 function edgeCheckoutUrl() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
   return supabaseUrl ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/checkout-start` : null;
 }
 
+function publicSupabaseKey() {
+  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
+  if (!key) {
+    throw new Error("O servidor de pagamento não está configurado corretamente.");
+  }
+  return key;
+}
+
 async function postCheckout(url: string, accessToken: string, body: string) {
-  return fetch(url, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${accessToken}`,
-      accept: "application/json",
-      "content-type": "application/json",
-    },
-    body,
-  });
+  try {
+    return await fetch(url, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        apikey: publicSupabaseKey(),
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body,
+      signal: AbortSignal.timeout(CHECKOUT_REQUEST_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      throw new Error("O servidor de pagamento demorou para responder. Tente novamente.");
+    }
+
+    throw new Error(
+      "Não foi possível conectar ao servidor de pagamento. Verifique sua conexão e tente novamente.",
+    );
+  }
 }
 
 async function checkoutResponse(accessToken: string, body: string) {
