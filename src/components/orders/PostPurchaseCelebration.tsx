@@ -13,8 +13,8 @@ const CELEBRATION_EXIT_MS = 700;
 
 const CONFETTI = Array.from({ length: 168 }, (_, index) => {
   const side = index % 2 === 0 ? "left" : "right";
-  const desktopLane =
-    side === "left" ? (index * 37) % 24 : 76 + ((index * 41) % 24);
+  const desktopLane = side === "left" ? (index * 37) % 24 : 76 + ((index * 41) % 24);
+  const drift = -18 + ((index * 29) % 37);
 
   return {
     id: index,
@@ -23,7 +23,8 @@ const CONFETTI = Array.from({ length: 168 }, (_, index) => {
     delay: ((index * 127) % 5600) / 1000,
     duration: 3.2 + ((index * 19) % 28) / 10,
     rotation: 300 + ((index * 47) % 680),
-    drift: -18 + ((index * 29) % 37),
+    drift,
+    startDrift: drift * -0.18,
     size: 6 + ((index * 11) % 6),
     shape: index % 3,
     opacity: 0.72 + ((index * 13) % 25) / 100,
@@ -78,7 +79,7 @@ export function PostPurchaseCelebration({
         @keyframes dropbox-confetti-fall {
           0% {
             opacity: 0;
-            transform: translate3d(calc(var(--confetti-drift) * -0.18), -16vh, 0) rotate(0deg);
+            transform: translate3d(var(--confetti-start-drift), -16vh, 0) rotate(0deg);
           }
           8% { opacity: var(--confetti-opacity); }
           90% { opacity: var(--confetti-opacity); }
@@ -124,6 +125,7 @@ export function PostPurchaseCelebration({
               {
                 "--confetti-mobile-left": `${piece.mobileLane}%`,
                 "--confetti-desktop-left": `${piece.desktopLane}%`,
+                "--confetti-start-drift": `${piece.startDrift}vw`,
                 "--confetti-drift": `${piece.drift}vw`,
                 "--confetti-rotation": `${piece.rotation}deg`,
                 "--confetti-opacity": piece.opacity,
