@@ -17,11 +17,11 @@ import {
   decodeStoredCart,
   encodeStoredCart,
   normalizeCartItems,
+  reconcileCartCustomization,
   type AddCartItemInput,
   type CartItem,
 } from "@/lib/cart";
 import { validateCartItems } from "@/lib/cart-validation";
-import { normalizePurchaseCustomization } from "@/lib/product-purchase";
 
 interface CartContextType {
   cart: CartItem[];
@@ -42,21 +42,6 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 function loadStoredCart(): CartItem[] {
   if (typeof window === "undefined") return [];
   return decodeStoredCart(localStorage.getItem(CART_STORAGE_KEY));
-}
-
-function preserveSelectedSize(item: CartItem, customization: CartItem["customization"]) {
-  const normalized = normalizePurchaseCustomization(customization);
-  if (normalized.size) return normalized;
-
-  const sizeSnapshot = item.selectedOptions.find(
-    (option) => option.optionKind === "size" && option.valueLabel.trim().length > 0,
-  );
-  if (!sizeSnapshot) return normalized;
-
-  return normalizePurchaseCustomization({
-    ...normalized,
-    size: sizeSnapshot.valueLabel,
-  });
 }
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -168,7 +153,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
               result.status === "needs_review"
                 ? item.variantId
                 : (result.variant_id ?? item.variantId);
-            const resolvedCustomization = preserveSelectedSize(item, result.customization);
+            const resolvedCustomization = reconcileCartCustomization(
+              result.customization,
+              item.selectedOptions,
+            );
 
             return {
               ...item,
