@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="DropBox">
-  <rect width="64" height="64" rx="14" fill="#15171b"/>
-  <g transform="translate(8 9) skewX(-10)">
-    <text x="24" y="39" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="38" font-weight="900" fill="#ef101c">B</text>
-  </g>
-</svg>
