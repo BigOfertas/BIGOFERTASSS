@@ -88,16 +88,25 @@ export function ProductQuickAdd({
   const [configError, setConfigError] = useState("");
   const [detailError, setDetailError] = useState("");
   const [lastAddedSize, setLastAddedSize] = useState<string | null>(null);
-  const configRequestInFlight = useRef(false);
-  const detailRequestInFlight = useRef(false);
+  const configAttempted = useRef(false);
+  const detailAttempted = useRef(false);
+
+  useEffect(() => {
+    configAttempted.current = false;
+    detailAttempted.current = false;
+    setConfig(null);
+    setDetail(null);
+    setConfigError("");
+    setDetailError("");
+  }, [productId, productSlug]);
 
   useEffect(() => {
     if (!open) return;
 
     let active = true;
 
-    if (!config && !configRequestInFlight.current) {
-      configRequestInFlight.current = true;
+    if (!config && !configAttempted.current) {
+      configAttempted.current = true;
       setConfigLoading(true);
       setConfigError("");
 
@@ -109,13 +118,12 @@ export function ProductQuickAdd({
           if (active) setConfigError("Não foi possível carregar os tamanhos agora.");
         })
         .finally(() => {
-          configRequestInFlight.current = false;
           if (active) setConfigLoading(false);
         });
     }
 
-    if (!detail && !detailRequestInFlight.current) {
-      detailRequestInFlight.current = true;
+    if (!detail && !detailAttempted.current) {
+      detailAttempted.current = true;
       setDetailLoading(true);
       setDetailError("");
 
@@ -125,11 +133,10 @@ export function ProductQuickAdd({
         })
         .catch(() => {
           if (active) {
-            setDetailError("Abra o produto para concluir a escolha deste item.");
+            setDetailError("Não foi possível preparar este item pelo card.");
           }
         })
         .finally(() => {
-          detailRequestInFlight.current = false;
           if (active) setDetailLoading(false);
         });
     }
