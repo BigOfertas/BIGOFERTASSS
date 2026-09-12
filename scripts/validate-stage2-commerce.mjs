@@ -66,8 +66,12 @@ check(
   cart.includes("export function reconcileCartCustomization") &&
     cart.includes('option.optionKind === "size"') &&
     cart.includes("size: sizeSnapshot.valueLabel") &&
-    cart.includes("customization: reconcileCartCustomization(item.customization, item.selectedOptions)") &&
-    checkout.includes("return reconcileCartCustomization(item.customization, item.selectedOptions)") &&
+    cart.includes(
+      "customization: reconcileCartCustomization(item.customization, item.selectedOptions)",
+    ) &&
+    checkout.includes(
+      "return reconcileCartCustomization(item.customization, item.selectedOptions)",
+    ) &&
     checkout.includes("customization: customizationForCheckout(item)"),
 );
 
