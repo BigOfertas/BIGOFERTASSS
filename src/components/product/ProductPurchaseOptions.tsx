@@ -47,8 +47,7 @@ export function ProductPurchaseOptions({
             ))}
           </div>
           <p className="mt-2 text-xs font-medium leading-5 text-gray-500">
-            Meça de uma axila à outra em uma peça que já veste bem. As medidas em centímetros podem
-            variar entre modelos. O tamanho não altera o preço do produto.
+            {"Meça de uma axila à outra em uma peça que já veste bem. As medidas em centímetros podem variar entre modelos. O tamanho não altera o preço do produto."}
           </p>
         </fieldset>
       ) : null}
