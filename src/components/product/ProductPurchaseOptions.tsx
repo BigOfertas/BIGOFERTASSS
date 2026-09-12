@@ -1,74 +1,8 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { SizeGuideDialog } from "@/components/product/SizeGuideDialog";
 import type { ProductPurchaseConfig, PurchaseCustomization } from "@/lib/product-purchase";
 import { calculatePurchaseSurcharge } from "@/lib/product-purchase";
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-
-function SizeGuide({ sizes }: { sizes: string[] }) {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          className="text-xs font-bold text-red-600 underline-offset-4 hover:underline"
-        >
-          Ver guia de tamanhos
-        </button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md rounded-2xl bg-white">
-        <DialogHeader>
-          <DialogTitle>Guia de tamanhos</DialogTitle>
-          <DialogDescription>
-            Use uma camisa que já veste bem como referência antes de escolher.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 text-sm text-gray-600">
-          <div className="grid grid-cols-2 gap-3 rounded-xl bg-gray-50 p-4">
-            <div>
-              <strong className="block text-gray-950">Largura</strong>
-              <span className="text-xs leading-5">
-                Meça de uma axila à outra com a peça esticada.
-              </span>
-            </div>
-            <div>
-              <strong className="block text-gray-950">Comprimento</strong>
-              <span className="text-xs leading-5">
-                Meça do ponto mais alto do ombro até a barra.
-              </span>
-            </div>
-          </div>
-          <div>
-            <p className="mb-2 text-xs font-black uppercase tracking-wider text-gray-500">
-              Tamanhos disponíveis neste produto
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {sizes.map((size) => (
-                <span
-                  key={size}
-                  className="min-w-11 rounded-md border border-gray-200 bg-white px-3 py-2 text-center text-xs font-black text-gray-900"
-                >
-                  {size}
-                </span>
-              ))}
-            </div>
-          </div>
-          <p className="text-xs leading-5 text-gray-500">
-            As medidas em centímetros podem variar entre modelos. Quando houver uma tabela
-            específica da peça, ela prevalece. Se estiver entre dois tamanhos e preferir caimento
-            mais folgado, escolha o maior.
-          </p>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export function ProductPurchaseOptions({
   config,
@@ -95,7 +29,7 @@ export function ProductPurchaseOptions({
             <legend className="text-xs font-black uppercase tracking-widest text-gray-800">
               Tamanho <span className="text-red-600">*</span>
             </legend>
-            <SizeGuide sizes={config.sizes} />
+            <SizeGuideDialog commercialType={config.commercialType} />
           </div>
           <div className="flex flex-wrap gap-2">
             {config.sizes.map((size) => (
