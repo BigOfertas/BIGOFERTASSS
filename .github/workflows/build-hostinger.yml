@@ -16,6 +16,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      VITE_TURNSTILE_SITE_KEY: ${{ secrets.VITE_TURNSTILE_SITE_KEY }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -81,7 +83,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -R -E -q "SUPABASE_SERVICE_ROLE_KEY|SUPERFRETE_TOKEN|RESEND_API_KEY|EMAIL_2FA_SECRET|R2_SECRET_ACCESS_KEY|SUPABASE_ACCESS_TOKEN" "$HOSTINGER_OUTPUT"; then
+          if grep -R -E -q "SUPABASE_SERVICE_ROLE_KEY|SUPERFRETE_TOKEN|RESEND_API_KEY|EMAIL_2FA_SECRET|R2_SECRET_ACCESS_KEY|SUPABASE_ACCESS_TOKEN|TURNSTILE_SECRET_KEY" "$HOSTINGER_OUTPUT"; then
             echo "Server-only secret marker found in static Hostinger output." >&2
             exit 1
           fi
