@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/http.ts";
+import { consumeRateLimit, rateLimitHeaders } from "../_shared/security.ts";
 
 const INFINITEPAY_LINKS_URL = "https://api.checkout.infinitepay.io/links";
 const INFINITEPAY_LEGACY_LINKS_URL = "https://api.infinitepay.io/invoices/public/checkout/links";
@@ -320,9 +321,12 @@ async function fetchAddress(userId: string, addressId: string): Promise<Customer
 
 async function authoritativeShipping(input: StartCheckoutInput, address: CustomerAddress) {
   const endpoint = `${environment("SUPABASE_URL").replace(/\/$/, "")}/functions/v1/shipping-quote`;
+  const serviceRoleKey = environment("SUPABASE_SERVICE_ROLE_KEY");
   const upstream = await fetch(endpoint, {
     method: "POST",
     headers: {
+      apikey: serviceRoleKey,
+      authorization: `Bearer ${serviceRoleKey}`,
       accept: "application/json",
       "content-type": "application/json",
     },
@@ -629,6 +633,29 @@ Deno.serve(async (request) => {
     const origin = requestOrigin(request);
     environment("INFINITEPAY_HANDLE");
     const user = await authenticateCustomer(request);
+    const checkoutLimit = await consumeRateLimit(request, {
+      scope: "checkout-start:user",
+      identity: `user:${user.id}`,
+      limit: 8,
+      windowSeconds: 60,
+    });
+    if (!checkoutLimit.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: "Muitas tentativas de iniciar pagamento. Aguarde um instante e tente novamente.",
+          code: "CHECKOUT_RATE_LIMITED",
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders(request),
+            ...rateLimitHeaders(checkoutLimit),
+            "content-type": "application/json; charset=utf-8",
+            "x-content-type-options": "nosniff",
+          },
+        },
+      );
+    }
 
     let rawBody: unknown;
     try {

@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/http.ts";
+import { consumeRateLimit, verifyTurnstile } from "../_shared/security.ts";
 
 const RESEND_EMAILS_URL = "https://api.resend.com/emails";
 const DEFAULT_FROM = "DropBox <contato@bigofertas.net>";
@@ -771,6 +772,43 @@ Deno.serve(async (request) => {
       action !== "enroll-verify"
     ) {
       throw new EmailTwoFactorError("Ação de segurança inválida.", 400, "EMAIL_2FA_ACTION_INVALID");
+    }
+
+    const authLimit = await consumeRateLimit(request, {
+      scope: "auth-email-2fa:ip",
+      limit: 30,
+      windowSeconds: 60,
+    });
+    if (!authLimit.allowed) {
+      throw new EmailTwoFactorError(
+        "Muitas tentativas em pouco tempo. Aguarde um instante e tente novamente.",
+        429,
+        "EMAIL_2FA_RATE_LIMITED",
+      );
+    }
+
+    if (action === "password-login") {
+      const loginLimit = await consumeRateLimit(request, {
+        scope: "password-login:ip",
+        limit: 10,
+        windowSeconds: 60,
+      });
+      if (!loginLimit.allowed) {
+        throw new EmailTwoFactorError(
+          "Muitas tentativas de acesso. Aguarde um instante e tente novamente.",
+          429,
+          "EMAIL_2FA_LOGIN_RATE_LIMITED",
+        );
+      }
+
+      const turnstile = await verifyTurnstile(request, body.turnstileToken, "login");
+      if (!turnstile.success) {
+        throw new EmailTwoFactorError(
+          "Não foi possível confirmar a verificação de segurança. Atualize a página e tente novamente.",
+          403,
+          "EMAIL_2FA_TURNSTILE_REJECTED",
+        );
+      }
     }
 
     let result: unknown;

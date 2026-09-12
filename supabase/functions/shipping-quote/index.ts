@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/http.ts";
+import { consumeRateLimit, rateLimitHeaders } from "../_shared/security.ts";
 
 const SUPERFRETE_API_URL = "https://api.superfrete.com/api/v0/calculator";
 const SUPERFRETE_USER_AGENT = "DropBox/1.0 (contato@bigofertas.net)";
@@ -476,6 +477,35 @@ Deno.serve(async (request) => {
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (Number.isFinite(contentLength) && contentLength > 24_000) {
     return response(request, { error: "Requisição de frete muito grande." }, 413);
+  }
+
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
+  const isTrustedInternalRequest =
+    Boolean(serviceRoleKey) && request.headers.get("authorization") === `Bearer ${serviceRoleKey}`;
+
+  if (!isTrustedInternalRequest) {
+    const shippingLimit = await consumeRateLimit(request, {
+      scope: "shipping-quote:ip",
+      limit: 30,
+      windowSeconds: 60,
+    });
+    if (!shippingLimit.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: "Muitas cotações em pouco tempo. Aguarde um instante e tente novamente.",
+          code: "SHIPPING_RATE_LIMITED",
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders(request),
+            ...rateLimitHeaders(shippingLimit),
+            "content-type": "application/json; charset=utf-8",
+            "x-content-type-options": "nosniff",
+          },
+        },
+      );
+    }
   }
 
   try {
