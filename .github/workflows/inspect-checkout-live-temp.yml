@@ -1,4 +1,4 @@
-name: Inspect Checkout Live Temp
+name: Apply Checkout Timeline Hotfix Temp
 
 on:
   push:
@@ -6,63 +6,115 @@ on:
       - main
     paths:
       - ".github/workflows/inspect-checkout-live-temp.yml"
+      - "supabase/migrations/20260912040500_fix_order_timeline_checkout.sql"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  inspect:
+  deploy:
     runs-on: ubuntu-latest
+    environment: production
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
     steps:
-      - name: Inspect live checkout database schema
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Apply checkout timeline hotfix
         shell: bash
         run: |
           set -euo pipefail
           node <<'NODE'
+          const fs = require('node:fs');
           const token = process.env.SUPABASE_ACCESS_TOKEN?.trim();
           const project = process.env.SUPABASE_PROJECT_ID?.trim();
           if (!token || !project) throw new Error('Missing Supabase management configuration');
+
+          const name = 'fix_order_timeline_checkout_20260912';
+          const file = 'supabase/migrations/20260912040500_fix_order_timeline_checkout.sql';
+          const apiBase = `https://api.supabase.com/v1/projects/${encodeURIComponent(project)}`;
           const headers = {
             authorization: `Bearer ${token}`,
             accept: 'application/json',
             'content-type': 'application/json',
           };
-          const sql = `
-            select 'timeline_columns' as kind,
-              jsonb_agg(jsonb_build_object('name', column_name, 'type', udt_name) order by ordinal_position) as value
-            from information_schema.columns
-            where table_schema = 'public' and table_name = 'order_timeline'
-            union all
-            select 'order_triggers' as kind,
-              jsonb_agg(jsonb_build_object('name', t.tgname, 'definition', pg_get_triggerdef(t.oid)) order by t.tgname) as value
-            from pg_trigger t
-            join pg_class c on c.oid = t.tgrelid
-            join pg_namespace n on n.oid = c.relnamespace
-            where n.nspname = 'public' and c.relname = 'orders' and not t.tgisinternal
-            union all
-            select 'timeline_functions' as kind,
-              jsonb_agg(jsonb_build_object('name', p.proname, 'definition', pg_get_functiondef(p.oid)) order by p.proname) as value
-            from pg_proc p
-            join pg_namespace n on n.oid = p.pronamespace
-            where n.nspname = 'public'
-              and p.prokind in ('f', 'p')
-              and position('order_timeline' in pg_get_functiondef(p.oid)) > 0;
-          `;
-          const response = await fetch(`https://api.supabase.com/v1/projects/${project}/database/query/read-only`, {
-            method: 'POST', headers, body: JSON.stringify({ query: sql }), signal: AbortSignal.timeout(30000),
+          const sql = fs.readFileSync(file, 'utf8')
+            .replace(/^\s*BEGIN;\s*/i, '')
+            .replace(/\s*COMMIT;\s*$/i, '')
+            .trim();
+
+          const historyResponse = await fetch(`${apiBase}/database/migrations`, {
+            headers,
+            signal: AbortSignal.timeout(20000),
           });
-          const text = await response.text();
-          if (!response.ok) throw new Error(`Schema query failed HTTP ${response.status}: ${text.slice(0, 500)}`);
-          const payload = JSON.parse(text);
-          for (const row of Array.isArray(payload) ? payload : [payload]) {
-            const raw = JSON.stringify(row);
-            console.log(raw
-              .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi, '<uuid>')
-              .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '<email>')
-              .slice(0, 20000));
+          if (!historyResponse.ok) throw new Error(`Migration history HTTP ${historyResponse.status}`);
+          const history = await historyResponse.json();
+          const alreadyApplied = Array.isArray(history) && history.some((item) => item?.name === name);
+
+          if (!alreadyApplied) {
+            const response = await fetch(`${apiBase}/database/migrations`, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({ name, query: sql }),
+              signal: AbortSignal.timeout(120000),
+            });
+            const text = await response.text();
+            if (!response.ok) {
+              console.error(`Checkout hotfix migration failed with HTTP ${response.status}.`);
+              console.error(text.slice(0, 2000));
+              process.exit(10);
+            }
+            console.log('Checkout timeline hotfix applied.');
+          } else {
+            console.log('Checkout timeline hotfix already applied.');
           }
+
+          const verificationSql = `
+            with target as (
+              select pg_get_functiondef(
+                to_regprocedure('public.create_order_core(uuid,uuid,jsonb,jsonb,jsonb,numeric,text)')
+              ) as definition
+            )
+            select
+              position('INSERT INTO public.order_timeline (order_id,status,note)' in definition) = 0
+                as legacy_timeline_insert_removed,
+              position('order_created' in definition) > 0
+                and position('event_type' in definition) > 0
+                and position('actor_type' in definition) > 0
+                as modern_timeline_insert_present,
+              (
+                select count(*) = 3
+                from information_schema.columns
+                where table_schema = 'public'
+                  and table_name = 'order_timeline'
+                  and column_name in ('event_type','actor_type','message')
+              ) as timeline_schema_ready
+            from target;
+          `;
+          const verificationResponse = await fetch(`${apiBase}/database/query/read-only`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ query: verificationSql }),
+            signal: AbortSignal.timeout(30000),
+          });
+          const verificationText = await verificationResponse.text();
+          if (!verificationResponse.ok) {
+            throw new Error(`Verification HTTP ${verificationResponse.status}: ${verificationText.slice(0, 500)}`);
+          }
+          const payload = JSON.parse(verificationText);
+          const row = Array.isArray(payload) ? payload[0] : payload;
+          console.log('CHECKOUT_TIMELINE_HOTFIX_VERIFICATION');
+          console.log(JSON.stringify(row));
+          if (
+            row?.legacy_timeline_insert_removed !== true ||
+            row?.modern_timeline_insert_present !== true ||
+            row?.timeline_schema_ready !== true
+          ) {
+            console.error('Checkout timeline hotfix verification failed.');
+            process.exit(11);
+          }
+          console.log('Checkout timeline hotfix is live.');
           NODE
