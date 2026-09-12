@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 
 import TEAM_CREST_SPRITE from "@/assets/teams/brasileirao-sprite";
 import BrazilianProducts from "@/components/home/BrazilianProducts";
+import DirectionalReveal from "@/components/ui/directional-reveal";
+import SlideUpReveal from "@/components/ui/slide-up-reveal";
 import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalization";
 
 // Compatibilidade com a validação legada da seção: href="#brasileirao"
@@ -104,8 +106,22 @@ const BrazilianTeams: React.FC = () => {
 
       <div className="mx-auto max-w-7xl px-4 lg:max-w-[1536px] lg:px-4">
         <div className="mb-6 text-center sm:mb-8">
-          <p className="display-kicker">Futebol brasileiro</p>
-          <h2 className="display-title-sm mt-2">Encontre seu time</h2>
+          <p className="display-kicker">
+            <DirectionalReveal direction="up" distance={9}>
+              Futebol brasileiro
+            </DirectionalReveal>
+          </p>
+          <h2 className="display-title-sm mt-2">
+            <SlideUpReveal
+              split="words"
+              stagger={0.065}
+              inView
+              className="justify-center"
+              wordClass="pb-[0.08em]"
+            >
+              Encontre seu time
+            </SlideUpReveal>
+          </h2>
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white px-3 py-5 shadow-sm sm:px-5">

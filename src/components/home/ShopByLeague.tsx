@@ -4,6 +4,8 @@ import React, { useMemo, useState } from "react";
 import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
+import DirectionalReveal from "@/components/ui/directional-reveal";
+import SlideUpReveal from "@/components/ui/slide-up-reveal";
 import { catalogProductsQueryOptions } from "@/hooks/useCatalogProducts";
 import { isStandardHomeJersey, selectVariedProducts } from "@/lib/home-product-selection";
 
@@ -83,8 +85,22 @@ const ShopByLeague: React.FC = () => {
     <section className="overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14">
       <div className="mx-auto max-w-7xl px-4 lg:max-w-[1536px] lg:px-4">
         <div className="mb-6 text-center sm:mb-8">
-          <p className="display-kicker">Futebol internacional</p>
-          <h2 className="display-title-sm mt-2">Compre por liga</h2>
+          <p className="display-kicker">
+            <DirectionalReveal direction="up" distance={9}>
+              Futebol internacional
+            </DirectionalReveal>
+          </p>
+          <h2 className="display-title-sm mt-2">
+            <SlideUpReveal
+              split="words"
+              stagger={0.065}
+              inView
+              className="justify-center"
+              wordClass="pb-[0.08em]"
+            >
+              Compre por liga
+            </SlideUpReveal>
+          </h2>
         </div>
 
         <div className="mb-7 flex justify-center sm:mb-8">
