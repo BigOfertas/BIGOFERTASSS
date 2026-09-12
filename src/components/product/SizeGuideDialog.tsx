@@ -179,7 +179,7 @@ export function SizeGuideDialog({
   }, [commercialType]);
 
   useEffect(() => {
-    if (!open || commercialType || !productId || loadingType) return;
+    if (!open || commercialType || !productId) return;
 
     let active = true;
     setLoadingType(true);
@@ -197,7 +197,7 @@ export function SizeGuideDialog({
     return () => {
       active = false;
     };
-  }, [commercialType, loadingType, open, productId]);
+  }, [commercialType, open, productId]);
 
   const knownUnsupported = Boolean(resolvedType && !automaticKey);
   const shouldRenderTrigger = commercialType ? Boolean(guideKeyForType(commercialType)) : true;
@@ -220,7 +220,7 @@ export function SizeGuideDialog({
         </button>
       </DialogTrigger>
 
-      <DialogContent className="max-h-[88vh] w-[calc(100vw-1rem)] max-w-3xl overflow-y-auto rounded-2xl border-gray-200 bg-white p-4 sm:p-6">
+      <DialogContent className="bottom-0 left-0 top-auto max-h-[90vh] w-full max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-b-none rounded-t-3xl border-gray-200 bg-white p-4 sm:bottom-auto sm:left-[50%] sm:top-[50%] sm:w-[calc(100vw-2rem)] sm:max-w-3xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl sm:p-6">
         <DialogHeader className="pr-7 text-left">
           <DialogTitle className="flex items-center gap-2 text-xl font-black text-gray-950">
             <Ruler className="h-5 w-5 text-red-600" aria-hidden="true" />
