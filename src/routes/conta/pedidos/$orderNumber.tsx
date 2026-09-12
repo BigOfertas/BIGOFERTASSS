@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, FileQuestion, Loader2, RotateCcw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import Header from "@/components/layout/Header";
 import { OrderDetailContent } from "@/components/orders/OrderDetailContent";
+import { PostPurchaseCelebration } from "@/components/orders/PostPurchaseCelebration";
 import { RefundRequestDialog } from "@/components/orders/RefundRequestDialog";
 import { BRAND } from "@/config/brand";
 import { useAuth } from "@/lib/auth";
@@ -15,8 +17,18 @@ import {
   requestOrderRefund,
   type RefundReason,
 } from "@/lib/orders";
+import {
+  claimOrderCelebration,
+  isConfirmedPurchase,
+  type CelebrationOrder,
+} from "@/lib/post-purchase";
+
+const orderDetailSearchSchema = z.object({
+  celebrate: z.literal("1").optional(),
+});
 
 export const Route = createFileRoute("/conta/pedidos/$orderNumber")({
+  validateSearch: (search) => orderDetailSearchSchema.parse(search),
   head: () => ({
     meta: [
       { title: `Detalhe do pedido | ${BRAND.officialName}` },
@@ -46,10 +58,14 @@ function DetailSkeleton() {
 
 function CustomerOrderDetailPage() {
   const { orderNumber } = Route.useParams();
+  const search = Route.useSearch();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
   const [requestingRefund, setRequestingRefund] = useState(false);
+  const [celebrationVisible, setCelebrationVisible] = useState(false);
+  const celebrationClaimAttemptedRef = useRef(false);
+  const paymentPollCountRef = useRef(0);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -61,16 +77,70 @@ function CustomerOrderDetailPage() {
     queryKey: ["my-order", orderNumber],
     queryFn: () => fetchOrderDetail(orderNumber),
     enabled: Boolean(user),
-    staleTime: 30_000,
+    staleTime: 5_000,
   });
 
+  const detail = detailQuery.data;
+  const confirmedPurchase = detail
+    ? isConfirmedPurchase(detail.order as CelebrationOrder)
+    : false;
+  const waitingForReturnConfirmation = search.celebrate === "1" && Boolean(detail) && !confirmedPurchase;
+
+  useEffect(() => {
+    paymentPollCountRef.current = 0;
+  }, [orderNumber]);
+
+  useEffect(() => {
+    if (!waitingForReturnConfirmation || paymentPollCountRef.current >= 24) return;
+
+    const timeout = window.setTimeout(() => {
+      paymentPollCountRef.current += 1;
+      void detailQuery.refetch();
+    }, 2_000);
+
+    return () => window.clearTimeout(timeout);
+  }, [detailQuery, waitingForReturnConfirmation]);
+
+  useEffect(() => {
+    if (
+      search.celebrate !== "1" ||
+      !detail ||
+      !confirmedPurchase ||
+      celebrationClaimAttemptedRef.current
+    ) {
+      return;
+    }
+
+    celebrationClaimAttemptedRef.current = true;
+
+    void (async () => {
+      try {
+        const claimed = await claimOrderCelebration(orderNumber);
+        if (claimed) setCelebrationVisible(true);
+
+        await navigate({
+          to: "/conta/pedidos/$orderNumber",
+          params: { orderNumber },
+          search: {},
+          replace: true,
+        });
+      } catch {
+        celebrationClaimAttemptedRef.current = false;
+      }
+    })();
+  }, [confirmedPurchase, detail, navigate, orderNumber, search.celebrate]);
+
+  const handleCelebrationDone = useCallback(() => {
+    setCelebrationVisible(false);
+  }, []);
+
   async function handleRefundRequest(reason: RefundReason, message: string) {
-    const detail = detailQuery.data;
-    if (!detail || requestingRefund) return;
+    const currentDetail = detailQuery.data;
+    if (!currentDetail || requestingRefund) return;
 
     setRequestingRefund(true);
     try {
-      await requestOrderRefund(detail.order.id, reason, message);
+      await requestOrderRefund(currentDetail.order.id, reason, message);
       await detailQuery.refetch();
       setRefundDialogOpen(false);
       toast.success("Solicitação registrada. O proprietário entrará em contato.");
@@ -136,6 +206,16 @@ function CustomerOrderDetailPage() {
             </div>
           ) : null}
 
+          {waitingForReturnConfirmation ? (
+            <div className="mb-5 flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900">
+              <Loader2
+                className="h-4 w-4 animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
+              Confirmando seu pagamento com segurança. Isso costuma levar apenas alguns instantes.
+            </div>
+          ) : null}
+
           {detailQuery.data ? (
             <OrderDetailContent
               detail={detailQuery.data}
@@ -165,6 +245,10 @@ function CustomerOrderDetailPage() {
           ) : null}
         </div>
       </main>
+
+      {celebrationVisible && detailQuery.data ? (
+        <PostPurchaseCelebration detail={detailQuery.data} onDone={handleCelebrationDone} />
+      ) : null}
 
       <RefundRequestDialog
         open={refundDialogOpen}
