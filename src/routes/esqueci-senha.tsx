@@ -3,6 +3,7 @@ import { ArrowLeft, CheckCircle2, Loader2, Mail } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
+import { TurnstileWidget, isTurnstileEnabled } from "@/components/security/TurnstileWidget";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserFacingError } from "@/lib/user-facing-error";
 
@@ -15,10 +16,17 @@ function ForgotPasswordPage() {
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const turnstileRequired = isTurnstileEnabled();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) return;
+    if (turnstileRequired && !turnstileToken) {
+      setErrorMessage("Conclua a verificação de segurança para continuar.");
+      return;
+    }
 
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail) return;
@@ -33,12 +41,15 @@ function ForgotPasswordPage() {
 
     const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
       ...(redirectTo ? { redirectTo } : {}),
+      ...(turnstileToken ? { captchaToken: turnstileToken } : {}),
     });
 
     if (error) {
       setErrorMessage(
         getUserFacingError(error, "Não foi possível enviar o e-mail de recuperação agora."),
       );
+      setTurnstileToken(null);
+      setTurnstileResetKey((value) => value + 1);
     } else {
       setSent(true);
     }
@@ -120,6 +131,14 @@ function ForgotPasswordPage() {
                 />
               </div>
 
+              <div className="mt-4">
+                <TurnstileWidget
+                  action="password_reset"
+                  onTokenChange={setTurnstileToken}
+                  resetKey={turnstileResetKey}
+                />
+              </div>
+
               {errorMessage ? (
                 <p
                   role="alert"
@@ -131,7 +150,7 @@ function ForgotPasswordPage() {
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || (turnstileRequired && !turnstileToken)}
                 className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? (

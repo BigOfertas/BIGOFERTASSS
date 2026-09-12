@@ -34,7 +34,7 @@ type AuthContextValue = {
   role: AppRole | null;
   loading: boolean;
 
-  signIn: (email: string, password: string) => Promise<SignInResult>;
+  signIn: (email: string, password: string, turnstileToken?: string | null) => Promise<SignInResult>;
   verifySignInTwoFactor: (
     email: string,
     password: string,
@@ -48,6 +48,7 @@ type AuthContextValue = {
     fullName: string,
     phone: string,
     referralCode?: string | null,
+    captchaToken?: string | null,
   ) => Promise<AuthActionResult>;
 
   resendSignUpConfirmation: (email: string) => Promise<AuthActionResult>;
@@ -271,13 +272,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [userId]);
 
-  async function signIn(email: string, password: string): Promise<SignInResult> {
+  async function signIn(
+    email: string,
+    password: string,
+    turnstileToken?: string | null,
+  ): Promise<SignInResult> {
     let response: Response;
     try {
       response = await authBackendRequest({
         action: "password-login",
         legacyPath: "/api/auth/password-login",
-        body: { email: email.trim(), password },
+        body: {
+          email: email.trim(),
+          password,
+          ...(turnstileToken ? { turnstileToken } : {}),
+        },
       });
     } catch {
       return {
@@ -396,6 +405,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fullName: string,
     phone: string,
     referralCode?: string | null,
+    captchaToken?: string | null,
   ): Promise<AuthActionResult> {
     const emailRedirectTo = getEmailConfirmationRedirectUrl();
     const normalizedReferralCode = normalizeAffiliateReferralCode(referralCode);
@@ -405,6 +415,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         ...(emailRedirectTo ? { emailRedirectTo } : {}),
+        ...(captchaToken ? { captchaToken } : {}),
         data: {
           full_name: fullName.trim(),
           phone: onlyDigits(phone, 11),

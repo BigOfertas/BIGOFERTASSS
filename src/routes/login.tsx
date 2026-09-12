@@ -2,6 +2,7 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Eye, EyeOff, KeyRound, Loader2, MailCheck, ShieldCheck } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
+import { TurnstileWidget, isTurnstileEnabled } from "@/components/security/TurnstileWidget";
 import { AuthSplitShell } from "@/components/ui/auth-split-shell";
 import { useAuth } from "@/lib/auth";
 
@@ -24,6 +25,9 @@ function LoginPage() {
   const [maskedEmail, setMaskedEmail] = useState("");
   const [challengeExpiresAt, setChallengeExpiresAt] = useState("");
   const [securityCode, setSecurityCode] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const turnstileRequired = isTurnstileEnabled();
 
   useEffect(() => {
     if (loading || !user) return;
@@ -37,14 +41,20 @@ function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) return;
+    if (turnstileRequired && !turnstileToken) {
+      setErrorMessage("Conclua a verificação de segurança para continuar.");
+      return;
+    }
 
     setErrorMessage("");
     setSubmitting(true);
 
-    const result = await signIn(email.trim(), password);
+    const result = await signIn(email.trim(), password, turnstileToken);
 
     if (result.error) {
       setErrorMessage(result.error.message);
+      setTurnstileToken(null);
+      setTurnstileResetKey((value) => value + 1);
     } else if (result.requiresTwoFactor) {
       setChallengeId(result.challengeId ?? "");
       setMaskedEmail(result.maskedEmail ?? email.trim());
@@ -331,6 +341,12 @@ function LoginPage() {
           </div>
         </label>
 
+        <TurnstileWidget
+          action="login"
+          onTokenChange={setTurnstileToken}
+          resetKey={turnstileResetKey}
+        />
+
         {errorMessage ? (
           <p
             role="alert"
@@ -342,7 +358,7 @@ function LoginPage() {
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || (turnstileRequired && !turnstileToken)}
           className="premium-action inline-flex h-12 w-full items-center justify-center rounded-2xl px-4 text-sm font-black transition hover:brightness-[0.96] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? (

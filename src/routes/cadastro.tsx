@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
+import { TurnstileWidget, isTurnstileEnabled } from "@/components/security/TurnstileWidget";
 import { AuthSplitShell } from "@/components/ui/auth-split-shell";
 import {
   captureAffiliateReferralFromSearch,
@@ -51,6 +52,9 @@ function RegisterPage() {
     getPendingAffiliateReferralCode(),
   );
   const [referralValidation, setReferralValidation] = useState<ReferralValidation>("idle");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const turnstileRequired = isTurnstileEnabled();
 
   useEffect(() => {
     const captured =
@@ -108,6 +112,10 @@ function RegisterPage() {
     }
 
     if (!formReady || submitting) return;
+    if (turnstileRequired && !turnstileToken) {
+      setErrorMessage("Conclua a verificação de segurança para continuar.");
+      return;
+    }
 
     setSubmitting(true);
     setErrorMessage("");
@@ -118,10 +126,13 @@ function RegisterPage() {
       fullName.trim(),
       phone,
       referralValidation === "invalid" ? null : referralCode,
+      turnstileToken,
     );
 
     if (error) {
       setErrorMessage(error.message);
+      setTurnstileToken(null);
+      setTurnstileResetKey((value) => value + 1);
       setSubmitting(false);
       return;
     }
@@ -505,6 +516,12 @@ function RegisterPage() {
               ) : null}
             </label>
 
+            <TurnstileWidget
+              action="signup"
+              onTokenChange={setTurnstileToken}
+              resetKey={turnstileResetKey}
+            />
+
             {errorMessage ? (
               <p
                 role="alert"
@@ -516,7 +533,7 @@ function RegisterPage() {
 
             <button
               type="submit"
-              disabled={!formReady || submitting}
+              disabled={!formReady || submitting || (turnstileRequired && !turnstileToken)}
               className="premium-action flex h-[52px] w-full items-center justify-center rounded-xl px-4 text-sm font-black transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? (
