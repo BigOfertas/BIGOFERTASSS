@@ -113,3 +113,5 @@ jobs:
           git add src/components/product/SizeGuideDialog.tsx src/components/product/ProductPurchaseOptions.tsx src/components/product/ProductQuickAdd.tsx src/routes/cart.tsx
           git commit -m "feat: integrate smart size guides"
           git push origin main
+
+# Triggered after workflow creation so the integration job runs on main.
