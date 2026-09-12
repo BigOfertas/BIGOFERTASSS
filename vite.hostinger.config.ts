@@ -9,6 +9,25 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  build: {
+    // Production hardening: never ship source maps and keep the browser bundle
+    // aggressively minified without changing application/business behavior.
+    sourcemap: false,
+    rolldownOptions: {
+      // Rolldown otherwise attaches lightweight module/chunk debug metadata.
+      experimental: {
+        attachDebugInfo: "none",
+      },
+      output: {
+        minify: {
+          compress: {
+            dropConsole: true,
+            dropDebugger: true,
+          },
+        },
+      },
+    },
+  },
   plugins: [
     tailwindcss(),
     tanstackStart({
