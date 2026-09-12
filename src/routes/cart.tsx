@@ -106,22 +106,22 @@ function CartPage() {
   return (
     <div className="min-h-screen bg-gray-50/50">
       <Header />
-      <main className="px-4 py-8 sm:px-6 lg:px-8">
+      <main className="px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 sm:mb-8 sm:gap-4">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-4">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => window.history.back()}
-                className="rounded-full hover:bg-white"
+                className="h-10 w-10 shrink-0 rounded-full hover:bg-white"
                 aria-label="Voltar"
               >
-                <ArrowLeft className="h-6 w-6" />
+                <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6" />
               </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Meu carrinho</h1>
-                <p className="mt-1 text-xs text-gray-500">
+              <div className="min-w-0">
+                <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Meu carrinho</h1>
+                <p className="mt-0.5 text-xs text-gray-500 sm:mt-1">
                   Revise seus itens, descontos e entrega.
                 </p>
               </div>
@@ -132,7 +132,7 @@ function CartPage() {
               variant="outline"
               onClick={() => void validateCart()}
               disabled={isValidating}
-              className="gap-2 bg-white"
+              className="w-full gap-2 bg-white sm:w-auto"
             >
               <RefreshCw
                 className={`h-4 w-4 ${
@@ -150,18 +150,30 @@ function CartPage() {
             </div>
           ) : null}
 
-          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-8">
             <div className="space-y-4 lg:col-span-8">
               <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-                <div className="space-y-6 p-6">
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-600">
+                      <ShoppingBag className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <h2 className="text-sm font-black text-gray-950 sm:text-base">Seus produtos</h2>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-500">
+                    {cart.length} {cart.length === 1 ? "produto" : "produtos"}
+                  </span>
+                </div>
+
+                <div className="space-y-4 p-3 sm:space-y-6 sm:p-6">
                   {cart.map((item, index) => {
                     const quantityLimit = getCartQuantityLimit(item.availableStock);
                     const editable = item.status === "available";
 
                     return (
                       <div key={item.lineId}>
-                        <div className="flex flex-col gap-6 sm:flex-row">
-                          <div className="flex h-[100px] w-full flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-gray-50 sm:w-[100px]">
+                        <div className="flex items-start gap-3 sm:gap-6">
+                          <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-gray-50 sm:h-[100px] sm:w-[100px]">
                             {item.imageUrl ? (
                               <img
                                 src={item.imageUrl}
@@ -169,19 +181,19 @@ function CartPage() {
                                 className="h-full w-full object-contain"
                               />
                             ) : (
-                              <span className="px-2 text-center text-xs text-gray-400">
+                              <span className="px-2 text-center text-[10px] text-gray-400 sm:text-xs">
                                 Imagem indisponível
                               </span>
                             )}
                           </div>
 
-                          <div className="flex flex-grow flex-col justify-between">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-2 sm:gap-4">
+                              <div className="min-w-0 flex-1">
                                 <Link
                                   to="/product/$id"
                                   params={{ id: item.productSlug ?? item.productId }}
-                                  className="line-clamp-2 text-lg font-semibold text-gray-900 transition-colors hover:text-red-600 motion-reduce:transition-none"
+                                  className="line-clamp-2 text-sm font-bold leading-5 text-gray-900 transition-colors hover:text-red-600 motion-reduce:transition-none sm:text-lg sm:font-semibold sm:leading-normal"
                                 >
                                   {item.name}
                                 </Link>
@@ -191,7 +203,7 @@ function CartPage() {
                                 </div>
 
                                 {item.selectedOptions.length > 0 ? (
-                                  <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+                                  <dl className="mt-1.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-gray-600 sm:mt-2 sm:gap-x-4 sm:gap-y-1 sm:text-xs">
                                     {item.selectedOptions.map((option) => (
                                       <div
                                         key={`${item.lineId}-${option.optionId}`}
@@ -204,7 +216,7 @@ function CartPage() {
                                   </dl>
                                 ) : null}
 
-                                <p className="mt-2 font-bold text-red-600">
+                                <p className="mt-1.5 text-sm font-black text-red-600 sm:mt-2 sm:text-base">
                                   {currency.format(item.unitPrice)}
                                 </p>
 
@@ -222,19 +234,19 @@ function CartPage() {
                               <button
                                 type="button"
                                 onClick={() => removeFromCart(item.lineId)}
-                                className="p-2 text-gray-400 transition-colors hover:text-red-600 motion-reduce:transition-none"
+                                className="-mr-1 -mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 motion-reduce:transition-none"
                                 aria-label={`Remover ${item.name}`}
                               >
-                                <Trash2 className="h-5 w-5" />
+                                <Trash2 className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
                               </button>
                             </div>
 
-                            <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+                            <div className="mt-3 flex items-end justify-between gap-3 border-t border-gray-100 pt-3 sm:mt-4 sm:border-0 sm:pt-0">
                               <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-1">
                                 <button
                                   type="button"
                                   onClick={() => updateQuantity(item.lineId, item.quantity - 1)}
-                                  className="p-1 transition-colors hover:text-red-600 disabled:cursor-not-allowed disabled:text-gray-300 motion-reduce:transition-none"
+                                  className="flex h-7 w-7 items-center justify-center transition-colors hover:text-red-600 disabled:cursor-not-allowed disabled:text-gray-300 motion-reduce:transition-none"
                                   disabled={!editable || item.quantity <= 1}
                                   aria-label="Diminuir quantidade"
                                 >
@@ -253,12 +265,12 @@ function CartPage() {
                                       Number.parseInt(event.target.value, 10) || 1,
                                     )
                                   }
-                                  className="w-12 border-none bg-transparent text-center font-medium text-gray-900 focus:ring-0 disabled:text-gray-400"
+                                  className="w-9 border-none bg-transparent p-0 text-center text-sm font-bold text-gray-900 focus:ring-0 disabled:text-gray-400 sm:w-12 sm:font-medium"
                                 />
                                 <button
                                   type="button"
                                   onClick={() => updateQuantity(item.lineId, item.quantity + 1)}
-                                  className="p-1 transition-colors hover:text-red-600 disabled:cursor-not-allowed disabled:text-gray-300 motion-reduce:transition-none"
+                                  className="flex h-7 w-7 items-center justify-center transition-colors hover:text-red-600 disabled:cursor-not-allowed disabled:text-gray-300 motion-reduce:transition-none"
                                   disabled={!editable || item.quantity >= quantityLimit}
                                   aria-label="Aumentar quantidade"
                                 >
@@ -266,16 +278,20 @@ function CartPage() {
                                 </button>
                               </div>
 
-                              <div className="text-right">
-                                <span className="block text-sm text-gray-500">Subtotal</span>
-                                <span className="text-lg font-bold text-gray-900">
+                              <div className="min-w-0 text-right">
+                                <span className="block text-[10px] font-medium uppercase tracking-wide text-gray-400 sm:text-sm sm:font-normal sm:normal-case sm:tracking-normal sm:text-gray-500">
+                                  Subtotal
+                                </span>
+                                <span className="block text-sm font-black text-gray-950 sm:text-lg sm:font-bold sm:text-gray-900">
                                   {currency.format(item.unitPrice * item.quantity)}
                                 </span>
                               </div>
                             </div>
                           </div>
                         </div>
-                        {index < cart.length - 1 ? <Separator className="mt-6" /> : null}
+                        {index < cart.length - 1 ? (
+                          <Separator className="mt-4 sm:mt-6" />
+                        ) : null}
                       </div>
                     );
                   })}
@@ -283,9 +299,9 @@ function CartPage() {
               </div>
             </div>
 
-            <div className="order-first mb-8 lg:order-last lg:col-span-4 lg:sticky lg:top-32 lg:mb-0">
-              <div className="space-y-6 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-bold text-gray-900">Resumo do pedido</h2>
+            <div className="lg:order-last lg:col-span-4 lg:sticky lg:top-32">
+              <div className="space-y-5 rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:space-y-6 sm:p-6">
+                <h2 className="text-lg font-bold text-gray-900 sm:text-xl">Resumo do pedido</h2>
 
                 <section className="overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4">
                   <div className="flex items-start gap-3">
