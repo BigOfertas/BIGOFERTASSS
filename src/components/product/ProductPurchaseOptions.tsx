@@ -29,7 +29,10 @@ export function ProductPurchaseOptions({
             <legend className="text-xs font-black uppercase tracking-widest text-gray-800">
               Tamanho <span className="text-red-600">*</span>
             </legend>
-            <SizeGuideDialog commercialType={config.commercialType} />
+            <SizeGuideDialog
+              commercialType={config.commercialType}
+              triggerLabel="Ver guia de tamanhos"
+            />
           </div>
           <div className="flex flex-wrap gap-2">
             {config.sizes.map((size) => (
@@ -43,8 +46,9 @@ export function ProductPurchaseOptions({
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs font-medium text-gray-500">
-            O tamanho não altera o preço do produto.
+          <p className="mt-2 text-xs font-medium leading-5 text-gray-500">
+            Meça de uma axila à outra em uma peça que já veste bem. As medidas em centímetros podem
+            variar entre modelos. O tamanho não altera o preço do produto.
           </p>
         </fieldset>
       ) : null}
