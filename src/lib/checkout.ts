@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { legacyWorkerFallbackAvailable } from "@/lib/backend-routing";
-import type { CartItem } from "@/lib/cart";
+import { reconcileCartCustomization, type CartItem } from "@/lib/cart";
 
 export type CheckoutStartResult = {
   checkoutUrl: string;
@@ -58,6 +58,10 @@ async function checkoutResponse(accessToken: string, body: string) {
   throw new Error("Não foi possível iniciar o pagamento agora.");
 }
 
+function customizationForCheckout(item: CartItem) {
+  return reconcileCartCustomization(item.customization, item.selectedOptions);
+}
+
 export async function startInfinitePayCheckout(input: {
   addressId: string;
   shippingServiceId: number;
@@ -79,7 +83,7 @@ export async function startInfinitePayCheckout(input: {
       productId: item.productId,
       variantId: item.variantId,
       quantity: item.quantity,
-      customization: item.customization,
+      customization: customizationForCheckout(item),
     };
   });
 

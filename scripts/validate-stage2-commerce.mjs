@@ -18,6 +18,8 @@ const card = read("src/components/product/ProductCard.tsx");
 const quickAdd = read("src/components/product/ProductQuickAdd.tsx");
 const register = read("src/routes/cadastro.tsx");
 const purchase = read("src/lib/product-purchase.ts");
+const cart = read("src/lib/cart.ts");
+const checkout = read("src/lib/checkout.ts");
 const catalog = read("src/lib/catalog.ts");
 const productsRoute = read("src/routes/products.tsx");
 const brazil = read("src/components/home/BrazilianProducts.tsx");
@@ -57,6 +59,16 @@ check(
     quickAdd.includes("customizationToCartOptions") &&
     quickAdd.includes("addToCart({") &&
     quickAdd.includes("variantId: variant.id"),
+);
+
+check(
+  "carrinho e checkout reconciliam o tamanho exibido com a personalização enviada ao backend",
+  cart.includes("export function reconcileCartCustomization") &&
+    cart.includes('option.optionKind === "size"') &&
+    cart.includes("size: sizeSnapshot.valueLabel") &&
+    cart.includes("customization: reconcileCartCustomization(item.customization, item.selectedOptions)") &&
+    checkout.includes("return reconcileCartCustomization(item.customization, item.selectedOptions)") &&
+    checkout.includes("customization: customizationForCheckout(item)"),
 );
 
 check(

@@ -17,6 +17,7 @@ import {
   decodeStoredCart,
   encodeStoredCart,
   normalizeCartItems,
+  reconcileCartCustomization,
   type AddCartItemInput,
   type CartItem,
 } from "@/lib/cart";
@@ -152,10 +153,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
               result.status === "needs_review"
                 ? item.variantId
                 : (result.variant_id ?? item.variantId);
+            const resolvedCustomization = reconcileCartCustomization(
+              result.customization,
+              item.selectedOptions,
+            );
 
             return {
               ...item,
-              lineId: createCartLineId(item.productId, resolvedVariantId, result.customization),
+              lineId: createCartLineId(item.productId, resolvedVariantId, resolvedCustomization),
               productSlug: result.product_slug ?? item.productSlug,
               variantId: resolvedVariantId,
               sku: result.variant_sku ?? item.sku,
@@ -163,7 +168,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
               variantName: result.variant_name ?? item.variantName,
               unitPrice: result.unit_price ?? item.unitPrice,
               availableStock,
-              customization: result.customization,
+              customization: resolvedCustomization,
               quantity,
               status: result.status,
             };
