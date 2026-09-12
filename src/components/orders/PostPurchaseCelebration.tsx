@@ -28,9 +28,7 @@ const CONFETTI = Array.from({ length: 168 }, (_, index) => {
     size: 6 + ((index * 11) % 6),
     shape: index % 3,
     opacity: 0.72 + ((index * 13) % 25) / 100,
-    color: ["#ef4444", "#111827", "#f59e0b", "#2563eb", "#16a34a", "#9333ea"][
-      index % 6
-    ],
+    color: ["#ef4444", "#111827", "#f59e0b", "#2563eb", "#16a34a", "#9333ea"][index % 6],
   };
 });
 
@@ -113,10 +111,7 @@ export function PostPurchaseCelebration({
         }
       `}</style>
 
-      <div
-        className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
-        aria-hidden="true"
-      >
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
         {CONFETTI.map((piece) => (
           <span
             key={piece.id}
