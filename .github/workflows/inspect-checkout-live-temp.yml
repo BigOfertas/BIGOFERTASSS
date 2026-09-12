@@ -1,0 +1,70 @@
+name: Inspect Checkout Live Temp
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/inspect-checkout-live-temp.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - name: Inspect recent checkout logs
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const token = process.env.SUPABASE_ACCESS_TOKEN?.trim();
+          const project = process.env.SUPABASE_PROJECT_ID?.trim();
+          if (!token || !project) throw new Error('Missing Supabase management configuration');
+
+          const end = new Date();
+          const start = new Date(end.getTime() - 2 * 60 * 60 * 1000);
+          const sql = `
+            select
+              timestamp,
+              source,
+              event_message,
+              log_attributes['response.status_code'] as status_code,
+              log_attributes['request.path'] as path
+            from logs
+            where source in ('function_logs', 'function_edge_logs')
+              and (
+                positionCaseInsensitive(event_message, 'checkout') > 0
+                or positionCaseInsensitive(log_attributes['request.path'], 'checkout-start') > 0
+              )
+            order by timestamp desc
+            limit 120
+          `;
+          const url = new URL(`https://api.supabase.com/v1/projects/${project}/analytics/endpoints/logs`);
+          url.searchParams.set('sql', sql);
+          url.searchParams.set('iso_timestamp_start', start.toISOString());
+          url.searchParams.set('iso_timestamp_end', end.toISOString());
+
+          const response = await fetch(url, {
+            headers: { authorization: `Bearer ${token}`, accept: 'application/json' },
+            signal: AbortSignal.timeout(30000),
+          });
+          const text = await response.text();
+          if (!response.ok) {
+            console.error(`Log query failed with HTTP ${response.status}`);
+            console.error(text.slice(0, 2000));
+            process.exit(2);
+          }
+          let payload;
+          try { payload = JSON.parse(text); } catch { throw new Error('Invalid logs response'); }
+          const rows = Array.isArray(payload?.result) ? payload.result : [];
+          console.log(`Recent checkout log rows: ${rows.length}`);
+          for (const row of rows) {
+            console.log(JSON.stringify(row));
+          }
+          NODE
