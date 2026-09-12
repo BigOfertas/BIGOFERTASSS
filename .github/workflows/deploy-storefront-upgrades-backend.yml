@@ -14,6 +14,7 @@ on:
       - "scripts/deploy-catalog-filter-key-fix.mjs"
       - "scripts/deploy-owner-order-history-cutoff.mjs"
       - "scripts/deploy-second-owner.mjs"
+      - "scripts/deploy-security-rate-limits.mjs"
       - "scripts/audit-stage2-patches.mjs"
       - "supabase/migrations/20260904213000_storefront_personalization.sql"
       - "supabase/migrations/20260904213500_catalog_commercial_type.sql"
@@ -37,6 +38,7 @@ on:
       - "supabase/migrations/20260911114500_final_storefront_refinements.sql"
       - "supabase/migrations/20260911172000_fix_affiliate_signup_referral_ambiguity.sql"
       - "supabase/migrations/20260911183000_add_second_owner.sql"
+      - "supabase/migrations/20260912144500_security_rate_limits.sql"
   workflow_dispatch:
 
 permissions:
@@ -71,6 +73,9 @@ jobs:
 
       - name: Ensure second owner is live
         run: node scripts/deploy-second-owner.mjs
+
+      - name: Deploy security rate limits
+        run: node scripts/deploy-security-rate-limits.mjs
 
       - name: Audit Stage 2 product patches
         run: node scripts/audit-stage2-patches.mjs
