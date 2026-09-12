@@ -20,6 +20,7 @@ const register = read("src/routes/cadastro.tsx");
 const purchase = read("src/lib/product-purchase.ts");
 const cart = read("src/lib/cart.ts");
 const checkout = read("src/lib/checkout.ts");
+const checkoutEdge = read("supabase/functions/checkout-start/index.ts");
 const catalog = read("src/lib/catalog.ts");
 const productsRoute = read("src/routes/products.tsx");
 const brazil = read("src/components/home/BrazilianProducts.tsx");
@@ -28,6 +29,9 @@ const deploy = read("scripts/deploy-storefront-upgrade-migrations.mjs");
 const patchAudit = read("scripts/audit-stage2-patches.mjs");
 const migration = read(
   "supabase/migrations/20260911051000_stage2_purchase_customization_policy.sql",
+);
+const purchaseOptionsMigration = read(
+  "supabase/migrations/20260904190000_product_purchase_options.sql",
 );
 const priorityMigration = read("supabase/migrations/20260911054000_stage2_storefront_priority.sql");
 
@@ -73,6 +77,14 @@ check(
       "return reconcileCartCustomization(item.customization, item.selectedOptions)",
     ) &&
     checkout.includes("customization: customizationForCheckout(item)"),
+);
+
+check(
+  "checkout edge preserva personalização ao criar o pedido no núcleo definitivo",
+  checkoutEdge.includes("p_items: input.items.map((item) => ({") &&
+    checkoutEdge.includes("variant_id: item.variantId") &&
+    checkoutEdge.includes("customization: item.customization,") &&
+    purchaseOptionsMigration.includes("COALESCE(item->'customization', '{}'::jsonb)"),
 );
 
 check(
