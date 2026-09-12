@@ -16,6 +16,7 @@ import {
 
 import { CheckoutPanel } from "@/components/cart/CheckoutPanel";
 import { ShippingCalculator } from "@/components/cart/ShippingCalculator";
+import { SizeGuideDialog } from "@/components/product/SizeGuideDialog";
 import Header from "@/components/layout/Header";
 import { ProductionNotice } from "@/components/orders/ProductionNotice";
 import { Button } from "@/components/ui/button";
@@ -169,6 +170,11 @@ function CartPage() {
                   {cart.map((item, index) => {
                     const quantityLimit = getCartQuantityLimit(item.availableStock);
                     const editable = item.status === "available";
+                    const hasSizeSelection = item.selectedOptions.some(
+                      (option) =>
+                        option.optionKind === "size" ||
+                        option.optionName.toLocaleLowerCase("pt-BR").includes("tamanho"),
+                    );
 
                     return (
                       <div key={item.lineId}>
@@ -219,6 +225,16 @@ function CartPage() {
                                 <p className="mt-1.5 text-sm font-black text-red-600 sm:mt-2 sm:text-base">
                                   {currency.format(item.unitPrice)}
                                 </p>
+
+                                {hasSizeSelection ? (
+                                  <div className="mt-1.5">
+                                    <SizeGuideDialog
+                                      productId={item.productId}
+                                      triggerLabel="Conferir medidas"
+                                      compact
+                                    />
+                                  </div>
+                                ) : null}
 
                                 {item.status === "needs_review" ? (
                                   <Link
