@@ -56,6 +56,8 @@ function LoginPage() {
       setTurnstileToken(null);
       setTurnstileResetKey((value) => value + 1);
     } else if (result.requiresTwoFactor) {
+      setTurnstileToken(null);
+      setTurnstileResetKey((value) => value + 1);
       setChallengeId(result.challengeId ?? "");
       setMaskedEmail(result.maskedEmail ?? email.trim());
       setChallengeExpiresAt(result.expiresAt ?? "");
@@ -68,6 +70,10 @@ function LoginPage() {
   async function handleVerifySecurityCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (verifyingCode || !challengeId) return;
+    if (turnstileRequired && !turnstileToken) {
+      setErrorMessage("Conclua a verificação de segurança para continuar.");
+      return;
+    }
 
     const normalizedCode = securityCode.replace(/\D/g, "").slice(0, 6);
     if (normalizedCode.length !== 6) {
@@ -83,9 +89,14 @@ function LoginPage() {
       password,
       challengeId,
       normalizedCode,
+      turnstileToken,
     );
 
-    if (error) setErrorMessage(error.message);
+    if (error) {
+      setErrorMessage(error.message);
+      setTurnstileToken(null);
+      setTurnstileResetKey((value) => value + 1);
+    }
     setVerifyingCode(false);
   }
 
@@ -94,6 +105,8 @@ function LoginPage() {
     setMaskedEmail("");
     setChallengeExpiresAt("");
     setSecurityCode("");
+    setTurnstileToken(null);
+    setTurnstileResetKey((value) => value + 1);
     setErrorMessage("");
   }
 
@@ -231,6 +244,14 @@ function LoginPage() {
               : "O código expira em 10 minutos."}
           </p>
 
+          <div className="mt-4">
+            <TurnstileWidget
+              action="login"
+              onTokenChange={setTurnstileToken}
+              resetKey={turnstileResetKey}
+            />
+          </div>
+
           {errorMessage ? (
             <p
               role="alert"
@@ -242,7 +263,9 @@ function LoginPage() {
 
           <button
             type="submit"
-            disabled={verifyingCode || securityCode.length !== 6}
+            disabled={
+              verifyingCode || securityCode.length !== 6 || (turnstileRequired && !turnstileToken)
+            }
             className="premium-action mt-5 inline-flex h-12 w-full items-center justify-center rounded-2xl px-4 text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-50"
           >
             {verifyingCode ? (

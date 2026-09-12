@@ -44,6 +44,7 @@ type AuthContextValue = {
     password: string,
     challengeId: string,
     code: string,
+    turnstileToken?: string | null,
   ) => Promise<AuthActionResult>;
 
   signUp: (
@@ -361,6 +362,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     challengeId: string,
     code: string,
+    turnstileToken?: string | null,
   ): Promise<AuthActionResult> {
     let response: Response;
     try {
@@ -372,6 +374,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
           challengeId,
           code: code.trim(),
+          ...(turnstileToken ? { turnstileToken } : {}),
         },
       });
     } catch {

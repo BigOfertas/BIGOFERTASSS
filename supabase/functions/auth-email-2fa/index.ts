@@ -1,5 +1,5 @@
 import { corsHeaders } from "../_shared/http.ts";
-import { consumeRateLimit, verifyTurnstile } from "../_shared/security.ts";
+import { consumeRateLimit } from "../_shared/security.ts";
 
 const RESEND_EMAILS_URL = "https://api.resend.com/emails";
 const DEFAULT_FROM = "DropBox <contato@bigofertas.net>";
@@ -178,7 +178,11 @@ function maskEmail(email: string) {
   return `${visible}${"*".repeat(Math.max(2, localPart.length - visible.length))}@${domain}`;
 }
 
-async function passwordGrant(email: string, password: string): Promise<SupabasePasswordGrant> {
+async function passwordGrant(
+  email: string,
+  password: string,
+  captchaToken: string,
+): Promise<SupabasePasswordGrant> {
   const endpoint = new URL("/auth/v1/token", env("SUPABASE_URL"));
   endpoint.searchParams.set("grant_type", "password");
 
@@ -191,7 +195,11 @@ async function passwordGrant(email: string, password: string): Promise<SupabaseP
         accept: "application/json",
         "content-type": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email,
+        password,
+        gotrue_meta_security: { captcha_token: captchaToken },
+      }),
       signal: AbortSignal.timeout(10_000),
     });
   } catch (cause) {
@@ -219,6 +227,22 @@ async function passwordGrant(email: string, password: string): Promise<SupabaseP
         "Confirme seu e-mail antes de entrar. Use o link enviado pela DropBox.",
         403,
         "EMAIL_NOT_CONFIRMED",
+      );
+    }
+
+    if (source.includes("captcha")) {
+      throw new EmailTwoFactorError(
+        "A verificação de segurança expirou ou não foi aceita. Faça a verificação novamente.",
+        403,
+        "EMAIL_2FA_CAPTCHA_REJECTED",
+      );
+    }
+
+    if (source.includes("api key") || source.includes("apikey") || source.includes("invalid jwt")) {
+      throw new EmailTwoFactorError(
+        "O acesso à conta está temporariamente indisponível.",
+        503,
+        "EMAIL_2FA_AUTH_CONFIGURATION_ERROR",
       );
     }
 
@@ -631,11 +655,12 @@ function sessionPayload(grant: SupabasePasswordGrant) {
 async function passwordLogin(body: Record<string, unknown>) {
   const email = normalizeEmail(body.email);
   const password = normalizePassword(body.password);
+  const captchaToken = typeof body.turnstileToken === "string" ? body.turnstileToken.trim() : "";
   if (!email || !password) {
     throw new EmailTwoFactorError("Informe e-mail e senha.", 400, "EMAIL_2FA_LOGIN_INPUT_INVALID");
   }
 
-  const grant = await passwordGrant(email, password);
+  const grant = await passwordGrant(email, password, captchaToken);
   const profile = await securityProfile(grant.user.id);
   if (!profile.email_2fa_enabled) {
     return { requiresTwoFactor: false, session: sessionPayload(grant) };
@@ -659,6 +684,7 @@ async function passwordLogin(body: Record<string, unknown>) {
 async function verifyPasswordLogin(body: Record<string, unknown>) {
   const email = normalizeEmail(body.email);
   const password = normalizePassword(body.password);
+  const captchaToken = typeof body.turnstileToken === "string" ? body.turnstileToken.trim() : "";
   const challengeId = typeof body.challengeId === "string" ? body.challengeId : "";
   const code = typeof body.code === "string" ? body.code.trim() : "";
   if (!email || !password) {
@@ -675,7 +701,7 @@ async function verifyPasswordLogin(body: Record<string, unknown>) {
     purpose: "login",
     expectedEmail: email,
   });
-  const grant = await passwordGrant(email, password);
+  const grant = await passwordGrant(email, password, captchaToken);
   if (grant.user.id !== challenge.user_id) {
     throw new EmailTwoFactorError(
       "A verificação não corresponde a esta conta.",
@@ -798,15 +824,6 @@ Deno.serve(async (request) => {
           "Muitas tentativas de acesso. Aguarde um instante e tente novamente.",
           429,
           "EMAIL_2FA_LOGIN_RATE_LIMITED",
-        );
-      }
-
-      const turnstile = await verifyTurnstile(request, body.turnstileToken, "login");
-      if (!turnstile.success) {
-        throw new EmailTwoFactorError(
-          "Não foi possível confirmar a verificação de segurança. Atualize a página e tente novamente.",
-          403,
-          "EMAIL_2FA_TURNSTILE_REJECTED",
         );
       }
     }
