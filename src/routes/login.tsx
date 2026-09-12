@@ -12,15 +12,25 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { user, loading, isOwner, signIn, verifySignInTwoFactor, signOut } = useAuth();
+  const {
+    user,
+    loading,
+    isOwner,
+    signIn,
+    verifySignInTwoFactor,
+    resendSignUpConfirmation,
+    signOut,
+  } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
+  const [resendingConfirmation, setResendingConfirmation] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [confirmationMessage, setConfirmationMessage] = useState("");
   const [challengeId, setChallengeId] = useState("");
   const [maskedEmail, setMaskedEmail] = useState("");
   const [challengeExpiresAt, setChallengeExpiresAt] = useState("");
@@ -47,6 +57,7 @@ function LoginPage() {
     }
 
     setErrorMessage("");
+    setConfirmationMessage("");
     setSubmitting(true);
 
     const result = await signIn(email.trim(), password, turnstileToken);
@@ -65,6 +76,32 @@ function LoginPage() {
     }
 
     setSubmitting(false);
+  }
+
+  async function handleResendConfirmation() {
+    if (resendingConfirmation) return;
+
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+      setConfirmationMessage("");
+      setErrorMessage("Informe o e-mail da conta para reenviar a confirmação.");
+      return;
+    }
+
+    setErrorMessage("");
+    setConfirmationMessage("");
+    setResendingConfirmation(true);
+
+    const { error } = await resendSignUpConfirmation(normalizedEmail);
+    if (error) {
+      setErrorMessage(error.message);
+    } else {
+      setConfirmationMessage(
+        "Se houver uma confirmação pendente para este e-mail, um novo link foi enviado. Use sempre o e-mail mais recente.",
+      );
+    }
+
+    setResendingConfirmation(false);
   }
 
   async function handleVerifySecurityCode(event: FormEvent<HTMLFormElement>) {
@@ -321,6 +358,7 @@ function LoginPage() {
               onChange={(event) => {
                 setEmail(event.target.value);
                 if (errorMessage) setErrorMessage("");
+                if (confirmationMessage) setConfirmationMessage("");
               }}
               className="h-12 w-full rounded-2xl bg-transparent px-4 text-sm outline-none placeholder:text-gray-400"
               placeholder="seuemail@exemplo.com"
@@ -379,6 +417,15 @@ function LoginPage() {
           </p>
         ) : null}
 
+        {confirmationMessage ? (
+          <p
+            role="status"
+            className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+          >
+            {confirmationMessage}
+          </p>
+        ) : null}
+
         <button
           type="submit"
           disabled={submitting || (turnstileRequired && !turnstileToken)}
@@ -393,6 +440,18 @@ function LoginPage() {
             "Entrar"
           )}
         </button>
+
+        <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-center">
+          <p className="text-xs leading-5 text-gray-500">Ainda não confirmou seu e-mail?</p>
+          <button
+            type="button"
+            onClick={() => void handleResendConfirmation()}
+            disabled={resendingConfirmation}
+            className="mt-1 text-xs font-bold text-red-600 transition hover:text-red-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {resendingConfirmation ? "Reenviando…" : "Reenviar e-mail de confirmação"}
+          </button>
+        </div>
 
         <p className="text-center text-xs leading-5 text-gray-400">
           O acesso é liberado após a confirmação do e-mail cadastrado.
