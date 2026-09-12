@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, CreditCard, Mail, MessageCircle, PackageCheck } from "lucide-react";
 
 import { COOKIE_PREFERENCES_EVENT } from "@/components/privacy/CookieConsent";
@@ -27,14 +27,31 @@ const paymentMethods = [
 
 export default function Footer() {
   const { user, isOwner } = useAuth();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [expanded, setExpanded] = useState({ acesso: false, conta: false, ajuda: false });
   const toggle = (key: keyof typeof expanded) =>
     setExpanded((current) => ({ ...current, [key]: !current[key] }));
   const accordionClass = (open: boolean) =>
     `space-y-3 overflow-hidden text-sm text-gray-400 transition-all duration-300 motion-reduce:transition-none lg:!max-h-none lg:!opacity-100 ${open ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`;
+  const showFloatingSupport = pathname === "/" || pathname.startsWith("/product/");
+  const supportWhatsappUrl = `${BRAND.whatsappUrl}${BRAND.whatsappUrl.includes("?") ? "&" : "?"}text=${encodeURIComponent(`Olá! Preciso de ajuda com uma compra na ${BRAND.officialName}.`)}`;
 
   return (
     <footer className="w-full border-t-4 border-red-600 bg-[#15171b] text-white">
+      {showFloatingSupport ? (
+        <a
+          href={supportWhatsappUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Falar com o suporte da ${BRAND.officialName} pelo WhatsApp`}
+          title="Falar com o suporte no WhatsApp"
+          className="fixed bottom-24 right-4 z-[70] inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/70 bg-[#25D366] text-white shadow-[0_12px_34px_rgba(0,0,0,0.28)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_42px_rgba(0,0,0,0.34)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 motion-reduce:transform-none motion-reduce:transition-none sm:bottom-6 sm:right-6 sm:h-12 sm:w-auto sm:gap-2 sm:px-4"
+        >
+          <MessageCircle className="h-6 w-6" aria-hidden="true" />
+          <span className="hidden text-sm font-bold sm:inline">Suporte</span>
+        </a>
+      ) : null}
+
       <div className="border-b border-white/10 bg-white/[0.025]">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 px-5 py-5 md:grid-cols-3 md:px-8 lg:px-10">
           {trustItems.map(({ icon: Icon, title, description }) => (
