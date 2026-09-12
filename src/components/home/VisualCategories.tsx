@@ -1,4 +1,5 @@
-import React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useRef } from "react";
 
 import CategoryCard from "@/components/home/CategoryCard";
 import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalization";
@@ -43,6 +44,20 @@ const categories = [
 
 export default function VisualCategories() {
   const { data } = useStorefrontPersonalization();
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+
+  const moveOneCard = (direction: -1 | 1) => {
+    const scroller = scrollerRef.current;
+    const firstCard = scroller?.querySelector<HTMLElement>("[data-category-slide]");
+    if (!scroller || !firstCard) return;
+
+    const styles = window.getComputedStyle(scroller);
+    const gap = Number.parseFloat(styles.columnGap || styles.gap || "0") || 0;
+    scroller.scrollBy({
+      left: direction * (firstCard.offsetWidth + gap),
+      behavior: "smooth",
+    });
+  };
 
   return (
     <section className="bg-transparent py-9 sm:py-11 lg:py-14">
@@ -52,16 +67,43 @@ export default function VisualCategories() {
           <h2 className="display-title mt-2">Monte seu pedido</h2>
         </div>
 
-        <div className="custom-scrollbar flex gap-4 overflow-x-auto pb-3 md:gap-6 md:pb-4">
-          {categories.map((category) => (
-            <div key={category.slot} className="aspect-[2/3] w-[164px] flex-shrink-0 md:w-[328px]">
-              <CategoryCard
-                name={category.name}
-                image={data?.[category.slot]?.url ?? null}
-                search={category.search}
-              />
-            </div>
-          ))}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => moveOneCard(-1)}
+            aria-label="Ver categoria anterior"
+            className="category-carousel-arrow absolute left-2 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border-2 border-red-600 bg-white/90 text-red-600 shadow-lg transition-[transform,background-color,color,box-shadow] duration-200 hover:-translate-y-1/2 hover:scale-105 hover:bg-red-600 hover:text-white hover:shadow-xl active:scale-95 md:flex motion-reduce:transition-none"
+          >
+            <ChevronLeft className="h-6 w-6" strokeWidth={2.4} aria-hidden="true" />
+          </button>
+
+          <div
+            ref={scrollerRef}
+            className="custom-scrollbar flex snap-x gap-4 overflow-x-auto scroll-smooth pb-3 md:gap-6 md:px-16 md:pb-4"
+          >
+            {categories.map((category) => (
+              <div
+                key={category.slot}
+                data-category-slide
+                className="aspect-[2/3] w-[164px] flex-shrink-0 snap-start md:w-[328px]"
+              >
+                <CategoryCard
+                  name={category.name}
+                  image={data?.[category.slot]?.url ?? null}
+                  search={category.search}
+                />
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => moveOneCard(1)}
+            aria-label="Ver próxima categoria"
+            className="category-carousel-arrow absolute right-2 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border-2 border-red-600 bg-white/90 text-red-600 shadow-lg transition-[transform,background-color,color,box-shadow] duration-200 hover:-translate-y-1/2 hover:scale-105 hover:bg-red-600 hover:text-white hover:shadow-xl active:scale-95 md:flex motion-reduce:transition-none"
+          >
+            <ChevronRight className="h-6 w-6" strokeWidth={2.4} aria-hidden="true" />
+          </button>
         </div>
       </div>
     </section>
