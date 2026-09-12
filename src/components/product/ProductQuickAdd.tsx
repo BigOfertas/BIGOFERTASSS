@@ -96,55 +96,63 @@ export function ProductQuickAdd({
     detailAttempted.current = false;
     setConfig(null);
     setDetail(null);
+    setConfigLoading(false);
+    setDetailLoading(false);
     setConfigError("");
     setDetailError("");
   }, [productId, productSlug]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || config || configAttempted.current) return;
 
     let active = true;
+    configAttempted.current = true;
+    setConfigLoading(true);
+    setConfigError("");
 
-    if (!config && !configAttempted.current) {
-      configAttempted.current = true;
-      setConfigLoading(true);
-      setConfigError("");
-
-      void withTimeout(fetchProductPurchaseConfig(productId))
-        .then((value) => {
-          if (active) setConfig(value);
-        })
-        .catch(() => {
-          if (active) setConfigError("Não foi possível carregar os tamanhos agora.");
-        })
-        .finally(() => {
-          if (active) setConfigLoading(false);
-        });
-    }
-
-    if (!detail && !detailAttempted.current) {
-      detailAttempted.current = true;
-      setDetailLoading(true);
-      setDetailError("");
-
-      void withTimeout(fetchProductDetail(productSlug || productId))
-        .then((value) => {
-          if (active) setDetail(value);
-        })
-        .catch(() => {
-          if (active) {
-            setDetailError("Não foi possível preparar este item pelo card.");
-          }
-        })
-        .finally(() => {
-          if (active) setDetailLoading(false);
-        });
-    }
+    void withTimeout(fetchProductPurchaseConfig(productId))
+      .then((value) => {
+        if (active) setConfig(value);
+      })
+      .catch(() => {
+        if (active) setConfigError("Não foi possível carregar os tamanhos agora.");
+      })
+      .finally(() => {
+        if (active) setConfigLoading(false);
+      });
 
     return () => {
       active = false;
+      if (!config) configAttempted.current = false;
     };
-  }, [config, detail, open, productId, productSlug]);
+  }, [config, open, productId]);
+
+  useEffect(() => {
+    if (!open || detail || detailAttempted.current) return;
+
+    let active = true;
+    detailAttempted.current = true;
+    setDetailLoading(true);
+    setDetailError("");
+
+    void withTimeout(fetchProductDetail(productSlug || productId))
+      .then((value) => {
+        if (active) setDetail(value);
+      })
+      .catch(() => {
+        if (active) {
+          setDetailError("Não foi possível preparar este item pelo card.");
+        }
+      })
+      .finally(() => {
+        if (active) setDetailLoading(false);
+      });
+
+    return () => {
+      active = false;
+      if (!detail) detailAttempted.current = false;
+    };
+  }, [detail, open, productId, productSlug]);
 
   const variant = useMemo(() => (detail ? resolveQuickAddVariant(detail) : null), [detail]);
 
