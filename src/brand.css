@@ -14,4 +14,29 @@
   width: 100%;
   height: auto;
   object-fit: contain;
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+.dropbox-wordmark-fallback {
+  display: inline-flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0;
+  color: #111827;
+  font-family: var(--font-display, "Arial Narrow", Arial, sans-serif);
+  font-size: clamp(1.5rem, 2.2vw, 2.5rem);
+  font-style: italic;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.065em;
+  text-transform: none;
+  text-shadow: none;
+  transform: skewX(-5deg);
+}
+
+.dropbox-wordmark-fallback strong {
+  color: #e30613;
+  font: inherit;
 }
