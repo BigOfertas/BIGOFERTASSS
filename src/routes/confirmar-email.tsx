@@ -64,14 +64,16 @@ function ConfirmEmailPage() {
     return new URLSearchParams(window.location.search).get("token_hash")?.trim() ?? "";
   }, []);
   const tokenHashRef = useRef(tokenHash);
+  const runningRef = useRef(false);
   const [state, setState] = useState<ConfirmationState>(tokenHash ? "verifying" : "expired");
   const [attempt, setAttempt] = useState(0);
   const [running, setRunning] = useState(false);
 
   const verifyConfirmation = useCallback(async () => {
     const currentTokenHash = tokenHashRef.current;
-    if (!currentTokenHash || running) return;
+    if (!currentTokenHash || runningRef.current) return;
 
+    runningRef.current = true;
     setRunning(true);
     setState("verifying");
 
@@ -90,6 +92,7 @@ function ConfirmEmailPage() {
 
       if (!error) {
         setState("success");
+        runningRef.current = false;
         setRunning(false);
 
         if (typeof window !== "undefined") {
@@ -105,9 +108,10 @@ function ConfirmEmailPage() {
       if (!isTransientConfirmationError(error)) break;
     }
 
+    runningRef.current = false;
     setRunning(false);
     setState(isExpiredConfirmationError(finalError) ? "expired" : "error");
-  }, [running]);
+  }, []);
 
   useEffect(() => {
     if (!tokenHashRef.current) return;
