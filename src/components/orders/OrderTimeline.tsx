@@ -91,7 +91,7 @@ export function OrderTimeline({ entries }: { entries: OrderTimelineEntry[] }) {
 
   return (
     <div className="space-y-6">
-      <ol aria-label="Etapas do pedido" className="overflow-hidden py-1">
+      <ol aria-label="Etapas do pedido" className="py-1">
         {STANDARD_STEPS.map((step, index) => {
           const entry = entryByType.get(step.eventType);
           const reached = Boolean(entry);
@@ -99,17 +99,22 @@ export function OrderTimeline({ entries }: { entries: OrderTimelineEntry[] }) {
           const completed = reached && index < currentIndex;
           const future = !reached;
           const Icon = step.icon;
-          const indent = index * 18;
           const connectorReached = index < currentIndex;
 
           return (
-            <li key={step.eventType} className="relative">
+            <li key={step.eventType} className="relative pb-8 last:pb-0">
+              {index < STANDARD_STEPS.length - 1 ? (
+                <span
+                  className={`absolute bottom-0 left-[22px] top-12 w-1 rounded-full ${
+                    connectorReached ? "bg-gray-950" : "bg-gray-200"
+                  }`}
+                  aria-hidden="true"
+                />
+              ) : null}
+
               <div
                 className="order-timeline-entry relative grid grid-cols-[52px_minmax(0,1fr)] gap-3"
-                style={{
-                  paddingLeft: `${indent}px`,
-                  animationDelay: `${Math.min(index * 70, 280)}ms`,
-                }}
+                style={{ animationDelay: `${Math.min(index * 70, 280)}ms` }}
               >
                 <span
                   className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-full border-[3px] shadow-[0_3px_0_rgba(15,23,42,0.14),0_8px_18px_rgba(15,23,42,0.10)] transition-colors motion-reduce:transition-none ${
@@ -171,16 +176,6 @@ export function OrderTimeline({ entries }: { entries: OrderTimelineEntry[] }) {
                   </p>
                 </div>
               </div>
-
-              {index < STANDARD_STEPS.length - 1 ? (
-                <div
-                  className={`h-8 w-[18px] rounded-bl-xl border-b-[6px] border-l-[6px] ${
-                    connectorReached ? "border-gray-950" : "border-gray-200"
-                  }`}
-                  style={{ marginLeft: `${indent + 23}px` }}
-                  aria-hidden="true"
-                />
-              ) : null}
             </li>
           );
         })}
