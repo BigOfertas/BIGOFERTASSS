@@ -141,14 +141,14 @@ export function OrderTimeline({ entries }: { entries: OrderTimelineEntry[] }) {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3
-                        className={`text-sm font-black ${
+                        className={`text-sm font-bold ${
                           future ? "text-gray-400" : "text-gray-950"
                         }`}
                       >
                         {step.label}
                       </h3>
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] ${
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] ${
                           current
                             ? "bg-red-600 text-white"
                             : completed
@@ -161,7 +161,7 @@ export function OrderTimeline({ entries }: { entries: OrderTimelineEntry[] }) {
                     </div>
 
                     {entry ? (
-                      <time className="text-[11px] font-bold text-gray-500">
+                      <time className="text-[11px] font-medium text-gray-500">
                         {dateFormatter.format(new Date(entry.created_at))}
                       </time>
                     ) : null}
@@ -185,7 +185,7 @@ export function OrderTimeline({ entries }: { entries: OrderTimelineEntry[] }) {
         <section className="rounded-2xl border-2 border-gray-300 bg-white p-4 shadow-[0_3px_0_rgba(15,23,42,0.10),0_12px_28px_rgba(15,23,42,0.08)] sm:p-5">
           <div className="mb-3 flex items-center gap-2">
             <Clock3 className="h-4.5 w-4.5 text-gray-700" aria-hidden="true" />
-            <h3 className="text-sm font-black text-gray-950">Ocorrências do pedido</h3>
+            <h3 className="text-sm font-bold text-gray-950">Ocorrências do pedido</h3>
           </div>
 
           <div className="space-y-2.5">
@@ -199,8 +199,8 @@ export function OrderTimeline({ entries }: { entries: OrderTimelineEntry[] }) {
                     <Icon className="mt-0.5 h-4.5 w-4.5 flex-none" aria-hidden="true" />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <p className="text-sm font-black">{config.label}</p>
-                        <time className="text-[11px] font-bold opacity-65">
+                        <p className="text-sm font-bold">{config.label}</p>
+                        <time className="text-[11px] font-medium opacity-65">
                           {dateFormatter.format(new Date(entry.created_at))}
                         </time>
                       </div>
