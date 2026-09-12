@@ -59,9 +59,9 @@ check(
 
 check(
   "wordmark compartilhado usa o PNG nítido dedicado ao cabeçalho",
-  brandWordmark.includes('/assets/branding/dropbox-wordmark-header-v2.png') &&
-    brandWordmark.includes('<img') &&
-    !brandWordmark.includes('<filter') &&
+  brandWordmark.includes("/assets/branding/dropbox-wordmark-header-v2.png") &&
+    brandWordmark.includes("<img") &&
+    !brandWordmark.includes("<filter") &&
     fs.existsSync("public/assets/branding/dropbox-wordmark-header-v2.png"),
 );
 
@@ -128,7 +128,9 @@ check(
   "favicon público usa PNG DropBox novo e versionado",
   root.includes('const DROPBOX_FAVICON = "/favicon-dropbox-v2.png?v=20260912b";') &&
     root.includes('{ rel: "icon", href: DROPBOX_FAVICON, type: "image/png", sizes: "64x64" }') &&
-    root.includes('{ rel: "shortcut icon", href: DROPBOX_FAVICON, type: "image/png", sizes: "64x64" }') &&
+    root.includes(
+      '{ rel: "shortcut icon", href: DROPBOX_FAVICON, type: "image/png", sizes: "64x64" }',
+    ) &&
     root.includes('const DROPBOX_TOUCH_ICON = "/apple-touch-icon-dropbox-v2.png?v=20260912b";') &&
     fs.existsSync("public/favicon-dropbox-v2.png") &&
     fs.existsSync("public/apple-touch-icon-dropbox-v2.png") &&
