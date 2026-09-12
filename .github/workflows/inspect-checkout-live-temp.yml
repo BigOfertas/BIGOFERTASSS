@@ -48,7 +48,7 @@ jobs:
               .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi, '<uuid>')
               .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '<email>')
               .replace(/\b\d{7,}\b/g, '<number>')
-              .slice(0, 1000);
+              .slice(0, 1200);
           }
 
           const functionRows = await query(`
@@ -88,6 +88,31 @@ jobs:
             console.log(JSON.stringify({
               timestamp: row.timestamp,
               source: row.source,
+              event_message: sanitize(row.event_message),
+            }));
+          }
+
+          const postgresErrors = await query(`
+            select timestamp, event_message
+            from logs
+            where source = 'postgres_logs'
+              and (
+                positionCaseInsensitive(event_message, 'error') > 0
+                or positionCaseInsensitive(event_message, 'exception') > 0
+                or positionCaseInsensitive(event_message, 'violat') > 0
+                or positionCaseInsensitive(event_message, 'invalid') > 0
+                or positionCaseInsensitive(event_message, 'ambiguous') > 0
+                or positionCaseInsensitive(event_message, 'column') > 0
+                or positionCaseInsensitive(event_message, 'record') > 0
+                or positionCaseInsensitive(event_message, 'function') > 0
+              )
+            order by timestamp desc
+            limit 160
+          `);
+          console.log(`CHECKOUT_POSTGRES_ERROR_ROWS ${postgresErrors.length}`);
+          for (const row of postgresErrors) {
+            console.log(JSON.stringify({
+              timestamp: row.timestamp,
               event_message: sanitize(row.event_message),
             }));
           }
