@@ -98,6 +98,24 @@ select
     select 1
     from pg_catalog.pg_proc p
     join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'create_order_core'
+  ) as create_order_core_function,
+  (
+    select coalesce(jsonb_agg(pg_catalog.pg_get_function_identity_arguments(p.oid) order by p.oid), '[]'::jsonb)
+    from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'create_order_core'
+  ) as create_order_core_signatures,
+  exists (
+    select 1
+    from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'bigofertas_progressive_discount_percent'
+  ) as progressive_discount_function,
+  exists (
+    select 1
+    from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'has_role'
   ) as has_role_function,
   exists (
