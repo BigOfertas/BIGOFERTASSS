@@ -29,42 +29,66 @@ jobs:
 
           const end = new Date();
           const start = new Date(end.getTime() - 2 * 60 * 60 * 1000);
-          const sql = `
-            select
-              timestamp,
-              source,
-              event_message,
-              log_attributes['response.status_code'] as status_code,
-              log_attributes['request.path'] as path
+          const headers = { authorization: `Bearer ${token}`, accept: 'application/json' };
+
+          async function query(sql) {
+            const url = new URL(`https://api.supabase.com/v1/projects/${project}/analytics/endpoints/logs`);
+            url.searchParams.set('sql', sql);
+            url.searchParams.set('iso_timestamp_start', start.toISOString());
+            url.searchParams.set('iso_timestamp_end', end.toISOString());
+            const response = await fetch(url, { headers, signal: AbortSignal.timeout(30000) });
+            const text = await response.text();
+            if (!response.ok) throw new Error(`Log query failed with HTTP ${response.status}: ${text.slice(0, 500)}`);
+            const payload = JSON.parse(text);
+            return Array.isArray(payload?.result) ? payload.result : [];
+          }
+
+          function sanitize(value) {
+            return String(value ?? '')
+              .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi, '<uuid>')
+              .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '<email>')
+              .replace(/\b\d{7,}\b/g, '<number>')
+              .slice(0, 1000);
+          }
+
+          const functionRows = await query(`
+            select timestamp, source, event_message,
+              log_attributes['response.status_code'] as status_code
             from logs
             where source in ('function_logs', 'function_edge_logs')
+              and positionCaseInsensitive(event_message, 'checkout') > 0
+            order by timestamp desc
+            limit 80
+          `);
+          console.log(`CHECKOUT_FUNCTION_ROWS ${functionRows.length}`);
+          for (const row of functionRows) {
+            console.log(JSON.stringify({
+              timestamp: row.timestamp,
+              source: row.source,
+              status_code: row.status_code,
+              event_message: sanitize(row.event_message),
+            }));
+          }
+
+          const databaseRows = await query(`
+            select timestamp, source, event_message
+            from logs
+            where source in ('postgres_logs', 'edge_logs', 'postgrest_logs')
               and (
-                positionCaseInsensitive(event_message, 'checkout') > 0
-                or positionCaseInsensitive(log_attributes['request.path'], 'checkout-start') > 0
+                positionCaseInsensitive(event_message, 'create_order_core') > 0
+                or positionCaseInsensitive(event_message, '/rpc/create_order_core') > 0
+                or positionCaseInsensitive(event_message, 'order_items') > 0
+                or positionCaseInsensitive(event_message, 'orders_') > 0
               )
             order by timestamp desc
             limit 120
-          `;
-          const url = new URL(`https://api.supabase.com/v1/projects/${project}/analytics/endpoints/logs`);
-          url.searchParams.set('sql', sql);
-          url.searchParams.set('iso_timestamp_start', start.toISOString());
-          url.searchParams.set('iso_timestamp_end', end.toISOString());
-
-          const response = await fetch(url, {
-            headers: { authorization: `Bearer ${token}`, accept: 'application/json' },
-            signal: AbortSignal.timeout(30000),
-          });
-          const text = await response.text();
-          if (!response.ok) {
-            console.error(`Log query failed with HTTP ${response.status}`);
-            console.error(text.slice(0, 2000));
-            process.exit(2);
-          }
-          let payload;
-          try { payload = JSON.parse(text); } catch { throw new Error('Invalid logs response'); }
-          const rows = Array.isArray(payload?.result) ? payload.result : [];
-          console.log(`Recent checkout log rows: ${rows.length}`);
-          for (const row of rows) {
-            console.log(JSON.stringify(row));
+          `);
+          console.log(`CHECKOUT_DATABASE_ROWS ${databaseRows.length}`);
+          for (const row of databaseRows) {
+            console.log(JSON.stringify({
+              timestamp: row.timestamp,
+              source: row.source,
+              event_message: sanitize(row.event_message),
+            }));
           }
           NODE
