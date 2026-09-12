@@ -61,16 +61,16 @@ export default function Footer() {
           <div>
             <Link
               to="/"
-              className="inline-flex w-fit rounded-xl"
+              className="inline-flex w-fit"
               aria-label={`${BRAND.officialName} - Início`}
             >
               <img
-                src="/assets/branding/dropbox-footer.svg"
+                src="/assets/branding/dropbox-wordmark-footer.png"
                 alt={BRAND.officialName}
-                width={160}
-                height={103}
+                width={440}
+                height={76}
                 decoding="async"
-                className="block w-40 max-w-full rounded-xl bg-white object-contain"
+                className="block h-auto w-44 max-w-full object-contain"
               />
             </Link>
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-gray-400">

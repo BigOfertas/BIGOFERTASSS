@@ -1,0 +1,17 @@
+.brand-lockup,
+.auth-brand-link {
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.dropbox-wordmark {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}

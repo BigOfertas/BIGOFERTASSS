@@ -1,14 +1,12 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /conta
+Disallow: /checkout
+Disallow: /cart
+Disallow: /login
+Disallow: /cadastro
+Disallow: /esqueci-senha
+Disallow: /redefinir-senha
+
+Sitemap: https://bigofertas.net/sitemap.xml

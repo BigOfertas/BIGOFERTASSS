@@ -42,8 +42,8 @@ export const BRAND = Object.freeze({
   whatsappDisplay,
   whatsappUrl,
   shortMark: (compactName.slice(0, 3) || officialName.slice(0, 3)).toUpperCase(),
-  storeTitle: `${officialName} | Loja Esportiva`,
-  storeDescription: `${officialName}: catálogo de artigos esportivos e produtos para torcedores.`,
+  storeTitle: `${officialName} | Camisas de Futebol e Artigos Esportivos`,
+  storeDescription: `${officialName}: camisas de futebol, retrô, seleções, kits de treino, corta-ventos e artigos esportivos para torcedores. Encontre seu time.`,
 });
 
 export type BrandConfig = typeof BRAND;

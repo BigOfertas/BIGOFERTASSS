@@ -33,6 +33,9 @@ const FOOTER_ROUTES = new Set([
   "/contato",
 ]);
 
+const INITIAL_BOOT_SPLASH_MS = 2500;
+const DEFAULT_OG_IMAGE = `${BRAND.siteUrl}/og-image.jpg`;
+
 const R2_IMAGE_ORIGIN = (() => {
   const baseUrl = getR2PublicBaseUrl();
   if (!baseUrl) return null;
@@ -111,10 +114,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: BRAND.storeTitle },
       { name: "description", content: BRAND.storeDescription },
       { name: "author", content: BRAND.officialName },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
       { property: "og:title", content: BRAND.storeTitle },
       { property: "og:description", content: BRAND.storeDescription },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: BRAND.siteUrl },
+      { property: "og:site_name", content: BRAND.officialName },
+      { property: "og:locale", content: "pt_BR" },
+      { property: "og:image", content: DEFAULT_OG_IMAGE },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: `${BRAND.officialName} - Loja esportiva` },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: BRAND.storeTitle },
+      { name: "twitter:description", content: BRAND.storeDescription },
+      { name: "twitter:image", content: DEFAULT_OG_IMAGE },
     ],
     links: [
       { rel: "preconnect", href: "https://lh3.googleusercontent.com" },
@@ -134,7 +148,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: glassLegacyCss },
       { rel: "stylesheet", href: sportThemeCss },
-      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "64x64" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
     ],
   }),
   shellComponent: RootShell,
@@ -149,7 +164,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body style={{ background: "#ffffff" }}>
         {children}
         <Scripts />
       </body>
@@ -157,14 +172,67 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function InitialBootSplash() {
+  return (
+    <div
+      data-initial-boot-splash
+      aria-label="Carregando loja"
+      role="status"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 2147483647,
+        display: "grid",
+        placeItems: "center",
+        background: "#ffffff",
+      }}
+    >
+      <svg width="42" height="42" viewBox="0 0 42 42" aria-hidden="true">
+        <circle cx="21" cy="21" r="16" fill="none" stroke="#e5e7eb" strokeWidth="4" />
+        <path
+          d="M21 5a16 16 0 0 1 16 16"
+          fill="none"
+          stroke="#e71919"
+          strokeWidth="4"
+          strokeLinecap="round"
+        >
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            from="0 21 21"
+            to="360 21 21"
+            dur="0.72s"
+            repeatCount="indefinite"
+          />
+        </path>
+      </svg>
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [storefrontHydrated, setStorefrontHydrated] = useState(false);
+  const [initialBootSplashVisible, setInitialBootSplashVisible] = useState(true);
   const showStorefrontFooter = FOOTER_ROUTES.has(pathname) || pathname.startsWith("/product/");
 
   useEffect(() => {
     setStorefrontHydrated(true);
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const elapsedSinceNavigationStart = performance.now();
+    const remainingSplashMs = Math.max(0, INITIAL_BOOT_SPLASH_MS - elapsedSinceNavigationStart);
+    const timer = window.setTimeout(() => {
+      setInitialBootSplashVisible(false);
+      document.body.style.overflow = previousOverflow;
+    }, remainingSplashMs);
+
+    return () => {
+      window.clearTimeout(timer);
+      document.body.style.overflow = previousOverflow;
+    };
   }, []);
 
   return (
@@ -180,6 +248,7 @@ function RootComponent() {
           <CursorFollower />
           <CookieConsent />
           <Toaster position="top-center" richColors />
+          {initialBootSplashVisible ? <InitialBootSplash /> : null}
         </CartProvider>
       </AuthProvider>
     </QueryClientProvider>

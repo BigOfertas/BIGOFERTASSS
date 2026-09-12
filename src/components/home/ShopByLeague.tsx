@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useQueries } from "@tanstack/react-query";
+import React, { useMemo, useState } from "react";
 
 import ProductCardPlaceholder from "@/components/home/ProductCardPlaceholder";
 import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
-import { useCatalogProducts } from "@/hooks/useCatalogProducts";
-import type { CatalogListItem } from "@/lib/catalog";
+import { catalogProductsQueryOptions } from "@/hooks/useCatalogProducts";
 import { isStandardHomeJersey, selectVariedProducts } from "@/lib/home-product-selection";
 
 interface League {
@@ -27,53 +27,57 @@ const DEFAULT_LEAGUE = LEAGUES[0]!;
 
 const ShopByLeague: React.FC = () => {
   const [activeLeagueId, setActiveLeagueId] = useState(DEFAULT_LEAGUE.id);
-  const [displayLeagueId, setDisplayLeagueId] = useState(DEFAULT_LEAGUE.id);
-  const [displayProducts, setDisplayProducts] = useState<CatalogListItem[]>([]);
 
-  const activeLeague = LEAGUES.find((league) => league.id === activeLeagueId) ?? DEFAULT_LEAGUE;
-  const torcedorQuery = useCatalogProducts({
-    liga: activeLeague.slug,
-    commercialType: "torcedor",
-    pageSize: 48,
-    sort: "featured",
-  });
-  const jogadorQuery = useCatalogProducts({
-    liga: activeLeague.slug,
-    commercialType: "jogador",
-    pageSize: 48,
-    sort: "featured",
-  });
+  const leagueQueryOptions = useMemo(
+    () =>
+      LEAGUES.flatMap((league) => [
+        catalogProductsQueryOptions({
+          liga: league.slug,
+          commercialType: "torcedor",
+          pageSize: 48,
+          sort: "featured",
+        }),
+        catalogProductsQueryOptions({
+          liga: league.slug,
+          commercialType: "jogador",
+          pageSize: 48,
+          sort: "featured",
+        }),
+      ]),
+    [],
+  );
 
-  const incomingProducts = useMemo(() => {
+  // Todas as ligas começam a carregar juntas assim que a home monta. Como a
+  // primeira pintura fica coberta pelo splash inicial, o cache normalmente já
+  // está quente quando o cliente interage com os botões. Depois disso, trocar
+  // de liga é apenas trocar o índice dos dados já presentes no React Query.
+  const leagueQueries = useQueries({ queries: leagueQueryOptions });
+
+  const activeLeagueIndex = Math.max(
+    0,
+    LEAGUES.findIndex((league) => league.id === activeLeagueId),
+  );
+  const activeLeague = LEAGUES[activeLeagueIndex] ?? DEFAULT_LEAGUE;
+  const torcedorQuery = leagueQueries[activeLeagueIndex * 2];
+  const jogadorQuery = leagueQueries[activeLeagueIndex * 2 + 1];
+
+  const displayProducts = useMemo(() => {
     const candidates = [
-      ...(torcedorQuery.data?.items ?? []),
-      ...(jogadorQuery.data?.items ?? []),
+      ...(torcedorQuery?.data?.items ?? []),
+      ...(jogadorQuery?.data?.items ?? []),
     ].filter(isStandardHomeJersey);
 
     return selectVariedProducts(candidates, SHOWCASE_SIZE);
-  }, [jogadorQuery.data?.items, torcedorQuery.data?.items]);
+  }, [jogadorQuery?.data?.items, torcedorQuery?.data?.items]);
 
-  const incomingLoading =
-    torcedorQuery.isLoading ||
-    jogadorQuery.isLoading ||
-    torcedorQuery.isFetching ||
-    jogadorQuery.isFetching ||
-    torcedorQuery.isPlaceholderData ||
-    jogadorQuery.isPlaceholderData;
-  const error = torcedorQuery.error ?? jogadorQuery.error;
-
-  useEffect(() => {
-    if (incomingLoading) return;
-    setDisplayLeagueId(activeLeague.id);
-    setDisplayProducts(incomingProducts);
-  }, [activeLeague.id, incomingLoading, incomingProducts]);
+  const activeDataReady = Boolean(torcedorQuery?.data && jogadorQuery?.data);
+  const showInitialPlaceholders = !activeDataReady;
+  const error = torcedorQuery?.error ?? jogadorQuery?.error;
 
   const handleLeagueChange = (id: string) => {
     if (id === activeLeagueId) return;
     setActiveLeagueId(id);
   };
-
-  const showInitialPlaceholders = displayProducts.length === 0;
 
   return (
     <section className="overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14">
@@ -91,7 +95,7 @@ const ShopByLeague: React.FC = () => {
                 key={league.id}
                 onClick={() => handleLeagueChange(league.id)}
                 aria-pressed={activeLeagueId === league.id}
-                className={`min-h-10 min-w-0 rounded-xl px-2 py-2 text-[11px] font-extrabold leading-tight tracking-[0.015em] transition-colors duration-200 motion-reduce:transition-none sm:whitespace-nowrap sm:px-4 sm:text-xs ${
+                className={`min-h-10 min-w-0 rounded-xl px-2 py-2 text-[11px] font-extrabold leading-tight tracking-[0.015em] transition-colors duration-150 motion-reduce:transition-none sm:whitespace-nowrap sm:px-4 sm:text-xs ${
                   index < 3 ? "col-span-2" : "col-span-3"
                 } ${
                   activeLeagueId === league.id
@@ -106,9 +110,9 @@ const ShopByLeague: React.FC = () => {
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
-          <div data-league-products={displayLeagueId} className="relative">
+          <div data-league-products={activeLeague.id} className="relative">
             <ProductCarousel
-              key={showInitialPlaceholders ? "league-loading" : displayLeagueId}
+              key={showInitialPlaceholders ? `league-loading-${activeLeague.id}` : activeLeague.id}
               itemCount={
                 showInitialPlaceholders ? INITIAL_PLACEHOLDER_COUNT : displayProducts.length
               }

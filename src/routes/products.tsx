@@ -24,6 +24,7 @@ import {
   type CatalogSort,
 } from "@/lib/catalog";
 import { toCatalogFilterKey } from "@/lib/catalog-filter-key";
+import { buildPageHead } from "@/lib/page-seo";
 
 const filterKeySchema = z
   .string()
@@ -67,6 +68,13 @@ const productSearchSchema = z
 
 export const Route = createFileRoute("/products")({
   validateSearch: (search) => productSearchSchema.parse(search),
+  head: () =>
+    buildPageHead({
+      title: "Produtos",
+      description:
+        "Explore o catálogo DropBox com camisas de futebol, retrô, seleções, kits de treino, corta-ventos e outros artigos esportivos.",
+      path: "/products",
+    }),
   component: ProductsPage,
 });
 
