@@ -58,9 +58,11 @@ check(
 );
 
 check(
-  "wordmark compartilhado reutiliza o asset público já validado do rodapé",
-  brandWordmark.includes('/assets/branding/dropbox-wordmark-footer.png') &&
-    !brandWordmark.includes('/assets/branding/dropbox-wordmark.png'),
+  "wordmark compartilhado usa o PNG nítido dedicado ao cabeçalho",
+  brandWordmark.includes('/assets/branding/dropbox-wordmark-header-v2.png') &&
+    brandWordmark.includes('<img') &&
+    !brandWordmark.includes('<filter') &&
+    fs.existsSync("public/assets/branding/dropbox-wordmark-header-v2.png"),
 );
 
 check(
@@ -123,13 +125,13 @@ check(
 );
 
 check(
-  "favicon público usa o novo arquivo versionado da identidade DropBox",
-  root.includes('const DROPBOX_FAVICON = "/favicon-dropbox-v2.svg";') &&
-    root.includes('{ rel: "icon", href: DROPBOX_FAVICON, type: "image/svg+xml" }') &&
-    root.includes('{ rel: "shortcut icon", href: DROPBOX_FAVICON, type: "image/svg+xml" }') &&
-    root.includes('const DROPBOX_TOUCH_ICON = "/assets/branding/dropbox-logo.png?v=20260912";') &&
-    fs.existsSync("public/favicon-dropbox-v2.svg") &&
-    fs.existsSync("public/assets/branding/dropbox-logo.png") &&
+  "favicon público usa PNG DropBox novo e versionado",
+  root.includes('const DROPBOX_FAVICON = "/favicon-dropbox-v2.png?v=20260912b";') &&
+    root.includes('{ rel: "icon", href: DROPBOX_FAVICON, type: "image/png", sizes: "64x64" }') &&
+    root.includes('{ rel: "shortcut icon", href: DROPBOX_FAVICON, type: "image/png", sizes: "64x64" }') &&
+    root.includes('const DROPBOX_TOUCH_ICON = "/apple-touch-icon-dropbox-v2.png?v=20260912b";') &&
+    fs.existsSync("public/favicon-dropbox-v2.png") &&
+    fs.existsSync("public/apple-touch-icon-dropbox-v2.png") &&
     !root.includes("/favicon.ico"),
 );
 
