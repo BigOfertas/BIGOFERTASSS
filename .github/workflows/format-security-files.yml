@@ -1,0 +1,46 @@
+name: Format Security Files
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/format-security-files.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Format security files
+        run: bunx prettier --write src/lib/auth.tsx supabase/functions/_shared/security.ts
+
+      - name: Commit formatting only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/auth.tsx supabase/functions/_shared/security.ts
+          if git diff --cached --quiet; then
+            echo "No formatting changes required."
+            exit 0
+          fi
+          git commit -m "style: format security integration"
+          git push origin HEAD:main
