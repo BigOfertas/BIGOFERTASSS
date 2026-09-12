@@ -13,11 +13,10 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
-import { AffiliateAdmin } from "@/components/admin/AffiliateAdmin";
-import { CatalogFoundationAdmin } from "@/components/admin/CatalogFoundationAdmin";
+import { AffiliateAdminWorkspace } from "@/components/admin/AffiliateAdminWorkspace";
 import { OrderAdmin } from "@/components/admin/OrderAdmin";
-import { ProductPurchaseAdmin } from "@/components/admin/ProductPurchaseAdmin";
 import { PersonalizationAdmin } from "@/components/admin/PersonalizationAdmin";
+import { ProductsAdminWorkspace } from "@/components/admin/ProductsAdminWorkspace";
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { LiquidGlassCard } from "@/components/ui/liquid-glass-card";
 import { BRAND } from "@/config/brand";
@@ -337,14 +336,11 @@ function AdminPage() {
             ) : section === "orders" ? (
               <OrderAdmin />
             ) : section === "products" ? (
-              <>
-                <CatalogFoundationAdmin />
-                <ProductPurchaseAdmin />
-              </>
+              <ProductsAdminWorkspace />
             ) : section === "personalization" ? (
               <PersonalizationAdmin />
             ) : (
-              <AffiliateAdmin />
+              <AffiliateAdminWorkspace />
             )}
           </div>
         </div>
