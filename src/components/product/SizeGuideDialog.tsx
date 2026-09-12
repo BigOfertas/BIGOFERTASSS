@@ -9,10 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  fetchProductPurchaseConfig,
-  type ProductCommercialType,
-} from "@/lib/product-purchase";
+import { fetchProductPurchaseConfig, type ProductCommercialType } from "@/lib/product-purchase";
 
 type GuideKey = "torcedor" | "jogador" | "feminino" | "infantil" | "basquete";
 
@@ -166,9 +163,13 @@ export function SizeGuideDialog({
   compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [resolvedType, setResolvedType] = useState<ProductCommercialType | null>(commercialType ?? null);
+  const [resolvedType, setResolvedType] = useState<ProductCommercialType | null>(
+    commercialType ?? null,
+  );
   const [loadingType, setLoadingType] = useState(false);
-  const [activeKey, setActiveKey] = useState<GuideKey>(guideKeyForType(commercialType) ?? "torcedor");
+  const [activeKey, setActiveKey] = useState<GuideKey>(
+    guideKeyForType(commercialType) ?? "torcedor",
+  );
 
   const automaticKey = useMemo(() => guideKeyForType(resolvedType), [resolvedType]);
 
@@ -189,6 +190,9 @@ export function SizeGuideDialog({
         setResolvedType(config.commercialType);
         const next = guideKeyForType(config.commercialType);
         if (next) setActiveKey(next);
+      })
+      .catch(() => {
+        if (active) setResolvedType(null);
       })
       .finally(() => {
         if (active) setLoadingType(false);
