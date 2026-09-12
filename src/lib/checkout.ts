@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { legacyWorkerFallbackAvailable } from "@/lib/backend-routing";
 import type { CartItem } from "@/lib/cart";
+import { normalizePurchaseCustomization } from "@/lib/product-purchase";
 
 export type CheckoutStartResult = {
   checkoutUrl: string;
@@ -58,6 +59,22 @@ async function checkoutResponse(accessToken: string, body: string) {
   throw new Error("Não foi possível iniciar o pagamento agora.");
 }
 
+function customizationForCheckout(item: CartItem) {
+  const normalized = normalizePurchaseCustomization(item.customization);
+  if (normalized.size) return normalized;
+
+  const sizeSnapshot = item.selectedOptions.find(
+    (option) => option.optionKind === "size" && option.valueLabel.trim().length > 0,
+  );
+
+  if (!sizeSnapshot) return normalized;
+
+  return normalizePurchaseCustomization({
+    ...normalized,
+    size: sizeSnapshot.valueLabel,
+  });
+}
+
 export async function startInfinitePayCheckout(input: {
   addressId: string;
   shippingServiceId: number;
@@ -79,7 +96,7 @@ export async function startInfinitePayCheckout(input: {
       productId: item.productId,
       variantId: item.variantId,
       quantity: item.quantity,
-      customization: item.customization,
+      customization: customizationForCheckout(item),
     };
   });
 
