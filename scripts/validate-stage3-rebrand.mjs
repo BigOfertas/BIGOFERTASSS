@@ -22,7 +22,6 @@ const faq = read("src/components/home/FAQ.tsx");
 const contact = read("src/routes/contato.tsx");
 const privacy = read("src/routes/privacidade.tsx");
 const root = read("src/routes/__root.tsx");
-const favicon = read("public/favicon.svg");
 const email2fa = read("src/lib/email-2fa-server.ts");
 const notificationEmail = read("src/lib/notification-email-server.ts");
 const server = read("src/server.ts");
@@ -117,12 +116,14 @@ check(
 );
 
 check(
-  "favicon público foi substituído por identidade DropBox",
-  root.includes('{ rel: "icon", href: "/favicon.svg", type: "image/svg+xml" }') &&
+  "favicon público foi substituído pela identidade DropBox enviada",
+  root.includes('{ rel: "icon", href: "/favicon.png", type: "image/png", sizes: "64x64" }') &&
+    root.includes('{ rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" }') &&
     !root.includes("/favicon.ico") &&
+    !root.includes("/favicon.svg") &&
     !fs.existsSync("public/favicon.ico") &&
-    favicon.includes('aria-label="DropBox"') &&
-    favicon.includes('fill="#dc2626"'),
+    fs.existsSync("public/favicon.png") &&
+    fs.existsSync("public/apple-touch-icon.png"),
 );
 
 console.log(`\nSTAGE3_REBRAND_VALIDATION passed=${passed} failed=${failed}`);
