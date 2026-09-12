@@ -18,7 +18,7 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
     steps:
-      - name: Inspect recent checkout logs
+      - name: Inspect live checkout database schema
         shell: bash
         run: |
           set -euo pipefail
@@ -26,94 +26,42 @@ jobs:
           const token = process.env.SUPABASE_ACCESS_TOKEN?.trim();
           const project = process.env.SUPABASE_PROJECT_ID?.trim();
           if (!token || !project) throw new Error('Missing Supabase management configuration');
-
-          const end = new Date();
-          const start = new Date(end.getTime() - 2 * 60 * 60 * 1000);
-          const headers = { authorization: `Bearer ${token}`, accept: 'application/json' };
-
-          async function query(sql) {
-            const url = new URL(`https://api.supabase.com/v1/projects/${project}/analytics/endpoints/logs`);
-            url.searchParams.set('sql', sql);
-            url.searchParams.set('iso_timestamp_start', start.toISOString());
-            url.searchParams.set('iso_timestamp_end', end.toISOString());
-            const response = await fetch(url, { headers, signal: AbortSignal.timeout(30000) });
-            const text = await response.text();
-            if (!response.ok) throw new Error(`Log query failed with HTTP ${response.status}: ${text.slice(0, 500)}`);
-            const payload = JSON.parse(text);
-            return Array.isArray(payload?.result) ? payload.result : [];
-          }
-
-          function sanitize(value) {
-            return String(value ?? '')
+          const headers = {
+            authorization: `Bearer ${token}`,
+            accept: 'application/json',
+            'content-type': 'application/json',
+          };
+          const sql = `
+            select 'timeline_columns' as kind,
+              jsonb_agg(jsonb_build_object('name', column_name, 'type', udt_name) order by ordinal_position) as value
+            from information_schema.columns
+            where table_schema = 'public' and table_name = 'order_timeline'
+            union all
+            select 'order_triggers' as kind,
+              jsonb_agg(jsonb_build_object('name', t.tgname, 'definition', pg_get_triggerdef(t.oid)) order by t.tgname) as value
+            from pg_trigger t
+            join pg_class c on c.oid = t.tgrelid
+            join pg_namespace n on n.oid = c.relnamespace
+            where n.nspname = 'public' and c.relname = 'orders' and not t.tgisinternal
+            union all
+            select 'timeline_functions' as kind,
+              jsonb_agg(jsonb_build_object('name', p.proname, 'definition', pg_get_functiondef(p.oid)) order by p.proname) as value
+            from pg_proc p
+            join pg_namespace n on n.oid = p.pronamespace
+            where n.nspname = 'public'
+              and position('order_timeline' in pg_get_functiondef(p.oid)) > 0;
+          `;
+          const response = await fetch(`https://api.supabase.com/v1/projects/${project}/database/query/read-only`, {
+            method: 'POST', headers, body: JSON.stringify({ query: sql }), signal: AbortSignal.timeout(30000),
+          });
+          const text = await response.text();
+          if (!response.ok) throw new Error(`Schema query failed HTTP ${response.status}: ${text.slice(0, 500)}`);
+          const payload = JSON.parse(text);
+          for (const row of Array.isArray(payload) ? payload : [payload]) {
+            const raw = JSON.stringify(row);
+            console.log(raw
               .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi, '<uuid>')
               .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '<email>')
-              .replace(/\b\d{7,}\b/g, '<number>')
-              .slice(0, 1200);
-          }
-
-          const functionRows = await query(`
-            select timestamp, source, event_message,
-              log_attributes['response.status_code'] as status_code
-            from logs
-            where source in ('function_logs', 'function_edge_logs')
-              and positionCaseInsensitive(event_message, 'checkout') > 0
-            order by timestamp desc
-            limit 80
-          `);
-          console.log(`CHECKOUT_FUNCTION_ROWS ${functionRows.length}`);
-          for (const row of functionRows) {
-            console.log(JSON.stringify({
-              timestamp: row.timestamp,
-              source: row.source,
-              status_code: row.status_code,
-              event_message: sanitize(row.event_message),
-            }));
-          }
-
-          const databaseRows = await query(`
-            select timestamp, source, event_message
-            from logs
-            where source in ('postgres_logs', 'edge_logs', 'postgrest_logs')
-              and (
-                positionCaseInsensitive(event_message, 'create_order_core') > 0
-                or positionCaseInsensitive(event_message, '/rpc/create_order_core') > 0
-                or positionCaseInsensitive(event_message, 'order_items') > 0
-                or positionCaseInsensitive(event_message, 'orders_') > 0
-              )
-            order by timestamp desc
-            limit 120
-          `);
-          console.log(`CHECKOUT_DATABASE_ROWS ${databaseRows.length}`);
-          for (const row of databaseRows) {
-            console.log(JSON.stringify({
-              timestamp: row.timestamp,
-              source: row.source,
-              event_message: sanitize(row.event_message),
-            }));
-          }
-
-          const postgresErrors = await query(`
-            select timestamp, event_message
-            from logs
-            where source = 'postgres_logs'
-              and (
-                positionCaseInsensitive(event_message, 'error') > 0
-                or positionCaseInsensitive(event_message, 'exception') > 0
-                or positionCaseInsensitive(event_message, 'violat') > 0
-                or positionCaseInsensitive(event_message, 'invalid') > 0
-                or positionCaseInsensitive(event_message, 'ambiguous') > 0
-                or positionCaseInsensitive(event_message, 'column') > 0
-                or positionCaseInsensitive(event_message, 'record') > 0
-                or positionCaseInsensitive(event_message, 'function') > 0
-              )
-            order by timestamp desc
-            limit 160
-          `);
-          console.log(`CHECKOUT_POSTGRES_ERROR_ROWS ${postgresErrors.length}`);
-          for (const row of postgresErrors) {
-            console.log(JSON.stringify({
-              timestamp: row.timestamp,
-              event_message: sanitize(row.event_message),
-            }));
+              .slice(0, 20000));
           }
           NODE
