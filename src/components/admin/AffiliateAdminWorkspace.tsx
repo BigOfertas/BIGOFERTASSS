@@ -60,19 +60,9 @@ function formatPhone(value: string | null | undefined) {
 
 function whatsappUrl(value: string | null | undefined) {
   const digits = onlyDigits(value);
-
-  // Telefones salvos pelo cadastro são nacionais (DDD + número). Mesmo quando o
-  // DDD é 55, esse primeiro "55" não é o código do país e precisa ser preservado.
-  if (digits.length === 10 || digits.length === 11) {
-    return `https://wa.me/55${digits}`;
-  }
-
-  // Também aceita E.164 brasileiro completo quando algum dado já vier com +55.
-  if ((digits.length === 12 || digits.length === 13) && digits.startsWith("55")) {
-    return `https://wa.me/${digits}`;
-  }
-
-  return null;
+  if (digits.length !== 10 && digits.length !== 11 && !digits.startsWith("55")) return null;
+  const international = digits.startsWith("55") ? digits : `55${digits}`;
+  return `https://wa.me/${international}`;
 }
 
 function paymentLabel(value: string) {
