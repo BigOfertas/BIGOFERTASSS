@@ -157,10 +157,7 @@ function ConfirmEmailPage() {
       description:
         "Estamos validando seu cadastro com segurança. Se o serviço oscilar, a DropBox tenta novamente automaticamente.",
       icon: (
-        <Loader2
-          className="h-7 w-7 animate-spin motion-reduce:animate-none"
-          aria-hidden="true"
-        />
+        <Loader2 className="h-7 w-7 animate-spin motion-reduce:animate-none" aria-hidden="true" />
       ),
       iconClass: "bg-gray-100 text-gray-800",
     };
