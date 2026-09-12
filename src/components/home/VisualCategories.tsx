@@ -2,6 +2,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useRef } from "react";
 
 import CategoryCard from "@/components/home/CategoryCard";
+import DirectionalReveal from "@/components/ui/directional-reveal";
+import SlideUpReveal from "@/components/ui/slide-up-reveal";
 import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalization";
 
 const categories = [
@@ -63,8 +65,22 @@ export default function VisualCategories() {
     <section className="bg-transparent py-9 sm:py-11 lg:py-14">
       <div className="mx-auto max-w-[1800px] px-4 lg:px-8">
         <div className="mb-7 text-center sm:mb-8">
-          <p className="display-kicker">Escolha seu estilo</p>
-          <h2 className="display-title mt-2">Monte seu pedido</h2>
+          <p className="display-kicker">
+            <DirectionalReveal direction="up" distance={9}>
+              Escolha seu estilo
+            </DirectionalReveal>
+          </p>
+          <h2 className="display-title mt-2">
+            <SlideUpReveal
+              split="words"
+              stagger={0.065}
+              inView
+              className="justify-center"
+              wordClass="pb-[0.08em]"
+            >
+              Monte seu pedido
+            </SlideUpReveal>
+          </h2>
         </div>
 
         <div className="relative">
