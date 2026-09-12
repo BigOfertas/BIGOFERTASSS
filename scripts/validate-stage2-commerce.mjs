@@ -18,6 +18,7 @@ const card = read("src/components/product/ProductCard.tsx");
 const quickAdd = read("src/components/product/ProductQuickAdd.tsx");
 const register = read("src/routes/cadastro.tsx");
 const purchase = read("src/lib/product-purchase.ts");
+const cart = read("src/lib/cart.ts");
 const checkout = read("src/lib/checkout.ts");
 const catalog = read("src/lib/catalog.ts");
 const productsRoute = read("src/routes/products.tsx");
@@ -61,10 +62,12 @@ check(
 );
 
 check(
-  "checkout recupera o tamanho do snapshot visual antes de chamar o backend",
-  checkout.includes("function customizationForCheckout(item: CartItem)") &&
-    checkout.includes('option.optionKind === "size"') &&
-    checkout.includes("size: sizeSnapshot.valueLabel") &&
+  "carrinho e checkout reconciliam o tamanho exibido com a personalização enviada ao backend",
+  cart.includes("export function reconcileCartCustomization") &&
+    cart.includes('option.optionKind === "size"') &&
+    cart.includes("size: sizeSnapshot.valueLabel") &&
+    cart.includes("customization: reconcileCartCustomization(item.customization, item.selectedOptions)") &&
+    checkout.includes("return reconcileCartCustomization(item.customization, item.selectedOptions)") &&
     checkout.includes("customization: customizationForCheckout(item)"),
 );
 
