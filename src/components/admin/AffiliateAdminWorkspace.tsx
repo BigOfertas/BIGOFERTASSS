@@ -192,11 +192,17 @@ function CustomerDetail({
           </p>
         </div>
         <div className="rounded-lg bg-white px-3 py-2">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Vendas pagas</p>
-          <p className="mt-1 text-xs font-bold text-gray-800">{money(referral.paid_sales_amount)}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">
+            Vendas pagas
+          </p>
+          <p className="mt-1 text-xs font-bold text-gray-800">
+            {money(referral.paid_sales_amount)}
+          </p>
         </div>
         <div className="rounded-lg bg-white px-3 py-2">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Comissão gerada</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">
+            Comissão gerada
+          </p>
           <p className="mt-1 text-xs font-bold text-gray-800">
             {money(referral.generated_commission_amount)}
           </p>
@@ -219,7 +225,9 @@ function CustomerDetail({
                   <p className="mt-0.5 text-[11px] text-gray-400">{formatDate(order.created_at)}</p>
                 </div>
                 <span className="text-gray-600">{paymentLabel(order.payment_status)}</span>
-                <span className="font-black tabular-nums text-gray-900">{money(order.total_amount)}</span>
+                <span className="font-black tabular-nums text-gray-900">
+                  {money(order.total_amount)}
+                </span>
               </div>
             ))}
           </div>
@@ -255,10 +263,10 @@ export function AffiliateAdminWorkspace() {
     staleTime: 15_000,
   });
 
-  const affiliates = affiliatesQuery.data ?? [];
-  const referrals = referralsQuery.data ?? [];
-  const orders = ordersQuery.data ?? [];
-  const commissions = commissionsQuery.data ?? [];
+  const affiliates = useMemo(() => affiliatesQuery.data ?? [], [affiliatesQuery.data]);
+  const referrals = useMemo(() => referralsQuery.data ?? [], [referralsQuery.data]);
+  const orders = useMemo(() => ordersQuery.data ?? [], [ordersQuery.data]);
+  const commissions = useMemo(() => commissionsQuery.data ?? [], [commissionsQuery.data]);
 
   const selectedAffiliate = useMemo(
     () => affiliates.find((row) => row.affiliate_id === selectedAffiliateId) ?? null,
@@ -287,7 +295,10 @@ export function AffiliateAdminWorkspace() {
   });
 
   const paidOrders = affiliateReferrals.reduce((total, row) => total + row.paid_orders_count, 0);
-  const paidSales = affiliateReferrals.reduce((total, row) => total + Number(row.paid_sales_amount || 0), 0);
+  const paidSales = affiliateReferrals.reduce(
+    (total, row) => total + Number(row.paid_sales_amount || 0),
+    0,
+  );
   const generatedCommission = affiliateReferrals.reduce(
     (total, row) => total + Number(row.generated_commission_amount || 0),
     0,
@@ -300,7 +311,10 @@ export function AffiliateAdminWorkspace() {
   }
 
   const dataLoading =
-    affiliatesQuery.isLoading || referralsQuery.isLoading || ordersQuery.isLoading || commissionsQuery.isLoading;
+    affiliatesQuery.isLoading ||
+    referralsQuery.isLoading ||
+    ordersQuery.isLoading ||
+    commissionsQuery.isLoading;
   const dataError =
     affiliatesQuery.error || referralsQuery.error || ordersQuery.error || commissionsQuery.error;
 
@@ -308,12 +322,15 @@ export function AffiliateAdminWorkspace() {
     <div className="space-y-6">
       <section className="rounded-xl border border-gray-200 bg-white">
         <div className="border-b border-gray-100 px-5 py-5 sm:px-6">
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-red-600">Gestão individual</p>
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-red-600">
+            Gestão individual
+          </p>
           <h1 className="mt-1 text-2xl font-black tracking-tight text-gray-950">
             Painel individual dos afiliados
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
-            Abra um afiliado para acompanhar os resultados dele, ver os clientes indicados e acessar os dados de contato de cada cliente.
+            Abra um afiliado para acompanhar os resultados dele, ver os clientes indicados e acessar
+            os dados de contato de cada cliente.
           </p>
         </div>
 
@@ -363,7 +380,9 @@ export function AffiliateAdminWorkspace() {
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-gray-500">
                       <span>{affiliate.referred_customers_count} clientes</span>
-                      <span className="font-bold text-gray-800">{money(affiliate.available_balance)} disponível</span>
+                      <span className="font-bold text-gray-800">
+                        {money(affiliate.available_balance)} disponível
+                      </span>
                     </div>
                   </button>
                 );
@@ -389,7 +408,9 @@ export function AffiliateAdminWorkspace() {
                       </span>
                     </div>
                     <p className="mt-1 break-all text-xs text-gray-500">
-                      {affiliateProfileQuery.data?.email || selectedAffiliate.email || "E-mail não informado"}
+                      {affiliateProfileQuery.data?.email ||
+                        selectedAffiliate.email ||
+                        "E-mail não informado"}
                     </p>
                     <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700">
                       <Phone className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
@@ -432,9 +453,17 @@ export function AffiliateAdminWorkspace() {
                 {activeTab === "summary" ? (
                   <div className="p-4 sm:p-5">
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-                      <MetricCard label="Clientes indicados" value={affiliateReferrals.length} icon={UsersRound} />
+                      <MetricCard
+                        label="Clientes indicados"
+                        value={affiliateReferrals.length}
+                        icon={UsersRound}
+                      />
                       <MetricCard label="Pedidos pagos" value={paidOrders} icon={ShoppingBag} />
-                      <MetricCard label="Vendas pagas" value={money(paidSales)} icon={CircleDollarSign} />
+                      <MetricCard
+                        label="Vendas pagas"
+                        value={money(paidSales)}
+                        icon={CircleDollarSign}
+                      />
                       <MetricCard
                         label="Comissão pendente"
                         value={money(selectedAffiliate.pending_commission_amount)}
@@ -457,13 +486,17 @@ export function AffiliateAdminWorkspace() {
                         <p className="text-[11px] font-black uppercase tracking-[0.08em] text-gray-400">
                           Comissão gerada pelos indicados
                         </p>
-                        <p className="mt-2 text-2xl font-black text-gray-950">{money(generatedCommission)}</p>
+                        <p className="mt-2 text-2xl font-black text-gray-950">
+                          {money(generatedCommission)}
+                        </p>
                       </div>
                       <div className="rounded-xl border border-gray-200 bg-white p-4">
                         <p className="text-[11px] font-black uppercase tracking-[0.08em] text-gray-400">
                           Registros de comissão
                         </p>
-                        <p className="mt-2 text-2xl font-black text-gray-950">{affiliateCommissions.length}</p>
+                        <p className="mt-2 text-2xl font-black text-gray-950">
+                          {affiliateCommissions.length}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -472,7 +505,9 @@ export function AffiliateAdminWorkspace() {
                     {affiliateReferrals.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-gray-300 bg-white px-5 py-10 text-center">
                         <UsersRound className="mx-auto h-6 w-6 text-gray-300" aria-hidden="true" />
-                        <p className="mt-2 text-sm font-bold text-gray-800">Nenhum cliente indicado</p>
+                        <p className="mt-2 text-sm font-bold text-gray-800">
+                          Nenhum cliente indicado
+                        </p>
                         <p className="mt-1 text-xs text-gray-500">
                           Quando alguém criar a conta pelo link deste afiliado, aparecerá aqui.
                         </p>
@@ -515,7 +550,9 @@ export function AffiliateAdminWorkspace() {
                                   />
                                 </div>
                               </button>
-                              {open ? <CustomerDetail referral={referral} orders={affiliateOrders} /> : null}
+                              {open ? (
+                                <CustomerDetail referral={referral} orders={affiliateOrders} />
+                              ) : null}
                             </div>
                           );
                         })}
