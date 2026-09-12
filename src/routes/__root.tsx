@@ -35,6 +35,8 @@ const FOOTER_ROUTES = new Set([
 
 const INITIAL_BOOT_SPLASH_MS = 2500;
 const DEFAULT_OG_IMAGE = `${BRAND.siteUrl}/og-image.jpg`;
+const DROPBOX_FAVICON = "/favicon-dropbox-v2.svg";
+const DROPBOX_TOUCH_ICON = "/assets/branding/dropbox-logo.png?v=20260912";
 
 const R2_IMAGE_ORIGIN = (() => {
   const baseUrl = getR2PublicBaseUrl();
@@ -148,8 +150,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: glassLegacyCss },
       { rel: "stylesheet", href: sportThemeCss },
-      { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "64x64" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
+      { rel: "icon", href: DROPBOX_FAVICON, type: "image/svg+xml" },
+      { rel: "shortcut icon", href: DROPBOX_FAVICON, type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: DROPBOX_TOUCH_ICON, sizes: "180x180" },
     ],
   }),
   shellComponent: RootShell,
