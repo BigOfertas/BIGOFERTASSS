@@ -34,6 +34,7 @@ jobs:
 
       # Turnstile secrets are intentionally activated only after a successful
       # Hostinger production deploy, so backend enforcement can never precede
-      # publication of the matching public site key.
+      # publication of the matching public site key. The smoke workflow runs
+      # after this deployment completes and validates the live Edge Functions.
       - name: Deploy Edge Functions
         run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
