@@ -165,7 +165,7 @@ export function OrderDetailContent({
             <header className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
               <div className="flex items-center gap-2.5">
                 <Package className="h-5 w-5 text-red-600" aria-hidden="true" />
-                <h2 className="font-black text-gray-950">Itens do pedido</h2>
+                <h2 className="font-bold text-gray-950">Itens do pedido</h2>
               </div>
               <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-600">
                 {units} {units === 1 ? "unidade" : "unidades"}
@@ -241,7 +241,7 @@ export function OrderDetailContent({
           <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-6 flex items-center gap-2.5">
               <ReceiptText className="h-5 w-5 text-red-600" aria-hidden="true" />
-              <h2 className="font-black text-gray-950">Acompanhamento</h2>
+              <h2 className="font-bold text-gray-950">Acompanhamento</h2>
             </div>
             <OrderTimeline entries={timeline} />
           </section>
@@ -249,7 +249,7 @@ export function OrderDetailContent({
 
         <aside className="space-y-5">
           <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-            <h2 className="font-black text-gray-950">Resumo de valores</h2>
+            <h2 className="font-bold text-gray-950">Resumo de valores</h2>
             <dl className="mt-5 space-y-3 text-sm">
               <div className="flex justify-between gap-4 text-gray-600">
                 <dt>Subtotal</dt>
@@ -281,7 +281,7 @@ export function OrderDetailContent({
           <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-center gap-2.5">
               <MapPin className="h-5 w-5 text-red-600" aria-hidden="true" />
-              <h2 className="font-black text-gray-950">Endereço de entrega</h2>
+              <h2 className="font-bold text-gray-950">Endereço de entrega</h2>
             </div>
             <address className="mt-4 not-italic text-sm leading-6 text-gray-600">
               <p className="font-bold text-gray-900">{order.address_recipient_name}</p>
@@ -300,7 +300,7 @@ export function OrderDetailContent({
           <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-center gap-2.5">
               <Truck className="h-5 w-5 text-red-600" aria-hidden="true" />
-              <h2 className="font-black text-gray-950">Entrega</h2>
+              <h2 className="font-bold text-gray-950">Entrega</h2>
             </div>
             {order.shipping_provider ? (
               <div className="mt-4 text-sm text-gray-600">
@@ -361,7 +361,7 @@ export function OrderDetailContent({
           <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-center gap-2.5">
               <CreditCard className="h-5 w-5 text-red-600" aria-hidden="true" />
-              <h2 className="font-black text-gray-950">Pagamento</h2>
+              <h2 className="font-bold text-gray-950">Pagamento</h2>
             </div>
             <p className="mt-3 text-sm font-bold text-gray-900">
               {paymentLabel(order.payment_status)}
@@ -375,7 +375,7 @@ export function OrderDetailContent({
             <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="flex items-center gap-2.5">
                 <UserRound className="h-5 w-5 text-red-600" aria-hidden="true" />
-                <h2 className="font-black text-gray-950">Cliente</h2>
+                <h2 className="font-bold text-gray-950">Cliente</h2>
               </div>
               <div className="mt-4 space-y-2.5 text-sm text-gray-600">
                 <p className="font-bold text-gray-900">{order.customer_name}</p>
@@ -393,7 +393,7 @@ export function OrderDetailContent({
 
           {!ownerView && refundRequest ? (
             <section className="rounded-2xl border border-orange-200 bg-orange-50/70 p-5 shadow-sm sm:p-6">
-              <h2 className="font-black text-orange-950">Solicitação de reembolso</h2>
+              <h2 className="font-bold text-orange-950">Solicitação de reembolso</h2>
               <p className="mt-2 text-sm font-bold text-orange-900">
                 {REFUND_REASON_LABELS[refundRequest.reason as RefundReason] ?? refundRequest.reason}
               </p>
