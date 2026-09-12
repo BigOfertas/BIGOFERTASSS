@@ -1,5 +1,7 @@
 import { memo, useCallback, useEffect, useState } from "react";
 
+import DirectionalReveal from "@/components/ui/directional-reveal";
+import SlideUpReveal from "@/components/ui/slide-up-reveal";
 import { BRAND } from "@/config/brand";
 
 const FAQ_EXIT_DURATION_MS = 150;
@@ -191,8 +193,22 @@ export default function FAQ() {
     <section className="bg-transparent py-12 md:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <div className="mb-8 text-center sm:mb-10">
-          <p className="display-kicker">Antes de comprar</p>
-          <h2 className="display-title-sm mt-2">Perguntas frequentes</h2>
+          <p className="display-kicker">
+            <DirectionalReveal direction="up" distance={9}>
+              Antes de comprar
+            </DirectionalReveal>
+          </p>
+          <h2 className="display-title-sm mt-2">
+            <SlideUpReveal
+              split="words"
+              stagger={0.065}
+              inView
+              className="justify-center"
+              wordClass="pb-[0.08em]"
+            >
+              Perguntas frequentes
+            </SlideUpReveal>
+          </h2>
         </div>
 
         <div className="mx-auto max-w-3xl space-y-3">
