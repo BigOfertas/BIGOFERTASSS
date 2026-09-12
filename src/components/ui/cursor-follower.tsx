@@ -5,6 +5,33 @@ import { useEffect, useRef } from "react";
 const INTERACTIVE_SELECTOR =
   'a, button, img, input, textarea, select, [role="button"], [data-cursor-interactive]';
 
+const STATIC_COPY_CURSOR_CSS = `
+@media (hover: hover) and (pointer: fine) {
+  body :where(h1, h2, h3, h4, h5, h6, p, span, li, small, strong, em, label) {
+    cursor: default;
+  }
+
+  body :where(a, a *, button, button *, [role="button"], [role="button"] *, summary, summary *) {
+    cursor: pointer;
+  }
+
+  body :where(
+    input:not([type]),
+    input[type="text"],
+    input[type="search"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="number"],
+    textarea,
+    [contenteditable]:not([contenteditable="false"])
+  ) {
+    cursor: text;
+  }
+}
+`;
+
 export const Component = () => {
   const dotRef = useRef<HTMLDivElement>(null);
   const borderRef = useRef<HTMLDivElement>(null);
@@ -19,6 +46,11 @@ export const Component = () => {
     const dot = dotRef.current;
     const border = borderRef.current;
     if (!finePointer.matches || !dot || !border) return;
+
+    const cursorStyle = document.createElement("style");
+    cursorStyle.dataset.staticCopyCursorFix = "true";
+    cursorStyle.textContent = STATIC_COPY_CURSOR_CSS;
+    document.head.appendChild(cursorStyle);
 
     const setVisible = (visible: boolean) => {
       const opacity = visible ? "1" : "0";
@@ -133,6 +165,7 @@ export const Component = () => {
       document.removeEventListener("pointerover", handlePointerOver);
       document.removeEventListener("pointerout", handlePointerOut);
       window.removeEventListener("mouseout", handleWindowOut);
+      cursorStyle.remove();
       if (animationFrame.current !== null) {
         window.cancelAnimationFrame(animationFrame.current);
       }
