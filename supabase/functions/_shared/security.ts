@@ -91,7 +91,10 @@ export async function consumeRateLimit(
       retryAfterSeconds: Math.max(0, Number(row.retry_after_seconds) || 0),
     };
   } catch (error) {
-    console.error("[security] rate limit check failed", error instanceof Error ? error.message : "unknown");
+    console.error(
+      "[security] rate limit check failed",
+      error instanceof Error ? error.message : "unknown",
+    );
     // Fail open on infrastructure errors so a security dependency cannot take the store offline.
     return { allowed: true, remaining: null, retryAfterSeconds: 0, degraded: true };
   }
@@ -171,7 +174,10 @@ export async function verifyTurnstile(
 
     return { configured: true, success: true };
   } catch (error) {
-    console.error("[security] Turnstile validation failed", error instanceof Error ? error.message : "unknown");
+    console.error(
+      "[security] Turnstile validation failed",
+      error instanceof Error ? error.message : "unknown",
+    );
     return { configured: true, success: false, reason: "siteverify-unavailable" };
   }
 }

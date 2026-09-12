@@ -34,7 +34,11 @@ type AuthContextValue = {
   role: AppRole | null;
   loading: boolean;
 
-  signIn: (email: string, password: string, turnstileToken?: string | null) => Promise<SignInResult>;
+  signIn: (
+    email: string,
+    password: string,
+    turnstileToken?: string | null,
+  ) => Promise<SignInResult>;
   verifySignInTwoFactor: (
     email: string,
     password: string,
