@@ -12,6 +12,8 @@ import { useAuth } from "@/lib/auth";
 
 const accountSearchSchema = z.object({
   secao: z.enum(["dados", "enderecos", "pedidos", "afiliados"]).optional(),
+  order_nsu: z.string().trim().max(64).optional(),
+  celebrate: z.literal("1").optional(),
 });
 
 type AccountRouteSection = AccountSection | "afiliados";
@@ -34,6 +36,20 @@ function AccountPage() {
       void navigate({ to: "/login", replace: true });
     }
   }, [loading, navigate, user]);
+
+  useEffect(() => {
+    if (loading || !user || showingOrderDetail || !search.order_nsu) return;
+
+    const orderNumber = search.order_nsu.trim().toUpperCase();
+    if (!/^BIG-[0-9]{4}-[0-9]{6,}$/.test(orderNumber)) return;
+
+    void navigate({
+      to: "/conta/pedidos/$orderNumber",
+      params: { orderNumber },
+      search: { celebrate: "1" },
+      replace: true,
+    });
+  }, [loading, navigate, search.order_nsu, showingOrderDetail, user]);
 
   function handleSectionChange(nextSection: AccountRouteSection) {
     void navigate({
