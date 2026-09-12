@@ -1,0 +1,37 @@
+name: Validate Final Storefront Polish PR
+
+on:
+  push:
+    branches:
+      - fix-brand-assets-20260912
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate brand and favicon
+        run: node scripts/validate-brand-identity.mjs && node scripts/validate-stage3-rebrand.mjs
+
+      - name: Validate storefront behavior
+        run: node scripts/validate-storefront-upgrades.mjs && node scripts/validate-storefront-regressions.mjs && node scripts/validate-stage2-commerce.mjs && node scripts/validate-final-storefront-refinements.mjs
+
+      - name: Lint storefront
+        run: bun run lint
+
+      - name: Build production storefront
+        run: bun run build
