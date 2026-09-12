@@ -81,10 +81,9 @@ function CustomerOrderDetailPage() {
   });
 
   const detail = detailQuery.data;
-  const confirmedPurchase = detail
-    ? isConfirmedPurchase(detail.order as CelebrationOrder)
-    : false;
-  const waitingForReturnConfirmation = search.celebrate === "1" && Boolean(detail) && !confirmedPurchase;
+  const confirmedPurchase = detail ? isConfirmedPurchase(detail.order as CelebrationOrder) : false;
+  const waitingForReturnConfirmation =
+    search.celebrate === "1" && Boolean(detail) && !confirmedPurchase;
 
   useEffect(() => {
     paymentPollCountRef.current = 0;

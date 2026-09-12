@@ -77,7 +77,10 @@ export function PostPurchaseCelebration({
         }
       `}</style>
 
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-[24vw] min-w-20 max-w-72 overflow-hidden" aria-hidden="true">
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 w-[24vw] min-w-20 max-w-72 overflow-hidden"
+        aria-hidden="true"
+      >
         {CONFETTI.filter((piece) => piece.side === "left").map((piece) => (
           <span
             key={piece.id}
@@ -98,7 +101,10 @@ export function PostPurchaseCelebration({
         ))}
       </div>
 
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-[24vw] min-w-20 max-w-72 overflow-hidden" aria-hidden="true">
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 w-[24vw] min-w-20 max-w-72 overflow-hidden"
+        aria-hidden="true"
+      >
         {CONFETTI.filter((piece) => piece.side === "right").map((piece) => (
           <span
             key={piece.id}
@@ -137,21 +143,27 @@ export function PostPurchaseCelebration({
         <div className="mt-6 grid grid-cols-3 gap-2.5 text-left sm:gap-3">
           <div className="rounded-2xl bg-gray-50 p-3 sm:p-4">
             <ShoppingBag className="h-4 w-4 text-red-600" aria-hidden="true" />
-            <p className="mt-2 text-[10px] font-bold uppercase tracking-wide text-gray-500">Pedido</p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-wide text-gray-500">
+              Pedido
+            </p>
             <p className="mt-0.5 truncate text-xs font-black text-gray-950 sm:text-sm">
               {detail.order.public_number}
             </p>
           </div>
           <div className="rounded-2xl bg-gray-50 p-3 sm:p-4">
             <PackageCheck className="h-4 w-4 text-red-600" aria-hidden="true" />
-            <p className="mt-2 text-[10px] font-bold uppercase tracking-wide text-gray-500">Itens</p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-wide text-gray-500">
+              Itens
+            </p>
             <p className="mt-0.5 text-xs font-black text-gray-950 sm:text-sm">
               {units} {units === 1 ? "item" : "itens"}
             </p>
           </div>
           <div className="rounded-2xl bg-gray-50 p-3 sm:p-4">
             <Heart className="h-4 w-4 text-red-600" aria-hidden="true" />
-            <p className="mt-2 text-[10px] font-bold uppercase tracking-wide text-gray-500">Total</p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-wide text-gray-500">
+              Total
+            </p>
             <p className="mt-0.5 text-xs font-black text-gray-950 sm:text-sm">
               {currencyFormatter.format(detail.order.total_amount)}
             </p>
