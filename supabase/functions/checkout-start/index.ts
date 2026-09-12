@@ -374,6 +374,7 @@ async function createOrder(
         product_id: item.productId,
         variant_id: item.variantId,
         quantity: item.quantity,
+        customization: item.customization,
       })),
       p_shipping: {
         provider: "superfrete",
