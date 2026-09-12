@@ -162,6 +162,24 @@ function sanitizeOptionSnapshot(value: unknown): CartOptionSnapshot | null {
   };
 }
 
+export function reconcileCartCustomization(
+  customization: unknown,
+  selectedOptions: CartOptionSnapshot[],
+) {
+  const normalized = normalizePurchaseCustomization(customization);
+  if (normalized.size) return normalized;
+
+  const sizeSnapshot = selectedOptions.find(
+    (option) => option.optionKind === "size" && option.valueLabel.trim().length > 0,
+  );
+  if (!sizeSnapshot) return normalized;
+
+  return normalizePurchaseCustomization({
+    ...normalized,
+    size: sizeSnapshot.valueLabel,
+  });
+}
+
 function sanitizeCurrentCartItem(value: unknown): CartItem | null {
   if (!isRecord(value)) return null;
 
@@ -191,7 +209,7 @@ function sanitizeCurrentCartItem(value: unknown): CartItem | null {
 
   const availableStock = rawStock;
   const imageUrl = nullableString(value["imageUrl"]);
-  const customization = normalizePurchaseCustomization(value["customization"]);
+  const customization = reconcileCartCustomization(value["customization"], selectedOptions);
 
   if (isKnownFictitiousCartItem(name, imageUrl)) {
     return null;
@@ -309,9 +327,10 @@ export function encodeStoredCart(items: CartItem[]) {
 
 export function createCartItem(input: AddCartItemInput, quantity: number): CartItem {
   const unitPrice = Number.isFinite(input.unitPrice) ? Math.max(0, input.unitPrice) : 0;
+  const customization = reconcileCartCustomization(input.customization, input.selectedOptions);
 
   return {
-    lineId: createCartLineId(input.productId, input.variantId, input.customization),
+    lineId: createCartLineId(input.productId, input.variantId, customization),
     productId: input.productId,
     productSlug: input.productSlug,
     variantId: input.variantId,
@@ -323,7 +342,7 @@ export function createCartItem(input: AddCartItemInput, quantity: number): CartI
     quantity: clampCartQuantity(quantity, null),
     availableStock: null,
     selectedOptions: input.selectedOptions,
-    customization: normalizePurchaseCustomization(input.customization),
+    customization,
     status: "available",
   };
 }
@@ -333,7 +352,7 @@ export function cartItemsToValidationPayload(items: CartItem[]): Json {
     line_id: item.lineId,
     product_id: item.productId,
     variant_id: item.variantId,
-    customization: item.customization,
+    customization: reconcileCartCustomization(item.customization, item.selectedOptions),
   }));
 }
 
