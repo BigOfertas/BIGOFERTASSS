@@ -27,6 +27,7 @@ const referralClient = read("src/lib/affiliate-referral.ts");
 const registerPage = read("src/routes/cadastro.tsx");
 const accountPanel = read("src/components/account/AffiliateAccountPanel.tsx");
 const adminPanel = read("src/components/admin/AffiliateAdmin.tsx");
+const adminWorkspace = read("src/components/admin/AffiliateAdminWorkspace.tsx");
 const adminRoute = read("src/routes/admin.tsx");
 
 let passed = 0;
@@ -316,7 +317,9 @@ check(
 
 check(
   "administracao inclui afiliados na navegacao principal",
-  adminRoute.includes('id: "affiliates"') && adminRoute.includes("<AffiliateAdmin />"),
+  adminRoute.includes('id: "affiliates"') &&
+    adminRoute.includes("<AffiliateAdminWorkspace />") &&
+    adminWorkspace.includes("<AffiliateAdmin />"),
 );
 
 check(
