@@ -27,8 +27,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node <<'NODE'
-          const fs = require('node:fs');
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
           const token = process.env.SUPABASE_ACCESS_TOKEN?.trim();
           const project = process.env.SUPABASE_PROJECT_ID?.trim();
           if (!token || !project) throw new Error('Missing Supabase management configuration');
