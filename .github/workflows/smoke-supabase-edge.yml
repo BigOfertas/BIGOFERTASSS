@@ -38,6 +38,24 @@ jobs:
           test "$status" = "204"
           tr -d '\r' < "$headers" | grep -i -F -q "access-control-allow-origin: $ALLOWED_ORIGIN"
 
+      - name: checkout-start accepts authenticated browser CORS preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          headers="$(mktemp)"
+          status="$(curl -sS -D "$headers" -o /dev/null -w '%{http_code}' \
+            -X OPTIONS \
+            -H "Origin: $ALLOWED_ORIGIN" \
+            -H 'Access-Control-Request-Method: POST' \
+            -H 'Access-Control-Request-Headers: authorization,content-type,apikey' \
+            "$EDGE_BASE/checkout-start")"
+          test "$status" = "204"
+          normalized="$(tr -d '\r' < "$headers")"
+          printf '%s\n' "$normalized" | grep -i -F -q "access-control-allow-origin: $ALLOWED_ORIGIN"
+          printf '%s\n' "$normalized" | grep -i -q 'access-control-allow-headers:.*authorization'
+          printf '%s\n' "$normalized" | grep -i -q 'access-control-allow-headers:.*content-type'
+          printf '%s\n' "$normalized" | grep -i -q 'access-control-allow-headers:.*apikey'
+
       - name: checkout-start rejects anonymous order creation
         shell: bash
         run: |
