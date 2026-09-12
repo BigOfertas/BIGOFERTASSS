@@ -7,6 +7,7 @@ import ProductFilters from "@/components/ProductFilters";
 import Header from "@/components/layout/Header";
 import { CatalogProductGrid } from "@/components/product/CatalogProductGrid";
 import { Button } from "@/components/ui/button";
+import DirectionalReveal from "@/components/ui/directional-reveal";
 import {
   Sheet,
   SheetClose,
@@ -16,6 +17,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import SlideUpReveal from "@/components/ui/slide-up-reveal";
 import { useCatalogFacets, useCatalogProducts } from "@/hooks/useCatalogProducts";
 import {
   catalogSortSchema,
@@ -151,35 +153,49 @@ function ProductsPage() {
         <div className="mb-6 flex flex-col gap-4 md:mb-8 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-2xl font-black uppercase tracking-tight text-gray-900 md:text-3xl">
-              Produtos
+              <SlideUpReveal
+                split="characters"
+                stagger={0.032}
+                inView
+                className="justify-start"
+                charClass="pb-[0.08em]"
+              >
+                Produtos
+              </SlideUpReveal>
             </h1>
             {search.q ? (
               <p className="mt-2 text-sm text-gray-500">
-                Resultados para <strong>“{search.q}”</strong>
+                <DirectionalReveal direction="left" distance={10} delay={0.08}>
+                  Resultados para <strong>“{search.q}”</strong>
+                </DirectionalReveal>
               </p>
             ) : null}
             {!isLoading && catalog ? (
               <p className="mt-1 text-xs text-gray-400">
-                {catalog.total.toLocaleString("pt-BR")} produto(s) encontrado(s)
+                <DirectionalReveal direction="left" distance={8} delay={0.12}>
+                  {catalog.total.toLocaleString("pt-BR")} produto(s) encontrado(s)
+                </DirectionalReveal>
               </p>
             ) : null}
           </div>
 
-          <label className="hidden items-center gap-2 text-xs font-bold uppercase text-gray-500 md:flex">
-            Ordenar
-            <select
-              value={search.sort ?? "featured"}
-              onChange={(event) => updateSearch({ sort: event.target.value as CatalogSort })}
-              className="h-10 rounded-md border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-900"
-            >
-              <option value="featured">Destaques</option>
-              <option value="newest">Mais recentes</option>
-              <option value="price_asc">Menor preço</option>
-              <option value="price_desc">Maior preço</option>
-              <option value="name_asc">Nome A–Z</option>
-              <option value="name_desc">Nome Z–A</option>
-            </select>
-          </label>
+          <DirectionalReveal direction="right" distance={10} delay={0.08}>
+            <label className="hidden items-center gap-2 text-xs font-bold uppercase text-gray-500 md:flex">
+              Ordenar
+              <select
+                value={search.sort ?? "featured"}
+                onChange={(event) => updateSearch({ sort: event.target.value as CatalogSort })}
+                className="h-10 rounded-md border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-900"
+              >
+                <option value="featured">Destaques</option>
+                <option value="newest">Mais recentes</option>
+                <option value="price_asc">Menor preço</option>
+                <option value="price_desc">Maior preço</option>
+                <option value="name_asc">Nome A–Z</option>
+                <option value="name_desc">Nome Z–A</option>
+              </select>
+            </label>
+          </DirectionalReveal>
         </div>
 
         <div className="mb-5 grid grid-cols-2 gap-2 md:hidden">
@@ -321,10 +337,14 @@ function ProductsPage() {
             ) : (
               <div className="py-20 text-center">
                 <h2 className="text-xl font-bold uppercase text-gray-400">
-                  Nenhum produto encontrado
+                  <SlideUpReveal split="words" stagger={0.05} inView className="justify-center">
+                    Nenhum produto encontrado
+                  </SlideUpReveal>
                 </h2>
                 <p className="mt-2 text-gray-500">
-                  Ajuste a busca ou os filtros para tentar novamente.
+                  <DirectionalReveal direction="up" distance={8} delay={0.08}>
+                    Ajuste a busca ou os filtros para tentar novamente.
+                  </DirectionalReveal>
                 </p>
               </div>
             )}
