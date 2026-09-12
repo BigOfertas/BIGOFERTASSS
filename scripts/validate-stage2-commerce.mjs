@@ -43,7 +43,7 @@ check(
 );
 
 check(
-  "quick add abre aba animada e carrega produto/configuração somente ao abrir sem spinner infinito",
+  "quick add abre aba animada, tem timeout e não reinicia sozinho após falha",
   quickAdd.includes("<Popover") &&
     quickAdd.includes("data-product-quick-add-panel") &&
     quickAdd.includes("fetchProductDetail(productSlug || productId)") &&
@@ -51,8 +51,14 @@ check(
     quickAdd.includes("if (!open) return") &&
     quickAdd.includes("QUICK_ADD_TIMEOUT_MS") &&
     quickAdd.includes("withTimeout") &&
-    quickAdd.includes("configLoading") &&
-    quickAdd.includes("detailLoading"),
+    quickAdd.includes("configAttempted") &&
+    quickAdd.includes("detailAttempted") &&
+    quickAdd.includes("if (!config && !configAttempted.current)") &&
+    quickAdd.includes("if (!detail && !detailAttempted.current)") &&
+    quickAdd.includes("[config, detail, open, productId, productSlug]") &&
+    !quickAdd.includes(
+      "[config, configLoading, detail, detailLoading, open, productId, productSlug]",
+    ),
 );
 
 check(

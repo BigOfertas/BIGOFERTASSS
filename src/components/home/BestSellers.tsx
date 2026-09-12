@@ -52,12 +52,12 @@ const BestSellers: React.FC<BestSellersProps> = ({ initialData }) => {
       id="lancamentos"
       className="scroll-mt-40 overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14"
     >
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 lg:max-w-[1536px] lg:px-4">
         <div className="mb-7 text-center sm:mb-8">
           <p className="display-kicker">Novidades da loja</p>
           <h2 className="display-title mt-2">Lançamentos</h2>
         </div>
-        <div className="rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
+        <div className="storefront-showcase rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
           <ProductCarousel itemCount={isLoading ? LOADING_SIZE : launchProducts.length}>
             {content}
           </ProductCarousel>

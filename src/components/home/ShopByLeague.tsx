@@ -81,14 +81,14 @@ const ShopByLeague: React.FC = () => {
 
   return (
     <section className="overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14">
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 lg:max-w-[1536px] lg:px-4">
         <div className="mb-6 text-center sm:mb-8">
           <p className="display-kicker">Futebol internacional</p>
           <h2 className="display-title-sm mt-2">Compre por liga</h2>
         </div>
 
         <div className="mb-7 flex justify-center sm:mb-8">
-          <div className="grid w-full max-w-md grid-cols-6 gap-1 rounded-2xl border border-gray-200 bg-white p-1.5 shadow-sm sm:flex sm:w-auto sm:max-w-full">
+          <div className="league-switcher grid w-full max-w-md grid-cols-6 gap-1 rounded-2xl border border-gray-200 bg-white p-1.5 shadow-sm sm:flex sm:w-auto sm:max-w-full">
             {LEAGUES.map((league, index) => (
               <button
                 type="button"
@@ -109,7 +109,7 @@ const ShopByLeague: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
+        <div className="storefront-showcase rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
           <div data-league-products={activeLeague.id} className="relative">
             <ProductCarousel
               key={showInitialPlaceholders ? `league-loading-${activeLeague.id}` : activeLeague.id}

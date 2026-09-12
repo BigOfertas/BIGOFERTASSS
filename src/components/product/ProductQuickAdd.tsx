@@ -1,5 +1,5 @@
 import { Check, Loader2, ShoppingCart } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -88,13 +88,25 @@ export function ProductQuickAdd({
   const [configError, setConfigError] = useState("");
   const [detailError, setDetailError] = useState("");
   const [lastAddedSize, setLastAddedSize] = useState<string | null>(null);
+  const configAttempted = useRef(false);
+  const detailAttempted = useRef(false);
+
+  useEffect(() => {
+    configAttempted.current = false;
+    detailAttempted.current = false;
+    setConfig(null);
+    setDetail(null);
+    setConfigError("");
+    setDetailError("");
+  }, [productId, productSlug]);
 
   useEffect(() => {
     if (!open) return;
 
     let active = true;
 
-    if (!config && !configLoading) {
+    if (!config && !configAttempted.current) {
+      configAttempted.current = true;
       setConfigLoading(true);
       setConfigError("");
 
@@ -110,7 +122,8 @@ export function ProductQuickAdd({
         });
     }
 
-    if (!detail && !detailLoading) {
+    if (!detail && !detailAttempted.current) {
+      detailAttempted.current = true;
       setDetailLoading(true);
       setDetailError("");
 
@@ -120,7 +133,7 @@ export function ProductQuickAdd({
         })
         .catch(() => {
           if (active) {
-            setDetailError("Abra o produto para concluir a escolha deste item.");
+            setDetailError("Não foi possível preparar este item pelo card.");
           }
         })
         .finally(() => {
@@ -131,7 +144,7 @@ export function ProductQuickAdd({
     return () => {
       active = false;
     };
-  }, [config, configLoading, detail, detailLoading, open, productId, productSlug]);
+  }, [config, detail, open, productId, productSlug]);
 
   const variant = useMemo(() => (detail ? resolveQuickAddVariant(detail) : null), [detail]);
 
@@ -191,7 +204,7 @@ export function ProductQuickAdd({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-red-200 hover:bg-red-600 hover:text-white hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 active:translate-y-0"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-600 shadow-sm transition-[transform,background-color,color,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-red-200 hover:bg-red-600 hover:text-white hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 active:translate-y-0"
           aria-label={`Adicionar ${productName} ao carrinho`}
           title="Adicionar ao carrinho"
           data-product-quick-add-trigger
@@ -247,7 +260,7 @@ export function ProductQuickAdd({
                       type="button"
                       onClick={() => addWithSize(size)}
                       disabled={!productReady}
-                      className={`flex min-h-10 items-center justify-center rounded-lg border px-2 text-xs font-black transition-all duration-150 disabled:cursor-wait disabled:opacity-55 ${
+                      className={`flex min-h-10 items-center justify-center rounded-lg border px-2 text-xs font-black transition-[transform,background-color,color,border-color] duration-150 disabled:cursor-wait disabled:opacity-55 ${
                         added
                           ? "border-emerald-500 bg-emerald-500 text-white"
                           : "border-gray-200 bg-white text-gray-800 hover:border-red-500 hover:bg-red-50 hover:text-red-700 active:scale-95"
@@ -288,7 +301,7 @@ export function ProductQuickAdd({
             <button
               type="button"
               onClick={() => addWithSize(null)}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-sm font-black text-white transition hover:bg-black"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-sm font-black text-white transition-colors hover:bg-black"
             >
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
               Adicionar
