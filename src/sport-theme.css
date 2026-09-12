@@ -1,8 +1,20 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=Teko:wght@500..700&display=swap");
+
 :root {
-  --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+  --font-sans: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --font-display: "Teko", "Arial Narrow", Impact, sans-serif;
   --sport-shadow-sm: 0 10px 24px rgba(15, 23, 42, 0.08);
   --sport-shadow-md: 0 18px 44px rgba(15, 23, 42, 0.12);
   --sport-shadow-lg: 0 28px 70px rgba(15, 23, 42, 0.16);
+  --sport-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-sans);
 }
 
 h1,
@@ -10,35 +22,229 @@ h2,
 h3,
 h4,
 .display-title,
-.display-title-sm {
+.display-title-sm,
+.sport-heading {
   font-family: var(--font-display);
   font-stretch: condensed;
+  text-rendering: geometricPrecision;
 }
 
 .display-title {
-  font-weight: 900;
-  letter-spacing: -0.035em;
-  line-height: 0.92;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75), 0 8px 22px rgba(15, 23, 42, 0.08);
+  font-size: clamp(2.5rem, 5.2vw, 4.9rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 0.86;
+  text-transform: uppercase;
+  text-shadow: none;
+  animation: sport-title-in 520ms var(--sport-ease) both;
 }
 
 .display-title-sm {
-  font-weight: 850;
-  letter-spacing: -0.025em;
-  line-height: 0.94;
+  font-size: clamp(2.2rem, 4.3vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -0.018em;
+  line-height: 0.88;
+  text-transform: uppercase;
+  animation: sport-title-in 500ms var(--sport-ease) both;
 }
 
 .display-kicker {
-  letter-spacing: 0.19em;
-  font-weight: 900;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  font-weight: 800;
+  text-transform: uppercase;
+  animation: sport-kicker-in 420ms var(--sport-ease) both;
 }
 
 .sport-heading {
-  font-family: var(--font-display);
-  font-weight: 900;
-  letter-spacing: -0.035em;
-  line-height: 0.92;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+  text-transform: uppercase;
   text-wrap: balance;
+}
+
+@keyframes sport-title-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes sport-kicker-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 7px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes sport-card-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.glass-header {
+  position: sticky;
+  isolation: isolate;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.09);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(249, 250, 252, 0.9)),
+    rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 10px 30px rgba(15, 23, 42, 0.07),
+    0 2px 8px rgba(15, 23, 42, 0.045);
+}
+
+.glass-header::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  z-index: -1;
+  background: linear-gradient(90deg, transparent 4%, rgba(220, 38, 38, 0.72) 50%, transparent 96%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.glass-header .brand-lockup {
+  transition: transform 220ms var(--sport-ease), opacity 220ms ease;
+}
+
+.glass-header .brand-lockup:hover {
+  transform: translate3d(0, -1px, 0) scale(1.012);
+}
+
+.glass-input {
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    0 8px 24px rgba(15, 23, 42, 0.05) !important;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.glass-input:focus {
+  border-color: rgba(220, 38, 38, 0.5) !important;
+  background: #fff !important;
+  box-shadow:
+    0 0 0 4px rgba(220, 38, 38, 0.08),
+    0 12px 30px rgba(15, 23, 42, 0.07) !important;
+}
+
+.header-action {
+  border: 1px solid rgba(15, 23, 42, 0.09) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(245, 247, 250, 0.82)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    0 8px 20px rgba(15, 23, 42, 0.055) !important;
+  transition:
+    transform 180ms var(--sport-ease),
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease;
+}
+
+.header-action:hover {
+  transform: translate3d(0, -2px, 0);
+  border-color: rgba(220, 38, 38, 0.2) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 12px 26px rgba(15, 23, 42, 0.085) !important;
+}
+
+.glass-header nav[aria-label="Categorias"] {
+  border-top-color: rgba(15, 23, 42, 0.075) !important;
+  background: rgba(250, 250, 251, 0.9) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.glass-header nav[aria-label="Categorias"] a {
+  transition: color 160ms ease, transform 160ms var(--sport-ease);
+}
+
+.glass-header nav[aria-label="Categorias"] a:hover {
+  transform: translate3d(0, -1px, 0);
+}
+
+.storefront-showcase,
+.league-switcher {
+  border-color: rgba(15, 23, 42, 0.085) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(247, 248, 250, 0.9)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 15px 38px rgba(15, 23, 42, 0.075) !important;
+}
+
+[data-product-card] {
+  animation: sport-card-in 440ms var(--sport-ease) both;
+  transition:
+    transform 220ms var(--sport-ease),
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+
+[data-product-card]:hover {
+  transform: translate3d(0, -5px, 0);
+}
+
+[data-product-card] img {
+  transition: transform 360ms var(--sport-ease), opacity 200ms ease;
+}
+
+[data-product-card]:hover img {
+  transform: scale(1.025);
+}
+
+.category-carousel-arrow {
+  backdrop-filter: saturate(145%);
+  -webkit-backdrop-filter: saturate(145%);
+}
+
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+section[aria-label="Preferências de cookies"] {
+  font-family: var(--font-sans);
+}
+
+section[aria-label="Preferências de cookies"] h2,
+section[aria-label="Preferências de cookies"] p,
+section[aria-label="Preferências de cookies"] span,
+section[aria-label="Preferências de cookies"] button,
+section[aria-label="Preferências de cookies"] a {
+  font-family: var(--font-sans) !important;
+  text-shadow: none !important;
+  font-stretch: normal;
+  transform: none;
+}
+
+section[aria-label="Preferências de cookies"] h2 {
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.25 !important;
+  text-transform: none !important;
+  animation: none !important;
 }
 
 .account-command-hero {
@@ -70,9 +276,9 @@ h4,
   z-index: -1;
   font-family: var(--font-display);
   font-size: clamp(5rem, 11vw, 9rem);
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.035em;
   color: rgba(255, 255, 255, 0.035);
   pointer-events: none;
 }
@@ -84,7 +290,7 @@ h4,
   background: linear-gradient(155deg, #ffffff, #fbfbfc 58%, #f4f5f7);
   box-shadow: var(--sport-shadow-sm);
   transition:
-    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 180ms var(--sport-ease),
     border-color 180ms ease,
     box-shadow 180ms ease;
 }
@@ -101,7 +307,7 @@ h4,
 }
 
 .account-action-card:hover {
-  transform: translateY(-3px);
+  transform: translate3d(0, -3px, 0);
   border-color: rgba(220, 38, 38, 0.22);
   box-shadow: var(--sport-shadow-md);
 }
@@ -120,10 +326,61 @@ h4,
   background: linear-gradient(90deg, #dc2626, #ef4444 55%, transparent);
 }
 
+@media (min-width: 768px) {
+  .glass-header {
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  main > section,
+  [data-home-section] {
+    animation: sport-section-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 4% cover 20%;
+  }
+
+  @keyframes sport-section-reveal {
+    from {
+      opacity: 0.55;
+      transform: translate3d(0, 14px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+
+  .display-title,
+  .display-title-sm,
+  .display-kicker,
+  [data-product-card],
+  main > section,
+  [data-home-section] {
+    animation: none !important;
+  }
+
   .account-action-card,
-  .account-action-card:hover {
-    transform: none;
-    transition: none;
+  .account-action-card:hover,
+  .header-action,
+  .header-action:hover,
+  .glass-header .brand-lockup,
+  .glass-header .brand-lockup:hover,
+  [data-product-card],
+  [data-product-card]:hover,
+  [data-product-card] img,
+  [data-product-card]:hover img,
+  .category-carousel-arrow {
+    transform: none !important;
+    transition: none !important;
   }
 }
