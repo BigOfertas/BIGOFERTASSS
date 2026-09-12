@@ -162,4 +162,46 @@ const dependencyKeys = [
 const dependenciesReady = dependencyKeys.every((key) => readiness?.[key] === true);
 console.log(`Affiliate migration dependencies ready: ${dependenciesReady}`);
 
+// Checkout diagnostic intentionally returns only aggregate operational state.
+// It never prints customer identity, address, order number, user id or idempotency key.
+const checkoutDiagnosticQuery = `
+select
+  count(*) filter (where created_at >= now() - interval '30 minutes')::int as recent_orders_30m,
+  count(*) filter (
+    where created_at >= now() - interval '30 minutes'
+      and payment_status = 'pending'::public.order_payment_status
+  )::int as recent_pending_payments_30m,
+  count(*) filter (
+    where created_at >= now() - interval '30 minutes'
+      and payment_provider = 'infinitepay'
+  )::int as recent_infinitepay_orders_30m,
+  max(created_at) as latest_order_at
+from public.orders;
+`;
+
+const checkoutDiagnosticResponse = await fetch(
+  `https://api.supabase.com/v1/projects/${encodeURIComponent(projectRef)}/database/query/read-only`,
+  {
+    method: "POST",
+    headers: managementHeaders,
+    body: JSON.stringify({ query: checkoutDiagnosticQuery }),
+    signal: AbortSignal.timeout(20_000),
+  },
+);
+
+if (!checkoutDiagnosticResponse.ok) {
+  console.error(
+    `Supabase checkout diagnostic request failed with HTTP ${checkoutDiagnosticResponse.status}.`,
+  );
+  process.exit(6);
+}
+
+const checkoutDiagnosticPayload = await checkoutDiagnosticResponse.json();
+const checkoutDiagnostic = Array.isArray(checkoutDiagnosticPayload)
+  ? checkoutDiagnosticPayload[0]
+  : checkoutDiagnosticPayload;
+
+console.log("\nCHECKOUT_LIVE_DIAGNOSTIC");
+console.log(JSON.stringify(checkoutDiagnostic, null, 2));
+
 // Inspection is intentionally read-only. Drift is reported instead of repaired.
