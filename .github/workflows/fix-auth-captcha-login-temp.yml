@@ -22,7 +22,12 @@ jobs:
       - name: Apply auth CAPTCHA hotfix
         run: node scripts/fix-auth-captcha-login-temp.mjs
       - name: Format hotfix
-        run: bunx prettier --write supabase/functions/auth-email-2fa/index.ts src/lib/auth.tsx src/routes/login.tsx
+        run: >-
+          bunx prettier --write
+          scripts/fix-auth-captcha-login-temp.mjs
+          supabase/functions/auth-email-2fa/index.ts
+          src/lib/auth.tsx
+          src/routes/login.tsx
       - name: Validate storefront
         run: |
           bun run lint
