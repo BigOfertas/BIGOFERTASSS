@@ -1,6 +1,8 @@
 import { corsHeaders } from "../_shared/http.ts";
 
 const INFINITEPAY_LINKS_URL = "https://api.checkout.infinitepay.io/links";
+const INFINITEPAY_LEGACY_LINKS_URL = "https://api.infinitepay.io/invoices/public/checkout/links";
+const INFINITEPAY_TIMEOUT_MS = 15_000;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type CheckoutItemInput = {
@@ -120,7 +122,14 @@ function response(request: Request, body: unknown, status = 200) {
 
 function errorResponse(request: Request, error: unknown) {
   if (error instanceof CheckoutError) {
-    console.error(`[checkout-edge] ${JSON.stringify({ code: error.code, status: error.status })}`);
+    const causeName = error.causeForLog instanceof Error ? error.causeForLog.name : null;
+    console.error(
+      `[checkout-edge] ${JSON.stringify({
+        code: error.code,
+        status: error.status,
+        causeName,
+      })}`,
+    );
     return response(request, { error: error.message, code: error.code }, error.status);
   }
 
@@ -437,7 +446,68 @@ function toCents(value: number | string) {
 
 function normalizePhone(value: string) {
   const digits = value.replace(/\D/g, "");
+  if (digits.length < 10 || digits.length > 13) {
+    throw new CheckoutError(
+      "O telefone do comprador precisa ser revisado antes do pagamento.",
+      422,
+      "CHECKOUT_CUSTOMER_PHONE_INVALID",
+    );
+  }
   return digits.startsWith("55") ? `+${digits}` : `+55${digits}`;
+}
+
+function retryableInfinitePayStatus(status: number) {
+  return status === 408 || status === 425 || status === 429 || status >= 500;
+}
+
+async function postInfinitePayLink(payload: unknown) {
+  const endpoints = [
+    { url: INFINITEPAY_LINKS_URL, label: "primary" },
+    { url: INFINITEPAY_LEGACY_LINKS_URL, label: "legacy" },
+  ] as const;
+  let lastCause: unknown = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const upstream = await fetch(endpoint.url, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(INFINITEPAY_TIMEOUT_MS),
+      });
+
+      if (endpoint.label === "primary" && retryableInfinitePayStatus(upstream.status)) {
+        console.error(
+          `[checkout-edge] ${JSON.stringify({
+            code: "CHECKOUT_INFINITEPAY_PRIMARY_RETRY",
+            upstreamStatus: upstream.status,
+          })}`,
+        );
+        continue;
+      }
+
+      return upstream;
+    } catch (cause) {
+      lastCause = cause;
+      console.error(
+        `[checkout-edge] ${JSON.stringify({
+          code: "CHECKOUT_INFINITEPAY_ENDPOINT_NETWORK_ERROR",
+          endpoint: endpoint.label,
+          causeName: cause instanceof Error ? cause.name : typeof cause,
+        })}`,
+      );
+    }
+  }
+
+  throw new CheckoutError(
+    "Não foi possível conectar à InfinitePay agora. Tente novamente.",
+    502,
+    "CHECKOUT_INFINITEPAY_NETWORK_ERROR",
+    lastCause,
+  );
 }
 
 async function createInfinitePayLink(
@@ -448,51 +518,33 @@ async function createInfinitePayLink(
 ) {
   const supabaseUrl = environment("SUPABASE_URL").replace(/\/$/, "");
   const amountInCents = toCents(order.total_amount);
-  let upstream: Response;
-
-  try {
-    upstream = await fetch(INFINITEPAY_LINKS_URL, {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
+  const infinitePayPayload = {
+    handle: environment("INFINITEPAY_HANDLE"),
+    redirect_url: `${origin.replace(/\/$/, "")}/conta`,
+    webhook_url: `${supabaseUrl}/functions/v1/infinitepay-webhook`,
+    order_nsu: order.public_number,
+    items: [
+      {
+        quantity: 1,
+        price: amountInCents,
+        description: `Pedido ${order.public_number}`,
       },
-      body: JSON.stringify({
-        handle: environment("INFINITEPAY_HANDLE"),
-        redirect_url: `${origin.replace(/\/$/, "")}/conta`,
-        webhook_url: `${supabaseUrl}/functions/v1/infinitepay-webhook`,
-        order_nsu: order.public_number,
-        items: [
-          {
-            quantity: 1,
-            price: amountInCents,
-            description: `Pedido ${order.public_number}`,
-          },
-        ],
-        customer: {
-          name: order.customer_name,
-          email: order.customer_email,
-          phone_number: normalizePhone(order.customer_phone),
-        },
-        address: {
-          cep: address.postal_code,
-          street: address.street,
-          neighborhood: address.neighborhood,
-          number: address.number,
-          complement: address.complement ?? "",
-        },
-      }),
-      signal: AbortSignal.timeout(10_000),
-    });
-  } catch (cause) {
-    throw new CheckoutError(
-      "Não foi possível abrir o pagamento agora.",
-      502,
-      "CHECKOUT_INFINITEPAY_NETWORK_ERROR",
-      cause,
-    );
-  }
+    ],
+    customer: {
+      name: order.customer_name,
+      email: order.customer_email,
+      phone_number: normalizePhone(order.customer_phone),
+    },
+    address: {
+      cep: address.postal_code,
+      street: address.street,
+      neighborhood: address.neighborhood,
+      number: address.number,
+      complement: address.complement ?? "",
+    },
+  };
 
+  const upstream = await postInfinitePayLink(infinitePayPayload);
   const payload = (await readJson(upstream, "CHECKOUT_INFINITEPAY_PARSE_ERROR")) as {
     url?: unknown;
     message?: unknown;
@@ -500,18 +552,33 @@ async function createInfinitePayLink(
   };
 
   if (!upstream.ok || typeof payload.url !== "string") {
+    const upstreamMessage =
+      typeof payload.message === "string"
+        ? payload.message.slice(0, 300)
+        : typeof payload.error === "string"
+          ? payload.error.slice(0, 300)
+          : null;
     console.error(
       `[checkout-edge] ${JSON.stringify({
         code: "CHECKOUT_INFINITEPAY_LINK_FAILED",
         upstreamStatus: upstream.status,
-        upstreamMessage:
-          typeof payload.message === "string"
-            ? payload.message.slice(0, 300)
-            : typeof payload.error === "string"
-              ? payload.error.slice(0, 300)
-              : null,
+        upstreamMessage,
       })}`,
     );
+
+    if (
+      upstream.status === 400 ||
+      upstream.status === 401 ||
+      upstream.status === 403 ||
+      (upstreamMessage && /handle|checkout|integrado|enabled|habilit/i.test(upstreamMessage))
+    ) {
+      throw new CheckoutError(
+        "A InfinitePay recusou a criação do checkout. Confira se o Checkout Integrado está habilitado e se a InfiniteTag configurada está correta.",
+        502,
+        "CHECKOUT_INFINITEPAY_CONFIGURATION_REJECTED",
+      );
+    }
+
     throw new CheckoutError(
       "A InfinitePay não conseguiu gerar o pagamento agora.",
       502,
