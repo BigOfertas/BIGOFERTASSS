@@ -43,22 +43,22 @@ check(
 );
 
 check(
-  "quick add abre aba animada, tem timeout e não reinicia sozinho após falha",
+  "quick add abre aba animada, tem timeout e carrega configuração e detalhe de forma independente",
   quickAdd.includes("<Popover") &&
     quickAdd.includes("data-product-quick-add-panel") &&
     quickAdd.includes("fetchProductDetail(productSlug || productId)") &&
     quickAdd.includes("fetchProductPurchaseConfig(productId)") &&
-    quickAdd.includes("if (!open) return") &&
     quickAdd.includes("QUICK_ADD_TIMEOUT_MS") &&
     quickAdd.includes("withTimeout") &&
     quickAdd.includes("configAttempted") &&
     quickAdd.includes("detailAttempted") &&
-    quickAdd.includes("if (!config && !configAttempted.current)") &&
-    quickAdd.includes("if (!detail && !detailAttempted.current)") &&
-    quickAdd.includes("[config, detail, open, productId, productSlug]") &&
-    !quickAdd.includes(
-      "[config, configLoading, detail, detailLoading, open, productId, productSlug]",
-    ),
+    quickAdd.includes("if (!open || config || configAttempted.current) return") &&
+    quickAdd.includes("if (!open || detail || detailAttempted.current) return") &&
+    quickAdd.includes("[config, open, productId]") &&
+    quickAdd.includes("[detail, open, productId, productSlug]") &&
+    quickAdd.includes("if (!config) configAttempted.current = false") &&
+    quickAdd.includes("if (!detail) detailAttempted.current = false") &&
+    !quickAdd.includes("[config, detail, open, productId, productSlug]"),
 );
 
 check(
