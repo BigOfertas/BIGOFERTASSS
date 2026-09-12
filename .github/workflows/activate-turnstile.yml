@@ -1,0 +1,122 @@
+name: Activate Turnstile Protection
+
+on:
+  workflow_run:
+    workflows:
+      - Hostinger Production Deploy
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+concurrency:
+  group: activate-turnstile-production
+  cancel-in-progress: false
+
+jobs:
+  activate:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+      VITE_TURNSTILE_SITE_KEY: ${{ secrets.VITE_TURNSTILE_SITE_KEY }}
+
+    steps:
+      - name: Check activation material
+        id: readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${TURNSTILE_SECRET_KEY:-}" && -n "${VITE_TURNSTILE_SITE_KEY:-}" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "TURNSTILE_KEYS_READY"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "TURNSTILE_ACTIVATION_PENDING_KEYS"
+          fi
+
+      - name: Install Supabase CLI
+        if: steps.readiness.outputs.ready == 'true'
+        uses: supabase/setup-cli@v3
+        with:
+          version: latest
+
+      - name: Configure Edge Function Turnstile secret
+        if: steps.readiness.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase secrets set \
+            --project-ref "$SUPABASE_PROJECT_ID" \
+            "TURNSTILE_SECRET_KEY=$TURNSTILE_SECRET_KEY" \
+            "TURNSTILE_ALLOWED_HOSTNAMES=bigofertas.net,www.bigofertas.net"
+          echo "TURNSTILE_EDGE_SECRET_CONFIGURED"
+
+      - name: Enable Turnstile in Supabase Auth
+        if: steps.readiness.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const projectRef = process.env.SUPABASE_PROJECT_ID;
+          const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
+          const secret = process.env.TURNSTILE_SECRET_KEY;
+          if (!projectRef || !accessToken || !secret) process.exit(2);
+
+          const endpoint = `https://api.supabase.com/v1/projects/${encodeURIComponent(projectRef)}/config/auth`;
+          const response = await fetch(endpoint, {
+            method: "PATCH",
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+              accept: "application/json",
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              security_captcha_enabled: true,
+              security_captcha_provider: "turnstile",
+              security_captcha_secret: secret,
+            }),
+            signal: AbortSignal.timeout(30_000),
+          });
+          if (!response.ok) {
+            console.error(`TURNSTILE_AUTH_CONFIGURATION_FAILED_HTTP_${response.status}`);
+            process.exit(3);
+          }
+          console.log("TURNSTILE_AUTH_CONFIGURED");
+          NODE
+
+      - name: Verify Turnstile activation
+        if: steps.readiness.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const projectRef = process.env.SUPABASE_PROJECT_ID;
+          const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
+          const endpoint = `https://api.supabase.com/v1/projects/${encodeURIComponent(projectRef)}/config/auth`;
+          const response = await fetch(endpoint, {
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+              accept: "application/json",
+            },
+            signal: AbortSignal.timeout(30_000),
+          });
+          if (!response.ok) {
+            console.error(`TURNSTILE_AUTH_VERIFY_FAILED_HTTP_${response.status}`);
+            process.exit(4);
+          }
+          const config = await response.json();
+          const enabled = config?.security_captcha_enabled === true;
+          const provider = config?.security_captcha_provider === "turnstile";
+          if (!enabled || !provider) {
+            console.error("TURNSTILE_AUTH_VERIFY_FAILED");
+            process.exit(5);
+          }
+          console.log("TURNSTILE_AUTH_ACTIVE");
+          NODE
