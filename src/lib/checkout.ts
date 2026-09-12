@@ -1,7 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { legacyWorkerFallbackAvailable } from "@/lib/backend-routing";
-import type { CartItem } from "@/lib/cart";
-import { normalizePurchaseCustomization } from "@/lib/product-purchase";
+import { reconcileCartCustomization, type CartItem } from "@/lib/cart";
 
 export type CheckoutStartResult = {
   checkoutUrl: string;
@@ -60,19 +59,7 @@ async function checkoutResponse(accessToken: string, body: string) {
 }
 
 function customizationForCheckout(item: CartItem) {
-  const normalized = normalizePurchaseCustomization(item.customization);
-  if (normalized.size) return normalized;
-
-  const sizeSnapshot = item.selectedOptions.find(
-    (option) => option.optionKind === "size" && option.valueLabel.trim().length > 0,
-  );
-
-  if (!sizeSnapshot) return normalized;
-
-  return normalizePurchaseCustomization({
-    ...normalized,
-    size: sizeSnapshot.valueLabel,
-  });
+  return reconcileCartCustomization(item.customization, item.selectedOptions);
 }
 
 export async function startInfinitePayCheckout(input: {
