@@ -35,8 +35,8 @@ const FOOTER_ROUTES = new Set([
 
 const INITIAL_BOOT_SPLASH_MS = 2500;
 const DEFAULT_OG_IMAGE = `${BRAND.siteUrl}/og-image.jpg`;
-const DROPBOX_FAVICON = "/favicon-dropbox-v2.svg";
-const DROPBOX_TOUCH_ICON = "/assets/branding/dropbox-logo.png?v=20260912";
+const DROPBOX_FAVICON = "/favicon-dropbox-v2.png?v=20260912b";
+const DROPBOX_TOUCH_ICON = "/apple-touch-icon-dropbox-v2.png?v=20260912b";
 
 const R2_IMAGE_ORIGIN = (() => {
   const baseUrl = getR2PublicBaseUrl();
@@ -139,7 +139,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600..900&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=Teko:wght@500..700&display=swap",
       },
       ...(R2_IMAGE_ORIGIN
         ? [
@@ -150,8 +150,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: glassLegacyCss },
       { rel: "stylesheet", href: sportThemeCss },
-      { rel: "icon", href: DROPBOX_FAVICON, type: "image/svg+xml" },
-      { rel: "shortcut icon", href: DROPBOX_FAVICON, type: "image/svg+xml" },
+      { rel: "icon", href: DROPBOX_FAVICON, type: "image/png", sizes: "64x64" },
+      { rel: "shortcut icon", href: DROPBOX_FAVICON, type: "image/png", sizes: "64x64" },
       { rel: "apple-touch-icon", href: DROPBOX_TOUCH_ICON, sizes: "180x180" },
     ],
   }),
