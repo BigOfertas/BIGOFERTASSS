@@ -16,6 +16,7 @@ const externalImagesMigration = read(
 );
 const seo = read("src/components/product/ProductSeo.tsx");
 const adminRoute = read("src/routes/admin.tsx");
+const productsAdminWorkspace = read("src/components/admin/ProductsAdminWorkspace.tsx");
 const admin = read("src/components/admin/CatalogFoundationAdmin.tsx");
 const adminClient = read("src/lib/admin-catalog-foundation.ts");
 const imageAdmin = read("src/lib/admin-product-images.ts");
@@ -47,8 +48,10 @@ const checks = [
   ],
   [
     "admin ativo usa catalogo escalavel unificado",
-    /CatalogFoundationAdmin/.test(adminRoute) &&
-      !/ProductImageAdmin/.test(adminRoute) &&
+    /ProductsAdminWorkspace/.test(adminRoute) &&
+      /CatalogFoundationAdmin/.test(productsAdminWorkspace) &&
+      /ProductPurchaseAdmin/.test(productsAdminWorkspace) &&
+      !/ProductImageAdmin/.test(adminRoute + productsAdminWorkspace) &&
       /fetchAdminCatalogPage/.test(admin),
   ],
   [
