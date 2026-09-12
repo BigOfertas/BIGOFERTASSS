@@ -17,6 +17,7 @@ function check(label, condition) {
 const env = read(".env");
 const brand = read("src/config/brand.ts");
 const header = read("src/components/layout/Header.tsx");
+const brandWordmark = read("src/components/brand/BrandWordmark.tsx");
 const footer = read("src/components/layout/Footer.tsx");
 const faq = read("src/components/home/FAQ.tsx");
 const contact = read("src/routes/contato.tsx");
@@ -54,6 +55,12 @@ check(
 check(
   "placeholder visual do cabeçalho usa a marca centralizada",
   header.includes("{BRAND.shortMark}") && !header.includes(">BIG</span>"),
+);
+
+check(
+  "wordmark compartilhado reutiliza o asset público já validado do rodapé",
+  brandWordmark.includes('/assets/branding/dropbox-wordmark-footer.png') &&
+    !brandWordmark.includes('/assets/branding/dropbox-wordmark.png'),
 );
 
 check(
@@ -116,14 +123,14 @@ check(
 );
 
 check(
-  "favicon público foi substituído pela identidade DropBox enviada",
-  root.includes('{ rel: "icon", href: "/favicon.png", type: "image/png", sizes: "64x64" }') &&
-    root.includes('{ rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" }') &&
-    !root.includes("/favicon.ico") &&
-    !root.includes("/favicon.svg") &&
-    !fs.existsSync("public/favicon.ico") &&
-    fs.existsSync("public/favicon.png") &&
-    fs.existsSync("public/apple-touch-icon.png"),
+  "favicon público usa o novo arquivo versionado da identidade DropBox",
+  root.includes('const DROPBOX_FAVICON = "/favicon-dropbox-v2.svg";') &&
+    root.includes('{ rel: "icon", href: DROPBOX_FAVICON, type: "image/svg+xml" }') &&
+    root.includes('{ rel: "shortcut icon", href: DROPBOX_FAVICON, type: "image/svg+xml" }') &&
+    root.includes('const DROPBOX_TOUCH_ICON = "/assets/branding/dropbox-logo.png?v=20260912";') &&
+    fs.existsSync("public/favicon-dropbox-v2.svg") &&
+    fs.existsSync("public/assets/branding/dropbox-logo.png") &&
+    !root.includes("/favicon.ico"),
 );
 
 console.log(`\nSTAGE3_REBRAND_VALIDATION passed=${passed} failed=${failed}`);
