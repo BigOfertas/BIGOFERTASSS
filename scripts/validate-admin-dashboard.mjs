@@ -8,6 +8,8 @@ const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
 const adminRoute = read("src/routes/admin.tsx");
+const productsWorkspace = read("src/components/admin/ProductsAdminWorkspace.tsx");
+const affiliateWorkspace = read("src/components/admin/AffiliateAdminWorkspace.tsx");
 const dashboard = read("src/components/admin/AdminDashboard.tsx");
 const dashboardLib = read("src/lib/admin-dashboard.ts");
 const liquidGlass = read("src/glass-legacy.css");
@@ -23,8 +25,11 @@ check(
   ) &&
     /<AdminDashboard/.test(adminRoute) &&
     /<OrderAdmin\s*\/>/.test(adminRoute) &&
-    /<CatalogFoundationAdmin\s*\/>/.test(adminRoute) &&
-    /<ProductPurchaseAdmin\s*\/>/.test(adminRoute),
+    /<ProductsAdminWorkspace\s*\/>/.test(adminRoute) &&
+    /<AffiliateAdminWorkspace\s*\/>/.test(adminRoute) &&
+    /<CatalogFoundationAdmin\s*\/>/.test(productsWorkspace) &&
+    /<ProductPurchaseAdmin\s*\/>/.test(productsWorkspace) &&
+    /<AffiliateAdmin\s*\/>/.test(affiliateWorkspace),
 );
 
 check(
@@ -78,6 +83,8 @@ let syntaxErrors = 0;
 for (const file of [
   "src/routes/admin.tsx",
   "src/components/admin/AdminDashboard.tsx",
+  "src/components/admin/ProductsAdminWorkspace.tsx",
+  "src/components/admin/AffiliateAdminWorkspace.tsx",
   "src/lib/admin-dashboard.ts",
   "src/components/ui/liquid-glass-card.tsx",
 ]) {
