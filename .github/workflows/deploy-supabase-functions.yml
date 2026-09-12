@@ -32,5 +32,8 @@ jobs:
       - name: Apply DropBox transactional sender
         run: supabase secrets set --project-ref "$SUPABASE_PROJECT_ID" 'RESEND_FROM=DropBox <contato@bigofertas.net>'
 
+      # Turnstile secrets are intentionally activated only after a successful
+      # Hostinger production deploy, so backend enforcement can never precede
+      # publication of the matching public site key.
       - name: Deploy Edge Functions
         run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
