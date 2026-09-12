@@ -51,8 +51,10 @@ check(
     quickAdd.includes("if (!open) return") &&
     quickAdd.includes("QUICK_ADD_TIMEOUT_MS") &&
     quickAdd.includes("withTimeout") &&
-    quickAdd.includes("configRequestInFlight") &&
-    quickAdd.includes("detailRequestInFlight") &&
+    quickAdd.includes("configAttempted") &&
+    quickAdd.includes("detailAttempted") &&
+    quickAdd.includes("if (!config && !configAttempted.current)") &&
+    quickAdd.includes("if (!detail && !detailAttempted.current)") &&
     quickAdd.includes("[config, detail, open, productId, productSlug]") &&
     !quickAdd.includes(
       "[config, configLoading, detail, detailLoading, open, productId, productSlug]",
