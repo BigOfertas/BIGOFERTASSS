@@ -202,15 +202,17 @@ const SlideUpReveal = forwardRef<SlideUpRevealRef, SlideUpRevealProps>(
       (sum, word) => sum + word.characters.length + (word.needsSpace ? 1 : 0),
       0,
     );
-    const completionDelay =
-      baseDelay + Math.max(0, totalAnimatedUnits - 1) * stagger + duration;
+    const completionDelay = baseDelay + Math.max(0, totalAnimatedUnits - 1) * stagger + duration;
 
     useEffect(() => {
       if (!isAnimating || hasCompleted) return;
-      const timeout = window.setTimeout(() => {
-        setHasCompleted(true);
-        onComplete?.();
-      }, Math.max(0, completionDelay * 1000));
+      const timeout = window.setTimeout(
+        () => {
+          setHasCompleted(true);
+          onComplete?.();
+        },
+        Math.max(0, completionDelay * 1000),
+      );
       return () => window.clearTimeout(timeout);
     }, [completionDelay, hasCompleted, isAnimating, onComplete]);
 
@@ -228,10 +230,7 @@ const SlideUpReveal = forwardRef<SlideUpRevealRef, SlideUpRevealProps>(
         {normalizedWords.map((wordObj, wordIndex, array) => {
           const previousUnits = array
             .slice(0, wordIndex)
-            .reduce(
-              (sum, word) => sum + word.characters.length + (word.needsSpace ? 1 : 0),
-              0,
-            );
+            .reduce((sum, word) => sum + word.characters.length + (word.needsSpace ? 1 : 0), 0);
 
           return (
             <span
