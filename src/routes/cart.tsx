@@ -289,9 +289,7 @@ function CartPage() {
                             </div>
                           </div>
                         </div>
-                        {index < cart.length - 1 ? (
-                          <Separator className="mt-4 sm:mt-6" />
-                        ) : null}
+                        {index < cart.length - 1 ? <Separator className="mt-4 sm:mt-6" /> : null}
                       </div>
                     );
                   })}
