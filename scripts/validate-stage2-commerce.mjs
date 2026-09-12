@@ -54,7 +54,9 @@ check(
     quickAdd.includes("configRequestInFlight") &&
     quickAdd.includes("detailRequestInFlight") &&
     quickAdd.includes("[config, detail, open, productId, productSlug]") &&
-    !quickAdd.includes("[config, configLoading, detail, detailLoading, open, productId, productSlug]"),
+    !quickAdd.includes(
+      "[config, configLoading, detail, detailLoading, open, productId, productSlug]",
+    ),
 );
 
 check(
