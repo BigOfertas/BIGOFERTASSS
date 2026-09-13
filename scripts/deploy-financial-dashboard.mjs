@@ -32,6 +32,10 @@ const migrations = [
     name: "finance_category_bulk_20260913",
     file: "supabase/migrations/20260913210000_finance_category_bulk.sql",
   },
+  {
+    name: "finance_category_bulk_consistency_20260913",
+    file: "supabase/migrations/20260913211500_finance_category_bulk_consistency.sql",
+  },
 ];
 
 function migrationSql(file) {
@@ -173,6 +177,10 @@ select
     'financial_snapshot_version := 2'
     in pg_get_functiondef('public.capture_order_item_financial_snapshot()'::regprocedure)
   ) > 0 as snapshot_version_two_ready,
+  position(
+    'v.commercial_type IS NULL'
+    in pg_get_functiondef('public.owner_save_product_purchase_settings_v2(uuid,text,boolean,boolean,boolean,jsonb)'::regprocedure)
+  ) > 0 as inherited_variant_price_consistency_ready,
   (select count(*) = 0
    from public.order_items oi
    cross join public.finance_settings fs
@@ -225,6 +233,7 @@ const required = [
   "dashboard_product_name_reference_ready",
   "variant_snapshot_cost_ready",
   "snapshot_version_two_ready",
+  "inherited_variant_price_consistency_ready",
   "historical_items_untouched",
 ];
 
