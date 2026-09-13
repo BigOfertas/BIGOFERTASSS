@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { AffiliateAdminWorkspace } from "@/components/admin/AffiliateAdminWorkspace";
+import { FinanceCategoryPricing } from "@/components/admin/FinanceCategoryPricing";
 import { FinancialAdmin } from "@/components/admin/FinancialAdmin";
 import { OrderAdmin } from "@/components/admin/OrderAdmin";
 import { PersonalizationAdmin } from "@/components/admin/PersonalizationAdmin";
@@ -345,7 +346,10 @@ function AdminPage() {
             ) : section === "orders" ? (
               <OrderAdmin />
             ) : section === "finance" ? (
-              <FinancialAdmin onOpenProducts={() => setSection("products")} />
+              <>
+                <FinanceCategoryPricing />
+                <FinancialAdmin onOpenProducts={() => setSection("products")} />
+              </>
             ) : section === "products" ? (
               <ProductsAdminWorkspace />
             ) : section === "personalization" ? (

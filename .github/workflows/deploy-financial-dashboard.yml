@@ -7,9 +7,12 @@ on:
     paths:
       - ".github/workflows/deploy-financial-dashboard.yml"
       - "scripts/deploy-financial-dashboard.mjs"
+      - "scripts/validate-finance-category-bulk.mjs"
       - "supabase/migrations/20260913174500_financial_dashboard.sql"
       - "supabase/migrations/20260913181500_financial_dashboard_security_hardening.sql"
       - "supabase/migrations/20260913204500_fix_financial_dashboard_payment_status_type.sql"
+      - "supabase/migrations/20260913210000_finance_category_bulk.sql"
+      - "supabase/migrations/20260913211500_finance_category_bulk_consistency.sql"
   workflow_dispatch:
 
 permissions:
@@ -31,7 +34,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Validate financial dashboard contract
-        run: node scripts/validate-financial-dashboard.mjs
+        run: node scripts/validate-financial-dashboard.mjs && node scripts/validate-finance-category-bulk.mjs
 
       - name: Deploy financial database state
         run: node scripts/deploy-financial-dashboard.mjs
