@@ -184,9 +184,7 @@ const SlideUpReveal = forwardRef<SlideUpRevealRef, SlideUpRevealProps>(
 
     const animatedStyle = (index: number): CSSProperties => ({
       opacity: isAnimating ? 1 : 0,
-      transform: isAnimating
-        ? "translate3d(0,0,0)"
-        : `translate3d(0,${hiddenTranslate},0)`,
+      transform: isAnimating ? "translate3d(0,0,0)" : `translate3d(0,${hiddenTranslate},0)`,
       transitionProperty: "transform, opacity",
       transitionDuration: `${duration}s`,
       transitionTimingFunction: easing,
@@ -251,7 +249,10 @@ const SlideUpReveal = forwardRef<SlideUpRevealRef, SlideUpRevealProps>(
                 <span
                   key={`${charIndex}-${char}`}
                   data-slide-character
-                  className={cn("relative inline-block overflow-visible whitespace-pre-wrap", charClass)}
+                  className={cn(
+                    "relative inline-block overflow-visible whitespace-pre-wrap",
+                    charClass,
+                  )}
                 >
                   <span
                     className="inline-block transform-gpu motion-reduce:transform-none motion-reduce:transition-none"
