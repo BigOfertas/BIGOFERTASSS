@@ -1,4 +1,4 @@
-name: QA Production c008
+name: QA Production f16b Final
 
 on:
   push:
@@ -30,13 +30,13 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Run production browser QA
-        run: node scripts/qa-production-c008-v2.mjs
+      - name: Run final production browser QA
+        run: node scripts/qa-production-f16b.mjs
 
       - name: Upload QA evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: production-qa-c008-v2
-          path: qa-artifacts-v2
+          name: production-qa-f16b-final
+          path: qa-final-f16b
           if-no-files-found: error
