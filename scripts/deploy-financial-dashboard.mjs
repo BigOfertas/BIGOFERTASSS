@@ -135,6 +135,14 @@ select
     'public.order_payment_status'
     in pg_get_functiondef('public.owner_get_financial_dashboard(text,timestamptz,timestamptz)'::regprocedure)
   ) > 0 as dashboard_payment_enum_reference_ready,
+  position(
+    'oi.product_name_snapshot'
+    in pg_get_functiondef('public.owner_get_financial_dashboard(text,timestamptz,timestamptz)'::regprocedure)
+  ) = 0 as dashboard_missing_product_name_reference_removed,
+  position(
+    'oi.product_name'
+    in pg_get_functiondef('public.owner_get_financial_dashboard(text,timestamptz,timestamptz)'::regprocedure)
+  ) > 0 as dashboard_product_name_reference_ready,
   (select count(*) = 0
    from public.order_items oi
    cross join public.finance_settings fs
@@ -168,6 +176,8 @@ const required = [
   "payment_status_type_ready",
   "dashboard_missing_enum_reference_removed",
   "dashboard_payment_enum_reference_ready",
+  "dashboard_missing_product_name_reference_removed",
+  "dashboard_product_name_reference_ready",
   "historical_items_untouched",
 ];
 
