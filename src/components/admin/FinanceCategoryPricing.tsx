@@ -81,7 +81,9 @@ function CategoryDialog({
         aria-labelledby="finance-category-dialog-title"
         className="w-full max-w-lg rounded-2xl border border-white/80 bg-white p-5 shadow-2xl sm:p-6"
       >
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-red-600">Aplicar a todos</p>
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-red-600">
+          Aplicar a todos
+        </p>
         <h3 id="finance-category-dialog-title" className="mt-1 text-xl font-black text-gray-950">
           Atualizar categoria {edit.row.label}?
         </h3>
@@ -186,7 +188,9 @@ function VariantEditor({
   onSave: (row: FinanceVariantRow) => void;
 }) {
   if (!page || page.items.length === 0) {
-    return <p className="px-4 py-8 text-center text-sm text-gray-500">Nenhuma variação encontrada.</p>;
+    return (
+      <p className="px-4 py-8 text-center text-sm text-gray-500">Nenhuma variação encontrada.</p>
+    );
   }
 
   return (
@@ -229,11 +233,11 @@ function VariantEditor({
                     className="h-9 min-w-48 rounded-lg border border-gray-300 bg-white px-2 text-xs font-bold outline-none focus:border-red-500"
                   >
                     <option value="inherit">
-                      Herdar do produto ({
-                        row.commercialType === "other"
-                          ? "Outro"
-                          : FINANCE_COMMERCIAL_LABELS[row.commercialType as FinanceCommercialType]
-                      })
+                      Herdar do produto (
+                      {row.commercialType === "other"
+                        ? "Outro"
+                        : FINANCE_COMMERCIAL_LABELS[row.commercialType as FinanceCommercialType]}
+                      )
                     </option>
                     {FINANCE_COMMERCIAL_TYPES.map((type) => (
                       <option key={type} value={type}>
@@ -441,7 +445,8 @@ export function FinanceCategoryPricing() {
   if (loading) {
     return (
       <section className="mb-8 flex items-center gap-2 rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-500">
-        <LoaderCircle className="h-4 w-4 animate-spin" /> Carregando preços e custos por categoria...
+        <LoaderCircle className="h-4 w-4 animate-spin" /> Carregando preços e custos por
+        categoria...
       </section>
     );
   }
@@ -451,7 +456,9 @@ export function FinanceCategoryPricing() {
       <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-red-600">Administração rápida</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-red-600">
+              Administração rápida
+            </p>
             <h2 className="mt-1 text-2xl font-black tracking-tight text-gray-950">
               Preços e custos por categoria
             </h2>
@@ -461,7 +468,9 @@ export function FinanceCategoryPricing() {
             </p>
           </div>
           <div className="rounded-xl bg-gray-950 px-4 py-3 text-white">
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/60">Itens classificados</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/60">
+              Itens classificados
+            </p>
             <p className="mt-0.5 text-xl font-black">{totalTargets}</p>
           </div>
         </div>
@@ -492,11 +501,15 @@ export function FinanceCategoryPricing() {
               </div>
               <dl className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.08em] text-gray-400">Preço geral</dt>
+                  <dt className="text-[10px] font-bold uppercase tracking-[0.08em] text-gray-400">
+                    Preço geral
+                  </dt>
                   <dd className="mt-1 text-sm font-black text-gray-950">{money(row.salePrice)}</dd>
                 </div>
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.08em] text-gray-400">Custo geral</dt>
+                  <dt className="text-[10px] font-bold uppercase tracking-[0.08em] text-gray-400">
+                    Custo geral
+                  </dt>
                   <dd className="mt-1 text-sm font-black text-gray-950">{money(row.unitCost)}</dd>
                 </div>
               </dl>
@@ -525,7 +538,9 @@ export function FinanceCategoryPricing() {
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         <div className="border-b border-gray-200 p-5 sm:p-6">
-          <h3 className="text-lg font-black text-gray-950">Exceções individuais por produto/variação</h3>
+          <h3 className="text-lg font-black text-gray-950">
+            Exceções individuais por produto/variação
+          </h3>
           <p className="mt-1 text-sm leading-6 text-gray-500">
             Use aqui quando uma peça específica fugir do valor geral. Em produtos com versões
             Torcedor/Jogador, cada variante pode ter sua própria classificação, preço e custo.

@@ -29,7 +29,13 @@ function makeState() {
       basquete: { sale: 229.9, cost: 120 },
     },
     variants: [
-      { id: "base-x-torcedor", product: "base-x", type: "torcedor", sale: 184.9, costOverride: null },
+      {
+        id: "base-x-torcedor",
+        product: "base-x",
+        type: "torcedor",
+        sale: 184.9,
+        costOverride: null,
+      },
       { id: "base-x-jogador", product: "base-x", type: "jogador", sale: 219.9, costOverride: null },
       { id: "torcedor-b", product: "produto-b", type: "torcedor", sale: 184.9, costOverride: 82 },
       { id: "nba-c", product: "produto-c", type: "basquete", sale: 229.9, costOverride: null },
@@ -92,7 +98,9 @@ function saveIndividual(state, variantId, { sale, cost }) {
   const state = makeState();
   applyAll(state, "torcedor", { cost: 85 });
   assert.deepEqual(
-    state.variants.filter((item) => item.type === "torcedor").map((item) => resolvedCost(state, item)),
+    state.variants
+      .filter((item) => item.type === "torcedor")
+      .map((item) => resolvedCost(state, item)),
     [85, 85],
   );
 }
@@ -153,12 +161,21 @@ for (const rpc of ["owner_apply_finance_category", "owner_save_finance_variant"]
   assert.match(migration, new RegExp(`CREATE OR REPLACE FUNCTION public\\.${rpc}`));
 }
 assert.ok(
-  (migration.match(/auth\.uid\(\) IS NULL OR NOT public\.has_role\('owner'::public\.app_role\)/g) ?? [])
-    .length >= 4,
+  (
+    migration.match(
+      /auth\.uid\(\) IS NULL OR NOT public\.has_role\('owner'::public\.app_role\)/g,
+    ) ?? []
+  ).length >= 4,
   "owner guard present on category/variant admin RPCs",
 );
-assert.match(migration, /REVOKE ALL ON FUNCTION public\.owner_apply_finance_category\(text,numeric,numeric\) FROM PUBLIC, anon/);
-assert.match(migration, /REVOKE ALL ON FUNCTION public\.owner_save_finance_variant\(uuid,text,numeric,numeric\) FROM PUBLIC, anon/);
+assert.match(
+  migration,
+  /REVOKE ALL ON FUNCTION public\.owner_apply_finance_category\(text,numeric,numeric\) FROM PUBLIC, anon/,
+);
+assert.match(
+  migration,
+  /REVOKE ALL ON FUNCTION public\.owner_save_finance_variant\(uuid,text,numeric,numeric\) FROM PUBLIC, anon/,
+);
 
 // Contratos estruturais: classificação real, sem heurística por nome.
 assert.match(migration, /ADD COLUMN IF NOT EXISTS commercial_type text/);
@@ -167,7 +184,10 @@ assert.doesNotMatch(migration, /LIKE '%regata%'/);
 assert.doesNotMatch(migration, /lower\(COALESCE\(p_product_name/);
 
 // Preço continua na fonte real do checkout: product_variants/products.
-assert.match(migration, /UPDATE public\.product_variants v[\s\S]*price_override = round\(p_sale_price, 2\)/);
+assert.match(
+  migration,
+  /UPDATE public\.product_variants v[\s\S]*price_override = round\(p_sale_price, 2\)/,
+);
 assert.match(migration, /UPDATE public\.products p[\s\S]*price = pv\.price_override/);
 assert.match(migration, /product_type_prices = jsonb_set/);
 assert.doesNotMatch(migration, /CREATE TABLE[^;]*price/i);
