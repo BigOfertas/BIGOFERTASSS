@@ -50,10 +50,7 @@ const BestSellers: React.FC<BestSellersProps> = ({ initialData }) => {
       ));
 
   return (
-    <section
-      id="lancamentos"
-      className="scroll-mt-40 overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14"
-    >
+    <section id="lancamentos" className="scroll-mt-40 bg-transparent py-9 sm:py-11 lg:py-14">
       <div className="mx-auto max-w-7xl px-4 lg:max-w-[1536px] lg:px-4">
         <div className="mb-7 text-center sm:mb-8">
           <p className="display-kicker">
@@ -61,14 +58,8 @@ const BestSellers: React.FC<BestSellersProps> = ({ initialData }) => {
               Novidades da loja
             </DirectionalReveal>
           </p>
-          <h2 className="display-title mt-2">
-            <SlideUpReveal
-              split="words"
-              stagger={0.065}
-              inView
-              className="justify-center"
-              wordClass="pb-[0.08em]"
-            >
+          <h2 className="display-title mt-2" style={{ animation: "none" }}>
+            <SlideUpReveal split="characters" stagger={0.028} inView className="justify-center">
               Lançamentos
             </SlideUpReveal>
           </h2>
