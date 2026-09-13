@@ -268,7 +268,7 @@ const SlideUpReveal = forwardRef<SlideUpRevealRef, SlideUpRevealProps>(
                     className="inline-block transform-gpu motion-reduce:transform-none motion-reduce:transition-none"
                     style={animatedStyle(previousUnits + wordObj.characters.length)}
                   >
-                    {" "}
+                    {"\u00A0"}
                   </span>
                 </span>
               ) : null}
