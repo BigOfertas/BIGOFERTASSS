@@ -21,7 +21,7 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v7
 
-      - name: Inspect live finance schema and reproduce dashboard RPC
+      - name: Inspect live finance schema and reproduce dashboard SQL failure
         shell: bash
         run: |
           set -euo pipefail
@@ -80,7 +80,7 @@ jobs:
                   and not a.attisdropped) as orders_payment_status_type,
               to_regtype('public.payment_status')::text as payment_status_type_exists,
               to_regtype('public.order_payment_status')::text as order_payment_status_type_exists,
-              to_regtype('public.order_status')::text as order_status_type_exists,
+              position('public.payment_status' in pg_get_functiondef('public.owner_get_financial_dashboard(text,timestamptz,timestamptz)'::regprocedure)) > 0 as dashboard_uses_missing_payment_status_type,
               to_regclass('public.finance_settings') is not null as finance_settings_exists,
               to_regclass('public.product_financial_settings') is not null as product_finance_exists,
               exists(select 1 from pg_trigger where tgname = 'capture_order_item_financial_snapshot' and not tgisinternal) as capture_trigger_exists,
@@ -88,28 +88,7 @@ jobs:
           `, 'FINANCE_SCHEMA');
           console.log('FINANCE_SCHEMA=' + JSON.stringify(schema));
 
-          const runtime = await readOnly(`
-            with owner_user as (
-              select ur.user_id
-              from public.user_roles ur
-              where ur.role = 'owner'::public.app_role
-              order by ur.user_id
-              limit 1
-            ), runtime_context as (
-              select
-                set_config('request.jwt.claim.sub', (select user_id::text from owner_user), true) as subject,
-                set_config('request.jwt.claim.role', 'authenticated', true) as jwt_role
-            )
-            select jsonb_build_object(
-              'period', result ->> 'period',
-              'hasSummary', result ? 'summary',
-              'hasTrend', result ? 'trend',
-              'hasProducts', result ? 'products',
-              'hasCategories', result ? 'categories',
-              'excludedOrders', coalesce((result ->> 'excludedOrders')::integer, 0)
-            ) as dashboard_shape
-            from runtime_context
-            cross join lateral public.owner_get_financial_dashboard('30d', null, null) result;
-          `, 'FINANCE_RPC_RUNTIME', true);
-          if (runtime) console.log('FINANCE_RPC_RUNTIME=' + JSON.stringify(runtime));
+          await readOnly(`select 'paid'::public.payment_status as invalid_cast;`, 'INVALID_PAYMENT_STATUS_CAST', true);
+          const validCast = await readOnly(`select 'paid'::public.order_payment_status::text as valid_cast;`, 'VALID_PAYMENT_STATUS_CAST');
+          console.log('VALID_PAYMENT_STATUS_CAST=' + JSON.stringify(validCast));
           NODE
