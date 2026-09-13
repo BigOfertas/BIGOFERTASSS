@@ -180,14 +180,16 @@ const SlideUpReveal = forwardRef<SlideUpRevealRef, SlideUpRevealProps>(
     const duration = transition.duration ?? 0.55;
     const baseDelay = delay + (transition.delay ?? 0);
     const easing = cssEase(transition.ease);
+    const hiddenTranslate = split === "characters" ? "0.58em" : "82%";
 
     const animatedStyle = (index: number): CSSProperties => ({
-      transform: isAnimating ? "translate3d(0,0,0)" : "translate3d(0,105%,0)",
-      transitionProperty: "transform",
+      opacity: isAnimating ? 1 : 0,
+      transform: isAnimating ? "translate3d(0,0,0)" : `translate3d(0,${hiddenTranslate},0)`,
+      transitionProperty: "transform, opacity",
       transitionDuration: `${duration}s`,
       transitionTimingFunction: easing,
       transitionDelay: `${baseDelay + getStaggerDelay(index)}s`,
-      willChange: isAnimating ? "transform" : undefined,
+      willChange: hasCompleted ? undefined : "transform, opacity",
     });
 
     const normalizedWords: WordObject[] =
@@ -219,8 +221,9 @@ const SlideUpReveal = forwardRef<SlideUpRevealRef, SlideUpRevealProps>(
     return (
       <span
         ref={rootRef}
+        data-slide-up-reveal
         className={cn(
-          "flex flex-wrap whitespace-pre-wrap",
+          "flex flex-wrap overflow-visible whitespace-pre-wrap",
           split === "lines" && "flex-col",
           className,
         )}
@@ -236,12 +239,20 @@ const SlideUpReveal = forwardRef<SlideUpRevealRef, SlideUpRevealProps>(
             <span
               key={`${wordIndex}-${wordObj.characters.join("")}`}
               aria-hidden="true"
-              className={cn("inline-flex overflow-hidden", wordClass)}
+              data-slide-word
+              className={cn(
+                "-mx-[0.04em] -my-[0.12em] inline-flex overflow-visible whitespace-nowrap px-[0.04em] py-[0.12em]",
+                wordClass,
+              )}
             >
               {wordObj.characters.map((char, charIndex) => (
                 <span
                   key={`${charIndex}-${char}`}
-                  className={cn("relative overflow-hidden whitespace-pre-wrap", charClass)}
+                  data-slide-character
+                  className={cn(
+                    "relative inline-block overflow-visible whitespace-pre-wrap",
+                    charClass,
+                  )}
                 >
                   <span
                     className="inline-block transform-gpu motion-reduce:transform-none motion-reduce:transition-none"
@@ -252,12 +263,12 @@ const SlideUpReveal = forwardRef<SlideUpRevealRef, SlideUpRevealProps>(
                 </span>
               ))}
               {wordObj.needsSpace ? (
-                <span className="relative overflow-hidden" aria-hidden="true">
+                <span className="relative inline-block overflow-visible" aria-hidden="true">
                   <span
                     className="inline-block transform-gpu motion-reduce:transform-none motion-reduce:transition-none"
                     style={animatedStyle(previousUnits + wordObj.characters.length)}
                   >
-                    {" "}
+                    {"\u00A0"}
                   </span>
                 </span>
               ) : null}

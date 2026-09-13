@@ -70,14 +70,8 @@ export default function VisualCategories() {
               Escolha seu estilo
             </DirectionalReveal>
           </p>
-          <h2 className="display-title mt-2">
-            <SlideUpReveal
-              split="words"
-              stagger={0.065}
-              inView
-              className="justify-center"
-              wordClass="pb-[0.08em]"
-            >
+          <h2 className="display-title mt-2" style={{ animation: "none" }}>
+            <SlideUpReveal split="characters" stagger={0.028} inView className="justify-center">
               Monte seu pedido
             </SlideUpReveal>
           </h2>
