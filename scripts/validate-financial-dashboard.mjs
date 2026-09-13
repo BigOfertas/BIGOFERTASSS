@@ -4,14 +4,26 @@ const migration = fs.readFileSync(
   "supabase/migrations/20260913174500_financial_dashboard.sql",
   "utf8",
 );
+const runtimeFixMigration = fs.readFileSync(
+  "supabase/migrations/20260913204500_fix_financial_dashboard_payment_status_type.sql",
+  "utf8",
+);
 const component = fs.readFileSync("src/components/admin/FinancialAdmin.tsx", "utf8");
 const financeLib = fs.readFileSync("src/lib/admin-finance.ts", "utf8");
 const adminRoute = fs.readFileSync("src/routes/admin.tsx", "utf8");
+const rpcClient = fs.readFileSync("src/lib/supabase-rpc.ts", "utf8");
 
 function requireText(source, needle, label) {
   if (!source.includes(needle)) {
     console.error(`FINANCE_VALIDATION_MISSING: ${label}`);
     process.exit(10);
+  }
+}
+
+function rejectText(source, needle, label) {
+  if (source.includes(needle)) {
+    console.error(`FINANCE_VALIDATION_FORBIDDEN: ${label}`);
+    process.exit(12);
   }
 }
 
@@ -72,7 +84,24 @@ requireText(migration, "BEFORE INSERT ON public.order_items", "snapshot somente 
 
 for (const period of ["today", "7d", "30d", "month", "previous_month", "year"]) {
   requireText(migration, `WHEN '${period}'`, `filtro ${period}`);
+  requireText(runtimeFixMigration, `'${period}'`, `smoke test ${period}`);
 }
+
+requireText(
+  runtimeFixMigration,
+  "'public.payment_status',\n    'public.order_payment_status'",
+  "substituição incremental do enum de pagamento",
+);
+requireText(
+  runtimeFixMigration,
+  "GRANT EXECUTE ON FUNCTION public.owner_get_financial_dashboard",
+  "execução autenticada preservada",
+);
+requireText(runtimeFixMigration, "FROM PUBLIC, anon", "acesso anônimo continua bloqueado");
+requireText(runtimeFixMigration, "'custom'", "smoke test do intervalo customizado");
+requireText(runtimeFixMigration, "Período sem vendas", "smoke test sem vendas");
+requireText(runtimeFixMigration, "Participação de 5%% divergente", "smoke test dos 5% do lucro");
+requireText(runtimeFixMigration, "Usuário não-owner", "smoke test de autorização");
 
 requireText(component, "Participação sobre o lucro", "card de participação");
 requireText(component, "5% do lucro do período — nunca do faturamento.", "regra visual dos 5%");
@@ -86,8 +115,12 @@ requireText(
 requireText(component, "Produtos", "ranking por produto");
 requireText(component, "Categorias", "ranking por categoria");
 requireText(financeLib, "owner_get_financial_dashboard", "RPC do dashboard");
+requireText(financeLib, "p_from: null", "parâmetro inicial do período");
+requireText(financeLib, "p_to: null", "parâmetro final do período");
 requireText(financeLib, "owner_save_product_finance", "RPC de custo do produto");
 requireText(adminRoute, 'id: "finance"', "navegação Financeiro");
 requireText(adminRoute, "<FinancialAdmin", "renderização Financeiro");
+requireText(rpcClient, "console.error(`[Supabase RPC]", "diagnóstico técnico de RPC");
+rejectText(rpcClient, "console.error(args", "payload de RPC não pode ser registrado");
 
 console.log("FINANCIAL_DASHBOARD_VALIDATION_OK");
