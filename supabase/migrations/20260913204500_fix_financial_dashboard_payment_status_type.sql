@@ -1,37 +1,46 @@
 BEGIN;
 
--- Corrige a RPC financeira sem reescrever a migration já aplicada.
--- O schema real usa public.order_payment_status em orders.payment_status,
--- enquanto a primeira versão da RPC referenciava o tipo inexistente
--- public.payment_status dentro do corpo PL/pgSQL. A função era criada,
--- mas falhava somente em runtime ao abrir o Financeiro.
+-- Corrige a RPC financeira sem reescrever migrations já aplicadas.
+-- O schema real usa public.order_payment_status em orders.payment_status e
+-- public.order_items.product_name para o snapshot textual do produto.
+-- A primeira versão da RPC referenciava public.payment_status (tipo inexistente)
+-- e order_items.product_name_snapshot (coluna inexistente), falhando em runtime.
 DO $fix$
 DECLARE
   dashboard_proc regprocedure := to_regprocedure(
     'public.owner_get_financial_dashboard(text,timestamptz,timestamptz)'
   );
   dashboard_definition text;
+  original_definition text;
 BEGIN
   IF dashboard_proc IS NULL THEN
     RAISE EXCEPTION 'owner_get_financial_dashboard não existe';
   END IF;
 
   dashboard_definition := pg_get_functiondef(dashboard_proc);
-
-  IF position('public.payment_status' IN dashboard_definition) = 0 THEN
-    IF position('public.order_payment_status' IN dashboard_definition) > 0 THEN
-      -- Idempotência defensiva caso o ambiente já tenha recebido a correção.
-      RETURN;
-    END IF;
-
-    RAISE EXCEPTION 'Definição inesperada de owner_get_financial_dashboard';
-  END IF;
+  original_definition := dashboard_definition;
 
   dashboard_definition := replace(
     dashboard_definition,
     'public.payment_status',
     'public.order_payment_status'
   );
+  dashboard_definition := replace(
+    dashboard_definition,
+    'oi.product_name_snapshot',
+    'oi.product_name'
+  );
+
+  IF dashboard_definition = original_definition THEN
+    IF position('public.order_payment_status' IN dashboard_definition) > 0
+      AND position('oi.product_name' IN dashboard_definition) > 0
+      AND position('public.payment_status' IN dashboard_definition) = 0
+      AND position('oi.product_name_snapshot' IN dashboard_definition) = 0 THEN
+      RETURN;
+    END IF;
+
+    RAISE EXCEPTION 'Definição inesperada de owner_get_financial_dashboard';
+  END IF;
 
   EXECUTE dashboard_definition;
 
@@ -40,8 +49,10 @@ BEGIN
   );
 
   IF position('public.payment_status' IN dashboard_definition) > 0
-    OR position('public.order_payment_status' IN dashboard_definition) = 0 THEN
-    RAISE EXCEPTION 'A correção do tipo de payment_status não foi aplicada';
+    OR position('public.order_payment_status' IN dashboard_definition) = 0
+    OR position('oi.product_name_snapshot' IN dashboard_definition) > 0
+    OR position('oi.product_name' IN dashboard_definition) = 0 THEN
+    RAISE EXCEPTION 'A correção de compatibilidade do Financeiro não foi aplicada';
   END IF;
 END;
 $fix$;

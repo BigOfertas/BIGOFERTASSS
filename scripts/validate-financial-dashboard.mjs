@@ -94,6 +94,16 @@ requireText(
 );
 requireText(
   runtimeFixMigration,
+  "'oi.product_name_snapshot',\n    'oi.product_name'",
+  "substituição incremental da coluna de nome do produto",
+);
+requireText(
+  runtimeFixMigration,
+  "position('oi.product_name_snapshot' IN dashboard_definition) > 0",
+  "verificação contra regressão da coluna inexistente",
+);
+requireText(
+  runtimeFixMigration,
   "GRANT EXECUTE ON FUNCTION public.owner_get_financial_dashboard",
   "execução autenticada preservada",
 );
