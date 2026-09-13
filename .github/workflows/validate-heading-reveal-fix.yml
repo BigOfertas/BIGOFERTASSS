@@ -1,0 +1,82 @@
+name: Validate Heading Reveal Fix
+
+on:
+  push:
+    branches:
+      - fix-heading-reveal-clipping-20260913
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-heading-reveal-fix
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate reveal structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="src/components/ui/slide-up-reveal.tsx"
+          grep -F -q 'data-slide-up-reveal' "$FILE"
+          grep -F -q 'overflow-visible whitespace-pre-wrap' "$FILE"
+          grep -F -q 'data-slide-character' "$FILE"
+          grep -F -q 'transitionProperty: "transform, opacity"' "$FILE"
+          if grep -F -q 'inline-flex overflow-hidden' "$FILE"; then
+            echo "Word reveal still clips italic glyph overhang." >&2
+            exit 1
+          fi
+          if grep -F -q 'relative overflow-hidden whitespace-pre-wrap' "$FILE"; then
+            echo "Character reveal still clips italic glyph overhang." >&2
+            exit 1
+          fi
+
+          for file in \
+            src/components/home/BestSellers.tsx \
+            src/components/home/VisualCategories.tsx \
+            src/components/home/BrazilianTeams.tsx \
+            src/components/home/ShopByLeague.tsx \
+            src/components/home/FAQ.tsx; do
+            grep -F -q 'split="characters"' "$file"
+            grep -F -q 'stagger={0.028}' "$file"
+            grep -F -q 'style={{ animation: "none" }}' "$file"
+          done
+
+          if grep -F -q 'scroll-mt-40 overflow-hidden' src/components/home/BestSellers.tsx; then
+            echo "Launch section still clips reveal overflow." >&2
+            exit 1
+          fi
+          if grep -F -q '<section className="overflow-hidden bg-transparent' src/components/home/ShopByLeague.tsx; then
+            echo "League section still clips reveal overflow." >&2
+            exit 1
+          fi
+          if grep -F -q '<section className="overflow-hidden bg-transparent' src/components/home/BrazilianTeams.tsx; then
+            echo "Brazilian teams section still clips reveal overflow." >&2
+            exit 1
+          fi
+
+          echo "HEADING_REVEAL_CLIPPING_VALIDATION_OK"
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Build application
+        run: bun run build
+
+      - name: Build Hostinger artifact without publishing
+        run: bun run build:hostinger
