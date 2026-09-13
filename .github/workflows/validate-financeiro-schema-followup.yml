@@ -1,0 +1,30 @@
+name: Validate Financeiro Schema Followup
+
+on:
+  push:
+    branches:
+      - fix-financeiro-schema-followup-20260913
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Validate Financeiro contract
+        run: node scripts/validate-financial-dashboard.mjs
+      - name: Check deploy script syntax
+        run: node --check scripts/deploy-financial-dashboard.mjs
+      - name: Lint
+        run: bun run lint
+      - name: Build
+        run: bun run build
+      - name: Build Hostinger
+        run: bun run build:hostinger
