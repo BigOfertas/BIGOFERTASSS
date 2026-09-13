@@ -1,0 +1,115 @@
+name: Diagnose Financeiro Runtime
+
+on:
+  push:
+    branches:
+      - fix-financeiro-runtime-20260913
+    paths:
+      - ".github/workflows/diagnose-financeiro-runtime.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+
+      - name: Inspect live finance schema and reproduce dashboard RPC
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          const projectRef = process.env.SUPABASE_PROJECT_ID?.trim();
+          const accessToken = process.env.SUPABASE_ACCESS_TOKEN?.trim();
+          if (!projectRef || !accessToken) throw new Error('Missing Supabase CI configuration');
+
+          const base = `https://api.supabase.com/v1/projects/${encodeURIComponent(projectRef)}`;
+          const headers = {
+            authorization: `Bearer ${accessToken}`,
+            accept: 'application/json',
+            'content-type': 'application/json',
+          };
+
+          async function readOnly(query, label, expectFailure = false) {
+            const response = await fetch(`${base}/database/query/read-only`, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({ query }),
+              signal: AbortSignal.timeout(30000),
+            });
+            const text = await response.text();
+            console.log(`${label}_HTTP=${response.status}`);
+            if (!response.ok) {
+              console.log(`${label}_ERROR=${text.slice(0, 2500)}`);
+              if (!expectFailure) process.exitCode = 1;
+              return null;
+            }
+            const data = text ? JSON.parse(text) : null;
+            console.log(`${label}_OK`);
+            return Array.isArray(data) ? data[0] : data;
+          }
+
+          const migrationsResponse = await fetch(`${base}/database/migrations`, {
+            headers,
+            signal: AbortSignal.timeout(20000),
+          });
+          const migrations = migrationsResponse.ok ? await migrationsResponse.json() : [];
+          const financeMigrations = Array.isArray(migrations)
+            ? migrations.filter((item) => String(item?.name ?? '').includes('financial_dashboard'))
+                .map((item) => ({ version: item.version, name: item.name }))
+            : [];
+          console.log('FINANCE_MIGRATIONS=' + JSON.stringify(financeMigrations));
+
+          const schema = await readOnly(`
+            select
+              to_regprocedure('public.owner_get_financial_dashboard(text,timestamptz,timestamptz)') is not null as dashboard_rpc_exists,
+              pg_get_function_identity_arguments('public.owner_get_financial_dashboard(text,timestamptz,timestamptz)'::regprocedure) as dashboard_args,
+              has_function_privilege('authenticated', 'public.owner_get_financial_dashboard(text,timestamptz,timestamptz)', 'execute') as authenticated_can_execute,
+              has_function_privilege('anon', 'public.owner_get_financial_dashboard(text,timestamptz,timestamptz)', 'execute') as anon_can_execute,
+              (select format_type(a.atttypid, a.atttypmod)
+                 from pg_attribute a
+                where a.attrelid = 'public.orders'::regclass
+                  and a.attname = 'payment_status'
+                  and not a.attisdropped) as orders_payment_status_type,
+              to_regtype('public.payment_status')::text as payment_status_type_exists,
+              to_regtype('public.order_payment_status')::text as order_payment_status_type_exists,
+              to_regtype('public.order_status')::text as order_status_type_exists,
+              to_regclass('public.finance_settings') is not null as finance_settings_exists,
+              to_regclass('public.product_financial_settings') is not null as product_finance_exists,
+              exists(select 1 from pg_trigger where tgname = 'capture_order_item_financial_snapshot' and not tgisinternal) as capture_trigger_exists,
+              exists(select 1 from pg_trigger where tgname = 'protect_order_item_financial_snapshot' and not tgisinternal) as protect_trigger_exists;
+          `, 'FINANCE_SCHEMA');
+          console.log('FINANCE_SCHEMA=' + JSON.stringify(schema));
+
+          const runtime = await readOnly(`
+            with owner_user as (
+              select ur.user_id
+              from public.user_roles ur
+              where ur.role = 'owner'::public.app_role
+              order by ur.user_id
+              limit 1
+            ), runtime_context as (
+              select
+                set_config('request.jwt.claim.sub', (select user_id::text from owner_user), true) as subject,
+                set_config('request.jwt.claim.role', 'authenticated', true) as jwt_role
+            )
+            select jsonb_build_object(
+              'period', result ->> 'period',
+              'hasSummary', result ? 'summary',
+              'hasTrend', result ? 'trend',
+              'hasProducts', result ? 'products',
+              'hasCategories', result ? 'categories',
+              'excludedOrders', coalesce((result ->> 'excludedOrders')::integer, 0)
+            ) as dashboard_shape
+            from runtime_context
+            cross join lateral public.owner_get_financial_dashboard('30d', null, null) result;
+          `, 'FINANCE_RPC_RUNTIME', true);
+          if (runtime) console.log('FINANCE_RPC_RUNTIME=' + JSON.stringify(runtime));
+          NODE
