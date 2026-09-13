@@ -8,6 +8,7 @@ on:
       - ".github/workflows/deploy-financial-dashboard.yml"
       - "scripts/deploy-financial-dashboard.mjs"
       - "supabase/migrations/20260913174500_financial_dashboard.sql"
+      - "supabase/migrations/20260913181500_financial_dashboard_security_hardening.sql"
   workflow_dispatch:
 
 permissions:

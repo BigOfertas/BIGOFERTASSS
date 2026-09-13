@@ -14,12 +14,21 @@ const headers = {
   accept: "application/json",
   "content-type": "application/json",
 };
-const migrationName = "financial_dashboard_20260913";
-const migrationFile = "supabase/migrations/20260913174500_financial_dashboard.sql";
 
-function migrationSql() {
+const migrations = [
+  {
+    name: "financial_dashboard_20260913",
+    file: "supabase/migrations/20260913174500_financial_dashboard.sql",
+  },
+  {
+    name: "financial_dashboard_security_hardening_20260913",
+    file: "supabase/migrations/20260913181500_financial_dashboard_security_hardening.sql",
+  },
+];
+
+function migrationSql(file) {
   return fs
-    .readFileSync(migrationFile, "utf8")
+    .readFileSync(file, "utf8")
     .replace(/^\s*BEGIN;\s*/i, "")
     .replace(/\s*COMMIT;\s*$/i, "")
     .trim();
@@ -50,27 +59,29 @@ async function readOnly(query) {
   return Array.isArray(payload) ? payload[0] : payload;
 }
 
-async function applyMigration() {
+async function applyMigration(migration) {
   const response = await fetch(`${apiBase}/database/migrations`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ name: migrationName, query: migrationSql() }),
+    body: JSON.stringify({ name: migration.name, query: migrationSql(migration.file) }),
     signal: AbortSignal.timeout(120_000),
   });
   const text = await response.text();
   if (!response.ok) {
-    console.error(`Financial dashboard migration failed with HTTP ${response.status}.`);
+    console.error(`Financial dashboard migration ${migration.name} failed with HTTP ${response.status}.`);
     if (text) console.error(text.slice(0, 3000));
     process.exit(10);
   }
-  console.log("Financial dashboard migration applied.");
+  console.log(`Financial dashboard migration ${migration.name} applied.`);
 }
 
 const history = await readHistory();
-if (history.some((item) => item?.name === migrationName)) {
-  console.log("Financial dashboard migration already applied.");
-} else {
-  await applyMigration();
+for (const migration of migrations) {
+  if (history.some((item) => item?.name === migration.name)) {
+    console.log(`Financial dashboard migration ${migration.name} already applied.`);
+  } else {
+    await applyMigration(migration);
+  }
 }
 
 const verification = await readOnly(`
@@ -98,6 +109,11 @@ select
   to_regprocedure('public.owner_finance_products_page(text,integer,integer)') is not null as products_rpc_ready,
   to_regprocedure('public.owner_save_product_finance(uuid,numeric)') is not null as save_cost_rpc_ready,
   not has_function_privilege('anon', 'public.owner_get_financial_dashboard(text,timestamptz,timestamptz)', 'execute') as anon_dashboard_blocked,
+  not has_function_privilege('anon', 'public.owner_get_finance_settings()', 'execute') as anon_settings_blocked,
+  not has_function_privilege('anon', 'public.owner_finance_products_page(text,integer,integer)', 'execute') as anon_products_blocked,
+  not has_function_privilege('anon', 'public.owner_save_product_finance(uuid,numeric)', 'execute') as anon_save_cost_blocked,
+  not has_function_privilege('anon', 'public.owner_save_finance_settings(numeric,numeric,numeric,numeric,numeric,numeric)', 'execute') as anon_save_settings_blocked,
+  not has_function_privilege('authenticated', 'public.finance_default_product_cost(numeric,text)', 'execute') as customer_cost_helper_blocked,
   has_function_privilege('authenticated', 'public.owner_get_financial_dashboard(text,timestamptz,timestamptz)', 'execute') as authenticated_rpc_granted,
   (select relrowsecurity from pg_class where oid = 'public.finance_settings'::regclass) as finance_rls_enabled,
   (select count(*) = 0
@@ -123,6 +139,11 @@ const required = [
   "products_rpc_ready",
   "save_cost_rpc_ready",
   "anon_dashboard_blocked",
+  "anon_settings_blocked",
+  "anon_products_blocked",
+  "anon_save_cost_blocked",
+  "anon_save_settings_blocked",
+  "customer_cost_helper_blocked",
   "authenticated_rpc_granted",
   "finance_rls_enabled",
   "historical_items_untouched",

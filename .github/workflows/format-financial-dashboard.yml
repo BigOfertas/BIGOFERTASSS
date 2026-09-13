@@ -1,0 +1,40 @@
+name: Format Financial Dashboard Sources
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/format-financial-dashboard.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Format financial sources
+        run: bunx prettier --write src/components/admin/FinancialAdmin.tsx src/routes/admin.tsx scripts/validate-financial-dashboard.mjs
+
+      - name: Upload formatted sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-financial-dashboard-${{ github.sha }}
+          path: |
+            src/components/admin/FinancialAdmin.tsx
+            src/routes/admin.tsx
+            scripts/validate-financial-dashboard.mjs
+          if-no-files-found: error
+          retention-days: 1
