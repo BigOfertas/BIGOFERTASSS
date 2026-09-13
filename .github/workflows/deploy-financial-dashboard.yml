@@ -9,6 +9,7 @@ on:
       - "scripts/deploy-financial-dashboard.mjs"
       - "supabase/migrations/20260913174500_financial_dashboard.sql"
       - "supabase/migrations/20260913181500_financial_dashboard_security_hardening.sql"
+      - "supabase/migrations/20260913204500_fix_financial_dashboard_payment_status_type.sql"
   workflow_dispatch:
 
 permissions:
