@@ -1,0 +1,36 @@
+name: Validate Finance Category Bulk
+
+on:
+  push:
+    branches:
+      - finance-category-bulk-20260913
+    paths:
+      - ".github/workflows/validate-finance-category-branch.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: finance-category-bulk-20260913
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Validate finance category scenarios
+        run: node scripts/validate-finance-category-bulk.mjs
+      - name: Validate existing financial dashboard
+        run: node scripts/validate-financial-dashboard.mjs
+      - name: Lint
+        run: bun run lint
+      - name: Build application
+        run: bun run build
+      - name: Validate definitive order core
+        run: bun run validate:phase10
+      - name: Build Hostinger artifact without publishing
+        run: bun run build:hostinger
