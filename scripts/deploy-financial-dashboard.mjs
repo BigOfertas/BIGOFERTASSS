@@ -1,0 +1,136 @@
+import fs from "node:fs";
+
+const projectRef = process.env.SUPABASE_PROJECT_ID?.trim();
+const accessToken = process.env.SUPABASE_ACCESS_TOKEN?.trim();
+
+if (!projectRef || !accessToken) {
+  console.error("Financial dashboard deployment is missing required Supabase CI configuration.");
+  process.exit(2);
+}
+
+const apiBase = `https://api.supabase.com/v1/projects/${encodeURIComponent(projectRef)}`;
+const headers = {
+  authorization: `Bearer ${accessToken}`,
+  accept: "application/json",
+  "content-type": "application/json",
+};
+const migrationName = "financial_dashboard_20260913";
+const migrationFile = "supabase/migrations/20260913174500_financial_dashboard.sql";
+
+function migrationSql() {
+  return fs
+    .readFileSync(migrationFile, "utf8")
+    .replace(/^\s*BEGIN;\s*/i, "")
+    .replace(/\s*COMMIT;\s*$/i, "")
+    .trim();
+}
+
+async function readHistory() {
+  const response = await fetch(`${apiBase}/database/migrations`, {
+    headers,
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!response.ok) throw new Error(`MIGRATION_HISTORY_HTTP_${response.status}`);
+  const payload = await response.json();
+  return Array.isArray(payload) ? payload : [];
+}
+
+async function readOnly(query) {
+  const response = await fetch(`${apiBase}/database/query/read-only`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ query }),
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`READ_ONLY_QUERY_HTTP_${response.status}: ${text.slice(0, 1200)}`);
+  }
+  const payload = await response.json();
+  return Array.isArray(payload) ? payload[0] : payload;
+}
+
+async function applyMigration() {
+  const response = await fetch(`${apiBase}/database/migrations`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ name: migrationName, query: migrationSql() }),
+    signal: AbortSignal.timeout(120_000),
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    console.error(`Financial dashboard migration failed with HTTP ${response.status}.`);
+    if (text) console.error(text.slice(0, 3000));
+    process.exit(10);
+  }
+  console.log("Financial dashboard migration applied.");
+}
+
+const history = await readHistory();
+if (history.some((item) => item?.name === migrationName)) {
+  console.log("Financial dashboard migration already applied.");
+} else {
+  await applyMigration();
+}
+
+const verification = await readOnly(`
+select
+  to_regclass('public.finance_settings') is not null as finance_settings_ready,
+  to_regclass('public.product_financial_settings') is not null as product_finance_ready,
+  exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'order_items' and column_name = 'financial_snapshot_version'
+  ) as snapshot_column_ready,
+  exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'order_items' and column_name = 'line_profit_snapshot'
+  ) as profit_column_ready,
+  exists (
+    select 1 from pg_trigger
+    where tgname = 'capture_order_item_financial_snapshot' and not tgisinternal
+  ) as capture_trigger_ready,
+  exists (
+    select 1 from pg_trigger
+    where tgname = 'protect_order_item_financial_snapshot' and not tgisinternal
+  ) as immutable_trigger_ready,
+  to_regprocedure('public.owner_get_financial_dashboard(text,timestamptz,timestamptz)') is not null as dashboard_rpc_ready,
+  to_regprocedure('public.owner_get_finance_settings()') is not null as settings_rpc_ready,
+  to_regprocedure('public.owner_finance_products_page(text,integer,integer)') is not null as products_rpc_ready,
+  to_regprocedure('public.owner_save_product_finance(uuid,numeric)') is not null as save_cost_rpc_ready,
+  not has_function_privilege('anon', 'public.owner_get_financial_dashboard(text,timestamptz,timestamptz)', 'execute') as anon_dashboard_blocked,
+  has_function_privilege('authenticated', 'public.owner_get_financial_dashboard(text,timestamptz,timestamptz)', 'execute') as authenticated_rpc_granted,
+  (select relrowsecurity from pg_class where oid = 'public.finance_settings'::regclass) as finance_rls_enabled,
+  (select count(*) = 0
+   from public.order_items oi
+   cross join public.finance_settings fs
+   where fs.singleton = true
+     and oi.created_at < fs.activated_at
+     and oi.financial_snapshot_version is not null) as historical_items_untouched;
+`);
+
+console.log("FINANCIAL_DASHBOARD_DEPLOYMENT_VERIFICATION");
+console.log(JSON.stringify(verification, null, 2));
+
+const required = [
+  "finance_settings_ready",
+  "product_finance_ready",
+  "snapshot_column_ready",
+  "profit_column_ready",
+  "capture_trigger_ready",
+  "immutable_trigger_ready",
+  "dashboard_rpc_ready",
+  "settings_rpc_ready",
+  "products_rpc_ready",
+  "save_cost_rpc_ready",
+  "anon_dashboard_blocked",
+  "authenticated_rpc_granted",
+  "finance_rls_enabled",
+  "historical_items_untouched",
+];
+
+if (required.some((key) => verification?.[key] !== true)) {
+  console.error("Financial dashboard verification failed.");
+  process.exit(11);
+}
+
+console.log("Financial dashboard database is ready.");

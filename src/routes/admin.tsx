@@ -2,6 +2,7 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   BadgePercent,
   Box,
+  CircleDollarSign,
   ExternalLink,
   LayoutDashboard,
   LogOut,
@@ -14,6 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { AffiliateAdminWorkspace } from "@/components/admin/AffiliateAdminWorkspace";
+import { FinancialAdmin } from "@/components/admin/FinancialAdmin";
 import { OrderAdmin } from "@/components/admin/OrderAdmin";
 import { PersonalizationAdmin } from "@/components/admin/PersonalizationAdmin";
 import { ProductsAdminWorkspace } from "@/components/admin/ProductsAdminWorkspace";
@@ -27,7 +29,13 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type AdminSection = "dashboard" | "orders" | "products" | "personalization" | "affiliates";
+type AdminSection =
+  | "dashboard"
+  | "orders"
+  | "finance"
+  | "products"
+  | "personalization"
+  | "affiliates";
 
 const NAV_ITEMS: Array<{
   id: AdminSection;
@@ -46,6 +54,12 @@ const NAV_ITEMS: Array<{
     label: "Pedidos",
     description: "Pagamento, produção e entrega",
     icon: ShoppingBag,
+  },
+  {
+    id: "finance",
+    label: "Financeiro",
+    description: "Faturamento, custos e lucro",
+    icon: CircleDollarSign,
   },
   {
     id: "products",
@@ -335,6 +349,8 @@ function AdminPage() {
               <AdminDashboard onNavigate={(next) => setSection(next)} />
             ) : section === "orders" ? (
               <OrderAdmin />
+            ) : section === "finance" ? (
+              <FinancialAdmin onOpenProducts={() => setSection("products")} />
             ) : section === "products" ? (
               <ProductsAdminWorkspace />
             ) : section === "personalization" ? (

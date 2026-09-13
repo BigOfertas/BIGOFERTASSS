@@ -46,6 +46,9 @@ jobs:
       - name: Validate affiliate referral backend
         run: bun run validate:affiliate
 
+      - name: Validate financial dashboard
+        run: node scripts/validate-financial-dashboard.mjs
+
       - name: Lint storefront
         run: bun run lint
 
