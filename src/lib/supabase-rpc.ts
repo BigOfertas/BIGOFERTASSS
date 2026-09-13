@@ -1,8 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 
+type RpcFailure = {
+  message?: string;
+  code?: string;
+  details?: string;
+  hint?: string;
+  status?: number;
+};
+
 type RpcResponse = {
   data: unknown;
-  error: { message?: string } | null;
+  error: RpcFailure | null;
 };
 
 type DynamicRpcClient = {
@@ -17,7 +25,19 @@ export async function callSupabaseRpc<T>(
   const { data, error } = await client.rpc(functionName, args);
 
   if (error) {
-    throw new Error(error.message || "Não foi possível concluir a operação agora.");
+    // Mantém a interface amigável, mas não engole o diagnóstico técnico.
+    // Não registramos os argumentos da RPC porque eles podem conter dados sensíveis.
+    console.error(`[Supabase RPC] ${functionName} failed`, {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      status: error.status,
+    });
+
+    const rpcError = new Error(error.message || "Não foi possível concluir a operação agora.");
+    rpcError.name = "SupabaseRpcError";
+    throw rpcError;
   }
 
   return data as T;
