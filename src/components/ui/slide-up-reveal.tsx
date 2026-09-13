@@ -185,10 +185,10 @@ const SlideUpReveal = forwardRef<SlideUpRevealRef, SlideUpRevealProps>(
     const animatedStyle = (index: number): CSSProperties => ({
       opacity: isAnimating ? 1 : 0,
       transform: isAnimating ? "translate3d(0,0,0)" : `translate3d(0,${hiddenTranslate},0)`,
-      transitionProperty: "transform, opacity",
-      transitionDuration: `${duration}s`,
+      transitionProperty: hasCompleted ? "none" : "transform, opacity",
+      transitionDuration: hasCompleted ? "0s" : `${duration}s`,
       transitionTimingFunction: easing,
-      transitionDelay: `${baseDelay + getStaggerDelay(index)}s`,
+      transitionDelay: hasCompleted ? "0s" : `${baseDelay + getStaggerDelay(index)}s`,
       willChange: hasCompleted ? undefined : "transform, opacity",
     });
 
