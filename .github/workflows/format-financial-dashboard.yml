@@ -8,7 +8,7 @@ on:
       - ".github/workflows/format-financial-dashboard.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format:
@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          ref: main
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -28,13 +30,14 @@ jobs:
       - name: Format financial sources
         run: bunx prettier --write src/components/admin/FinancialAdmin.tsx src/routes/admin.tsx scripts/validate-financial-dashboard.mjs
 
-      - name: Upload formatted sources
-        uses: actions/upload-artifact@v4
-        with:
-          name: formatted-financial-dashboard-${{ github.sha }}
-          path: |
-            src/components/admin/FinancialAdmin.tsx
-            src/routes/admin.tsx
-            scripts/validate-financial-dashboard.mjs
-          if-no-files-found: error
-          retention-days: 1
+      - name: Commit formatted sources
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/admin/FinancialAdmin.tsx src/routes/admin.tsx scripts/validate-financial-dashboard.mjs
+          if git diff --cached --quiet; then
+            echo "Financial sources already formatted."
+            exit 0
+          fi
+          git commit -m "style: format financial dashboard sources"
+          git push origin HEAD:main
