@@ -1,0 +1,46 @@
+name: Diagnose Financeiro Schema Followup
+
+on:
+  push:
+    branches:
+      - fix-financeiro-schema-followup-20260913
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - uses: actions/checkout@v7
+      - name: Inspect schema only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          const ref = process.env.SUPABASE_PROJECT_ID;
+          const token = process.env.SUPABASE_ACCESS_TOKEN;
+          const base = `https://api.supabase.com/v1/projects/${ref}`;
+          const headers = { authorization: `Bearer ${token}`, accept: 'application/json', 'content-type': 'application/json' };
+          async function q(query) {
+            const r = await fetch(`${base}/database/query/read-only`, { method:'POST', headers, body:JSON.stringify({query}), signal:AbortSignal.timeout(30000) });
+            const t = await r.text();
+            if (!r.ok) throw new Error(`${r.status}: ${t}`);
+            return JSON.parse(t);
+          }
+          const cols = await q(`select column_name, data_type, udt_name from information_schema.columns where table_schema='public' and table_name='order_items' order by ordinal_position;`);
+          console.log('ORDER_ITEMS_SCHEMA=' + JSON.stringify(cols));
+          const orderCols = await q(`select column_name, data_type, udt_name from information_schema.columns where table_schema='public' and table_name='orders' and column_name in ('id','created_at','paid_at','payment_status','status','subtotal_amount','discount_amount') order by ordinal_position;`);
+          console.log('ORDERS_SCHEMA=' + JSON.stringify(orderCols));
+          const f = await q(`select pg_get_functiondef('public.owner_get_financial_dashboard(text,timestamptz,timestamptz)'::regprocedure) as definition;`);
+          const definition = f?.[0]?.definition ?? '';
+          const identifiers = [...definition.matchAll(/oi\.([a-zA-Z_][a-zA-Z0-9_]*)/g)].map(m => m[1]);
+          console.log('RPC_ORDER_ITEM_IDENTIFIERS=' + JSON.stringify([...new Set(identifiers)].sort()));
+          const h = await fetch(`${base}/database/migrations`, {headers, signal:AbortSignal.timeout(20000)});
+          const history = await h.json();
+          console.log('FIX_MIGRATION_APPLIED=' + JSON.stringify((Array.isArray(history)?history:[]).some(x => x?.name === 'fix_financial_dashboard_payment_status_type_20260913')));
+          NODE
