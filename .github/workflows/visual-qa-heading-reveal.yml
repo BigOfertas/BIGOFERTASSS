@@ -40,7 +40,7 @@ jobs:
           bun run dev -- --host 127.0.0.1 > /tmp/dropbox-heading-vite.log 2>&1 &
           echo $! > /tmp/dropbox-heading-vite.pid
           for attempt in {1..60}; do
-            if curl --fail --silent http://127.0.0.1:5173/ >/dev/null; then
+            if curl --fail --silent http://127.0.0.1:8080/ >/dev/null; then
               exit 0
             fi
             sleep 1
@@ -72,7 +72,7 @@ jobs:
 
           for (const [viewportName, viewport] of viewports) {
             const page = await browser.newPage({ viewportSize: viewport, deviceScaleFactor: 1 });
-            await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
+            await page.goto('http://127.0.0.1:8080/', { waitUntil: 'networkidle' });
             await page.waitForTimeout(3200);
 
             for (const [slug, title] of headings) {
