@@ -1,6 +1,9 @@
 import fs from "node:fs";
 
-const migration = fs.readFileSync("supabase/migrations/20260913174500_financial_dashboard.sql", "utf8");
+const migration = fs.readFileSync(
+  "supabase/migrations/20260913174500_financial_dashboard.sql",
+  "utf8",
+);
 const component = fs.readFileSync("src/components/admin/FinancialAdmin.tsx", "utf8");
 const financeLib = fs.readFileSync("src/lib/admin-finance.ts", "utf8");
 const adminRoute = fs.readFileSync("src/routes/admin.tsx", "utf8");
@@ -19,7 +22,14 @@ function assertEqual(actual, expected, label) {
   }
 }
 
-function profitCents(saleCents, costCents, addOnRevenueCents = 0, addOnCostCents = 0, discountCents = 0, quantity = 1) {
+function profitCents(
+  saleCents,
+  costCents,
+  addOnRevenueCents = 0,
+  addOnCostCents = 0,
+  discountCents = 0,
+  quantity = 1,
+) {
   return (saleCents + addOnRevenueCents - costCents - addOnCostCents) * quantity - discountCents;
 }
 
@@ -48,8 +58,16 @@ requireText(migration, "'canceled'::public.order_status", "exclusão de cancelad
 requireText(migration, "'refunded'::public.order_status", "exclusão de reembolsados");
 requireText(migration, "round(totals.profit * 500 / 10000, 2)", "participação de 5% sobre lucro");
 requireText(migration, "public.has_role('owner'::public.app_role)", "proteção owner");
-requireText(migration, "REVOKE ALL ON TABLE public.finance_settings FROM PUBLIC, anon, authenticated", "custos não públicos");
-requireText(migration, "ON CONFLICT (product_id) DO NOTHING", "seed sem sobrescrever configuração existente");
+requireText(
+  migration,
+  "REVOKE ALL ON TABLE public.finance_settings FROM PUBLIC, anon, authenticated",
+  "custos não públicos",
+);
+requireText(
+  migration,
+  "ON CONFLICT (product_id) DO NOTHING",
+  "seed sem sobrescrever configuração existente",
+);
 requireText(migration, "BEFORE INSERT ON public.order_items", "snapshot somente em novos itens");
 
 for (const period of ["today", "7d", "30d", "month", "previous_month", "year"]) {
@@ -60,7 +78,11 @@ requireText(component, "Participação sobre o lucro", "card de participação")
 requireText(component, "5% do lucro do período — nunca do faturamento.", "regra visual dos 5%");
 requireText(component, "Faturamento x lucro", "gráfico financeiro");
 requireText(component, "Por que deu este lucro?", "composição do lucro");
-requireText(component, "Esta alteração será aplicada somente às novas compras", "aviso de snapshot");
+requireText(
+  component,
+  "Esta alteração será aplicada somente às novas compras",
+  "aviso de snapshot",
+);
 requireText(component, "Produtos", "ranking por produto");
 requireText(component, "Categorias", "ranking por categoria");
 requireText(financeLib, "owner_get_financial_dashboard", "RPC do dashboard");

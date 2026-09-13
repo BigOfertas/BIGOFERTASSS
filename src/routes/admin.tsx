@@ -30,12 +30,7 @@ export const Route = createFileRoute("/admin")({
 });
 
 type AdminSection =
-  | "dashboard"
-  | "orders"
-  | "finance"
-  | "products"
-  | "personalization"
-  | "affiliates";
+  "dashboard" | "orders" | "finance" | "products" | "personalization" | "affiliates";
 
 const NAV_ITEMS: Array<{
   id: AdminSection;
