@@ -12,6 +12,7 @@ on:
       - "supabase/migrations/20260913181500_financial_dashboard_security_hardening.sql"
       - "supabase/migrations/20260913204500_fix_financial_dashboard_payment_status_type.sql"
       - "supabase/migrations/20260913210000_finance_category_bulk.sql"
+      - "supabase/migrations/20260913211500_finance_category_bulk_consistency.sql"
   workflow_dispatch:
 
 permissions:
