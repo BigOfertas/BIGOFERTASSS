@@ -24,6 +24,10 @@ const migrations = [
     name: "financial_dashboard_security_hardening_20260913",
     file: "supabase/migrations/20260913181500_financial_dashboard_security_hardening.sql",
   },
+  {
+    name: "fix_financial_dashboard_payment_status_type_20260913",
+    file: "supabase/migrations/20260913204500_fix_financial_dashboard_payment_status_type.sql",
+  },
 ];
 
 function migrationSql(file) {
@@ -118,6 +122,19 @@ select
   not has_function_privilege('authenticated', 'public.finance_default_product_cost(numeric,text)', 'execute') as customer_cost_helper_blocked,
   has_function_privilege('authenticated', 'public.owner_get_financial_dashboard(text,timestamptz,timestamptz)', 'execute') as authenticated_rpc_granted,
   (select relrowsecurity from pg_class where oid = 'public.finance_settings'::regclass) as finance_rls_enabled,
+  (select format_type(a.atttypid, a.atttypmod) = 'order_payment_status'
+     from pg_attribute a
+    where a.attrelid = 'public.orders'::regclass
+      and a.attname = 'payment_status'
+      and not a.attisdropped) as payment_status_type_ready,
+  position(
+    'public.payment_status'
+    in pg_get_functiondef('public.owner_get_financial_dashboard(text,timestamptz,timestamptz)'::regprocedure)
+  ) = 0 as dashboard_missing_enum_reference_removed,
+  position(
+    'public.order_payment_status'
+    in pg_get_functiondef('public.owner_get_financial_dashboard(text,timestamptz,timestamptz)'::regprocedure)
+  ) > 0 as dashboard_payment_enum_reference_ready,
   (select count(*) = 0
    from public.order_items oi
    cross join public.finance_settings fs
@@ -148,6 +165,9 @@ const required = [
   "customer_cost_helper_blocked",
   "authenticated_rpc_granted",
   "finance_rls_enabled",
+  "payment_status_type_ready",
+  "dashboard_missing_enum_reference_removed",
+  "dashboard_payment_enum_reference_ready",
   "historical_items_untouched",
 ];
 
