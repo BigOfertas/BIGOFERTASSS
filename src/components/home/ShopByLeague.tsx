@@ -82,7 +82,7 @@ const ShopByLeague: React.FC = () => {
   };
 
   return (
-    <section className="overflow-hidden bg-transparent py-9 sm:py-11 lg:py-14">
+    <section className="bg-transparent py-9 sm:py-11 lg:py-14">
       <div className="mx-auto max-w-7xl px-4 lg:max-w-[1536px] lg:px-4">
         <div className="mb-6 text-center sm:mb-8">
           <p className="display-kicker">
@@ -90,14 +90,8 @@ const ShopByLeague: React.FC = () => {
               Futebol internacional
             </DirectionalReveal>
           </p>
-          <h2 className="display-title-sm mt-2">
-            <SlideUpReveal
-              split="words"
-              stagger={0.065}
-              inView
-              className="justify-center"
-              wordClass="pb-[0.08em]"
-            >
+          <h2 className="display-title-sm mt-2" style={{ animation: "none" }}>
+            <SlideUpReveal split="characters" stagger={0.028} inView className="justify-center">
               Compre por liga
             </SlideUpReveal>
           </h2>
