@@ -47,7 +47,7 @@ jobs:
         run: bun run validate:affiliate
 
       - name: Validate financial dashboard
-        run: node scripts/validate-financial-dashboard.mjs
+        run: node scripts/validate-financial-dashboard.mjs && node scripts/validate-finance-category-bulk.mjs
 
       - name: Lint storefront
         run: bun run lint
