@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Validate code
+        run: bun run lint && bun run build
+
       - name: Install Playwright for visual QA
         run: |
           bun add --no-save playwright
@@ -75,10 +78,37 @@ jobs:
             await page.goto('http://127.0.0.1:8080/', { waitUntil: 'networkidle' });
             await page.waitForTimeout(3200);
 
+            const cookieAccept = page.getByRole('button', { name: /aceitar todos/i });
+            if (await cookieAccept.count()) {
+              await cookieAccept.first().click();
+              await page.waitForTimeout(250);
+            }
+
             for (const [slug, title] of headings) {
               const heading = page.locator('h2').filter({ hasText: title }).first();
               await heading.scrollIntoViewIfNeeded();
               await page.waitForTimeout(900);
+
+              const reveal = heading.locator('[data-slide-up-reveal]').first();
+              const overflowIsSafe = await reveal.evaluate((root) => {
+                const nodes = [root, ...root.querySelectorAll('[data-slide-word], [data-slide-character]')];
+                return nodes.every((node) => {
+                  const style = getComputedStyle(node);
+                  return style.overflowX === 'visible' && style.overflowY === 'visible';
+                });
+              });
+              if (!overflowIsSafe) throw new Error(`Unsafe clipping found: ${title}`);
+
+              const wordSpacingIsVisible = await reveal.evaluate((root) => {
+                const words = Array.from(root.querySelectorAll('[data-slide-word]'));
+                if (words.length < 2) return true;
+                return words.slice(0, -1).every((word) => {
+                  const lastChild = word.lastElementChild;
+                  return lastChild ? lastChild.getBoundingClientRect().width > 1 : false;
+                });
+              });
+              if (!wordSpacingIsVisible) throw new Error(`Collapsed word spacing found: ${title}`);
+
               const box = await heading.boundingBox();
               if (!box) throw new Error(`Heading not found: ${title}`);
               const padding = 36;
