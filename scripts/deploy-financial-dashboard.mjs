@@ -68,7 +68,9 @@ async function applyMigration(migration) {
   });
   const text = await response.text();
   if (!response.ok) {
-    console.error(`Financial dashboard migration ${migration.name} failed with HTTP ${response.status}.`);
+    console.error(
+      `Financial dashboard migration ${migration.name} failed with HTTP ${response.status}.`,
+    );
     if (text) console.error(text.slice(0, 3000));
     process.exit(10);
   }
