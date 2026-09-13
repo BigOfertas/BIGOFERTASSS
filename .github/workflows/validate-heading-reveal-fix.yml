@@ -80,3 +80,5 @@ jobs:
 
       - name: Build Hostinger artifact without publishing
         run: bun run build:hostinger
+
+      # Validation-only workflow; remove it after a green run.
