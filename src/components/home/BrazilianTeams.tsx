@@ -68,7 +68,7 @@ const BrazilianTeams: React.FC = () => {
   const activeDotIndex = Math.round(scrollProgress * (dots.length - 1));
 
   return (
-    <section className="overflow-hidden bg-transparent py-8 sm:py-10 lg:py-12">
+    <section className="bg-transparent py-8 sm:py-10 lg:py-12">
       {desktopBanner || mobileBanner ? (
         <div className="mx-auto mb-8 max-w-[1920px]">
           <Link
@@ -111,14 +111,8 @@ const BrazilianTeams: React.FC = () => {
               Futebol brasileiro
             </DirectionalReveal>
           </p>
-          <h2 className="display-title-sm mt-2">
-            <SlideUpReveal
-              split="words"
-              stagger={0.065}
-              inView
-              className="justify-center"
-              wordClass="pb-[0.08em]"
-            >
+          <h2 className="display-title-sm mt-2" style={{ animation: "none" }}>
+            <SlideUpReveal split="characters" stagger={0.028} inView className="justify-center">
               Encontre seu time
             </SlideUpReveal>
           </h2>
