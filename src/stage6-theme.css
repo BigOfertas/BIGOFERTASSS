@@ -1,0 +1,168 @@
+/* Stage 6: dark-mode compatibility for storefront, account, admin and finance legacy utilities. */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(circle at 8% 2%, rgba(230, 0, 0, 0.13), transparent 23rem),
+    radial-gradient(circle at 92% 14%, rgba(59, 130, 246, 0.08), transparent 29rem),
+    linear-gradient(180deg, #090d16, #111827 62%, #0b1019);
+}
+
+.dark .glass-card,
+.dark .glass-panel {
+  border-color: rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(30, 41, 59, 0.95),
+      rgba(15, 23, 42, 0.82) 48%,
+      rgba(17, 24, 39, 0.92)
+    ),
+    radial-gradient(circle at 12% -8%, rgba(148, 163, 184, 0.16), transparent 38%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+    var(--glass-shadow-soft);
+}
+
+.dark .glass-header {
+  border-bottom-color: rgba(255, 255, 255, 0.09);
+  background: rgba(10, 15, 25, 0.92);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.26);
+}
+
+.dark .glass-input,
+.dark input,
+.dark textarea,
+.dark select {
+  border-color: rgba(148, 163, 184, 0.24);
+  background-color: rgba(15, 23, 42, 0.82);
+  color: #f8fafc;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #94a3b8;
+}
+
+.dark .brand-lockup,
+.dark .header-action {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.86));
+  color: #f8fafc;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 22px rgba(0, 0, 0, 0.22);
+}
+
+.dark .display-title,
+.dark .display-title-sm {
+  color: #f8fafc;
+}
+
+.dark .section-copy {
+  color: #cbd5e1;
+}
+
+.dark .ambient-band {
+  border-color: rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 18% 30%, rgba(230, 0, 0, 0.18), transparent 28%),
+    radial-gradient(circle at 82% 46%, rgba(59, 130, 246, 0.11), transparent 30%),
+    linear-gradient(120deg, rgba(15, 23, 42, 0.92), rgba(17, 24, 39, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.dark .bg-white,
+.dark .bg-white\/95,
+.dark .bg-white\/90,
+.dark .bg-white\/80,
+.dark .bg-white\/70,
+.dark .bg-white\/60,
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+  background-color: #111827 !important;
+}
+
+.dark .bg-gray-200 {
+  background-color: #1f2937 !important;
+}
+
+.dark .text-gray-950,
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700 {
+  color: #f8fafc !important;
+}
+
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-gray-400 {
+  color: #94a3b8 !important;
+}
+
+.dark .border-white,
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-100:hover {
+  background-color: #1f2937 !important;
+}
+
+.dark [data-product-card],
+.dark [role="dialog"],
+.dark [data-radix-popper-content-wrapper] > * {
+  color: var(--foreground);
+}
+
+.dark [data-motion-button] .icon svg,
+.dark [data-motion-button]:hover .button-text {
+  color: #fff !important;
+}
+
+html[dir="rtl"] body {
+  direction: rtl;
+}
+
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[inputmode="numeric"],
+html[dir="rtl"] input[inputmode="decimal"],
+html[dir="rtl"] [data-ltr] {
+  direction: ltr;
+  text-align: left;
+}
+
+@media (max-width: 767px) {
+  .dark body {
+    background-image:
+      radial-gradient(circle at 12% 0%, rgba(230, 0, 0, 0.11), transparent 16rem),
+      linear-gradient(180deg, #090d16, #111827);
+  }
+
+  .dark .glass-card,
+  .dark .glass-panel,
+  .dark .glass-header,
+  .dark .glass-input {
+    background-color: rgba(15, 23, 42, 0.97);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .dark .glass-card,
+  .dark .glass-panel,
+  .dark .glass-header,
+  .dark .glass-input {
+    background: rgba(15, 23, 42, 0.98);
+  }
+}
