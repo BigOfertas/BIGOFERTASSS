@@ -1,0 +1,32 @@
+name: QA Stage 1 Variants Production
+
+on:
+  push:
+    branches:
+      - qa-stage1-variants-prod-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  qa-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout QA branch
+        uses: actions/checkout@v7
+        with:
+          ref: qa-stage1-variants-prod-20260914
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run production browser QA
+        run: node scripts/qa-stage1-variants-production.mjs
