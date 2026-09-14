@@ -29,7 +29,7 @@ interface FloatingWhatsAppSupportProps {
 }
 
 function appendMessage(baseUrl: string, message: string) {
-  return \`${'${baseUrl}'}\${'${baseUrl.includes("?") ? "&" : "?"}'}text=\${'${encodeURIComponent(message)}'}\`;
+  return baseUrl + (baseUrl.includes("?") ? "&" : "?") + "text=" + encodeURIComponent(message);
 }
 
 export function FloatingWhatsAppSupport({
@@ -39,8 +39,8 @@ export function FloatingWhatsAppSupport({
 }: FloatingWhatsAppSupportProps) {
   const message =
     productName && productUrl
-      ? \`Olá! 👋 Tenho uma dúvida sobre este produto: \${'${productName}'} — \${'${productUrl}'}\`
-      : \`Olá! 👋 Preciso de ajuda com a minha compra na \${'${BRAND.officialName}'}.\`;
+      ? "Olá! 👋 Tenho uma dúvida sobre este produto: " + productName + " — " + productUrl
+      : "Olá! 👋 Preciso de ajuda com a minha compra na " + BRAND.officialName + ".";
   const href = appendMessage(BRAND.whatsappUrl, message);
   const bottomClass = productPage
     ? "bottom-[calc(env(safe-area-inset-bottom)+6.5rem)]"
@@ -55,10 +55,13 @@ export function FloatingWhatsAppSupport({
       rel="noopener noreferrer"
       aria-label={
         productName
-          ? \`Falar sobre \${'${productName}'} com a \${'${BRAND.officialName}'} pelo WhatsApp\`
-          : \`Falar com a \${'${BRAND.officialName}'} pelo WhatsApp\`
+          ? "Falar sobre " + productName + " com a " + BRAND.officialName + " pelo WhatsApp"
+          : "Falar com a " + BRAND.officialName + " pelo WhatsApp"
       }
-      className={\`group fixed right-4 z-[60] inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/80 bg-[#25D366] text-white shadow-[0_10px_28px_rgba(0,0,0,0.24)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.3)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 motion-reduce:transform-none motion-reduce:transition-none md:bottom-6 md:right-6 \${'${bottomClass}'}\`}
+      className={
+        "group fixed right-4 z-[60] inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/80 bg-[#25D366] text-white shadow-[0_10px_28px_rgba(0,0,0,0.24)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(0,0,0,0.3)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 motion-reduce:transform-none motion-reduce:transition-none md:bottom-6 md:right-6 " +
+        bottomClass
+      }
     >
       <Phone className="h-6 w-6 fill-current" strokeWidth={2.4} aria-hidden="true" />
       <span className="pointer-events-none absolute right-[calc(100%+0.75rem)] top-1/2 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-950 px-2.5 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none md:block">
@@ -83,7 +86,14 @@ interface ProductShareProps {
 }
 
 function buildShareMessage(productName: string, canonicalUrl: string) {
-  return \`Olha o que eu achei na \${'${BRAND.officialName}'}! 👀⚽\\n\${'${productName}'}\\nDá uma olhada: \${'${canonicalUrl}'}\`;
+  return (
+    "Olha o que eu achei na " +
+    BRAND.officialName +
+    "! 👀⚽\\n" +
+    productName +
+    "\\nDá uma olhada: " +
+    canonicalUrl
+  );
 }
 
 async function copyToClipboard(value: string) {
@@ -108,9 +118,18 @@ export function ProductShare({ productName, canonicalUrl }: ProductShareProps) {
   const [open, setOpen] = useState(false);
   const [nativeShareAvailable, setNativeShareAvailable] = useState(false);
   const shareMessage = buildShareMessage(productName, canonicalUrl);
-  const whatsAppUrl = \`https://wa.me/?text=\${'${encodeURIComponent(shareMessage)}'}\`;
-  const telegramText = \`Olha o que eu achei na \${'${BRAND.officialName}'}! 👀⚽\\n\${'${productName}'}\\nDá uma olhada:\`;
-  const telegramUrl = \`https://t.me/share/url?url=\${'${encodeURIComponent(canonicalUrl)}'}&text=\${'${encodeURIComponent(telegramText)}'}\`;
+  const whatsAppUrl = "https://wa.me/?text=" + encodeURIComponent(shareMessage);
+  const telegramText =
+    "Olha o que eu achei na " +
+    BRAND.officialName +
+    "! 👀⚽\\n" +
+    productName +
+    "\\nDá uma olhada:";
+  const telegramUrl =
+    "https://t.me/share/url?url=" +
+    encodeURIComponent(canonicalUrl) +
+    "&text=" +
+    encodeURIComponent(telegramText);
 
   useEffect(() => {
     setNativeShareAvailable(typeof navigator !== "undefined" && typeof navigator.share === "function");
@@ -130,7 +149,7 @@ export function ProductShare({ productName, canonicalUrl }: ProductShareProps) {
     try {
       await navigator.share({
         title: productName,
-        text: \`Olha o que eu achei na \${'${BRAND.officialName}'}! 👀⚽\`,
+        text: "Olha o que eu achei na " + BRAND.officialName + "! 👀⚽",
         url: canonicalUrl,
       });
       setOpen(false);
@@ -148,7 +167,7 @@ export function ProductShare({ productName, canonicalUrl }: ProductShareProps) {
           type="button"
           variant="outline"
           className="h-10 gap-2 rounded-lg border-gray-200 bg-white px-3 text-sm font-bold text-gray-700 shadow-none hover:border-gray-300 hover:bg-gray-50 hover:text-gray-950"
-          aria-label={\`Compartilhar \${'${productName}'}\`}
+          aria-label={"Compartilhar " + productName}
         >
           <Share2 className="h-4 w-4" aria-hidden="true" />
           Compartilhar
@@ -231,7 +250,7 @@ const checks = [];
 const check = (name, condition) => checks.push([name, Boolean(condition)]);
 
 check("WhatsApp reutiliza BRAND.whatsappUrl", support.includes("BRAND.whatsappUrl") && brand.includes("whatsappUrl"));
-check("mensagem da home inclui saudacao e DropBox dinamica", support.includes("Olá! 👋 Preciso de ajuda com a minha compra na") && support.includes("BRAND.officialName"));
+check("mensagem da home inclui saudacao e marca dinamica", support.includes("Olá! 👋 Preciso de ajuda com a minha compra na") && support.includes("BRAND.officialName"));
 check("mensagem do produto inclui nome e URL", support.includes("Tenho uma dúvida sobre este produto") && support.includes("productName") && support.includes("productUrl"));
 check("WhatsApp aparece somente na home pelo root", root.includes('pathname === "/"') && root.includes("<FloatingWhatsAppSupport />"));
 check("produto usa WhatsApp contextual", product.includes("<FloatingWhatsAppSupport") && product.includes("productName={product.name}") && product.includes("productUrl={productSeo.canonicalUrl}"));
@@ -249,11 +268,11 @@ check("admin nao recebe WhatsApp global", !root.includes('pathname.startsWith("/
 
 let failed = 0;
 for (const [name, ok] of checks) {
-  console.log(\`${'${ok ? "PASS" : "FAIL"}'} - \${'${name}'}\`);
+  console.log((ok ? "PASS" : "FAIL") + " - " + name);
   if (!ok) failed += 1;
 }
 if (failed) process.exit(1);
-console.log(\`\\n\${'${checks.length}'}/\${'${checks.length}'} validações de WhatsApp/compartilhamento aprovadas.\`);
+console.log("\\n" + checks.length + "/" + checks.length + " validações de WhatsApp/compartilhamento aprovadas.");
 `;
 
 write("src/components/support/FloatingWhatsAppSupport.tsx", floatingSupport);
