@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import React, { useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
 import CategoryCard from "@/components/home/CategoryCard";
 import DirectionalReveal from "@/components/ui/directional-reveal";
@@ -44,22 +44,188 @@ const categories = [
   },
 ] as const;
 
+const LOOP_COPIES = 3;
+const CONTINUOUS_SPEED_PX_PER_SECOND = 20;
+const HOVER_RESUME_DELAY_MS = 5000;
+const MANUAL_INTERACTION_SETTLE_MS = 700;
+
 export default function VisualCategories() {
   const { data } = useStorefrontPersonalization();
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const resumeTimerRef = useRef<number | null>(null);
+  const lastFrameTimeRef = useRef<number | null>(null);
+  const sequenceWidthRef = useRef(0);
+  const isHoverPausedRef = useRef(false);
+  const isPointerInteractingRef = useRef(false);
+  const prefersReducedMotionRef = useRef(false);
 
-  const moveOneCard = (direction: -1 | 1) => {
+  const clearResumeTimer = useCallback(() => {
+    if (resumeTimerRef.current !== null) {
+      window.clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+  }, []);
+
+  const normalizeLoopPosition = useCallback(() => {
     const scroller = scrollerRef.current;
-    const firstCard = scroller?.querySelector<HTMLElement>("[data-category-slide]");
-    if (!scroller || !firstCard) return;
+    const sequenceWidth = sequenceWidthRef.current;
+    if (!scroller || sequenceWidth <= 0) return;
 
-    const styles = window.getComputedStyle(scroller);
-    const gap = Number.parseFloat(styles.columnGap || styles.gap || "0") || 0;
-    scroller.scrollBy({
-      left: direction * (firstCard.offsetWidth + gap),
-      behavior: "smooth",
-    });
-  };
+    const middleStartCard = scroller.querySelector<HTMLElement>('[data-loop-copy="1"]');
+    if (!middleStartCard) return;
+
+    const middleStart = middleStartCard.offsetLeft;
+    const middleEnd = middleStart + sequenceWidth;
+
+    while (scroller.scrollLeft >= middleEnd) {
+      scroller.scrollLeft -= sequenceWidth;
+    }
+    while (scroller.scrollLeft < middleStart) {
+      scroller.scrollLeft += sequenceWidth;
+    }
+  }, []);
+
+  const scheduleResumeAfterInteraction = useCallback(
+    (delayMs = MANUAL_INTERACTION_SETTLE_MS) => {
+      clearResumeTimer();
+      if (prefersReducedMotionRef.current || isHoverPausedRef.current) return;
+
+      resumeTimerRef.current = window.setTimeout(() => {
+        resumeTimerRef.current = null;
+        isPointerInteractingRef.current = false;
+        normalizeLoopPosition();
+        lastFrameTimeRef.current = null;
+      }, delayMs);
+    },
+    [clearResumeTimer, normalizeLoopPosition],
+  );
+
+  const moveOneCard = useCallback(
+    (direction: -1 | 1) => {
+      const scroller = scrollerRef.current;
+      const firstCard = scroller?.querySelector<HTMLElement>('[data-loop-copy="1"]');
+      if (!scroller || !firstCard) return;
+
+      clearResumeTimer();
+      isPointerInteractingRef.current = true;
+      const styles = window.getComputedStyle(scroller);
+      const gap = Number.parseFloat(styles.columnGap || styles.gap || "0") || 0;
+      scroller.scrollBy({
+        left: direction * (firstCard.offsetWidth + gap),
+        behavior: prefersReducedMotionRef.current ? "auto" : "smooth",
+      });
+      scheduleResumeAfterInteraction();
+    },
+    [clearResumeTimer, scheduleResumeAfterInteraction],
+  );
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const hoverQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+
+    const syncReducedMotion = () => {
+      prefersReducedMotionRef.current = reducedMotionQuery.matches;
+      lastFrameTimeRef.current = null;
+    };
+
+    const measureLoop = () => {
+      const firstCopy = scroller.querySelector<HTMLElement>('[data-loop-copy="0"]');
+      const middleCopy = scroller.querySelector<HTMLElement>('[data-loop-copy="1"]');
+      if (!firstCopy || !middleCopy) return;
+
+      const sequenceWidth = middleCopy.offsetLeft - firstCopy.offsetLeft;
+      if (sequenceWidth <= 0) return;
+
+      sequenceWidthRef.current = sequenceWidth;
+      if (scroller.scrollLeft < middleCopy.offsetLeft - 1) {
+        scroller.scrollLeft = middleCopy.offsetLeft;
+      } else {
+        normalizeLoopPosition();
+      }
+    };
+
+    const handleMouseEnter = () => {
+      if (!hoverQuery.matches) return;
+      clearResumeTimer();
+      isHoverPausedRef.current = true;
+      lastFrameTimeRef.current = null;
+    };
+
+    const handleMouseLeave = () => {
+      if (!hoverQuery.matches) return;
+      clearResumeTimer();
+      isHoverPausedRef.current = true;
+      resumeTimerRef.current = window.setTimeout(() => {
+        resumeTimerRef.current = null;
+        isHoverPausedRef.current = false;
+        isPointerInteractingRef.current = false;
+        normalizeLoopPosition();
+        lastFrameTimeRef.current = null;
+      }, HOVER_RESUME_DELAY_MS);
+    };
+
+    const handlePointerDown = () => {
+      clearResumeTimer();
+      isPointerInteractingRef.current = true;
+      lastFrameTimeRef.current = null;
+    };
+
+    const handlePointerEnd = () => {
+      normalizeLoopPosition();
+      if (isHoverPausedRef.current && hoverQuery.matches) return;
+      scheduleResumeAfterInteraction();
+    };
+
+    const animate = (time: number) => {
+      if (
+        !prefersReducedMotionRef.current &&
+        !isHoverPausedRef.current &&
+        !isPointerInteractingRef.current &&
+        sequenceWidthRef.current > 0
+      ) {
+        if (lastFrameTimeRef.current !== null) {
+          const deltaSeconds = Math.min((time - lastFrameTimeRef.current) / 1000, 0.05);
+          scroller.scrollLeft += CONTINUOUS_SPEED_PX_PER_SECOND * deltaSeconds;
+          normalizeLoopPosition();
+        }
+        lastFrameTimeRef.current = time;
+      } else {
+        lastFrameTimeRef.current = null;
+      }
+
+      animationFrameRef.current = window.requestAnimationFrame(animate);
+    };
+
+    syncReducedMotion();
+    measureLoop();
+    const resizeObserver = new ResizeObserver(measureLoop);
+    resizeObserver.observe(scroller);
+    reducedMotionQuery.addEventListener("change", syncReducedMotion);
+    scroller.addEventListener("mouseenter", handleMouseEnter);
+    scroller.addEventListener("mouseleave", handleMouseLeave);
+    scroller.addEventListener("pointerdown", handlePointerDown);
+    scroller.addEventListener("pointerup", handlePointerEnd);
+    scroller.addEventListener("pointercancel", handlePointerEnd);
+    animationFrameRef.current = window.requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+      clearResumeTimer();
+      resizeObserver.disconnect();
+      reducedMotionQuery.removeEventListener("change", syncReducedMotion);
+      scroller.removeEventListener("mouseenter", handleMouseEnter);
+      scroller.removeEventListener("mouseleave", handleMouseLeave);
+      scroller.removeEventListener("pointerdown", handlePointerDown);
+      scroller.removeEventListener("pointerup", handlePointerEnd);
+      scroller.removeEventListener("pointercancel", handlePointerEnd);
+    };
+  }, [clearResumeTimer, normalizeLoopPosition, scheduleResumeAfterInteraction]);
 
   return (
     <section className="bg-transparent py-9 sm:py-11 lg:py-14">
@@ -89,21 +255,26 @@ export default function VisualCategories() {
 
           <div
             ref={scrollerRef}
-            className="custom-scrollbar flex snap-x gap-4 overflow-x-auto scroll-smooth pb-3 md:gap-6 md:px-16 md:pb-4"
+            data-visual-categories-loop
+            className="flex gap-4 overflow-x-auto pb-3 [-ms-overflow-style:none] [scrollbar-width:none] md:gap-6 md:px-16 md:pb-4 [&::-webkit-scrollbar]:hidden"
           >
-            {categories.map((category) => (
-              <div
-                key={category.slot}
-                data-category-slide
-                className="aspect-[2/3] w-[164px] flex-shrink-0 snap-start md:w-[328px]"
-              >
-                <CategoryCard
-                  name={category.name}
-                  image={data?.[category.slot]?.url ?? null}
-                  search={category.search}
-                />
-              </div>
-            ))}
+            {Array.from({ length: LOOP_COPIES }, (_, copyIndex) =>
+              categories.map((category) => (
+                <div
+                  key={`${copyIndex}-${category.slot}`}
+                  data-category-slide
+                  data-loop-copy={copyIndex}
+                  className="aspect-[2/3] w-[164px] flex-shrink-0 md:w-[328px]"
+                >
+                  <CategoryCard
+                    name={category.name}
+                    image={data?.[category.slot]?.url ?? null}
+                    search={category.search}
+                    clone={copyIndex !== 1}
+                  />
+                </div>
+              )),
+            )}
           </div>
 
           <button
