@@ -1,0 +1,67 @@
+name: Audit Stage 2 Production Classifications
+
+on:
+  push:
+    branches:
+      - qa-stage2-production-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - name: Audit active product classifications read-only
+        run: |
+          node <<'JS'
+          const projectRef = process.env.SUPABASE_PROJECT_ID;
+          const token = process.env.SUPABASE_ACCESS_TOKEN;
+          const response = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query/read-only`, {
+            method: 'POST',
+            headers: {
+              authorization: `Bearer ${token}`,
+              accept: 'application/json',
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+              query: `
+                select
+                  p.slug,
+                  p.name,
+                  p.category as legacy_category,
+                  c.name as category_name,
+                  c.slug as category_slug,
+                  pps.commercial_type::text as product_commercial_type,
+                  coalesce(
+                    jsonb_agg(distinct v.commercial_type::text) filter (where v.commercial_type is not null),
+                    '[]'::jsonb
+                  ) as variant_commercial_types
+                from public.products p
+                left join public.categories c on c.id = p.primary_category_id
+                left join public.product_purchase_settings pps on pps.product_id = p.id
+                left join public.product_variants v
+                  on v.product_id = p.id
+                 and v.status = 'active'::public.product_variant_status
+                where p.status = 'active'::public.product_status
+                  and (
+                    pps.commercial_type::text in ('camisa_calcao','regata_calcao','treino_calca','casaco_calca')
+                    or v.commercial_type::text in ('camisa_calcao','regata_calcao','treino_calca','casaco_calca')
+                    or coalesce(c.slug,'') ilike any (array['%treino%','%conjunto%','%kit%'])
+                    or coalesce(c.name,'') ilike any (array['%treino%','%conjunto%','%kit%'])
+                    or coalesce(p.category,'') ilike any (array['%treino%','%conjunto%','%kit%'])
+                  )
+                group by p.slug,p.name,p.category,c.name,c.slug,pps.commercial_type
+                order by p.name
+                limit 150;
+              `,
+            }),
+          });
+          const text = await response.text();
+          if (!response.ok) throw new Error(`HTTP_${response.status}: ${text}`);
+          console.log('STAGE2_ACTIVE_CLASSIFICATIONS=' + text);
+          JS
