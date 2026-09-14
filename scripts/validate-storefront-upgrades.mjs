@@ -29,6 +29,7 @@ const faq = read("src/components/home/FAQ.tsx");
 const productCard = read("src/components/product/ProductCard.tsx");
 const productPage = read("src/routes/product/$id.tsx");
 const purchaseOptions = read("src/components/product/ProductPurchaseOptions.tsx");
+const sizeGuidance = read("src/lib/size-guidance.ts");
 const shippingCalculator = read("src/components/product/ProductShippingCalculator.tsx");
 const gallery = read("src/components/product/ProductGallery.tsx");
 const seo = read("src/components/product/ProductSeo.tsx");
@@ -307,10 +308,14 @@ check(
   !productPage.includes('{ label: "Peso"') && !productPage.includes('{ label: "Dimensões"'),
 );
 check(
-  "produto possui guia de tamanhos sem medidas inventadas",
+  "produto possui orientação de tamanho dinâmica sem medida fixa incorreta",
   purchaseOptions.includes("Ver guia de tamanhos") &&
-    purchaseOptions.includes("Meça de uma axila à outra") &&
-    purchaseOptions.includes("As medidas em centímetros podem variar entre modelos"),
+    purchaseOptions.includes("getSizeGuidance") &&
+    purchaseOptions.includes("data-size-guidance") &&
+    sizeGuidance.includes("GUIDANCE_BY_KIND") &&
+    sizeGuidance.includes("Consulte o guia de tamanhos") &&
+    sizeGuidance.includes("cintura de um short") &&
+    !purchaseOptions.includes("As medidas em centímetros podem variar entre modelos"),
 );
 check(
   "produto possui cálculo de entrega antes do carrinho",
