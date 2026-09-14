@@ -9,6 +9,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useI18n } from "@/i18n";
+import { formatRecommendedSizeTable } from "@/i18n/site-copy";
 import { fetchProductPurchaseConfig, type ProductCommercialType } from "@/lib/product-purchase";
 
 type GuideKey = "torcedor" | "jogador" | "feminino" | "infantil" | "basquete";
@@ -109,10 +111,13 @@ function guideKeyForType(type: ProductCommercialType | null | undefined): GuideK
 }
 
 function GuideTable({ guide }: { guide: SizeGuide }) {
+  const { translateText } = useI18n();
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-[#111] text-white">
       <div className="border-b border-neutral-700 bg-[#191919] px-4 py-4 text-center">
-        <h3 className="text-base font-black uppercase tracking-wide sm:text-lg">{guide.title}</h3>
+        <h3 className="text-base font-black uppercase tracking-wide sm:text-lg">
+          {translateText(guide.title)}
+        </h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] border-collapse text-center text-xs sm:text-sm">
@@ -124,7 +129,7 @@ function GuideTable({ guide }: { guide: SizeGuide }) {
                   scope="col"
                   className="border-b border-r border-neutral-700 px-3 py-3 font-black uppercase last:border-r-0"
                 >
-                  {column}
+                  {translateText(column)}
                 </th>
               ))}
             </tr>
@@ -162,6 +167,7 @@ export function SizeGuideDialog({
   triggerLabel?: string;
   compact?: boolean;
 }) {
+  const { locale, translateText } = useI18n();
   const [open, setOpen] = useState(false);
   const [resolvedType, setResolvedType] = useState<ProductCommercialType | null>(
     commercialType ?? null,
@@ -220,7 +226,7 @@ export function SizeGuideDialog({
           }
         >
           <Ruler className="h-3.5 w-3.5" aria-hidden="true" />
-          {triggerLabel}
+          {translateText(triggerLabel)}
         </button>
       </DialogTrigger>
 
@@ -228,11 +234,12 @@ export function SizeGuideDialog({
         <DialogHeader className="pr-7 text-left">
           <DialogTitle className="flex items-center gap-2 text-xl font-black text-gray-950">
             <Ruler className="h-5 w-5 text-red-600" aria-hidden="true" />
-            Guia de tamanhos
+            {translateText("Guia de tamanhos")}
           </DialogTitle>
           <DialogDescription className="text-sm leading-5">
-            A tabela correspondente a este produto é selecionada automaticamente. Você também pode
-            consultar as outras referências abaixo.
+            {translateText(
+              "A tabela correspondente a este produto é selecionada automaticamente. Você também pode consultar as outras referências abaixo.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -240,8 +247,10 @@ export function SizeGuideDialog({
           <div className="flex items-start gap-2">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-red-600" aria-hidden="true" />
             <p>
-              <strong>Aviso:</strong> as medidas informadas são aproximadas e podem apresentar
-              variação de até 2 a 3 cm, para mais ou para menos, conforme o molde utilizado.
+              <strong>{translateText("Aviso:")}</strong>{" "}
+              {translateText(
+                "as medidas informadas são aproximadas e podem apresentar variação de até 2 a 3 cm, para mais ou para menos, conforme o molde utilizado.",
+              )}
             </p>
           </div>
         </div>
@@ -249,22 +258,26 @@ export function SizeGuideDialog({
         {loadingType ? (
           <div className="flex min-h-24 items-center justify-center gap-2 text-sm font-semibold text-gray-500">
             <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
-            Identificando a tabela deste produto...
+            {translateText("Identificando a tabela deste produto...")}
           </div>
         ) : (
           <>
             {knownUnsupported ? (
               <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs leading-5 text-gray-600">
-                Este tipo de produto não possui uma tabela específica entre as referências
-                fornecidas. As outras tabelas continuam disponíveis para consulta abaixo.
+                {translateText(
+                  "Este tipo de produto não possui uma tabela específica entre as referências fornecidas. As outras tabelas continuam disponíveis para consulta abaixo.",
+                )}
               </div>
             ) : automaticKey ? (
               <p className="text-xs font-semibold text-emerald-700">
-                Tabela recomendada para este produto: {SIZE_GUIDES[automaticKey].title}.
+                {formatRecommendedSizeTable(locale, translateText(SIZE_GUIDES[automaticKey].title))}
               </p>
             ) : null}
 
-            <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Tabelas de medidas">
+            <div
+              className="flex gap-2 overflow-x-auto pb-1"
+              aria-label={translateText("Tabelas de medidas")}
+            >
               {GUIDE_ORDER.map((key) => {
                 const guide = SIZE_GUIDES[key];
                 const selected = activeKey === key;
@@ -279,7 +292,7 @@ export function SizeGuideDialog({
                         : "border-gray-200 bg-white text-gray-700 hover:border-red-300 hover:text-red-700"
                     }`}
                   >
-                    {guide.shortLabel}
+                    {translateText(guide.shortLabel)}
                   </button>
                 );
               })}
@@ -289,14 +302,16 @@ export function SizeGuideDialog({
 
             <div className="grid gap-3 rounded-xl bg-gray-50 p-4 text-xs leading-5 text-gray-600 sm:grid-cols-2">
               <p>
-                <strong className="block text-gray-950">Como comparar</strong>
-                Use uma peça que já veste bem, estenda-a em uma superfície plana e compare as
-                medidas com a tabela.
+                <strong className="block text-gray-950">{translateText("Como comparar")}</strong>
+                {translateText(
+                  "Use uma peça que já veste bem, estenda-a em uma superfície plana e compare as medidas com a tabela.",
+                )}
               </p>
               <p>
-                <strong className="block text-gray-950">Importante</strong>
-                As faixas acima reproduzem as referências fornecidas. Em caso de dúvida entre dois
-                tamanhos, considere o caimento que você prefere.
+                <strong className="block text-gray-950">{translateText("Importante")}</strong>
+                {translateText(
+                  "As faixas acima reproduzem as referências fornecidas. Em caso de dúvida entre dois tamanhos, considere o caimento que você prefere.",
+                )}
               </p>
             </div>
           </>
