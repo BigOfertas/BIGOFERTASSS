@@ -76,7 +76,9 @@ const BestSellers: React.FC<BestSellersProps> = ({ initialData }) => {
           </ProductCarousel>
         </div>
         {error ? (
-          <span className="sr-only">{translateText("Não foi possível carregar os lançamentos.")}</span>
+          <span className="sr-only">
+            {translateText("Não foi possível carregar os lançamentos.")}
+          </span>
         ) : null}
       </div>
     </section>

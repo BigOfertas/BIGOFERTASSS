@@ -10,14 +10,7 @@ import { uiCopy } from "@/i18n/ui-copy";
 import type { CatalogFacetOption, CatalogFacets, CatalogQuery } from "@/lib/catalog";
 
 type FilterKey =
-  | "campeonato"
-  | "liga"
-  | "time"
-  | "category"
-  | "season"
-  | "brand"
-  | "audience"
-  | "commercialType";
+  "campeonato" | "liga" | "time" | "category" | "season" | "brand" | "audience" | "commercialType";
 
 interface ProductFiltersProps {
   facets: CatalogFacets;
@@ -155,15 +148,15 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
 
   const hasFilters = Boolean(
     search.campeonato ||
-      search.liga ||
-      search.time ||
-      search.category ||
-      search.season ||
-      search.brand ||
-      search.audience ||
-      search.commercialType ||
-      search.minPrice !== undefined ||
-      search.maxPrice !== undefined,
+    search.liga ||
+    search.time ||
+    search.category ||
+    search.season ||
+    search.brand ||
+    search.audience ||
+    search.commercialType ||
+    search.minPrice !== undefined ||
+    search.maxPrice !== undefined,
   );
 
   return (

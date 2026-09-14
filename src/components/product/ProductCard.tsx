@@ -102,7 +102,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
       </Link>
 
-      <div data-product-card-body className="flex flex-1 flex-col px-2.5 pb-3 pt-3 sm:px-3.5 sm:pb-4">
+      <div
+        data-product-card-body
+        className="flex flex-1 flex-col px-2.5 pb-3 pt-3 sm:px-3.5 sm:pb-4"
+      >
         <Link
           to="/product/$id"
           params={productParams}

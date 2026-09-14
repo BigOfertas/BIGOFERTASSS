@@ -3,7 +3,7 @@ import type { Locale } from "@/i18n";
 const COPY: Record<Locale, Record<string, string>> = {
   pt: {},
   en: {
-    "INÍCIO": "HOME",
+    INÍCIO: "HOME",
     TORCEDOR: "FAN",
     JOGADOR: "PLAYER",
     FEMININO: "WOMEN",
@@ -47,7 +47,7 @@ const COPY: Record<Locale, Record<string, string>> = {
     Conta: "ACCOUNT",
   },
   es: {
-    "INÍCIO": "INICIO",
+    INÍCIO: "INICIO",
     TORCEDOR: "AFICIONADO",
     JOGADOR: "JUGADOR",
     FEMININO: "MUJER",
@@ -91,7 +91,7 @@ const COPY: Record<Locale, Record<string, string>> = {
     Conta: "CUENTA",
   },
   fr: {
-    "INÍCIO": "ACCUEIL",
+    INÍCIO: "ACCUEIL",
     TORCEDOR: "SUPPORTER",
     JOGADOR: "JOUEUR",
     FEMININO: "FEMME",
@@ -135,7 +135,7 @@ const COPY: Record<Locale, Record<string, string>> = {
     Conta: "COMPTE",
   },
   de: {
-    "INÍCIO": "START",
+    INÍCIO: "START",
     TORCEDOR: "FAN",
     JOGADOR: "SPIELER",
     FEMININO: "DAMEN",
@@ -179,7 +179,7 @@ const COPY: Record<Locale, Record<string, string>> = {
     Conta: "KONTO",
   },
   it: {
-    "INÍCIO": "HOME",
+    INÍCIO: "HOME",
     TORCEDOR: "TIFOSO",
     JOGADOR: "GIOCATORE",
     FEMININO: "DONNA",
@@ -223,7 +223,7 @@ const COPY: Record<Locale, Record<string, string>> = {
     Conta: "ACCOUNT",
   },
   nl: {
-    "INÍCIO": "HOME",
+    INÍCIO: "HOME",
     TORCEDOR: "FAN",
     JOGADOR: "SPELER",
     FEMININO: "DAMES",
@@ -267,7 +267,7 @@ const COPY: Record<Locale, Record<string, string>> = {
     Conta: "ACCOUNT",
   },
   ja: {
-    "INÍCIO": "ホーム",
+    INÍCIO: "ホーム",
     TORCEDOR: "ファン",
     JOGADOR: "選手",
     FEMININO: "レディース",
@@ -311,7 +311,7 @@ const COPY: Record<Locale, Record<string, string>> = {
     Conta: "アカウント",
   },
   ko: {
-    "INÍCIO": "홈",
+    INÍCIO: "홈",
     TORCEDOR: "팬",
     JOGADOR: "선수",
     FEMININO: "여성",
@@ -355,7 +355,7 @@ const COPY: Record<Locale, Record<string, string>> = {
     Conta: "계정",
   },
   zh: {
-    "INÍCIO": "首页",
+    INÍCIO: "首页",
     TORCEDOR: "球迷版",
     JOGADOR: "球员版",
     FEMININO: "女款",
@@ -399,7 +399,7 @@ const COPY: Record<Locale, Record<string, string>> = {
     Conta: "账户",
   },
   ar: {
-    "INÍCIO": "الرئيسية",
+    INÍCIO: "الرئيسية",
     TORCEDOR: "مشجع",
     JOGADOR: "لاعب",
     FEMININO: "نسائي",
@@ -480,9 +480,7 @@ export function translateProductDisplayName(locale: Locale, value: string) {
   let output = value;
   for (const [term, copyKey] of Object.entries(PRODUCT_TERMS)) {
     const replacement =
-      copyKey === "Camisa"
-        ? PRODUCT_TERM_TRANSLATIONS[locale].Camisa
-        : uiCopy(locale, copyKey);
+      copyKey === "Camisa" ? PRODUCT_TERM_TRANSLATIONS[locale].Camisa : uiCopy(locale, copyKey);
     output = output.replace(new RegExp(`\\b${term}\\b`, "giu"), replacement);
   }
   return output;

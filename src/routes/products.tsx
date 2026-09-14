@@ -246,7 +246,8 @@ function ProductsPage() {
               <div className="border-t border-gray-100 bg-white p-4">
                 <SheetClose asChild>
                   <Button className="h-11 w-full bg-red-600 font-black text-white hover:bg-red-700">
-                    {translateText("Ver produtos")} ({catalog?.total?.toLocaleString(numberLocale) ?? ""})
+                    {translateText("Ver produtos")} (
+                    {catalog?.total?.toLocaleString(numberLocale) ?? ""})
                   </Button>
                 </SheetClose>
               </div>
