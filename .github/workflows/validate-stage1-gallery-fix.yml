@@ -27,7 +27,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Check formatting
-        run: bunx prettier --check src/lib/product-images.ts scripts/qa-stage1-gallery-fix.mjs
+        run: bunx prettier --check src/lib/product-images.ts
 
       - name: Lint storefront
         run: bunx eslint . --ignore-pattern scripts/qa-stage1-gallery-fix.mjs
