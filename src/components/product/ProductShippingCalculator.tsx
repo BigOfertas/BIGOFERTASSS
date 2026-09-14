@@ -2,6 +2,8 @@ import { LoaderCircle, MapPin, Truck } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/i18n";
+import { formatShippingTotalNote } from "@/i18n/site-copy";
 import {
   formatPostalCode,
   formatTotalDeliveryLabel,
@@ -21,6 +23,7 @@ export function ProductShippingCalculator({
   productId: string;
   quantity: number;
 }) {
+  const { locale, translateText } = useI18n();
   const [postalCode, setPostalCode] = useState("");
   const [result, setResult] = useState<ShippingQuoteResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,7 +32,7 @@ export function ProductShippingCalculator({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (onlyPostalCodeDigits(postalCode).length !== 8) {
-      setError("Informe um CEP válido com 8 dígitos.");
+      setError(translateText("Informe um CEP válido com 8 dígitos."));
       setResult(null);
       return;
     }
@@ -39,7 +42,9 @@ export function ProductShippingCalculator({
       setResult(await requestProductShippingQuotes(postalCode, productId, quantity));
     } catch (caught) {
       setResult(null);
-      setError(getUserFacingError(caught, "Não foi possível calcular a entrega agora."));
+      setError(
+        translateText(getUserFacingError(caught, "Não foi possível calcular a entrega agora.")),
+      );
     } finally {
       setLoading(false);
     }
@@ -53,16 +58,18 @@ export function ProductShippingCalculator({
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 text-red-600" aria-hidden="true" />
         <h2 id="product-shipping-title" className="text-sm font-black text-gray-950">
-          Calcule a entrega
+          {translateText("Calcule a entrega")}
         </h2>
       </div>
       <p className="mt-1 text-xs leading-5 text-gray-500">
-        Consulte o valor e a previsão total para o seu CEP antes de adicionar ao carrinho.
+        {translateText(
+          "Consulte o valor e a previsão total para o seu CEP antes de adicionar ao carrinho.",
+        )}
       </p>
 
       <form onSubmit={submit} className="mt-3 flex gap-2">
         <label htmlFor="product-postal-code" className="sr-only">
-          CEP
+          {translateText("CEP")}
         </label>
         <input
           id="product-postal-code"
@@ -78,7 +85,11 @@ export function ProductShippingCalculator({
           disabled={loading}
           className="h-10 bg-gray-950 px-4 text-xs font-black text-white hover:bg-red-600"
         >
-          {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : "Calcular"}
+          {loading ? (
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+          ) : (
+            translateText("Calcular")
+          )}
         </Button>
       </form>
 
@@ -98,9 +109,11 @@ export function ProductShippingCalculator({
               <div className="flex items-center gap-3">
                 <Truck className="h-4 w-4 flex-none text-gray-500" aria-hidden="true" />
                 <div className="min-w-0 flex-1">
-                  <strong className="block text-xs text-gray-950">{quote.service}</strong>
+                  <strong className="block text-xs text-gray-950" data-no-i18n="true">
+                    {quote.service}
+                  </strong>
                   <span className="block text-[11px] text-gray-500">
-                    Transporte: {formatTransitLabel(quote)}
+                    {translateText("Transporte")}: {translateText(formatTransitLabel(quote))}
                   </span>
                 </div>
                 <strong className="flex-none text-xs text-gray-950">
@@ -108,13 +121,12 @@ export function ProductShippingCalculator({
                 </strong>
               </div>
               <p className="mt-2 border-t border-gray-100 pt-2 text-[11px] font-bold text-gray-700">
-                Previsão total: {formatTotalDeliveryLabel(result.productionBusinessDays, quote)}
+                {translateText("Previsão total")}: {translateText(formatTotalDeliveryLabel(result.productionBusinessDays, quote))}
               </p>
             </div>
           ))}
           <p className="pt-1 text-[11px] leading-5 text-gray-500">
-            A previsão total soma até {result.productionBusinessDays} dias úteis de preparação ao
-            prazo de transporte informado para o CEP.
+            {formatShippingTotalNote(locale, result.productionBusinessDays)}
           </p>
         </div>
       ) : null}
