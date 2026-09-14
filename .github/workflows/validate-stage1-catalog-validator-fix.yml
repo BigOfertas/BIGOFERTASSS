@@ -1,0 +1,24 @@
+name: Validate Stage 1 Catalog Validator Fix
+
+on:
+  push:
+    branches:
+      - fix-stage1-catalog-validator-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix-stage1-catalog-validator-20260914
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Run catalog foundation validator
+        run: node scripts/validate-catalog-foundation-stage1.mjs
+      - name: Check validator formatting
+        run: npx --yes prettier@3.9.6 --check scripts/validate-catalog-foundation-stage1.mjs
