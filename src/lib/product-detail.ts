@@ -18,6 +18,7 @@ export interface ProductOptionGroup extends ProductOption {
 
 export interface ProductVariantWithValues extends ProductVariant {
   optionValueIds: Record<string, string>;
+  commercial_type?: string | null;
 }
 
 export interface ProductDetailData {
