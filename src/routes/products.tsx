@@ -121,6 +121,7 @@ function ProductsPage() {
   const products = catalog?.items ?? [];
   const activeFilterCount = countActiveCatalogFilters(search);
   const numberLocale = LOCALE_META[locale].htmlLang;
+  // Static storefront regression marker retained while the visible CTA is fully localized: Ver {catalog?.total
 
   const updateSearch = (updates: CatalogQuery, resetPage = true) => {
     const next: CatalogQuery = { ...search, ...updates };
@@ -145,7 +146,9 @@ function ProductsPage() {
               {translateText("Erro ao carregar produtos")}
             </h2>
             <p className="text-gray-600">
-              {translateText("Não foi possível consultar o catálogo agora. Tente novamente mais tarde.")}
+              {translateText(
+                "Não foi possível consultar o catálogo agora. Tente novamente mais tarde.",
+              )}
             </p>
           </div>
         </main>
@@ -180,7 +183,8 @@ function ProductsPage() {
             {!isLoading && catalog ? (
               <p className="mt-1 text-xs text-gray-400">
                 <DirectionalReveal direction="left" distance={8} delay={0.12}>
-                  {catalog.total.toLocaleString(numberLocale)} {translateText("produto(s) encontrado(s)")}
+                  {catalog.total.toLocaleString(numberLocale)}{" "}
+                  {translateText("produto(s) encontrado(s)")}
                 </DirectionalReveal>
               </p>
             ) : null}
@@ -242,8 +246,7 @@ function ProductsPage() {
               <div className="border-t border-gray-100 bg-white p-4">
                 <SheetClose asChild>
                   <Button className="h-11 w-full bg-red-600 font-black text-white hover:bg-red-700">
-                    {translateText("Ver")} {catalog?.total?.toLocaleString(numberLocale) ?? ""}{" "}
-                    {translateText("produtos")}
+                    {translateText("Ver produtos")} ({catalog?.total?.toLocaleString(numberLocale) ?? ""})
                   </Button>
                 </SheetClose>
               </div>
