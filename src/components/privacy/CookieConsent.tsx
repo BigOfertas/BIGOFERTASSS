@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import { useI18n } from "@/i18n";
+
 const CONSENT_COOKIE = "dropbox_cookie_consent_v1";
 const CONSENT_MAX_AGE_SECONDS = 60 * 60 * 24 * 180;
 export const COOKIE_PREFERENCES_EVENT = "dropbox:open-cookie-preferences";
@@ -116,6 +118,7 @@ function PreferenceToggle({
 }
 
 export function CookieConsent() {
+  const { translateText } = useI18n();
   const [visible, setVisible] = useState(false);
   const [customizing, setCustomizing] = useState(false);
   const [hasSavedConsent, setHasSavedConsent] = useState(false);
@@ -164,7 +167,7 @@ export function CookieConsent() {
 
   return (
     <section
-      aria-label="Preferências de cookies"
+      aria-label={translateText("Preferências de cookies")}
       className="fixed inset-x-3 bottom-3 z-[100] mx-auto max-w-3xl rounded-[22px] border border-gray-200 bg-white p-4 shadow-[0_18px_55px_rgba(17,24,39,0.22)] sm:inset-x-5 sm:bottom-5 sm:p-5"
     >
       <div className="mx-auto h-1 w-12 rounded-full bg-red-600" aria-hidden="true" />
@@ -174,11 +177,12 @@ export function CookieConsent() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-base font-black tracking-[-0.02em] text-gray-950">
-                Escolha suas preferências
+                {translateText("Escolha suas preferências")}
               </h2>
               <p className="mt-1 text-xs leading-relaxed text-gray-500">
-                Os recursos necessários ficam sempre ativos. Os demais só ficam autorizados se você
-                permitir.
+                {translateText(
+                  "Os recursos necessários ficam sempre ativos. Os demais só ficam autorizados se você permitir.",
+                )}
               </p>
             </div>
             {hasSavedConsent ? (
@@ -187,7 +191,7 @@ export function CookieConsent() {
                 onClick={() => setVisible(false)}
                 className="flex-none rounded-xl border border-gray-200 px-3 py-2 text-xs font-bold text-gray-600 hover:bg-gray-50"
               >
-                Fechar
+                {translateText("Fechar")}
               </button>
             ) : null}
           </div>
@@ -196,29 +200,37 @@ export function CookieConsent() {
             <PreferenceToggle
               checked
               disabled
-              label="Necessários"
-              description="Mantêm recursos essenciais do site, como segurança, sessão, carrinho e registro da sua escolha de cookies."
+              label={translateText("Necessários")}
+              description={translateText(
+                "Mantêm recursos essenciais do site, como segurança, sessão, carrinho e registro da sua escolha de cookies.",
+              )}
             />
             <PreferenceToggle
               checked={preferences.preferences}
-              label="Preferências"
-              description="Permitem lembrar escolhas de experiência e exibição quando esses recursos estiverem disponíveis."
+              label={translateText("Preferências")}
+              description={translateText(
+                "Permitem lembrar escolhas de experiência e exibição quando esses recursos estiverem disponíveis.",
+              )}
               onChange={(checked) =>
                 setPreferences((current) => ({ ...current, preferences: checked }))
               }
             />
             <PreferenceToggle
               checked={preferences.analytics}
-              label="Análise"
-              description="Autoriza métricas de uso e desempenho caso ferramentas de análise sejam ativadas no site."
+              label={translateText("Análise")}
+              description={translateText(
+                "Autoriza métricas de uso e desempenho caso ferramentas de análise sejam ativadas no site.",
+              )}
               onChange={(checked) =>
                 setPreferences((current) => ({ ...current, analytics: checked }))
               }
             />
             <PreferenceToggle
               checked={preferences.marketing}
-              label="Marketing"
-              description="Autoriza recursos de medição promocional caso ferramentas desse tipo sejam ativadas no futuro."
+              label={translateText("Marketing")}
+              description={translateText(
+                "Autoriza recursos de medição promocional caso ferramentas desse tipo sejam ativadas no futuro.",
+              )}
               onChange={(checked) =>
                 setPreferences((current) => ({ ...current, marketing: checked }))
               }
@@ -231,21 +243,21 @@ export function CookieConsent() {
               onClick={() => save(REJECTED_OPTIONAL)}
               className="h-11 rounded-xl border border-gray-300 px-4 text-sm font-extrabold text-gray-800 transition-colors hover:bg-gray-50"
             >
-              Recusar opcionais
+              {translateText("Recusar opcionais")}
             </button>
             <button
               type="button"
               onClick={() => save(preferences)}
               className="h-11 rounded-xl bg-gray-950 px-4 text-sm font-extrabold text-white transition-colors hover:bg-gray-800"
             >
-              Salvar escolhas
+              {translateText("Salvar escolhas")}
             </button>
             <button
               type="button"
               onClick={() => save(ACCEPTED_OPTIONAL)}
               className="h-11 rounded-xl bg-red-600 px-4 text-sm font-extrabold text-white transition-colors hover:bg-red-700"
             >
-              Aceitar todos
+              {translateText("Aceitar todos")}
             </button>
           </div>
         </div>
@@ -253,16 +265,17 @@ export function CookieConsent() {
         <div className="mt-3 sm:flex sm:items-center sm:gap-5">
           <div className="min-w-0 flex-1">
             <h2 className="text-base font-black tracking-[-0.02em] text-gray-950">
-              Sua privacidade importa
+              {translateText("Sua privacidade importa")}
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-gray-500 sm:text-sm">
-              Usamos armazenamento necessário para o funcionamento da loja. Você pode aceitar,
-              recusar os recursos opcionais ou escolher suas preferências. Veja nossa{" "}
+              {translateText(
+                "Usamos armazenamento necessário para o funcionamento da loja. Você pode aceitar, recusar os recursos opcionais ou escolher suas preferências. Veja nossa",
+              )}{" "}
               <Link
                 to="/privacidade"
                 className="font-bold text-gray-900 underline underline-offset-2"
               >
-                Política de Privacidade
+                {translateText("Política de Privacidade")}
               </Link>
               .
             </p>
@@ -274,21 +287,21 @@ export function CookieConsent() {
               onClick={() => save(REJECTED_OPTIONAL)}
               className="h-10 rounded-xl border border-gray-300 px-3 text-xs font-extrabold text-gray-800 transition-colors hover:bg-gray-50"
             >
-              Recusar
+              {translateText("Recusar")}
             </button>
             <button
               type="button"
               onClick={() => setCustomizing(true)}
               className="h-10 rounded-xl bg-gray-950 px-3 text-xs font-extrabold text-white transition-colors hover:bg-gray-800"
             >
-              Escolher
+              {translateText("Escolher")}
             </button>
             <button
               type="button"
               onClick={() => save(ACCEPTED_OPTIONAL)}
               className="col-span-2 h-10 rounded-xl bg-red-600 px-3 text-xs font-extrabold text-white transition-colors hover:bg-red-700 sm:col-span-1"
             >
-              Aceitar todos
+              {translateText("Aceitar todos")}
             </button>
           </div>
         </div>
