@@ -56,9 +56,7 @@ function labelFromCommercialType(value: string | null | undefined) {
   if (!value || value === "other") return null;
   return (
     COMMERCIAL_TYPE_LABELS[value] ??
-    value
-      .replace(/[-_]+/g, " ")
-      .replace(/^./, (char) => char.toUpperCase())
+    value.replace(/[-_]+/g, " ").replace(/^./, (char) => char.toUpperCase())
   );
 }
 
