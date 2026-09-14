@@ -119,11 +119,6 @@ export function getVariantEffectivePrice(product: Product, variant: ProductVaria
 
 export function getDefaultProductVariant(variants: ProductVariantWithValues[]) {
   if (variants.length === 0) return null;
-  if (variants.length === 1) return variants[0] ?? null;
-
-  const hasRealChoice = variants.some((variant) => Object.keys(variant.optionValueIds).length > 0);
-  if (hasRealChoice) return null;
-
   return variants.find((variant) => variant.is_default) ?? variants[0] ?? null;
 }
 
