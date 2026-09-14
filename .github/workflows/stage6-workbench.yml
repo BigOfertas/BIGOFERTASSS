@@ -35,14 +35,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p .stage6-snapshot
-          cp package.json bun.lock .stage6-snapshot/
-          cp -R src scripts public supabase .github vite*.ts tsconfig*.json eslint.config.js components.json .stage6-snapshot/ 2>/dev/null || true
+          rm -rf stage6-snapshot
+          mkdir -p stage6-snapshot
+          cp package.json bun.lock stage6-snapshot/
+          cp -R src scripts public supabase .github vite*.ts tsconfig*.json eslint.config.js components.json stage6-snapshot/ 2>/dev/null || true
 
       - name: Upload Stage 6 snapshot
         uses: actions/upload-artifact@v4
         with:
           name: stage6-source-snapshot
-          path: .stage6-snapshot
+          path: stage6-snapshot
           if-no-files-found: error
           retention-days: 1
