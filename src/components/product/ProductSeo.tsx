@@ -135,8 +135,20 @@ export default function ProductSeo({
       );
     }
 
-    // O canonical é responsabilidade exclusiva do head da rota (`buildProductHead`).
-    // Mantê-lo também neste efeito pode duplicar a tag durante a hidratação.
+    // A build SPA da Hostinger prerenderiza a home como index.html. Em um hard refresh
+    // de /product/... esse shell pode chegar com o canonical da home antes do router
+    // aplicar o canonical correto do produto. O head da rota continua sendo a fonte de
+    // verdade; aqui apenas removemos canonicals stale de outra URL.
+    const canonicalLinks = Array.from(
+      document.head.querySelectorAll<HTMLLinkElement>('link[rel="canonical"]'),
+    );
+    const productCanonical = canonicalLinks.find((link) => link.href === canonicalUrl);
+    if (productCanonical) {
+      for (const link of canonicalLinks) {
+        if (link !== productCanonical) link.remove();
+      }
+    }
+
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "Product",
