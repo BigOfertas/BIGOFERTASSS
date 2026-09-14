@@ -114,6 +114,9 @@ check(
 
 const expectedNav = [
   "INÍCIO",
+  "TORCEDOR",
+  "JOGADOR",
+  "FEMININO",
   "KIDS",
   "KITS DE TREINO",
   "SHORTS",
@@ -124,7 +127,6 @@ const expectedNav = [
 ];
 const forbiddenNav = [
   "COPA DO MUNDO",
-  "JOGADOR",
   "KIT REGATA",
   "CONJUNTOS",
   "INFANTIL",
