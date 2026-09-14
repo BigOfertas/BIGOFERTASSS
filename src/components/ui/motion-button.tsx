@@ -2,10 +2,10 @@
 
 import { FC, type ButtonHTMLAttributes } from 'react'
 import { ArrowRight } from 'lucide-react'
-import { clsx } from 'clsx'
+import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
-function cn(...inputs: any[]) {
+function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
