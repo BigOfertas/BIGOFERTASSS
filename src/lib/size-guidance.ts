@@ -28,7 +28,8 @@ export const SIZE_GUIDANCE_NOTE =
   "As medidas podem variar levemente entre modelos. O tamanho não altera o preço do produto.";
 
 const GUIDANCE_BY_KIND: Record<SizeGuidanceKind, string> = {
-  shirt: "Meça de uma axila à outra em uma camisa que já veste bem e compare com o guia de tamanhos.",
+  shirt:
+    "Meça de uma axila à outra em uma camisa que já veste bem e compare com o guia de tamanhos.",
   basketball:
     "Meça de uma axila à outra em uma regata ou camiseta que já veste bem e compare com o guia.",
   shorts:
@@ -44,7 +45,8 @@ const GUIDANCE_BY_KIND: Record<SizeGuidanceKind, string> = {
     "Compare a largura de uma regata que veste bem e a cintura de um calção confortável.",
   "training-pants":
     "Compare a largura da parte de cima na região do peito e a cintura de uma calça que já veste bem.",
-  "jacket-pants": "Compare a largura de um casaco que veste bem e a cintura de uma calça confortável.",
+  "jacket-pants":
+    "Compare a largura de um casaco que veste bem e a cintura de uma calça confortável.",
   fallback:
     "Consulte o guia de tamanhos e compare as medidas com uma peça semelhante que já veste bem.",
 };
@@ -59,10 +61,12 @@ function normalizeStructuredValue(value: string | null | undefined) {
 }
 
 function hasWord(value: string, word: string) {
-  return (` ${value} `).includes(` ${word} `);
+  return ` ${value} `.includes(` ${word} `);
 }
 
-function kindFromCommercialType(commercialType: string | null | undefined): SizeGuidanceKind | null {
+function kindFromCommercialType(
+  commercialType: string | null | undefined,
+): SizeGuidanceKind | null {
   switch (normalizeStructuredValue(commercialType).replace(/ /g, "_")) {
     case "torcedor":
     case "jogador":
