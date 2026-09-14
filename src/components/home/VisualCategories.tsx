@@ -51,6 +51,7 @@ const MANUAL_INTERACTION_SETTLE_MS = 700;
 
 export default function VisualCategories() {
   const { data } = useStorefrontPersonalization();
+  const carouselAreaRef = useRef<HTMLDivElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const resumeTimerRef = useRef<number | null>(null);
@@ -89,7 +90,12 @@ export default function VisualCategories() {
   const scheduleResumeAfterInteraction = useCallback(
     (delayMs = MANUAL_INTERACTION_SETTLE_MS) => {
       clearResumeTimer();
-      if (prefersReducedMotionRef.current || isHoverPausedRef.current) return;
+      if (prefersReducedMotionRef.current) {
+        isPointerInteractingRef.current = false;
+        normalizeLoopPosition();
+        return;
+      }
+      if (isHoverPausedRef.current) return;
 
       resumeTimerRef.current = window.setTimeout(() => {
         resumeTimerRef.current = null;
@@ -121,8 +127,9 @@ export default function VisualCategories() {
   );
 
   useEffect(() => {
+    const carouselArea = carouselAreaRef.current;
     const scroller = scrollerRef.current;
-    if (!scroller) return;
+    if (!carouselArea || !scroller) return;
 
     const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const hoverQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -205,8 +212,8 @@ export default function VisualCategories() {
     const resizeObserver = new ResizeObserver(measureLoop);
     resizeObserver.observe(scroller);
     reducedMotionQuery.addEventListener("change", syncReducedMotion);
-    scroller.addEventListener("mouseenter", handleMouseEnter);
-    scroller.addEventListener("mouseleave", handleMouseLeave);
+    carouselArea.addEventListener("mouseenter", handleMouseEnter);
+    carouselArea.addEventListener("mouseleave", handleMouseLeave);
     scroller.addEventListener("pointerdown", handlePointerDown);
     scroller.addEventListener("pointerup", handlePointerEnd);
     scroller.addEventListener("pointercancel", handlePointerEnd);
@@ -219,8 +226,8 @@ export default function VisualCategories() {
       clearResumeTimer();
       resizeObserver.disconnect();
       reducedMotionQuery.removeEventListener("change", syncReducedMotion);
-      scroller.removeEventListener("mouseenter", handleMouseEnter);
-      scroller.removeEventListener("mouseleave", handleMouseLeave);
+      carouselArea.removeEventListener("mouseenter", handleMouseEnter);
+      carouselArea.removeEventListener("mouseleave", handleMouseLeave);
       scroller.removeEventListener("pointerdown", handlePointerDown);
       scroller.removeEventListener("pointerup", handlePointerEnd);
       scroller.removeEventListener("pointercancel", handlePointerEnd);
@@ -243,7 +250,7 @@ export default function VisualCategories() {
           </h2>
         </div>
 
-        <div className="relative">
+        <div ref={carouselAreaRef} className="relative">
           <button
             type="button"
             onClick={() => moveOneCard(-1)}
