@@ -11,6 +11,8 @@ const fail = (message) => {
 const locales = ["en", "es", "fr", "de", "it", "nl", "ja", "ko", "zh", "ar"];
 const i18n = read("src/i18n/index.tsx");
 const criticalUi = read("src/i18n/ui-copy.ts");
+const criticalFallbacks = read("src/i18n/critical-copy.ts");
+const slideUpReveal = read("src/components/ui/slide-up-reveal.tsx");
 const rootRoute = read("src/routes/__root.tsx");
 const header = read("src/components/layout/Header.tsx");
 const categoryNav = read("src/components/layout/CategoryNav.tsx");
@@ -51,8 +53,52 @@ for (const token of [
   'import.meta.glob("./generated/*.json"',
   "MutationObserver",
   'ar: { htmlLang: "ar"',
+  "criticalCopy(locale, compact)",
+  "isUsableGeneratedTranslation",
 ]) {
   if (!i18n.includes(token)) fail(`i18n architecture missing ${token}`);
+}
+
+for (const phrase of [
+  "Monte seu pedido",
+  "Encontre seu time",
+  "Compre por liga",
+  "Perguntas frequentes",
+  "Antes de comprar",
+  "Tamanho",
+  "Ver guia de tamanhos",
+  "Personalizar",
+  "Patches",
+  "Frase personalizada",
+  "Nome e número",
+  "Calcule a entrega",
+  "Adicionar ao carrinho",
+  "Atendimento",
+  "Envio e produção",
+  "Trocas e devoluções",
+  "Termos de compra",
+  "Privacidade",
+  "Finalizar compra",
+  "Resumo do pedido",
+  "Entrar",
+  "Criar conta",
+  "Pedidos",
+  "Endereços",
+  "Administração",
+  "Financeiro",
+]) {
+  if (!criticalFallbacks.includes(`\"${phrase}\"`))
+    fail(`critical deterministic copy missing: ${phrase}`);
+}
+
+for (const locale of locales) {
+  if (!criticalFallbacks.includes(`\"${locale}\"`))
+    fail(`critical deterministic copy missing locale: ${locale}`);
+}
+
+for (const token of ["useI18n", "translateText(sourceText)", "const text = useMemo"]) {
+  if (!slideUpReveal.includes(token))
+    fail(`animated copy must be translated before splitting: ${token}`);
 }
 
 for (const token of [
@@ -162,6 +208,6 @@ for (const forbiddenRuntimeApi of [
 
 if (!process.exitCode) {
   console.log(
-    "STAGE6_I18N_OK locales=11 runtime_translation_api=none rtl=enabled theme=persistent motion_button=enabled critical_storefront_copy=explicit dark_product_surfaces=covered",
+    "STAGE6_I18N_OK locales=11 runtime_translation_api=none rtl=enabled theme=persistent motion_button=enabled critical_storefront_copy=explicit pre_split_translation=enabled broken_catalog_guard=enabled",
   );
 }
