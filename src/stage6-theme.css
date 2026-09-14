@@ -1,61 +1,112 @@
 /* Stage 6: dark-mode compatibility for storefront, account, admin and finance legacy utilities. */
 .dark {
   color-scheme: dark;
+  --stage6-dark-bg: #090a0d;
+  --stage6-dark-surface: #12141a;
+  --stage6-dark-surface-2: #171a21;
+  --stage6-dark-surface-3: #1d212a;
+  --stage6-dark-border: rgba(255, 255, 255, 0.1);
+  --stage6-dark-muted: #aeb6c3;
 }
 
 .dark body {
-  background-color: var(--background);
+  background-color: var(--stage6-dark-bg);
   background-image:
-    radial-gradient(circle at 8% 2%, rgba(230, 0, 0, 0.13), transparent 23rem),
-    radial-gradient(circle at 92% 14%, rgba(59, 130, 246, 0.08), transparent 29rem),
-    linear-gradient(180deg, #090d16, #111827 62%, #0b1019);
+    radial-gradient(circle at 8% 0%, rgba(230, 0, 0, 0.1), transparent 26rem),
+    radial-gradient(circle at 92% 8%, rgba(255, 255, 255, 0.025), transparent 30rem),
+    linear-gradient(180deg, #08090c 0%, #0c0e13 52%, #090a0d 100%);
+  color: #f5f7fa;
 }
 
 .dark .glass-card,
 .dark .glass-panel {
-  border-color: rgba(255, 255, 255, 0.1);
-  background:
-    linear-gradient(
-      145deg,
-      rgba(30, 41, 59, 0.95),
-      rgba(15, 23, 42, 0.82) 48%,
-      rgba(17, 24, 39, 0.92)
-    ),
-    radial-gradient(circle at 12% -8%, rgba(148, 163, 184, 0.16), transparent 38%);
+  border-color: var(--stage6-dark-border) !important;
+  background: linear-gradient(145deg, rgba(27, 30, 38, 0.98), rgba(16, 18, 24, 0.96)) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.03),
-    var(--glass-shadow-soft);
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 14px 34px rgba(0, 0, 0, 0.28) !important;
 }
 
 .dark .glass-header {
-  border-bottom-color: rgba(255, 255, 255, 0.09);
-  background: rgba(10, 15, 25, 0.92);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.26);
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(8, 10, 14, 0.96) !important;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.34) !important;
+}
+
+.dark .glass-header nav[aria-label="Categorias"] {
+  border-top-color: rgba(255, 255, 255, 0.075) !important;
+  background: linear-gradient(180deg, #12141a, #0e1015) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 8px 18px rgba(0, 0, 0, 0.22) !important;
 }
 
 .dark .glass-input,
 .dark input,
 .dark textarea,
 .dark select {
-  border-color: rgba(148, 163, 184, 0.24);
-  background-color: rgba(15, 23, 42, 0.82);
-  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background-color: var(--stage6-dark-surface-2) !important;
+  color: #f7f8fa !important;
+}
+
+.dark .glass-input,
+.dark .glass-header .glass-input {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  background: linear-gradient(180deg, #171a20, #111319) !important;
+  color: #f7f8fa !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 10px 26px rgba(0, 0, 0, 0.24) !important;
+}
+
+.dark .glass-input:hover,
+.dark .glass-header .glass-input:hover {
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  background: #171a20 !important;
+}
+
+.dark .glass-input:focus,
+.dark .glass-input:focus-visible,
+.dark .glass-header .glass-input:focus,
+.dark .glass-header .glass-input:focus-visible {
+  border-color: rgba(239, 68, 68, 0.58) !important;
+  background: #171a20 !important;
+  box-shadow:
+    0 0 0 3px rgba(220, 38, 38, 0.12),
+    0 12px 28px rgba(0, 0, 0, 0.28) !important;
 }
 
 .dark input::placeholder,
-.dark textarea::placeholder {
-  color: #94a3b8;
+.dark textarea::placeholder,
+.dark .glass-header .glass-input::placeholder {
+  color: #8d96a5 !important;
+  opacity: 1;
+}
+
+.dark .glass-header form[role="search"] button {
+  color: #b8c0cc !important;
+}
+
+.dark .glass-header form[role="search"]:focus-within button {
+  color: #ef4444 !important;
 }
 
 .dark .brand-lockup,
 .dark .header-action {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: linear-gradient(145deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.86));
-  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.095) !important;
+  background: linear-gradient(145deg, #171a20, #101218) !important;
+  color: #f8fafc !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 8px 22px rgba(0, 0, 0, 0.22);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 22px rgba(0, 0, 0, 0.24) !important;
+}
+
+.dark .header-action:hover {
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 13px 28px rgba(0, 0, 0, 0.32) !important;
 }
 
 .dark .display-title,
@@ -64,16 +115,64 @@
 }
 
 .dark .section-copy {
-  color: #cbd5e1;
+  color: #c5ccd6;
 }
 
 .dark .ambient-band {
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.07) !important;
   background:
-    radial-gradient(circle at 18% 30%, rgba(230, 0, 0, 0.18), transparent 28%),
-    radial-gradient(circle at 82% 46%, rgba(59, 130, 246, 0.11), transparent 30%),
-    linear-gradient(120deg, rgba(15, 23, 42, 0.92), rgba(17, 24, 39, 0.96));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    radial-gradient(circle at 18% 30%, rgba(230, 0, 0, 0.12), transparent 30%),
+    linear-gradient(120deg, #111319, #171920) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+}
+
+/*
+ * Do not leave legacy white gradients sitting above a dark background.
+ * These selectors intentionally use the background shorthand because older
+ * storefront layers also use background-image, not only background-color.
+ */
+.dark .storefront-showcase,
+.dark .league-switcher,
+.dark [data-product-showcase] {
+  border-color: rgba(255, 255, 255, 0.09) !important;
+  background: linear-gradient(145deg, #14171d, #0f1116) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 18px 46px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark [data-product-card] {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: var(--stage6-dark-surface-2) !important;
+  color: #f5f7fa !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 10px 24px rgba(0, 0, 0, 0.24) !important;
+}
+
+.dark [data-product-card]:hover {
+  border-color: rgba(239, 68, 68, 0.28) !important;
+  background: #1a1d24 !important;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.36) !important;
+}
+
+.dark [data-product-card-body] {
+  background: transparent !important;
+}
+
+.dark [data-product-carousel-dot] {
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  background: transparent !important;
+}
+
+.dark [data-product-carousel-dot][aria-current="page"] {
+  border-color: #ef4444 !important;
+  background: #ef4444 !important;
+}
+
+.dark [data-product-carousel-dot]:hover {
+  border-color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12) !important;
 }
 
 .dark .bg-white,
@@ -84,42 +183,41 @@
 .dark .bg-white\/60,
 .dark .bg-gray-50,
 .dark .bg-gray-100 {
-  background-color: #111827 !important;
+  background-color: var(--stage6-dark-surface) !important;
 }
 
 .dark .bg-gray-200 {
-  background-color: #1f2937 !important;
+  background-color: var(--stage6-dark-surface-3) !important;
 }
 
 .dark .text-gray-950,
 .dark .text-gray-900,
 .dark .text-gray-800,
 .dark .text-gray-700 {
-  color: #f8fafc !important;
+  color: #f5f7fa !important;
 }
 
 .dark .text-gray-600,
 .dark .text-gray-500 {
-  color: #cbd5e1 !important;
+  color: #c2c9d3 !important;
 }
 
 .dark .text-gray-400 {
-  color: #94a3b8 !important;
+  color: #919baa !important;
 }
 
 .dark .border-white,
 .dark .border-gray-100,
 .dark .border-gray-200,
 .dark .border-gray-300 {
-  border-color: rgba(148, 163, 184, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.11) !important;
 }
 
 .dark .hover\:bg-gray-50:hover,
 .dark .hover\:bg-gray-100:hover {
-  background-color: #1f2937 !important;
+  background-color: var(--stage6-dark-surface-3) !important;
 }
 
-.dark [data-product-card],
 .dark [role="dialog"],
 .dark [data-radix-popper-content-wrapper] > * {
   color: var(--foreground);
@@ -128,6 +226,16 @@
 .dark [data-motion-button] .icon svg,
 .dark [data-motion-button]:hover .button-text {
   color: #fff !important;
+}
+
+.dark select option {
+  background: #151820;
+  color: #f7f8fa;
+}
+
+.dark input[type="checkbox"],
+.dark [role="checkbox"] {
+  border-color: rgba(255, 255, 255, 0.22) !important;
 }
 
 html[dir="rtl"] body {
@@ -146,15 +254,15 @@ html[dir="rtl"] [data-ltr] {
 @media (max-width: 767px) {
   .dark body {
     background-image:
-      radial-gradient(circle at 12% 0%, rgba(230, 0, 0, 0.11), transparent 16rem),
-      linear-gradient(180deg, #090d16, #111827);
+      radial-gradient(circle at 12% 0%, rgba(230, 0, 0, 0.09), transparent 18rem),
+      linear-gradient(180deg, #08090c, #0c0e13) !important;
   }
 
   .dark .glass-card,
   .dark .glass-panel,
   .dark .glass-header,
   .dark .glass-input {
-    background-color: rgba(15, 23, 42, 0.97);
+    background-color: rgba(14, 16, 21, 0.98) !important;
   }
 }
 
@@ -163,6 +271,6 @@ html[dir="rtl"] [data-ltr] {
   .dark .glass-panel,
   .dark .glass-header,
   .dark .glass-input {
-    background: rgba(15, 23, 42, 0.98);
+    background: #111318 !important;
   }
 }

@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 
 import { ProductQuickAdd } from "@/components/product/ProductQuickAdd";
 import { BRAND } from "@/config/brand";
+import { useI18n } from "@/i18n";
+import { translateProductDisplayName, uiCopy } from "@/i18n/ui-copy";
 
 interface ProductCardProps {
   id: string;
@@ -18,14 +20,14 @@ interface ProductCardProps {
   priority?: boolean;
 }
 
-const COMMERCIAL_TYPE_LABELS: Record<string, string> = {
-  torcedor: "Torcedor",
-  feminino: "Feminino",
-  jogador: "Jogador",
-  retro: "Retrô",
-  infantil: "Kids",
-  calcao: "Shorts / calção",
-  basquete: "Basquete",
+const COMMERCIAL_TYPE_COPY_KEYS: Record<string, string> = {
+  torcedor: "TORCEDOR",
+  feminino: "FEMININO",
+  jogador: "JOGADOR",
+  retro: "CAMISAS RETRÔ",
+  infantil: "KIDS",
+  calcao: "SHORTS",
+  basquete: "BASQUETE / NBA",
 };
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -41,6 +43,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   className = "",
   priority = false,
 }) => {
+  const { locale } = useI18n();
   const [imageFailed, setImageFailed] = React.useState(false);
   const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
   const hasPromotion =
@@ -51,8 +54,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const formattedPrice = currency.format(hasPromotion ? promotionalPrice : price);
   const formattedOriginalPrice = hasPromotion ? currency.format(price) : null;
   const showImage = Boolean(imageUrl) && !imageFailed;
-  const commercialLabel = commercialType ? COMMERCIAL_TYPE_LABELS[commercialType] : null;
+  const commercialCopyKey = commercialType ? COMMERCIAL_TYPE_COPY_KEYS[commercialType] : null;
+  const commercialLabel = commercialCopyKey ? uiCopy(locale, commercialCopyKey) : null;
   const metadata = [commercialLabel, time?.trim() || null].filter(Boolean).join(" · ");
+  const localizedName = translateProductDisplayName(locale, name);
   const productParams = { id: slug || id };
 
   return (
@@ -63,13 +68,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <Link
         to="/product/$id"
         params={productParams}
-        aria-label={`Ver ${name}`}
+        aria-label={localizedName}
         className="block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-500/40"
       >
         <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-gray-50">
           {hasPromotion ? (
             <span className="absolute left-2.5 top-2.5 z-[30] rounded-full bg-red-600 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white sm:text-[10px]">
-              Oferta
+              {uiCopy(locale, "Oferta")}
             </span>
           ) : null}
 
@@ -77,7 +82,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <img
               src={imageUrl ?? undefined}
               srcSet={imageSrcSet ?? undefined}
-              alt={name}
+              alt={localizedName}
               loading={priority ? "eager" : "lazy"}
               fetchPriority={priority ? "high" : "auto"}
               decoding="async"
@@ -97,7 +102,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col px-2.5 pb-3 pt-3 sm:px-3.5 sm:pb-4">
+      <div
+        data-product-card-body
+        className="flex flex-1 flex-col px-2.5 pb-3 pt-3 sm:px-3.5 sm:pb-4"
+      >
         <Link
           to="/product/$id"
           params={productParams}
@@ -110,7 +118,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           ) : null}
 
           <h2 className="line-clamp-2 min-h-[30px] text-[12px] font-bold leading-[1.3] tracking-[-0.015em] text-gray-900 transition-colors group-hover:text-red-600 sm:min-h-[38px] sm:text-[14px]">
-            {name}
+            {localizedName}
           </h2>
         </Link>
 

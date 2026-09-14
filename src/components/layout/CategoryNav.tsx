@@ -2,6 +2,8 @@ import React from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 
 import "@/header.css";
+import { useI18n } from "@/i18n";
+import { uiCopy } from "@/i18n/ui-copy";
 import { matchesFilter, type ProductSearchFilters } from "@/lib/products";
 
 interface CategoryLink {
@@ -63,6 +65,7 @@ interface CategoryNavProps {
 
 const CategoryNav: React.FC<CategoryNavProps> = ({ mobile = false, onNavigate }) => {
   const location = useLocation();
+  const { locale } = useI18n();
   const currentSearch = location.search as ProductSearchFilters;
 
   const handleHomeClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -129,12 +132,13 @@ const CategoryNav: React.FC<CategoryNavProps> = ({ mobile = false, onNavigate })
                 }`}
               />
             );
+            const label = uiCopy(locale, category.name);
 
             return (
               <li key={category.name} className="flex-shrink-0">
                 {category.href === "/" ? (
                   <Link to="/" onClick={handleHomeClick} className={className}>
-                    {category.name}
+                    {label}
                     {underline}
                   </Link>
                 ) : (
@@ -144,7 +148,7 @@ const CategoryNav: React.FC<CategoryNavProps> = ({ mobile = false, onNavigate })
                     onClick={onNavigate}
                     className={className}
                   >
-                    {category.name}
+                    {label}
                     {underline}
                   </Link>
                 )}

@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/i18n";
+import { uiCopy } from "@/i18n/ui-copy";
 import type { CatalogFacetOption, CatalogFacets, CatalogQuery } from "@/lib/catalog";
 
 type FilterKey =
@@ -17,6 +19,7 @@ interface ProductFiltersProps {
 
 const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
   const navigate = useNavigate();
+  const { locale, translateText } = useI18n();
   const [minPrice, setMinPrice] = React.useState(search.minPrice?.toString() ?? "");
   const [maxPrice, setMaxPrice] = React.useState(search.maxPrice?.toString() ?? "");
 
@@ -94,27 +97,30 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
   }) => (
     <div className="mb-7">
       <h3 className="mb-3 flex items-center justify-between text-sm font-black uppercase tracking-wider text-gray-900">
-        {title}
+        {uiCopy(locale, title)}
         {currentValue ? (
           <button
             type="button"
             onClick={() => handleFilterChange(filterKey, currentValue)}
             className="text-[10px] text-red-600 transition-colors hover:text-black"
           >
-            Limpar
+            {uiCopy(locale, "Limpar")}
           </button>
         ) : null}
       </h3>
 
       {!items.length && emptyMessage ? (
         <p className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-3 text-xs text-gray-500">
-          {emptyMessage}
+          {translateText(emptyMessage)}
         </p>
       ) : (
         <div className="max-h-52 space-y-2.5 overflow-y-auto pr-1">
           {items.map((item) => {
             const id = `${filterKey}-${item.value}`;
             const checked = currentValue === item.value;
+            const shouldTranslateLabel = ["category", "commercialType", "audience"].includes(
+              filterKey,
+            );
             return (
               <div key={item.value} className="flex items-center space-x-3">
                 <Checkbox
@@ -129,7 +135,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
                     checked ? "font-bold text-red-600" : "text-gray-600"
                   }`}
                 >
-                  <span>{item.label}</span>
+                  <span>{shouldTranslateLabel ? translateText(item.label) : item.label}</span>
                   <span className="text-[10px] font-normal text-gray-400">{item.count}</span>
                 </label>
               </div>
@@ -156,7 +162,9 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
   return (
     <div className="flex flex-col">
       <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-2">
-        <h2 className="text-lg font-black uppercase tracking-tight text-gray-900">Filtros</h2>
+        <h2 className="text-lg font-black uppercase tracking-tight text-gray-900">
+          {uiCopy(locale, "Filtros")}
+        </h2>
         {hasFilters ? (
           <Button
             variant="ghost"
@@ -165,7 +173,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
             className="flex h-7 items-center gap-1 px-2 text-[10px] font-bold uppercase text-red-600 hover:bg-red-600 hover:text-white"
           >
             <X className="h-3 w-3" />
-            Limpar tudo
+            {uiCopy(locale, "Limpar tudo")}
           </Button>
         ) : null}
       </div>
@@ -227,30 +235,32 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
 
       <div className="mb-8">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-sm font-black uppercase tracking-wider text-gray-900">Preço</h3>
+          <h3 className="text-sm font-black uppercase tracking-wider text-gray-900">
+            {uiCopy(locale, "Preço")}
+          </h3>
           {search.minPrice !== undefined || search.maxPrice !== undefined ? (
             <button
               type="button"
               onClick={clearPrice}
               className="text-[10px] text-red-600 hover:text-black"
             >
-              Limpar
+              {uiCopy(locale, "Limpar")}
             </button>
           ) : null}
         </div>
         <div className="grid grid-cols-2 gap-2">
           <Input
             inputMode="decimal"
-            aria-label="Preço mínimo"
-            placeholder={`Mín. ${Math.floor(facets.priceMin)}`}
+            aria-label={translateText("Preço mínimo")}
+            placeholder={`${translateText("Mín.")} ${Math.floor(facets.priceMin)}`}
             value={minPrice}
             onChange={(event) => setMinPrice(event.target.value)}
             className="h-9 text-xs"
           />
           <Input
             inputMode="decimal"
-            aria-label="Preço máximo"
-            placeholder={`Máx. ${Math.ceil(facets.priceMax)}`}
+            aria-label={translateText("Preço máximo")}
+            placeholder={`${translateText("Máx.")} ${Math.ceil(facets.priceMax)}`}
             value={maxPrice}
             onChange={(event) => setMaxPrice(event.target.value)}
             className="h-9 text-xs"
@@ -263,7 +273,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({ facets, search }) => {
           onClick={applyPrice}
           className="mt-2 w-full text-[10px] font-bold uppercase"
         >
-          Aplicar preço
+          {uiCopy(locale, "Aplicar preço")}
         </Button>
       </div>
     </div>

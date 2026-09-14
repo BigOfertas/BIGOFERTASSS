@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useI18n } from "@/i18n";
 
 interface ProductCarouselProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ const DESKTOP_TRANSITION_MS = 300;
 const MOBILE_SCROLL_SETTLE_MS = 160;
 
 const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }) => {
+  const { translateText } = useI18n();
   const [activePage, setActivePage] = useState(0);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const isMobile = useIsMobile();
@@ -226,8 +228,9 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }
               <button
                 type="button"
                 key={index}
+                data-product-carousel-dot
                 onClick={() => handlePageSelect(index)}
-                aria-label={`Página ${index + 1}`}
+                aria-label={`${translateText("Página")} ${index + 1}`}
                 aria-current={visiblePage === index ? "page" : undefined}
                 className={`h-3 w-3 cursor-pointer rounded-full border-2 transition-all duration-300 ease-in-out motion-reduce:transition-none ${
                   visiblePage === index

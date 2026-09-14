@@ -6,6 +6,8 @@ import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
 import DirectionalReveal from "@/components/ui/directional-reveal";
 import SlideUpReveal from "@/components/ui/slide-up-reveal";
+import { useI18n } from "@/i18n";
+import { uiCopy } from "@/i18n/ui-copy";
 import { fetchHomeLaunchProducts } from "@/lib/home-launches";
 import type { CatalogPage } from "@/lib/catalog";
 
@@ -18,6 +20,7 @@ interface BestSellersProps {
 }
 
 const BestSellers: React.FC<BestSellersProps> = ({ initialData }) => {
+  const { locale, translateText } = useI18n();
   const { data, isLoading, error } = useQuery({
     queryKey: ["home", "launches", "top-10"],
     staleTime: 5 * 60_000,
@@ -55,21 +58,28 @@ const BestSellers: React.FC<BestSellersProps> = ({ initialData }) => {
         <div className="mb-7 text-center sm:mb-8">
           <p className="display-kicker">
             <DirectionalReveal direction="up" distance={9}>
-              Novidades da loja
+              {uiCopy(locale, "Novidades da loja")}
             </DirectionalReveal>
           </p>
           <h2 className="display-title mt-2" style={{ animation: "none" }}>
             <SlideUpReveal split="characters" stagger={0.028} inView className="justify-center">
-              Lançamentos
+              {uiCopy(locale, "Lançamentos")}
             </SlideUpReveal>
           </h2>
         </div>
-        <div className="storefront-showcase rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5">
+        <div
+          data-product-showcase
+          className="storefront-showcase rounded-2xl border border-gray-200 bg-white px-2 py-4 shadow-sm sm:px-4 sm:py-5 lg:px-5"
+        >
           <ProductCarousel itemCount={isLoading ? LOADING_SIZE : launchProducts.length}>
             {content}
           </ProductCarousel>
         </div>
-        {error ? <span className="sr-only">Não foi possível carregar os lançamentos.</span> : null}
+        {error ? (
+          <span className="sr-only">
+            {translateText("Não foi possível carregar os lançamentos.")}
+          </span>
+        ) : null}
       </div>
     </section>
   );

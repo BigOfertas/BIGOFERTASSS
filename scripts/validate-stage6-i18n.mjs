@@ -10,8 +10,15 @@ const fail = (message) => {
 
 const locales = ["en", "es", "fr", "de", "it", "nl", "ja", "ko", "zh", "ar"];
 const i18n = read("src/i18n/index.tsx");
+const criticalUi = read("src/i18n/ui-copy.ts");
 const rootRoute = read("src/routes/__root.tsx");
 const header = read("src/components/layout/Header.tsx");
+const categoryNav = read("src/components/layout/CategoryNav.tsx");
+const bestSellers = read("src/components/home/BestSellers.tsx");
+const productsRoute = read("src/routes/products.tsx");
+const filters = read("src/components/ProductFilters.tsx");
+const productCard = read("src/components/product/ProductCard.tsx");
+const productCarousel = read("src/components/product/ProductCarousel.tsx");
 const product = read("src/routes/product/$id.tsx");
 const motion = read("src/components/ui/motion-button.tsx");
 const switcher = read("src/components/ui/cinematic-theme-switcher.tsx");
@@ -58,6 +65,56 @@ for (const token of [
 }
 
 if (!header.includes("Stage6HeaderControls")) fail("header controls are not integrated");
+if (!header.includes("useI18n")) fail("header is not locale-aware");
+if (!header.includes("uiCopy(locale, category.name)"))
+  fail("mobile header categories are not translated before render");
+if (!header.includes("accountTopLabel = uiCopy"))
+  fail("desktop account header labels are not localized");
+
+if (!categoryNav.includes("useI18n")) fail("category navigation is not locale-aware");
+if (!categoryNav.includes("uiCopy(locale, category.name)"))
+  fail("category labels are not translated before render");
+
+for (const token of ['uiCopy(locale, "Novidades da loja")', 'uiCopy(locale, "Lançamentos")']) {
+  if (!bestSellers.includes(token))
+    fail(`animated homepage heading must be translated before splitting: ${token}`);
+}
+
+for (const token of [
+  'uiCopy(locale, "Produtos")',
+  'uiCopy(locale, "Ordenar")',
+  'uiCopy(locale, "Destaques")',
+]) {
+  if (!productsRoute.includes(token))
+    fail(`catalog page missing deterministic translation: ${token}`);
+}
+
+for (const token of [
+  'uiCopy(locale, "Filtros")',
+  'uiCopy(locale, "Limpar tudo")',
+  "uiCopy(locale, title)",
+]) {
+  if (!filters.includes(token)) fail(`catalog filters missing deterministic translation: ${token}`);
+}
+
+if (!productCard.includes("translateProductDisplayName"))
+  fail("product card generic names are not localized");
+if (!productCard.includes("data-product-card-body"))
+  fail("product cards are missing the dark-mode body hook");
+if (!productCarousel.includes("data-product-carousel-dot"))
+  fail("product carousel dots are missing a dark-mode hook");
+
+for (const token of [
+  "en: {",
+  "zh: {",
+  "ar: {",
+  'Lançamentos: "NEW ARRIVALS"',
+  'Lançamentos: "新品"',
+  'Produtos: "PRODUCTS"',
+]) {
+  if (!criticalUi.includes(token)) fail(`critical storefront copy missing: ${token}`);
+}
+
 if (!product.includes("<MotionButton")) fail("product CTA is not using MotionButton");
 if ((product.match(/<MotionButton/g) ?? []).length !== 2)
   fail("both desktop and mobile CTAs must use MotionButton");
@@ -77,7 +134,17 @@ for (const token of [
   if (!switcher.includes(token)) fail(`cinematic switcher drifted: ${token}`);
 }
 
-if (!theme.includes('html[dir="rtl"]')) fail("RTL theme support is missing");
+for (const token of [
+  'html[dir="rtl"]',
+  ".dark [data-product-card]",
+  "background: var(--stage6-dark-surface-2) !important",
+  ".dark [data-product-showcase]",
+  ".dark .glass-header .glass-input",
+  ".dark [data-product-carousel-dot]",
+]) {
+  if (!theme.includes(token)) fail(`dark-mode regression protection missing: ${token}`);
+}
+
 if (!share.includes("useI18n")) fail("share messages are not localized");
 if (!whatsapp.includes("useI18n")) fail("WhatsApp messages are not localized");
 if (!validateMain.includes("validate-stage6-i18n.mjs"))
@@ -95,6 +162,6 @@ for (const forbiddenRuntimeApi of [
 
 if (!process.exitCode) {
   console.log(
-    "STAGE6_I18N_OK locales=11 runtime_translation_api=none rtl=enabled theme=persistent motion_button=enabled",
+    "STAGE6_I18N_OK locales=11 runtime_translation_api=none rtl=enabled theme=persistent motion_button=enabled critical_storefront_copy=explicit dark_product_surfaces=covered",
   );
 }
