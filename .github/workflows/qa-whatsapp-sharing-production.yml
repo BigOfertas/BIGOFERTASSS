@@ -1,0 +1,40 @@
+name: QA WhatsApp Sharing Production
+
+on:
+  push:
+    branches:
+      - qa-whatsapp-sharing-production-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  production-browser-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout QA branch
+        uses: actions/checkout@v7
+        with:
+          ref: qa-whatsapp-sharing-production-20260914
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run production browser QA
+        run: node scripts/qa-whatsapp-sharing-production.mjs
+
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: whatsapp-sharing-production-qa
+          path: qa-whatsapp-sharing-production
+          if-no-files-found: error
