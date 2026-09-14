@@ -47,15 +47,22 @@ function looksLikeSizeLabel(value: string) {
   return /^(?:PP|P|M|G|GG|XG|XGG|EG|EGG|XS|S|L|XL|XXL|XXXL|[2-6]XL|\d{1,3})$/.test(compact);
 }
 
-function labelFromCommercialType(value: string | null | undefined) {
-  if (!value || value === "other") return null;
-  return COMMERCIAL_TYPE_LABELS[value] ?? value.replace(/[-_]+/g, " ").replace(/^./, (char) => char.toUpperCase());
+function looksLikeGenericVersionLabel(value: string) {
+  const normalized = normalizeComparable(value);
+  return /^(?:versao|modelo)?\s*0*\d+$/.test(normalized) || /^versao\s+[a-z]$/.test(normalized);
 }
 
-function variantLabel(
-  variant: PublicDescriptionVariant,
-  options: PublicDescriptionOption[],
-) {
+function labelFromCommercialType(value: string | null | undefined) {
+  if (!value || value === "other") return null;
+  return (
+    COMMERCIAL_TYPE_LABELS[value] ??
+    value
+      .replace(/[-_]+/g, " ")
+      .replace(/^./, (char) => char.toUpperCase())
+  );
+}
+
+function variantLabel(variant: PublicDescriptionVariant, options: PublicDescriptionOption[]) {
   const selectedValues = options
     .filter((option) => !isSizeOption(option))
     .map((option) => {
@@ -65,12 +72,19 @@ function variantLabel(
     })
     .filter((value): value is string => Boolean(value));
 
-  if (selectedValues.length > 0) {
+  const commercialTypeLabel = labelFromCommercialType(variant.commercial_type);
+  if (
+    selectedValues.length > 0 &&
+    !selectedValues.every((value) => looksLikeGenericVersionLabel(value))
+  ) {
     return selectedValues.join(" · ");
   }
 
-  const commercialTypeLabel = labelFromCommercialType(variant.commercial_type);
   if (commercialTypeLabel) return commercialTypeLabel;
+
+  if (selectedValues.length > 0) {
+    return selectedValues.join(" · ");
+  }
 
   const variantName = variant.name?.trim();
   return variantName && !looksLikeSizeLabel(variantName) ? variantName : null;
@@ -117,7 +131,7 @@ export function sanitizeStoredPublicProductDescription(description: string | nul
   ];
 
   for (const pattern of metadataPatterns) {
-    cleaned = cleaned.replace(pattern, (match, prefix: string) => {
+    cleaned = cleaned.replace(pattern, (_match, prefix: string) => {
       if (!prefix) return "";
       return /[.!?]/.test(prefix) ? prefix.trimEnd() + " " : " ";
     });
