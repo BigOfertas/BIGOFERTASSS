@@ -1,7 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type ProductCommercialType =
-  "torcedor" | "feminino" | "jogador" | "retro" | "infantil" | "calcao" | "basquete" | "other";
+  | "torcedor"
+  | "feminino"
+  | "jogador"
+  | "retro"
+  | "infantil"
+  | "calcao"
+  | "basquete"
+  | "camisa_calcao"
+  | "regata_calcao"
+  | "treino_calca"
+  | "casaco_calca"
+  | "corta_vento"
+  | "other";
 
 export type PurchaseCustomization = {
   size: string | null;
@@ -90,6 +102,11 @@ function normalizeConfig(value: unknown): ProductPurchaseConfig {
     "infantil",
     "calcao",
     "basquete",
+    "camisa_calcao",
+    "regata_calcao",
+    "treino_calca",
+    "casaco_calca",
+    "corta_vento",
     "other",
   ];
   const commercialType = allowedTypes.includes(row.commercialType as ProductCommercialType)

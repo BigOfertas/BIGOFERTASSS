@@ -15,6 +15,7 @@ on:
       - "scripts/deploy-owner-order-history-cutoff.mjs"
       - "scripts/deploy-second-owner.mjs"
       - "scripts/deploy-security-rate-limits.mjs"
+      - "scripts/deploy-dynamic-size-guidance.mjs"
       - "scripts/audit-stage2-patches.mjs"
       - "supabase/migrations/20260904213000_storefront_personalization.sql"
       - "supabase/migrations/20260904213500_catalog_commercial_type.sql"
@@ -39,6 +40,7 @@ on:
       - "supabase/migrations/20260911172000_fix_affiliate_signup_referral_ambiguity.sql"
       - "supabase/migrations/20260911183000_add_second_owner.sql"
       - "supabase/migrations/20260912144500_security_rate_limits.sql"
+      - "supabase/migrations/20260914034500_dynamic_size_guidance_variant_type.sql"
   workflow_dispatch:
 
 permissions:
@@ -88,6 +90,9 @@ jobs:
 
       - name: Deploy Kids purchase sizes
         run: node scripts/deploy-kids-purchase-sizes.mjs
+
+      - name: Deploy dynamic size guidance variant type
+        run: node scripts/deploy-dynamic-size-guidance.mjs
 
       - name: Hide existing owner order history
         run: node scripts/deploy-owner-order-history-cutoff.mjs
