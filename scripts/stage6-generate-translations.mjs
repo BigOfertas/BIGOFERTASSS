@@ -26,7 +26,8 @@ if (selectedLocale && localePairs.length === 0) {
   throw new Error(`Unsupported STAGE6_TARGET_LOCALE=${selectedLocale}`);
 }
 
-const portugueseHint = /(?:[áàâãéêíóôõúç]|\b(?:a|as|o|os|de|da|das|do|dos|em|para|por|com|sem|não|sim|seu|sua|seus|suas|meu|minha|produto|produtos|pedido|pedidos|carrinho|compra|comprar|adicionar|remover|salvar|cancelar|confirmar|buscar|selecione|escolha|endereço|telefone|senha|conta|entrega|frete|pagamento|tamanho|guia|afiliado|afiliados|comissão|saque|receita|custo|lucro|margem|categoria|campeonato|temporada|marca|time|início|detalhes|detalhe|disponível|disponíveis|indisponível|carregando|erro|sucesso|voltar|continuar|finalizar|copiar|compartilhar|compartilhamento|produção|envio|trocas|devoluções|privacidade|termos|perguntas|frequentes|idioma|tema|claro|escuro|fale|falar|ajuda|dúvida|duvida|encontrei|olha|dispositivo|torcedor|jogador|feminina|retro|retrô|infantil|corta|vento|calção|calcao|short|modelo|versão|versao|versões|versoes|camisa|regata|calça|calca|casaco|itens|caracteres)\b)/iu;
+const portugueseHint =
+  /(?:[áàâãéêíóôõúç]|\b(?:a|as|o|os|de|da|das|do|dos|em|para|por|com|sem|não|sim|seu|sua|seus|suas|meu|minha|produto|produtos|pedido|pedidos|carrinho|compra|comprar|adicionar|remover|salvar|cancelar|confirmar|buscar|selecione|escolha|endereço|telefone|senha|conta|entrega|frete|pagamento|tamanho|guia|afiliado|afiliados|comissão|saque|receita|custo|lucro|margem|categoria|campeonato|temporada|marca|time|início|detalhes|detalhe|disponível|disponíveis|indisponível|carregando|erro|sucesso|voltar|continuar|finalizar|copiar|compartilhar|compartilhamento|produção|envio|trocas|devoluções|privacidade|termos|perguntas|frequentes|idioma|tema|claro|escuro|fale|falar|ajuda|dúvida|duvida|encontrei|olha|dispositivo|torcedor|jogador|feminina|retro|retrô|infantil|corta|vento|calção|calcao|short|modelo|versão|versao|versões|versoes|camisa|regata|calça|calca|casaco|itens|caracteres)\b)/iu;
 
 const ignoredPropertyNames = new Set([
   "className",
@@ -63,13 +64,21 @@ const ignoredPropertyNames = new Set([
 function looksTechnical(value) {
   const text = value.trim();
   if (text.length < 2 || text.length > 420) return true;
-  if (/^(?:https?:|\/|\.\/|\.\.\/|@\/|[a-z0-9_.-]+\.(?:tsx?|jsx?|css|json|mjs|png|webp|svg))/.test(text)) {
+  if (
+    /^(?:https?:|\/|\.\/|\.\.\/|@\/|[a-z0-9_.-]+\.(?:tsx?|jsx?|css|json|mjs|png|webp|svg))/.test(
+      text,
+    )
+  ) {
     return true;
   }
   if (/^[a-z0-9_.:/-]+$/i.test(text) && !/\s/.test(text) && !portugueseHint.test(text)) {
     return true;
   }
-  if (/(?:bg-|text-|border-|rounded-|px-|py-|mx-|my-|flex|grid|hover:|focus:|sm:|md:|lg:|xl:|w-|h-)/.test(text)) {
+  if (
+    /(?:bg-|text-|border-|rounded-|px-|py-|mx-|my-|flex|grid|hover:|focus:|sm:|md:|lg:|xl:|w-|h-)/.test(
+      text,
+    )
+  ) {
     return true;
   }
   if (text.includes("SELECT ") || text.includes("CREATE ") || text.includes("ALTER ")) return true;
@@ -236,5 +245,7 @@ for (const [outputCode, target] of localePairs) {
     path.join(OUTPUT, `${outputCode}.json`),
     JSON.stringify(translated, null, 2) + "\n",
   );
-  console.log(`STAGE6_TRANSLATION_LOCALE locale=${outputCode} entries=${Object.keys(translated).length}`);
+  console.log(
+    `STAGE6_TRANSLATION_LOCALE locale=${outputCode} entries=${Object.keys(translated).length}`,
+  );
 }

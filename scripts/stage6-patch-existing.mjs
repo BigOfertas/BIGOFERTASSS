@@ -48,14 +48,14 @@ root = root.replace('background: "#ffffff",', 'background: "var(--background)",'
 if (!root.includes('storageKey="dropbox-theme"')) {
   root = replaceOnce(
     root,
-    '    <QueryClientProvider client={queryClient}>\n      <AuthProvider>',
+    "    <QueryClientProvider client={queryClient}>\n      <AuthProvider>",
     '    <QueryClientProvider client={queryClient}>\n      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="dropbox-theme">\n        <I18nProvider>\n          <AuthProvider>',
     "providers open",
   );
   root = replaceOnce(
     root,
-    '      </AuthProvider>\n    </QueryClientProvider>',
-    '          </AuthProvider>\n        </I18nProvider>\n      </ThemeProvider>\n    </QueryClientProvider>',
+    "      </AuthProvider>\n    </QueryClientProvider>",
+    "          </AuthProvider>\n        </I18nProvider>\n      </ThemeProvider>\n    </QueryClientProvider>",
     "providers close",
   );
 }
@@ -134,9 +134,7 @@ if (!product.includes("<MotionButton")) {
     (_match, indent) => {
       replaced += 1;
       const mobile = indent.length <= 10;
-      const classes = mobile
-        ? 'classes="min-w-0 flex-[1.35] w-auto"'
-        : 'classes="w-full"';
+      const classes = mobile ? 'classes="min-w-0 flex-[1.35] w-auto"' : 'classes="w-full"';
       const selectLabel = mobile ? "Escolha as opções" : "Selecione as opções";
       return [
         `${indent}<MotionButton`,
@@ -152,7 +150,7 @@ if (!product.includes("<MotionButton")) {
         `${indent}        : "Indisponível"`,
         `${indent}  }`,
         `${indent}  ${classes}`,
-        `${indent}/>`
+        `${indent}/>`,
       ].join("\n");
     },
   );
@@ -198,7 +196,7 @@ if (!seo.includes("LOCALE_META[locale].ogLocale")) {
   seo = replaceOnce(
     seo,
     "    setManagedMeta(\n      'meta[property=\"og:type\"]',",
-    "    setManagedMeta(\n      'meta[property=\"og:locale\"]',\n      { property: \"og:locale\", content: LOCALE_META[locale].ogLocale },\n      cleanups,\n    );\n    setManagedMeta(\n      'meta[property=\"og:type\"]',",
+    '    setManagedMeta(\n      \'meta[property="og:locale"]\',\n      { property: "og:locale", content: LOCALE_META[locale].ogLocale },\n      cleanups,\n    );\n    setManagedMeta(\n      \'meta[property="og:type"]\',',
     "ProductSeo og locale",
   );
 }

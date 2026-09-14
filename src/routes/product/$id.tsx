@@ -1,15 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  Check,
-  ChevronRight,
-  Factory,
-  Minus,
-  Plus,
-  ShoppingCart,
-} from "lucide-react";
+import { AlertTriangle, Check, ChevronRight, Factory, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import Header from "@/components/layout/Header";
@@ -28,6 +20,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import MotionButton from "@/components/ui/motion-button";
 import { BRAND } from "@/config/brand";
 import { useCart } from "@/context/CartContext";
 import {
@@ -92,6 +85,7 @@ function ProductDetail() {
   const loaderDetail = Route.useLoaderData();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
   const [selection, setSelection] = useState<Record<string, string>>(
     () => getDefaultProductVariant(loaderDetail.variants)?.optionValueIds ?? {},
   );
@@ -264,6 +258,7 @@ function ProductDetail() {
   const specifications = [...builtInSpecs, ...parseLegacySpecifications(product.specifications)];
 
   const handleAddToCart = () => {
+    if (addingToCart) return;
     if (!selectedVariant || !selectionComplete) {
       toast.error("Selecione as opções do produto antes de continuar.");
       return;
@@ -278,6 +273,7 @@ function ProductDetail() {
       return;
     }
 
+    setAddingToCart(true);
     addToCart(
       {
         productId: product.id,
@@ -294,6 +290,7 @@ function ProductDetail() {
       },
       quantity,
     );
+    window.setTimeout(() => setAddingToCart(false), 450);
   };
 
   return (
@@ -451,22 +448,20 @@ function ProductDetail() {
                 </div>
               ) : null}
 
-              <Button
+              <MotionButton
+                type="button"
                 onClick={handleAddToCart}
-                disabled={!selectedVariant || !selectionComplete}
-                className={`flex h-14 w-full items-center justify-center gap-3 rounded-sm text-lg font-black uppercase tracking-tight transition-all duration-300 sm:h-16 ${
-                  selectedVariant && selectionComplete
-                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20 hover:bg-black hover:shadow-black/20"
-                    : "cursor-not-allowed bg-gray-200 text-gray-400"
-                }`}
-              >
-                <ShoppingCart className="h-6 w-6" />
-                {!selectionComplete
-                  ? "Selecione as opções"
-                  : availableToOrder
-                    ? "Adicionar ao Carrinho"
-                    : "Indisponível"}
-              </Button>
+                disabled={!selectedVariant || !selectionComplete || !purchaseConfig}
+                loading={addingToCart}
+                label={
+                  !selectionComplete
+                    ? "Selecione as opções"
+                    : availableToOrder
+                      ? "Adicionar ao carrinho"
+                      : "Indisponível"
+                }
+                classes="w-full"
+              />
             </div>
           </section>
         </div>
@@ -565,14 +560,20 @@ function ProductDetail() {
               {currency.format(finalUnitPrice)}
             </p>
           </div>
-          <Button
+          <MotionButton
+            type="button"
             onClick={handleAddToCart}
             disabled={!selectedVariant || !selectionComplete || !purchaseConfig}
-            className="h-12 flex-[1.35] rounded-xl bg-red-600 px-4 text-sm font-black text-white hover:bg-black disabled:bg-gray-200 disabled:text-gray-400"
-          >
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            {!selectionComplete ? "Escolha as opções" : "Adicionar"}
-          </Button>
+            loading={addingToCart}
+            label={
+              !selectionComplete
+                ? "Escolha as opções"
+                : availableToOrder
+                  ? "Adicionar ao carrinho"
+                  : "Indisponível"
+            }
+            classes="min-w-0 flex-[1.35] w-auto"
+          />
         </div>
       </div>
     </div>

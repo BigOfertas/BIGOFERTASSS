@@ -183,9 +183,18 @@ function translateDynamicText(source: string, locale: Locale, catalog: Catalog) 
   const genericDemand =
     "Produto sob demanda da DropBox, com as opções comerciais configuradas para esta linha.";
   const translatedDemand = lookup(genericDemand);
-  if (translatedDemand !== genericDemand) output = output.replaceAll(genericDemand, translatedDemand);
+  if (translatedDemand !== genericDemand)
+    output = output.replaceAll(genericDemand, translatedDemand);
 
-  for (const label of ["Categoria", "Time", "Liga", "Campeonato", "Temporada", "Marca", "Detalhe"]) {
+  for (const label of [
+    "Categoria",
+    "Time",
+    "Liga",
+    "Campeonato",
+    "Temporada",
+    "Marca",
+    "Detalhe",
+  ]) {
     const translated = lookup(label);
     if (translated === label) continue;
     output = output.replace(new RegExp(`\\b${label}:`, "giu"), `${translated}:`);
@@ -212,7 +221,9 @@ function translateDynamicText(source: string, locale: Locale, catalog: Catalog) 
   });
 
   if (/^Switch to (?:light|dark) mode$/i.test(output)) {
-    return /light/i.test(output) ? lookup("Mudar para modo claro") : lookup("Mudar para modo escuro");
+    return /light/i.test(output)
+      ? lookup("Mudar para modo claro")
+      : lookup("Mudar para modo escuro");
   }
 
   return output;
@@ -250,7 +261,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    setCatalog(locale === "pt" ? {} : catalogCache.get(locale) ?? {});
+    setCatalog(locale === "pt" ? {} : (catalogCache.get(locale) ?? {}));
     void loadCatalog(locale).then((next) => {
       if (active) setCatalog(next);
     });
@@ -340,7 +351,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       }
       if (!(root instanceof Element) && !(root instanceof Document)) return;
       if (root instanceof Element) scanElement(root);
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+      const walker = document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+      );
       let current = walker.nextNode();
       while (current) {
         if (current.nodeType === Node.TEXT_NODE) applyText(current as Text);
