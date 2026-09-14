@@ -1,0 +1,49 @@
+name: Format Stage 1 Variant Previews
+
+on:
+  push:
+    branches:
+      - stage1-variant-previews-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: ${{ !contains(github.event.head_commit.message, '[stage1-formatted]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: stage1-variant-previews-20260914
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Format touched source
+        run: |
+          bunx prettier --write \
+            src/components/product/ProductVariantSelector.tsx \
+            src/components/product/ProductGallery.tsx \
+            src/lib/product-detail.ts \
+            src/routes/product/'$id.tsx'
+
+      - name: Commit formatting if needed
+        run: |
+          if git diff --quiet; then
+            echo "No formatting changes needed"
+            exit 0
+          fi
+          git diff --check
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add src/components/product/ProductVariantSelector.tsx src/components/product/ProductGallery.tsx src/lib/product-detail.ts src/routes/product/'$id.tsx'
+          git commit -m "[stage1-formatted] style: formatar previews de variantes"
+          git push origin HEAD:stage1-variant-previews-20260914
