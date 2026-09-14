@@ -1,0 +1,58 @@
+name: Implement WhatsApp and Product Sharing
+
+on:
+  push:
+    branches:
+      - finish-whatsapp-sharing-20260913
+
+permissions:
+  contents: write
+
+jobs:
+  implement-and-validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: finish-whatsapp-sharing-20260913
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Apply implementation
+        run: node scripts/apply-whatsapp-sharing.mjs
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate feature contract
+        run: node scripts/validate-whatsapp-sharing.mjs
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Production build
+        run: npm run build:hostinger
+
+      - name: Commit validated implementation
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/routes/__root.tsx 'src/routes/product/$id.tsx' src/components/support/FloatingWhatsAppSupport.tsx src/components/product/ProductShare.tsx scripts/validate-whatsapp-sharing.mjs
+          if git diff --cached --quiet; then
+            echo "No implementation changes to commit."
+            exit 0
+          fi
+          git commit -m "feat: concluir WhatsApp e compartilhamento de produtos"
+          git push origin HEAD:finish-whatsapp-sharing-20260913
