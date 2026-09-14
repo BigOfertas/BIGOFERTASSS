@@ -1,0 +1,51 @@
+name: QA Stage 3 Pagination
+
+on:
+  push:
+    branches:
+      - qa-stage3-pagination-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout published production SHA
+        uses: actions/checkout@v7
+        with:
+          ref: 9dcb0f421aa10ad41bb8579a2caf67b978297bbe
+
+      - name: Validate public RPC page 2 and combined filters
+        run: |
+          node <<'JS'
+          import fs from 'node:fs';
+          const envText=fs.readFileSync('.env','utf8');
+          const env=Object.fromEntries(envText.split(/\r?\n/).map(x=>x.trim()).filter(x=>x&&!x.startsWith('#')&&x.includes('=')).map(line=>{const i=line.indexOf('=');return [line.slice(0,i),line.slice(i+1).replace(/^['\"]|['\"]$/g,'')]}));
+          const url=env.VITE_SUPABASE_URL;
+          const key=env.VITE_SUPABASE_PUBLISHABLE_KEY;
+          if(!url||!key) throw new Error('config pública ausente');
+          async function rpc(args){
+            const r=await fetch(`${url}/rest/v1/rpc/catalog_products_page_v3`,{method:'POST',headers:{apikey:key,authorization:`Bearer ${key}`,'content-type':'application/json',accept:'application/json'},body:JSON.stringify(args)});
+            const text=await r.text();
+            if(!r.ok) throw new Error(`HTTP ${r.status}: ${text}`);
+            return JSON.parse(text);
+          }
+          const args=(type,page,extra={})=>({p_query:null,p_category:null,p_campeonato:null,p_liga:null,p_time:null,p_season:null,p_brand:null,p_audience:null,p_commercial_type:type,p_min_price:null,p_max_price:null,p_sort:'featured',p_page:page,p_page_size:24,...extra});
+          const torcedor2=await rpc(args('torcedor',2));
+          const jogador2=await rpc(args('jogador',2));
+          const bahia={p_time:'bahia',p_season:'25-26',p_brand:'puma'};
+          const bahiaTorcedor=await rpc(args('torcedor',1,bahia));
+          const bahiaJogador=await rpc(args('jogador',1,bahia));
+          const summary=(x)=>({total:x.total,page:x.page,pageSize:x.pageSize,totalPages:x.totalPages,itemCount:x.items?.length??0,ids:(x.items??[]).slice(0,5).map(i=>i.id),types:[...new Set((x.items??[]).map(i=>i.commercial_type))]});
+          console.log('STAGE3_TORCEDOR_PAGE2='+JSON.stringify(summary(torcedor2)));
+          console.log('STAGE3_JOGADOR_PAGE2='+JSON.stringify(summary(jogador2)));
+          console.log('STAGE3_BAHIA_TORCEDOR='+JSON.stringify(summary(bahiaTorcedor)));
+          console.log('STAGE3_BAHIA_JOGADOR='+JSON.stringify(summary(bahiaJogador)));
+          if(torcedor2.total!==1194||torcedor2.page!==2||torcedor2.items?.length!==24||!torcedor2.items.every(i=>i.commercial_type==='torcedor')) throw new Error('paginação Torcedor inválida');
+          if(jogador2.total!==46||jogador2.page!==2||jogador2.items?.length!==22||!jogador2.items.every(i=>i.commercial_type==='jogador')) throw new Error('paginação Jogador inválida');
+          if((bahiaTorcedor.total??0)<1||(bahiaJogador.total??0)<1) throw new Error('combinação Bahia não retornou ambos os tipos');
+          console.log('STAGE3_PAGINATION_OK');
+          JS
