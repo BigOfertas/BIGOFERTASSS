@@ -106,6 +106,9 @@ function kindFromCategory(
   categoryName: string | null | undefined,
   categorySlug: string | null | undefined,
 ) {
+  const normalizedCategorySlug = normalizeStructuredValue(categorySlug).replace(/ /g, "-");
+  if (normalizedCategorySlug === "kit-treino") return "training-pants" as const;
+
   const category = normalizeStructuredValue([categorySlug, categoryName].filter(Boolean).join(" "));
   if (!category) return null;
 
