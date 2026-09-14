@@ -1,4 +1,4 @@
-import { Phone } from "lucide-react";
+import { MessageCircle, Phone } from "lucide-react";
 
 import { BRAND } from "@/config/brand";
 
@@ -43,7 +43,10 @@ export function FloatingWhatsAppSupport({
         bottomClass
       }
     >
-      <Phone className="h-6 w-6 fill-current" strokeWidth={2.4} aria-hidden="true" />
+      <span className="relative inline-flex h-8 w-8 items-center justify-center" aria-hidden="true">
+        <MessageCircle className="absolute h-8 w-8" strokeWidth={2.25} />
+        <Phone className="h-3.5 w-3.5 fill-current" strokeWidth={2.4} />
+      </span>
       <span className="pointer-events-none absolute right-[calc(100%+0.75rem)] top-1/2 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-950 px-2.5 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none md:block">
         Fale conosco
       </span>
