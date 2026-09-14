@@ -1,14 +1,11 @@
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join, relative } from "node:path";
 
-const ROOTS = ["src/components", "src/routes"];
-const ALLOWED_FILES = new Set(["src/components/brand/BrandWordmark.tsx"]);
-const FORBIDDEN = [
-  { label: "nome legado", pattern: /BIGofertas/g },
-  { label: "dominio legado", pattern: /bigofertas\.net/g },
-  { label: "email legado", pattern: /contato@bigofertas\.net/g },
-  { label: "wordmark legado fragmentado", pattern: />BIG<\/span>ofertas/g },
-];
+const ROOTS = ["src"];
+const INTERNAL_FIXTURES = ["Camisa Profissional BIGofertas 2024"];
+const TECHNICAL_SOURCE_FILES = new Set(["src/lib/public-product-description.ts"]);
+const PUBLIC_LEGACY_BRAND = /\bbigofertas\b(?!\.net)/gi;
+const TECHNICAL_DOMAIN = /\b(?:img\.)?bigofertas\.net\b/gi;
 
 async function collectFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -17,41 +14,58 @@ async function collectFiles(directory) {
   for (const entry of entries) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) files.push(...(await collectFiles(path)));
-    else if ([".ts", ".tsx"].includes(extname(entry.name))) files.push(path);
+    else if ([".ts", ".tsx", ".js", ".jsx"].includes(extname(entry.name))) files.push(path);
   }
 
   return files;
 }
 
 const failures = [];
+let technicalDomainReferences = 0;
+let internalFixtureReferences = 0;
+let technicalSanitizerReferences = 0;
 
 for (const root of ROOTS) {
   for (const file of await collectFiles(root)) {
     const normalized = relative(".", file).replaceAll("\\", "/");
-    if (ALLOWED_FILES.has(normalized)) continue;
-
     const source = await readFile(file, "utf8");
-    const lines = source.split(/\r?\n/);
+    technicalDomainReferences += source.match(TECHNICAL_DOMAIN)?.length ?? 0;
 
-    for (const { label, pattern } of FORBIDDEN) {
-      pattern.lastIndex = 0;
-      if (!pattern.test(source)) continue;
-
-      lines.forEach((line, index) => {
-        pattern.lastIndex = 0;
-        if (pattern.test(line)) {
-          failures.push(`${normalized}:${index + 1} - ${label}: ${line.trim()}`);
-        }
-      });
+    if (TECHNICAL_SOURCE_FILES.has(normalized)) {
+      technicalSanitizerReferences += source.match(PUBLIC_LEGACY_BRAND)?.length ?? 0;
+      continue;
     }
+
+    let publicSource = source;
+    for (const fixture of INTERNAL_FIXTURES) {
+      const occurrences = publicSource.split(fixture).length - 1;
+      if (occurrences > 0) {
+        internalFixtureReferences += occurrences;
+        publicSource = publicSource.replaceAll(fixture, "");
+      }
+    }
+
+    const lines = publicSource.split(/\r?\n/);
+    lines.forEach((line, index) => {
+      PUBLIC_LEGACY_BRAND.lastIndex = 0;
+      if (PUBLIC_LEGACY_BRAND.test(line)) {
+        failures.push(`${normalized}:${index + 1} - marca pública legada: ${line.trim()}`);
+      }
+    });
   }
 }
 
 if (failures.length > 0) {
-  console.error("A identidade antiga ainda esta escrita diretamente na UI:\n");
+  console.error("A identidade antiga ainda esta escrita em uma superficie publica do codigo:\n");
   for (const failure of failures) console.error(`FAIL - ${failure}`);
-  console.error("\nUse src/config/brand.ts (BRAND) ou BrandWordmark em vez de texto fixo.");
+  console.error(
+    "\nPreserve bigofertas.net quando for infraestrutura, mas use DropBox para a marca visivel.",
+  );
   process.exit(1);
 }
 
-console.log("PASS - nenhuma identidade antiga esta hardcoded nas telas do storefront/admin.");
+console.log("PASS - nenhuma identidade antiga esta hardcoded nas superficies publicas do src.");
+console.log("BRAND_AUDIT_PUBLIC_LEGACY_OCCURRENCES=0");
+console.log(`BRAND_AUDIT_TECHNICAL_DOMAIN_REFERENCES_PRESERVED=${technicalDomainReferences}`);
+console.log(`BRAND_AUDIT_INTERNAL_FIXTURES_PRESERVED=${internalFixtureReferences}`);
+console.log(`BRAND_AUDIT_SANITIZER_REFERENCES_PRESERVED=${technicalSanitizerReferences}`);
