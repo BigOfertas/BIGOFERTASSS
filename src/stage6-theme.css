@@ -50,14 +50,26 @@
   color: #f7f8fa !important;
 }
 
-.dark .glass-input {
+.dark .glass-input,
+.dark .glass-header .glass-input {
+  border-color: rgba(255, 255, 255, 0.14) !important;
   background: linear-gradient(180deg, #171a20, #111319) !important;
+  color: #f7f8fa !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.045),
     0 10px 26px rgba(0, 0, 0, 0.24) !important;
 }
 
-.dark .glass-input:focus {
+.dark .glass-input:hover,
+.dark .glass-header .glass-input:hover {
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  background: #171a20 !important;
+}
+
+.dark .glass-input:focus,
+.dark .glass-input:focus-visible,
+.dark .glass-header .glass-input:focus,
+.dark .glass-header .glass-input:focus-visible {
   border-color: rgba(239, 68, 68, 0.58) !important;
   background: #171a20 !important;
   box-shadow:
@@ -66,8 +78,18 @@
 }
 
 .dark input::placeholder,
-.dark textarea::placeholder {
+.dark textarea::placeholder,
+.dark .glass-header .glass-input::placeholder {
   color: #8d96a5 !important;
+  opacity: 1;
+}
+
+.dark .glass-header form[role="search"] button {
+  color: #b8c0cc !important;
+}
+
+.dark .glass-header form[role="search"]:focus-within button {
+  color: #ef4444 !important;
 }
 
 .dark .brand-lockup,
@@ -136,6 +158,21 @@
 
 .dark [data-product-card-body] {
   background: transparent !important;
+}
+
+.dark [data-product-carousel-dot] {
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  background: transparent !important;
+}
+
+.dark [data-product-carousel-dot][aria-current="page"] {
+  border-color: #ef4444 !important;
+  background: #ef4444 !important;
+}
+
+.dark [data-product-carousel-dot]:hover {
+  border-color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12) !important;
 }
 
 .dark .bg-white,
