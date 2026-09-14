@@ -51,7 +51,7 @@ jobs:
           JS
 
       - name: Check formatting
-        run: bunx prettier --check src/components/layout/CategoryNav.tsx src/header.css
+        run: bunx prettier --check src/components/layout/CategoryNav.tsx src/header.css scripts/validate-storefront-upgrades.mjs
 
       - name: Validate storefront customer experience
         run: node scripts/validate-storefront-upgrades.mjs && node scripts/validate-storefront-regressions.mjs && node scripts/validate-stage2-commerce.mjs && node scripts/validate-final-storefront-refinements.mjs && bun scripts/validate-size-guidance.ts
