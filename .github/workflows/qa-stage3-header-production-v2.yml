@@ -1,0 +1,374 @@
+name: QA Stage 3 Header Production V2
+
+on:
+  push:
+    branches:
+      - qa-stage3-header-production-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact published main SHA
+        uses: actions/checkout@v7
+        with:
+          ref: 9dcb0f421aa10ad41bb8579a2caf67b978297bbe
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run final production header QA
+        env:
+          BASE_URL: https://bigofertas.net
+        run: |
+          mkdir -p qa-shots
+          cat > stage3-header-production-qa-v2.mjs <<'JS'
+          import { chromium } from 'playwright';
+
+          const BASE_URL = process.env.BASE_URL;
+          const SHA = '9dcb0f421aa10ad41bb8579a2caf67b978297bbe';
+          const browser = await chromium.launch({ headless: true });
+          const result = {
+            production: BASE_URL,
+            publishedSha: SHA,
+            viewports: {},
+            filters: {},
+            search: {},
+            logoClick: null,
+            consoleErrors: [],
+            pageErrors: [],
+            failedRequests: [],
+            httpErrors: [],
+            rpcBodies: [],
+          };
+
+          const labels = [
+            'INÍCIO', 'TORCEDOR', 'JOGADOR', 'FEMININO', 'KIDS', 'KITS DE TREINO',
+            'SHORTS', 'BASQUETE / NBA', 'CORTA-VENTO', 'MUNDO FIFA', 'CAMISAS RETRÔ',
+          ];
+          const assert = (condition, message) => { if (!condition) throw new Error(message); };
+          const uniquePush = (array, value) => {
+            const key = JSON.stringify(value);
+            if (!array.some((item) => JSON.stringify(item) === key)) array.push(value);
+          };
+          const nearBox = (a, b, tolerance = 0.7) => Boolean(
+            a && b && Math.abs(a.x - b.x) <= tolerance && Math.abs(a.y - b.y) <= tolerance &&
+            Math.abs(a.width - b.width) <= tolerance && Math.abs(a.height - b.height) <= tolerance
+          );
+
+          function attach(page, label) {
+            page.on('console', (msg) => {
+              if (msg.type() === 'error') uniquePush(result.consoleErrors, { label, text: msg.text().slice(0, 900) });
+            });
+            page.on('pageerror', (error) => uniquePush(result.pageErrors, { label, text: String(error).slice(0, 900) }));
+            page.on('requestfailed', (request) => {
+              const url = request.url();
+              const error = request.failure()?.errorText ?? 'unknown';
+              if ((url.includes('bigofertas.net') || url.includes('supabase.co')) && !/ERR_ABORTED/i.test(error)) {
+                uniquePush(result.failedRequests, { label, url: url.slice(0, 650), error });
+              }
+            });
+            page.on('response', (response) => {
+              const url = response.url();
+              if (response.status() >= 400 && (url.includes('bigofertas.net') || url.includes('supabase.co'))) {
+                uniquePush(result.httpErrors, { label, status: response.status(), url: url.slice(0, 650) });
+              }
+            });
+            page.on('request', (request) => {
+              if (request.method() === 'POST' && request.url().includes('/rest/v1/rpc/catalog_products_page_v3')) {
+                try { result.rpcBodies.push({ label, body: request.postDataJSON() }); }
+                catch { result.rpcBodies.push({ label, body: request.postData() }); }
+              }
+            });
+          }
+
+          async function waitHeader(page) {
+            await page.waitForSelector('header.glass-header', { state: 'visible', timeout: 22000 });
+            await page.waitForTimeout(300);
+          }
+
+          async function logoSnapshot(page) {
+            const link = page.locator('header.glass-header a[aria-label$=" - Início"]:visible').first();
+            await link.waitFor({ state: 'visible', timeout: 15000 });
+            const lock = link.locator('.brand-lockup');
+            return {
+              linkBox: await link.boundingBox(),
+              box: await lock.boundingBox(),
+              lockStyle: await lock.evaluate((el) => {
+                const s = getComputedStyle(el);
+                return { transform: s.transform, transitionProperty: s.transitionProperty };
+              }),
+              linkStyle: await link.evaluate((el) => {
+                const s = getComputedStyle(el);
+                return { transform: s.transform, outlineStyle: s.outlineStyle, outlineWidth: s.outlineWidth };
+              }),
+            };
+          }
+
+          async function testViewport(width) {
+            const context = await browser.newContext({
+              viewport: { width, height: width <= 390 ? 844 : 900 },
+              isMobile: width <= 390,
+              hasTouch: width <= 768,
+            });
+            const page = await context.newPage();
+            attach(page, `viewport-${width}`);
+            await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await waitHeader(page);
+
+            assert(
+              !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2)),
+              `${width}px: overflow horizontal da página`,
+            );
+
+            const desktop = width >= 1024;
+            const nav = page.locator('nav[aria-label="Categorias"]:visible');
+            const menuButton = page.locator('button[aria-label="Abrir menu de categorias"]:visible');
+            let categoryStyle = null;
+
+            if (desktop) {
+              await nav.waitFor({ state: 'visible', timeout: 12000 });
+              assert(!(await menuButton.isVisible()), `${width}px: botão móvel indevido`);
+              const navLabels = (await nav.getByRole('link').allTextContents()).map((x) => x.trim()).filter(Boolean);
+              for (const label of labels) assert(navLabels.includes(label), `${width}px: ${label} ausente`);
+              const layout = await nav.locator('ul').evaluate((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth }));
+              assert(layout.scrollWidth <= layout.clientWidth + 2, `${width}px: menu desktop precisa rolagem horizontal`);
+              categoryStyle = await nav.getByRole('link', { name: 'TORCEDOR', exact: true }).evaluate((el) => {
+                const s = getComputedStyle(el);
+                return { fontSize: s.fontSize, fontWeight: s.fontWeight, letterSpacing: s.letterSpacing };
+              });
+              assert(parseFloat(categoryStyle.fontSize) >= 12, `${width}px: categorias pequenas`);
+              assert(parseInt(categoryStyle.fontWeight, 10) >= 800, `${width}px: categorias sem peso`);
+            } else {
+              await menuButton.waitFor({ state: 'visible', timeout: 12000 });
+              assert(!(await nav.isVisible()), `${width}px: menu desktop indevido`);
+              await menuButton.click();
+              await page.getByText('Todas as categorias', { exact: true }).waitFor({ state: 'visible', timeout: 8000 });
+              for (const label of labels) {
+                await page.getByRole('button', { name: label, exact: true }).waitFor({ state: 'visible', timeout: 8000 });
+              }
+              assert(
+                !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2)),
+                `${width}px: drawer gera overflow horizontal`,
+              );
+            }
+
+            const logo = page.locator('header.glass-header a[aria-label$=" - Início"]:visible').first();
+            const logo0 = await logoSnapshot(page);
+            assert(['none', 'matrix(1, 0, 0, 1, 0, 0)'].includes(logo0.lockStyle.transform), `${width}px: logo transformada no repouso`);
+
+            if (desktop) {
+              await logo.hover();
+              await page.waitForTimeout(260);
+              const hovered = await logoSnapshot(page);
+              assert(nearBox(logo0.box, hovered.box), `${width}px: logo muda no hover`);
+              assert(['none', 'matrix(1, 0, 0, 1, 0, 0)'].includes(hovered.lockStyle.transform), `${width}px: logo ganha transform no hover`);
+            }
+
+            await logo.focus();
+            await page.waitForTimeout(100);
+            const focused = await logoSnapshot(page);
+            assert(nearBox(logo0.box, focused.box), `${width}px: logo muda no focus`);
+            assert(focused.linkStyle.outlineStyle !== 'none' && parseFloat(focused.linkStyle.outlineWidth) >= 1, `${width}px: logo sem foco acessível`);
+
+            await logo.evaluate((el) => el.addEventListener('click', (event) => event.preventDefault(), { once: true }));
+            if (desktop) {
+              const b = await logo.boundingBox();
+              await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+              await page.mouse.down();
+              await page.waitForTimeout(80);
+              const active = await logoSnapshot(page);
+              assert(nearBox(logo0.box, active.box), `${width}px: logo muda no active`);
+              await page.mouse.up();
+            } else {
+              await logo.tap();
+              await page.waitForTimeout(100);
+              const touched = await logoSnapshot(page);
+              assert(nearBox(logo0.box, touched.box), `${width}px: logo muda após touch`);
+            }
+
+            const input = page.locator('input[aria-label="Buscar produtos"]:visible').first();
+            await input.waitFor({ state: 'visible', timeout: 15000 });
+            const box0 = await input.boundingBox();
+            const normal = await input.evaluate((el) => {
+              const s = getComputedStyle(el);
+              return { borderColor: s.borderColor, borderWidth: s.borderWidth, boxShadow: s.boxShadow, transform: s.transform };
+            });
+            assert(parseFloat(normal.borderWidth) >= 1, `${width}px: busca sem borda`);
+            assert(normal.transform === 'none', `${width}px: busca transformada em repouso`);
+
+            let hoverBorder = null;
+            if (desktop) {
+              await input.hover();
+              await page.waitForTimeout(190);
+              hoverBorder = await input.evaluate((el) => getComputedStyle(el).borderColor);
+              assert(hoverBorder !== normal.borderColor, `${width}px: busca sem feedback de hover`);
+            }
+            await input.focus();
+            await page.waitForTimeout(190);
+            const focusBox = await input.boundingBox();
+            const focus = await input.evaluate((el) => {
+              const s = getComputedStyle(el);
+              return { borderColor: s.borderColor, boxShadow: s.boxShadow, transform: s.transform };
+            });
+            assert(nearBox(box0, focusBox), `${width}px: busca muda de tamanho/posição no foco`);
+            assert(focus.transform === 'none', `${width}px: busca se desloca no foco`);
+            assert(focus.borderColor !== normal.borderColor || focus.boxShadow !== normal.boxShadow, `${width}px: foco da busca sem destaque`);
+
+            const searchButton = page.locator('form[role="search"]:visible button[aria-label="Buscar"]').first();
+            const iconFocusColor = await searchButton.evaluate((el) => getComputedStyle(el).color);
+            assert(Boolean(iconFocusColor), `${width}px: ícone de busca sem cor computada`);
+
+            await page.screenshot({ path: `qa-shots/header-${width}-v2.png`, fullPage: false });
+            const data = {
+              mode: desktop ? 'desktop' : 'mobile',
+              noOverflow: true,
+              categoryStyle,
+              logoStable: true,
+              logoFocusVisible: true,
+              searchStable: true,
+              searchNormalBorder: normal.borderColor,
+              searchHoverBorder: hoverBorder,
+              searchFocusBorder: focus.borderColor,
+            };
+            await context.close();
+            return data;
+          }
+
+          async function testMobileFilter(width, label, type) {
+            const context = await browser.newContext({ viewport: { width, height: width <= 390 ? 844 : 900 }, isMobile: width <= 390, hasTouch: true });
+            const page = await context.newPage();
+            attach(page, `mobile-filter-${width}`);
+            await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await waitHeader(page);
+            await page.getByRole('button', { name: 'Abrir menu de categorias' }).click();
+            const button = page.getByRole('button', { name: label, exact: true });
+            await button.waitFor({ state: 'visible', timeout: 8000 });
+            await Promise.all([
+              page.waitForURL((u) => u.pathname === '/products' && u.searchParams.get('commercialType') === type, { timeout: 25000 }),
+              button.click(),
+            ]);
+            assert(new URL(page.url()).searchParams.get('commercialType') === type, `${width}px: ${label} móvel não aplicou filtro`);
+            await context.close();
+            return true;
+          }
+
+          async function testFilter(page, label, type) {
+            await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await waitHeader(page);
+            const nav = page.locator('nav[aria-label="Categorias"]:visible');
+            await nav.waitFor({ state: 'visible', timeout: 10000 });
+            const start = result.rpcBodies.length;
+            await Promise.all([
+              page.waitForURL((u) => u.pathname === '/products' && u.searchParams.get('commercialType') === type, { timeout: 25000 }),
+              nav.getByRole('link', { name: label, exact: true }).click(),
+            ]);
+            await page.waitForSelector('[data-product-card]', { state: 'visible', timeout: 25000 });
+            await page.waitForTimeout(400);
+            const cardCount = await page.locator('[data-product-card]').count();
+            assert(cardCount > 0, `${label}: nenhum produto real na listagem`);
+            assert(result.rpcBodies.slice(start).some((x) => x.body?.p_commercial_type === type), `${label}: RPC não recebeu p_commercial_type=${type}`);
+
+            const reloadStart = result.rpcBodies.length;
+            await page.reload({ waitUntil: 'domcontentloaded', timeout: 45000 });
+            await page.waitForSelector('[data-product-card]', { state: 'visible', timeout: 25000 });
+            await page.waitForTimeout(400);
+            assert(new URL(page.url()).searchParams.get('commercialType') === type, `${label}: refresh perdeu query`);
+            assert(result.rpcBodies.slice(reloadStart).some((x) => x.body?.p_commercial_type === type), `${label}: refresh não preservou RPC estruturado`);
+            return { url: page.url(), cardCount, clickStructured: true, refreshStructured: true };
+          }
+
+          async function testSearch(width, mobile) {
+            const context = await browser.newContext({ viewport: { width, height: mobile ? 844 : 900 }, isMobile: mobile, hasTouch: mobile });
+            const page = await context.newPage();
+            attach(page, `search-${width}`);
+            await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await waitHeader(page);
+            const input = page.locator('input[aria-label="Buscar produtos"]:visible').first();
+            await input.waitFor({ state: 'visible', timeout: 15000 });
+            const before = await input.boundingBox();
+            await input.fill('Real Madrid');
+            await page.waitForFunction(() => {
+              const text = document.body.innerText;
+              return text.includes('Ver todos os resultados') || text.includes('Nenhum produto encontrado agora.') || text.includes('Buscando produtos...');
+            }, null, { timeout: 15000 });
+            await page.waitForTimeout(700);
+            const after = await input.boundingBox();
+            assert(nearBox(before, after), `${width}px: busca muda ao digitar`);
+            const suggestions = await page.getByText('Ver todos os resultados', { exact: true }).isVisible().catch(() => false);
+            const emptySurface = await page.getByText('Nenhum produto encontrado agora.', { exact: true }).isVisible().catch(() => false);
+            assert(suggestions || emptySurface, `${width}px: sugestões não estabilizaram`);
+            await input.press('Enter');
+            await page.waitForURL((u) => u.pathname === '/products' && u.searchParams.get('q') === 'Real Madrid', { timeout: 25000 });
+            await page.waitForSelector('[data-product-card]', { timeout: 25000 });
+            const cards = await page.locator('[data-product-card]').count();
+            assert(cards > 0, `${width}px: Enter da busca não trouxe produtos`);
+            const data = { suggestionsSurface: true, enterWorks: true, url: page.url(), cards };
+            await context.close();
+            return data;
+          }
+
+          try {
+            for (const width of [1440, 1280, 1024, 768, 390]) {
+              console.log(`QA_VIEWPORT_START=${width}`);
+              result.viewports[String(width)] = await testViewport(width);
+              console.log(`QA_VIEWPORT_OK=${width}`);
+            }
+
+            result.mobileJogador768 = await testMobileFilter(768, 'JOGADOR', 'jogador');
+            result.mobileTorcedor390 = await testMobileFilter(390, 'TORCEDOR', 'torcedor');
+
+            const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+            const page = await context.newPage();
+            attach(page, 'filters-desktop');
+            result.filters.torcedor = await testFilter(page, 'TORCEDOR', 'torcedor');
+            result.filters.jogador = await testFilter(page, 'JOGADOR', 'jogador');
+
+            await page.goto(`${BASE_URL}/products?commercialType=torcedor`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await waitHeader(page);
+            const logo = page.locator('header.glass-header a[aria-label$=" - Início"]:visible').first();
+            await Promise.all([
+              page.waitForURL((u) => u.pathname === '/', { timeout: 20000 }),
+              logo.click(),
+            ]);
+            result.logoClick = { works: true, finalUrl: page.url() };
+            await context.close();
+
+            result.search.desktop1440 = await testSearch(1440, false);
+            result.search.mobile390 = await testSearch(390, true);
+
+            const relevantConsole = result.consoleErrors.filter(({ text }) => /hydration|cors|rpc|failed to fetch|uncaught|typeerror|referenceerror|syntaxerror/i.test(text));
+            result.relevantDiagnostics = {
+              consoleErrors: relevantConsole,
+              pageErrors: result.pageErrors,
+              failedRequests: result.failedRequests,
+              httpErrors: result.httpErrors,
+            };
+            console.log('STAGE3_HEADER_PRODUCTION_QA_RESULT=' + JSON.stringify(result));
+            assert(relevantConsole.length === 0, 'console errors relevantes');
+            assert(result.pageErrors.length === 0, 'page errors encontrados');
+            assert(result.failedRequests.length === 0, 'requests relevantes falharam');
+            assert(result.httpErrors.length === 0, '4xx/5xx relevantes encontrados');
+            console.log('STAGE3_HEADER_PRODUCTION_QA_OK');
+          } catch (error) {
+            console.log('STAGE3_HEADER_PRODUCTION_QA_PARTIAL=' + JSON.stringify(result));
+            throw error;
+          } finally {
+            await browser.close();
+          }
+          JS
+          node ./stage3-header-production-qa-v2.mjs
+
+      - name: Upload QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage3-header-production-qa-v2-shots
+          path: qa-shots/*.png
+          if-no-files-found: ignore
