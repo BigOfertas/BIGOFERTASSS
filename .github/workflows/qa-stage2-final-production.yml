@@ -1,0 +1,397 @@
+name: QA Stage 2 Final Production
+
+on:
+  push:
+    branches:
+      - qa-stage2-final-production-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: production
+    env:
+      BASE_URL: https://bigofertas.net
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - name: Checkout exact published main SHA
+        uses: actions/checkout@v7
+        with:
+          ref: 328b60037bd9ba6d54f8744349cc3608e62f15aa
+
+      - name: Verify Stage 2 backend contract
+        run: node scripts/deploy-dynamic-size-guidance.mjs
+
+      - name: Audit real mixed-guidance variants
+        run: |
+          node <<'JS'
+          import fs from 'node:fs';
+          const projectRef = process.env.SUPABASE_PROJECT_ID;
+          const token = process.env.SUPABASE_ACCESS_TOKEN;
+          const response = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query/read-only`, {
+            method: 'POST',
+            headers: {
+              authorization: `Bearer ${token}`,
+              accept: 'application/json',
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+              query: `
+                with variant_kinds as (
+                  select
+                    p.slug,
+                    p.name,
+                    v.id as variant_id,
+                    coalesce(v.commercial_type::text, pps.commercial_type::text, 'other') as effective_type,
+                    case
+                      when coalesce(v.commercial_type::text, pps.commercial_type::text, 'other') in ('torcedor','jogador','feminino','retro') then 'shirt'
+                      when coalesce(v.commercial_type::text, pps.commercial_type::text, 'other') = 'basquete' then 'basketball'
+                      when coalesce(v.commercial_type::text, pps.commercial_type::text, 'other') = 'calcao' then 'shorts'
+                      when coalesce(v.commercial_type::text, pps.commercial_type::text, 'other') = 'infantil' then 'kids'
+                      when coalesce(v.commercial_type::text, pps.commercial_type::text, 'other') = 'camisa_calcao' then 'shirt-shorts'
+                      when coalesce(v.commercial_type::text, pps.commercial_type::text, 'other') = 'regata_calcao' then 'tank-shorts'
+                      when coalesce(v.commercial_type::text, pps.commercial_type::text, 'other') = 'treino_calca' then 'training-pants'
+                      when coalesce(v.commercial_type::text, pps.commercial_type::text, 'other') = 'casaco_calca' then 'jacket-pants'
+                      when coalesce(v.commercial_type::text, pps.commercial_type::text, 'other') = 'corta_vento' then 'outerwear'
+                      when coalesce(v.commercial_type::text, pps.commercial_type::text, 'other') = 'other' and c.slug = 'kit-treino' then 'training-pants'
+                      else 'fallback'
+                    end as guidance_kind
+                  from public.products p
+                  join public.product_variants v
+                    on v.product_id = p.id
+                   and v.status = 'active'::public.product_variant_status
+                  left join public.product_purchase_settings pps on pps.product_id = p.id
+                  left join public.categories c on c.id = p.primary_category_id
+                  where p.status = 'active'::public.product_status
+                )
+                select
+                  slug,
+                  name,
+                  jsonb_agg(jsonb_build_object(
+                    'variant_id', variant_id,
+                    'effective_type', effective_type,
+                    'guidance_kind', guidance_kind
+                  ) order by variant_id) as variants
+                from variant_kinds
+                group by slug, name
+                having count(distinct guidance_kind) > 1
+                order by name
+                limit 20;
+              `,
+            }),
+          });
+          const text = await response.text();
+          if (!response.ok) throw new Error(`HTTP_${response.status}: ${text}`);
+          const rows = JSON.parse(text);
+          fs.writeFileSync('stage2-mixed-variants.json', JSON.stringify(rows, null, 2));
+          console.log('STAGE2_MIXED_VARIANT_PRODUCTS=' + JSON.stringify(rows));
+          JS
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run real production QA
+        run: |
+          mkdir -p qa-shots
+          cat > stage2-production-qa.mjs <<'JS'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+
+          const BASE_URL = process.env.BASE_URL;
+          const mixedProducts = fs.existsSync('stage2-mixed-variants.json')
+            ? JSON.parse(fs.readFileSync('stage2-mixed-variants.json', 'utf8'))
+            : [];
+          const browser = await chromium.launch({ headless: true });
+          const result = {
+            production: BASE_URL,
+            publishedSha: '328b60037bd9ba6d54f8744349cc3608e62f15aa',
+            products: {},
+            mobile: {},
+            variantSwitch: {
+              mixedGuidanceProductsFound: mixedProducts.length,
+              foundRealSwitchExample: false,
+              testedProducts: 0,
+              evidence: null,
+            },
+            consoleErrors: [],
+            pageErrors: [],
+            failedRequests: [],
+            httpErrors: [],
+          };
+
+          const uniquePush = (array, value) => {
+            const key = JSON.stringify(value);
+            if (!array.some((item) => JSON.stringify(item) === key)) array.push(value);
+          };
+
+          function attachDiagnostics(page, label) {
+            page.on('console', (msg) => {
+              if (msg.type() === 'error') {
+                uniquePush(result.consoleErrors, { label, text: msg.text().slice(0, 1000) });
+              }
+            });
+            page.on('pageerror', (error) => {
+              uniquePush(result.pageErrors, { label, text: String(error).slice(0, 1000) });
+            });
+            page.on('requestfailed', (request) => {
+              const url = request.url();
+              const error = request.failure()?.errorText ?? 'unknown';
+              if (
+                (url.includes('bigofertas.net') || url.includes('supabase.co')) &&
+                !/ERR_ABORTED/i.test(error)
+              ) {
+                uniquePush(result.failedRequests, { label, url: url.slice(0, 700), error });
+              }
+            });
+            page.on('response', (response) => {
+              const url = response.url();
+              if (
+                response.status() >= 400 &&
+                (url.includes('bigofertas.net') || url.includes('supabase.co'))
+              ) {
+                uniquePush(result.httpErrors, {
+                  label,
+                  status: response.status(),
+                  url: url.slice(0, 700),
+                });
+              }
+            });
+          }
+
+          async function catalogProductUrls(page, candidates, max = 20) {
+            for (const path of candidates) {
+              await page.goto(`${BASE_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+              try {
+                await page.waitForSelector('[data-product-card] a[href*="/product/"]', { timeout: 18000 });
+              } catch {
+                continue;
+              }
+              const urls = await page.locator('[data-product-card] a[href*="/product/"]').evaluateAll((links) =>
+                [...new Set(links.map((link) => link.getAttribute('href')).filter(Boolean))].slice(0, 30),
+              );
+              if (urls.length) return urls.slice(0, max);
+            }
+            return [];
+          }
+
+          async function inspectProduct(page, path, shotName) {
+            await page.goto(`${BASE_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await page.waitForSelector('[data-size-guidance]', { timeout: 22000 });
+            await page.waitForTimeout(250);
+            const data = await page.evaluate(() => {
+              const block = document.querySelector('[data-size-guidance]');
+              const instruction = document.querySelector('[data-size-guidance-instruction]');
+              const note = document.querySelector('[data-size-guidance-note]');
+              const title = document.querySelector('#product-title') ?? document.querySelector('h1');
+              const rect = block?.getBoundingClientRect();
+              const sizeLegend = [...document.querySelectorAll('legend')].find((node) =>
+                node.textContent?.includes('Tamanho'),
+              );
+              const sizeFieldset = sizeLegend?.closest('fieldset');
+              const instructionStyle = instruction ? getComputedStyle(instruction) : null;
+              return {
+                title: title?.textContent?.trim() ?? '',
+                kind: block?.getAttribute('data-size-guidance-kind') ?? '',
+                instruction: instruction?.textContent?.trim() ?? '',
+                note: note?.textContent?.trim() ?? '',
+                guidanceFitsViewport: Boolean(
+                  rect && rect.left >= -1 && rect.right <= window.innerWidth + 1,
+                ),
+                sizeSelectorVisible: Boolean(
+                  sizeFieldset && sizeFieldset.getBoundingClientRect().height > 0,
+                ),
+                fontSize: instructionStyle?.fontSize ?? '',
+                lineHeight: instructionStyle?.lineHeight ?? '',
+                viewportWidth: window.innerWidth,
+              };
+            });
+            await page.screenshot({ path: `qa-shots/${shotName}.png`, fullPage: true });
+            return { ...data, url: page.url() };
+          }
+
+          async function findByKind(page, candidates, allowedKinds, label) {
+            const urls = await catalogProductUrls(page, candidates, 20);
+            if (!urls.length) throw new Error(`${label}: nenhum produto real encontrado`);
+            for (let index = 0; index < urls.length; index += 1) {
+              const url = urls[index];
+              try {
+                const inspected = await inspectProduct(page, url, `probe-${label}-${index}`);
+                if (allowedKinds.includes(inspected.kind)) return inspected;
+              } catch (error) {
+                console.log(`QA_SKIP ${label} ${url} ${String(error).slice(0, 220)}`);
+              }
+            }
+            throw new Error(`${label}: nenhum produto real exibiu kind ${allowedKinds.join(', ')}`);
+          }
+
+          const assert = (condition, message) => {
+            if (!condition) throw new Error(message);
+          };
+
+          try {
+            const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+            const desktop = await desktopContext.newPage();
+            attachDiagnostics(desktop, 'desktop');
+
+            result.products.shirt = await findByKind(
+              desktop,
+              ['/products?commercialType=torcedor', '/products?commercialType=jogador', '/products'],
+              ['shirt'],
+              'shirt',
+            );
+            result.products.shorts = await findByKind(
+              desktop,
+              ['/products?commercialType=calcao', '/products?category=shorts', '/products'],
+              ['shorts'],
+              'shorts',
+            );
+            result.products.outerwear = await findByKind(
+              desktop,
+              ['/products?category=corta-ventos', '/products?q=corta-vento', '/products'],
+              ['outerwear'],
+              'outerwear',
+            );
+            result.products.kids = await findByKind(
+              desktop,
+              ['/products?commercialType=infantil', '/products?category=infantil', '/products'],
+              ['kids'],
+              'kids',
+            );
+            result.products.set = await inspectProduct(
+              desktop,
+              '/product/alemanha-conjunto-de-treino-treino-viagem-24-25-adidas-p002606',
+              'desktop-set',
+            );
+
+            assert(
+              /axila/i.test(result.products.shirt.instruction) && /camisa/i.test(result.products.shirt.instruction),
+              'Camisa sem orientação de axila adequada',
+            );
+            assert(/cintura/i.test(result.products.shorts.instruction), 'Short/Calção sem cintura');
+            assert(!/axila/i.test(result.products.shorts.instruction), 'Short/Calção contém axila');
+            assert(
+              /casaco/i.test(result.products.outerwear.instruction) && /folga/i.test(result.products.outerwear.instruction),
+              'Corta-vento sem orientação de largura/folga',
+            );
+            assert(/altura da criança/i.test(result.products.kids.instruction), 'Kit Infantil sem altura');
+            assert(result.products.set.kind === 'training-pants', 'Kit de treino não resolveu training-pants');
+            assert(
+              /parte de cima/i.test(result.products.set.instruction) && /cintura de uma calça/i.test(result.products.set.instruction),
+              'Kit de treino não orienta as duas partes',
+            );
+
+            const expectedNote =
+              'As medidas podem variar levemente entre modelos. O tamanho não altera o preço do produto.';
+            for (const [key, product] of Object.entries(result.products)) {
+              assert(product.note === expectedNote, `${key}: observação complementar divergente`);
+              assert(product.guidanceFitsViewport, `${key}: orientação excede desktop`);
+              assert(product.sizeSelectorVisible, `${key}: seletor de tamanho não visível no desktop`);
+            }
+
+            for (const [key, product] of Object.entries(result.products)) {
+              const path = new URL(product.url).pathname;
+              await inspectProduct(desktop, path, `desktop-${key}`);
+            }
+
+            for (const mixed of mixedProducts.slice(0, 8)) {
+              const path = `/product/${mixed.slug}`;
+              await desktop.goto(`${BASE_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+              try {
+                await desktop.waitForSelector('[data-size-guidance]', { timeout: 18000 });
+              } catch {
+                continue;
+              }
+              const buttons = desktop.locator('[data-variant-preview]');
+              const count = await buttons.count();
+              if (count < 2) continue;
+              result.variantSwitch.testedProducts += 1;
+              const beforeKind = await desktop.locator('[data-size-guidance]').getAttribute('data-size-guidance-kind');
+              const beforeText = (await desktop.locator('[data-size-guidance-instruction]').textContent())?.trim() ?? '';
+              let navigations = 0;
+              const onNavigated = (frame) => {
+                if (frame === desktop.mainFrame()) navigations += 1;
+              };
+              desktop.on('framenavigated', onNavigated);
+              for (let i = 0; i < Math.min(count, 12); i += 1) {
+                const button = buttons.nth(i);
+                if ((await button.getAttribute('aria-pressed')) === 'true') continue;
+                if (await button.isDisabled()) continue;
+                await button.click();
+                await desktop.waitForTimeout(300);
+                const afterKind = await desktop.locator('[data-size-guidance]').getAttribute('data-size-guidance-kind');
+                const afterText = (await desktop.locator('[data-size-guidance-instruction]').textContent())?.trim() ?? '';
+                if ((afterKind !== beforeKind || afterText !== beforeText) && navigations === 0) {
+                  result.variantSwitch.foundRealSwitchExample = true;
+                  result.variantSwitch.evidence = {
+                    title: (await desktop.locator('#product-title').textContent())?.trim() ?? mixed.name,
+                    url: desktop.url(),
+                    before: { kind: beforeKind, text: beforeText },
+                    after: { kind: afterKind, text: afterText },
+                    noRefresh: true,
+                  };
+                  break;
+                }
+              }
+              desktop.off('framenavigated', onNavigated);
+              if (result.variantSwitch.foundRealSwitchExample) break;
+            }
+            await desktopContext.close();
+
+            const mobileContext = await browser.newContext({
+              viewport: { width: 390, height: 844 },
+              isMobile: true,
+            });
+            const mobile = await mobileContext.newPage();
+            attachDiagnostics(mobile, 'mobile');
+            for (const [key, product] of Object.entries(result.products)) {
+              const path = new URL(product.url).pathname;
+              const inspected = await inspectProduct(mobile, path, `mobile-${key}`);
+              result.mobile[key] = inspected;
+              assert(inspected.kind === product.kind, `${key}: kind divergiu no mobile`);
+              assert(inspected.instruction === product.instruction, `${key}: texto divergiu no mobile`);
+              assert(inspected.guidanceFitsViewport, `${key}: orientação excede mobile`);
+              assert(inspected.sizeSelectorVisible, `${key}: seletor de tamanho não visível no mobile`);
+            }
+            await mobileContext.close();
+
+            const relevantConsole = result.consoleErrors.filter(({ text }) =>
+              /hydration|cors|rpc|storefront_product_detail|failed to fetch|uncaught|typeerror/i.test(text),
+            );
+            const relevantPageErrors = result.pageErrors;
+            const relevantFailedRequests = result.failedRequests;
+            const relevantHttpErrors = result.httpErrors;
+            result.relevantDiagnostics = {
+              consoleErrors: relevantConsole,
+              pageErrors: relevantPageErrors,
+              failedRequests: relevantFailedRequests,
+              httpErrors: relevantHttpErrors,
+            };
+
+            console.log('STAGE2_PRODUCTION_QA_RESULT=' + JSON.stringify(result));
+            assert(relevantConsole.length === 0, 'Console contém erros relevantes');
+            assert(relevantPageErrors.length === 0, 'Page errors encontrados');
+            assert(relevantFailedRequests.length === 0, 'Requests relevantes falharam');
+            assert(relevantHttpErrors.length === 0, 'Respostas 4xx/5xx relevantes encontradas');
+            console.log('STAGE2_PRODUCTION_QA_OK');
+          } catch (error) {
+            console.log('STAGE2_PRODUCTION_QA_PARTIAL=' + JSON.stringify(result));
+            throw error;
+          } finally {
+            await browser.close();
+          }
+          JS
+          node ./stage2-production-qa.mjs
+
+      - name: Upload QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage2-production-qa-shots
+          path: qa-shots/*.png
+          if-no-files-found: ignore
