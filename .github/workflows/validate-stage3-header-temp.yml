@@ -1,0 +1,72 @@
+name: Validate Stage 3 Header Temp
+
+on:
+  push:
+    branches:
+      - stage3-header-refinement-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate Stage 3 header contract
+        run: |
+          node <<'JS'
+          const fs = require('node:fs');
+          const nav = fs.readFileSync('src/components/layout/CategoryNav.tsx', 'utf8');
+          const css = fs.readFileSync('src/header.css', 'utf8');
+          const products = fs.readFileSync('src/routes/products.tsx', 'utf8');
+          const hook = fs.readFileSync('src/hooks/useCatalogProducts.ts', 'utf8');
+
+          const assert = (condition, message) => {
+            if (!condition) throw new Error(message);
+            console.log(`PASS - ${message}`);
+          };
+
+          assert(nav.includes('name: "TORCEDOR"') && nav.includes('commercialType: "torcedor"'), 'Torcedor usa commercialType estruturado');
+          assert(nav.includes('name: "JOGADOR"') && nav.includes('commercialType: "jogador"'), 'Jogador usa commercialType estruturado');
+          assert(products.includes('commercialType: filterKeySchema.optional()'), 'rota de produtos valida commercialType');
+          assert(hook.includes('p_commercial_type: query.commercialType?.trim() || null'), 'catálogo envia commercialType ao RPC');
+          assert(!/product\.name|includes\(["']torcedor|includes\(["']jogador/i.test(nav), 'navegação não classifica por nome do produto');
+          assert(css.includes('a[aria-label$=" - Início"]:hover .brand-lockup') && css.includes('transform: none !important'), 'logo fica sem transform em hover/active/focus');
+          assert(css.includes('.glass-header .glass-input:hover') && css.includes('.glass-header .glass-input:focus-visible'), 'busca possui hover e foco destacados');
+          assert(css.includes('max-width: 1023.98px') && css.includes('.md\\:hidden'), 'tablet usa sistema móvel existente');
+          assert(nav.includes('text-[12px]') && nav.includes('font-black'), 'categorias ganharam presença visual');
+          console.log('STAGE3_HEADER_CONTRACT_OK');
+          JS
+
+      - name: Check formatting
+        run: bunx prettier --check src/components/layout/CategoryNav.tsx src/header.css
+
+      - name: Validate storefront customer experience
+        run: node scripts/validate-storefront-upgrades.mjs && node scripts/validate-storefront-regressions.mjs && node scripts/validate-stage2-commerce.mjs && node scripts/validate-final-storefront-refinements.mjs && bun scripts/validate-size-guidance.ts
+
+      - name: Validate catalog foundation
+        run: node scripts/validate-catalog-foundation-stage1.mjs && bun run validate:catalog-import
+
+      - name: Lint storefront
+        run: bun run lint
+
+      - name: Production build
+        run: bun run build
+
+      - name: Hostinger build without publish
+        run: bun run build:hostinger
+
+      - name: Validate definitive order core
+        run: bun run validate:phase10
