@@ -23,10 +23,7 @@ export default function ProductGallery({
   productName,
   unavailable = false,
 }: ProductGalleryProps) {
-  const preferredImageId = useMemo(
-    () => images.find((image) => image.isPrimary)?.id ?? images[0]?.id ?? null,
-    [images],
-  );
+  const preferredImageId = useMemo(() => images[0]?.id ?? null, [images]);
   const [activeImageId, setActiveImageId] = useState<string | null>(preferredImageId);
   const [loadedImageId, setLoadedImageId] = useState<string | null>(null);
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
