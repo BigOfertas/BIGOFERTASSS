@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 
+import "@/header.css";
 import { matchesFilter, type ProductSearchFilters } from "@/lib/products";
 
 interface CategoryLink {
@@ -11,6 +12,16 @@ interface CategoryLink {
 
 export const categoryLinks: CategoryLink[] = [
   { name: "INÍCIO", href: "/" },
+  {
+    name: "TORCEDOR",
+    href: "/products",
+    search: { commercialType: "torcedor" },
+  },
+  {
+    name: "JOGADOR",
+    href: "/products",
+    search: { commercialType: "jogador" },
+  },
   {
     name: "FEMININO",
     href: "/products",
@@ -83,7 +94,7 @@ const CategoryNav: React.FC<CategoryNavProps> = ({ mobile = false, onNavigate })
           className={
             mobile
               ? "grid grid-cols-2 gap-1 py-2"
-              : "flex items-center justify-between gap-4 overflow-x-auto py-3 no-scrollbar"
+              : "flex items-center justify-between gap-2 overflow-x-auto py-3 no-scrollbar xl:gap-4"
           }
         >
           {categoryLinks.map((category) => {
@@ -102,18 +113,18 @@ const CategoryNav: React.FC<CategoryNavProps> = ({ mobile = false, onNavigate })
                   );
 
             const className = mobile
-              ? `rounded-lg px-3 py-2.5 text-left text-[12px] font-extrabold tracking-wide transition-colors ${
+              ? `rounded-lg px-3 py-2.5 text-left text-[12px] font-black tracking-wide transition-colors ${
                   isActive
                     ? "bg-red-50 text-red-600"
                     : "text-gray-900 hover:bg-gray-50 hover:text-red-600"
                 }`
-              : `group relative whitespace-nowrap px-0.5 py-1.5 text-[11px] font-extrabold tracking-[0.04em] transition-colors ${
+              : `group relative whitespace-nowrap px-0.5 py-2 text-[12px] font-black tracking-[0.045em] transition-colors xl:text-[13px] ${
                   isActive ? "text-red-600" : "text-gray-900 hover:text-red-600"
                 }`;
 
             const underline = mobile ? null : (
               <span
-                className={`absolute -bottom-1 left-0 h-0.5 w-full origin-left bg-red-600 transition-transform duration-200 ${
+                className={`absolute -bottom-0.5 left-0 h-0.5 w-full origin-left bg-red-600 transition-transform duration-200 ${
                   isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
                 }`}
               />
