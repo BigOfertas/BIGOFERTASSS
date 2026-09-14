@@ -79,6 +79,7 @@ const generatedModules = import.meta.glob("./generated/*.json", {
 }) as Record<string, () => Promise<Catalog>>;
 
 const catalogCache = new Map<Locale, Catalog>([["pt", {}]]);
+const fragmentCache = new WeakMap<Catalog, ReadonlyArray<readonly [string, string]>>();
 
 function normalize(value: string) {
   return value.replace(/\s+/g, " ").trim();
@@ -157,6 +158,51 @@ function exactFromCatalog(catalog: Catalog, value: string, locale: Locale) {
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isSafeCatalogFragment(source: string, target: string) {
+  const compact = source.trim();
+  if (compact.length < 12 || !compact.includes(" ")) return false;
+  if (!/[A-Za-zÀ-ÖØ-öø-ÿ]/u.test(compact)) return false;
+  if (/[<>{}[\]]|=>|className|data-|aria-|https?:\/\//u.test(compact)) return false;
+  if (/^(?:rgb|rgba|hsl|hsla|var|calc)\(/iu.test(compact)) return false;
+  return Boolean(sanitizeCatalogTranslation(source, target));
+}
+
+function catalogFragments(catalog: Catalog) {
+  const cached = fragmentCache.get(catalog);
+  if (cached) return cached;
+
+  const fragments = Object.entries(catalog)
+    .filter(([source, target]) => isSafeCatalogFragment(source, target))
+    .sort(([left], [right]) => right.length - left.length) as Array<readonly [string, string]>;
+  fragmentCache.set(catalog, fragments);
+  return fragments;
+}
+
+/**
+ * Source extraction around template expressions can leave catalog keys such as
+ * "Quando ... A" + {DropBox} + " entrará em contato". React renders that as one final text node,
+ * so exact lookup alone cannot translate it. This conservative longest-fragment pass translates
+ * only natural-language catalog fragments and leaves interpolated proper names, prices, IDs and
+ * URLs untouched.
+ */
+function translateCatalogFragments(source: string, locale: Locale, catalog: Catalog) {
+  if (source.trim().length < 12 || Object.keys(catalog).length === 0) return source;
+
+  let output = source;
+  for (const [fragment, rawTarget] of catalogFragments(catalog)) {
+    if (!output.includes(fragment)) continue;
+    const compact = normalize(fragment);
+    const deterministic = deterministicCopy(locale, compact);
+    const translated =
+      deterministic !== compact
+        ? deterministic
+        : sanitizeCatalogTranslation(fragment, rawTarget);
+    if (!translated || translated === fragment) continue;
+    output = output.replaceAll(fragment, translated);
+  }
+  return output;
 }
 
 function translateCommercialLabel(value: string, locale: Locale, catalog: Catalog) {
@@ -280,7 +326,7 @@ function translateDynamicText(source: string, locale: Locale, catalog: Catalog) 
       : lookup("Mudar para modo escuro");
   }
 
-  return output;
+  return translateCatalogFragments(output, locale, catalog);
 }
 
 const I18N_ATTRIBUTE_NAMES = ["placeholder", "title", "aria-label", "aria-description"] as const;
