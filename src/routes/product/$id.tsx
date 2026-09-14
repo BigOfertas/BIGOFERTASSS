@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import Header from "@/components/layout/Header";
 import ProductCard from "@/components/product/ProductCard";
 import ProductGallery from "@/components/product/ProductGallery";
+import { ProductVariantSelector } from "@/components/product/ProductVariantSelector";
 import { ProductShippingCalculator } from "@/components/product/ProductShippingCalculator";
 import { ProductPurchaseOptions } from "@/components/product/ProductPurchaseOptions";
 import { ProductShare } from "@/components/product/ProductShare";
@@ -37,7 +38,6 @@ import {
   getVariantBasePrice,
   getVariantEffectivePrice,
   getVariantPromotionalPrice,
-  isValueCompatibleWithSelection,
 } from "@/lib/product-detail";
 import { getProductGalleryItems } from "@/lib/product-images";
 import { buildProductHead, buildProductSeoData } from "@/lib/product-seo";
@@ -92,7 +92,9 @@ function ProductDetail() {
   const loaderDetail = Route.useLoaderData();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [selection, setSelection] = useState<Record<string, string>>({});
+  const [selection, setSelection] = useState<Record<string, string>>(
+    () => getDefaultProductVariant(loaderDetail.variants)?.optionValueIds ?? {},
+  );
   const [purchaseCustomization, setPurchaseCustomization] = useState(EMPTY_PURCHASE_CUSTOMIZATION);
 
   const {
@@ -337,6 +339,7 @@ function ProductDetail() {
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-16">
           <ProductGallery
+            key={selectedVariant?.id ?? defaultVariant?.id ?? product.id}
             images={gallery}
             productName={product.name}
             unavailable={selectionComplete && !availableToOrder}
@@ -392,72 +395,14 @@ function ProductDetail() {
               </div>
             </div>
 
-            {detail.options.length > 0 ? (
-              <div className="space-y-6 border-t border-gray-100 py-6">
-                {detail.options.map((option) => (
-                  <fieldset key={option.id}>
-                    <legend className="mb-3 text-xs font-black uppercase tracking-widest text-gray-800">
-                      {option.name}
-                      {option.is_required ? (
-                        <span className="ml-1 text-red-600" aria-hidden="true">
-                          *
-                        </span>
-                      ) : null}
-                    </legend>
-                    <div className="flex flex-wrap gap-2">
-                      {option.values.map((value) => {
-                        const compatible = isValueCompatibleWithSelection(
-                          detail.variants,
-                          option.id,
-                          value.id,
-                          selection,
-                        );
-                        const selected = selection[option.id] === value.id;
-
-                        return (
-                          <button
-                            key={value.id}
-                            type="button"
-                            disabled={!compatible}
-                            onClick={() =>
-                              setSelection((current) => {
-                                const next = { ...current, [option.id]: value.id };
-                                const exactMatch = findVariantForSelection(
-                                  detail.variants,
-                                  next,
-                                  requiredOptionIds,
-                                );
-
-                                if (exactMatch) {
-                                  return next;
-                                }
-
-                                const fallbackVariant = detail.variants.find(
-                                  (variant) => variant.optionValueIds[option.id] === value.id,
-                                );
-
-                                return fallbackVariant
-                                  ? { ...fallbackVariant.optionValueIds }
-                                  : next;
-                              })
-                            }
-                            className={`min-h-11 min-w-12 rounded-md border px-4 py-2 text-sm font-bold transition-colors ${
-                              selected
-                                ? "border-red-600 bg-red-600 text-white"
-                                : compatible
-                                  ? "border-gray-300 bg-white text-gray-800 hover:border-red-600"
-                                  : "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300 line-through"
-                            }`}
-                            aria-pressed={selected}
-                          >
-                            {value.value}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </fieldset>
-                ))}
-              </div>
+            {detail.variants.length > 1 ? (
+              <ProductVariantSelector
+                product={product}
+                options={detail.options}
+                variants={detail.variants}
+                selectedVariantId={selectedVariant?.id ?? null}
+                onSelect={(variant) => setSelection({ ...variant.optionValueIds })}
+              />
             ) : null}
 
             {purchaseConfig ? (
