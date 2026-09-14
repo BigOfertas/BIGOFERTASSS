@@ -3,6 +3,7 @@ import { extname, join, relative } from "node:path";
 
 const ROOTS = ["src"];
 const INTERNAL_FIXTURES = ["Camisa Profissional BIGofertas 2024"];
+const TECHNICAL_SOURCE_FILES = new Set(["src/lib/public-product-description.ts"]);
 const PUBLIC_LEGACY_BRAND = /\bbigofertas\b(?!\.net)/gi;
 const TECHNICAL_DOMAIN = /\b(?:img\.)?bigofertas\.net\b/gi;
 
@@ -22,12 +23,18 @@ async function collectFiles(directory) {
 const failures = [];
 let technicalDomainReferences = 0;
 let internalFixtureReferences = 0;
+let technicalSanitizerReferences = 0;
 
 for (const root of ROOTS) {
   for (const file of await collectFiles(root)) {
     const normalized = relative(".", file).replaceAll("\\", "/");
     const source = await readFile(file, "utf8");
     technicalDomainReferences += source.match(TECHNICAL_DOMAIN)?.length ?? 0;
+
+    if (TECHNICAL_SOURCE_FILES.has(normalized)) {
+      technicalSanitizerReferences += source.match(PUBLIC_LEGACY_BRAND)?.length ?? 0;
+      continue;
+    }
 
     let publicSource = source;
     for (const fixture of INTERNAL_FIXTURES) {
@@ -61,3 +68,4 @@ console.log("PASS - nenhuma identidade antiga esta hardcoded nas superficies pub
 console.log("BRAND_AUDIT_PUBLIC_LEGACY_OCCURRENCES=0");
 console.log(`BRAND_AUDIT_TECHNICAL_DOMAIN_REFERENCES_PRESERVED=${technicalDomainReferences}`);
 console.log(`BRAND_AUDIT_INTERNAL_FIXTURES_PRESERVED=${internalFixtureReferences}`);
+console.log(`BRAND_AUDIT_SANITIZER_REFERENCES_PRESERVED=${technicalSanitizerReferences}`);
