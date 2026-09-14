@@ -1,0 +1,38 @@
+name: QA Stage 2 Production V2
+
+on:
+  push:
+    branches:
+      - qa-stage2-production-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout QA source
+        uses: actions/checkout@v7
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Extract and run production QA from workspace
+        env:
+          BASE_URL: https://bigofertas.net
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          source = Path('.github/workflows/qa-stage2-production.yml').read_text()
+          start = source.index("          import { chromium } from 'playwright';")
+          end = source.index("          JS\n", start)
+          lines = source[start:end].splitlines()
+          script = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines) + '\n'
+          Path('stage2-production-qa.mjs').write_text(script)
+          PY
+          node ./stage2-production-qa.mjs
+          rm -f ./stage2-production-qa.mjs
