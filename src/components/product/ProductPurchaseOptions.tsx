@@ -1,17 +1,36 @@
 import { SizeGuideDialog } from "@/components/product/SizeGuideDialog";
-import type { ProductPurchaseConfig, PurchaseCustomization } from "@/lib/product-purchase";
+import type {
+  ProductCommercialType,
+  ProductPurchaseConfig,
+  PurchaseCustomization,
+} from "@/lib/product-purchase";
 import { calculatePurchaseSurcharge } from "@/lib/product-purchase";
+import { getSizeGuidance, SIZE_GUIDANCE_NOTE } from "@/lib/size-guidance";
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+const sizeGuideTypes = new Set<ProductCommercialType>([
+  "torcedor",
+  "jogador",
+  "feminino",
+  "infantil",
+  "basquete",
+]);
 
 export function ProductPurchaseOptions({
   config,
   value,
   onChange,
+  commercialType,
+  categoryName,
+  categorySlug,
 }: {
   config: ProductPurchaseConfig;
   value: PurchaseCustomization;
   onChange: (next: PurchaseCustomization) => void;
+  commercialType?: string | null;
+  categoryName?: string | null;
+  categorySlug?: string | null;
 }) {
   const surcharge = calculatePurchaseSurcharge(config, value);
   const normalEnabled = Boolean(value.personalization);
@@ -20,6 +39,17 @@ export function ProductPurchaseOptions({
   const totalMax = config.productionBusinessDays + config.deliveryMaxBusinessDays;
   const selectedPatchCodes =
     value.patchCodes?.length > 0 ? value.patchCodes : value.patchCode ? [value.patchCode] : [];
+  const effectiveCommercialType = commercialType ?? config.commercialType;
+  const sizeGuidance = getSizeGuidance({
+    commercialType: effectiveCommercialType,
+    categoryName,
+    categorySlug,
+  });
+  const sizeGuideCommercialType = sizeGuideTypes.has(
+    effectiveCommercialType as ProductCommercialType,
+  )
+    ? (effectiveCommercialType as ProductCommercialType)
+    : config.commercialType;
 
   return (
     <div className="space-y-5 border-t border-gray-100 py-6">
@@ -30,7 +60,7 @@ export function ProductPurchaseOptions({
               Tamanho <span className="text-red-600">*</span>
             </legend>
             <SizeGuideDialog
-              commercialType={config.commercialType}
+              commercialType={sizeGuideCommercialType}
               triggerLabel="Ver guia de tamanhos"
             />
           </div>
@@ -46,11 +76,17 @@ export function ProductPurchaseOptions({
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs font-medium leading-5 text-gray-500">
-            {
-              "Meça de uma axila à outra em uma peça que já veste bem. As medidas em centímetros podem variar entre modelos. O tamanho não altera o preço do produto."
-            }
-          </p>
+          <div
+            className="mt-2 max-w-2xl text-xs font-medium leading-5 text-gray-500"
+            data-size-guidance
+            data-size-guidance-kind={sizeGuidance.kind}
+            aria-live="polite"
+          >
+            <p data-size-guidance-instruction>{sizeGuidance.instruction}</p>
+            <p className="mt-0.5 text-gray-400" data-size-guidance-note>
+              {SIZE_GUIDANCE_NOTE}
+            </p>
+          </div>
         </fieldset>
       ) : null}
 
