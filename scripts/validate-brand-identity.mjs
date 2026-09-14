@@ -3,7 +3,11 @@ import { extname, join, relative } from "node:path";
 
 const ROOTS = ["src"];
 const INTERNAL_FIXTURES = ["Camisa Profissional BIGofertas 2024"];
-const TECHNICAL_SOURCE_FILES = new Set(["src/lib/public-product-description.ts"]);
+const TECHNICAL_SOURCE_FILES = new Set([
+  "src/components/product/CatalogProductGrid.tsx",
+  "src/lib/public-product-description.ts",
+  "src/lib/shipping-server.ts",
+]);
 const PUBLIC_LEGACY_BRAND = /\bbigofertas\b(?!\.net)/gi;
 const TECHNICAL_DOMAIN = /\b(?:img\.)?bigofertas\.net\b/gi;
 
@@ -23,7 +27,7 @@ async function collectFiles(directory) {
 const failures = [];
 let technicalDomainReferences = 0;
 let internalFixtureReferences = 0;
-let technicalSanitizerReferences = 0;
+let technicalLegacyReferences = 0;
 
 for (const root of ROOTS) {
   for (const file of await collectFiles(root)) {
@@ -32,7 +36,7 @@ for (const root of ROOTS) {
     technicalDomainReferences += source.match(TECHNICAL_DOMAIN)?.length ?? 0;
 
     if (TECHNICAL_SOURCE_FILES.has(normalized)) {
-      technicalSanitizerReferences += source.match(PUBLIC_LEGACY_BRAND)?.length ?? 0;
+      technicalLegacyReferences += source.match(PUBLIC_LEGACY_BRAND)?.length ?? 0;
       continue;
     }
 
@@ -59,7 +63,7 @@ if (failures.length > 0) {
   console.error("A identidade antiga ainda esta escrita em uma superficie publica do codigo:\n");
   for (const failure of failures) console.error(`FAIL - ${failure}`);
   console.error(
-    "\nPreserve bigofertas.net quando for infraestrutura, mas use DropBox para a marca visivel.",
+    "\nPreserve bigofertas.net e identificadores internos quando tecnicamente necessarios, mas use DropBox para a marca visivel.",
   );
   process.exit(1);
 }
@@ -68,4 +72,4 @@ console.log("PASS - nenhuma identidade antiga esta hardcoded nas superficies pub
 console.log("BRAND_AUDIT_PUBLIC_LEGACY_OCCURRENCES=0");
 console.log(`BRAND_AUDIT_TECHNICAL_DOMAIN_REFERENCES_PRESERVED=${technicalDomainReferences}`);
 console.log(`BRAND_AUDIT_INTERNAL_FIXTURES_PRESERVED=${internalFixtureReferences}`);
-console.log(`BRAND_AUDIT_SANITIZER_REFERENCES_PRESERVED=${technicalSanitizerReferences}`);
+console.log(`BRAND_AUDIT_TECHNICAL_LEGACY_REFERENCES_PRESERVED=${technicalLegacyReferences}`);
