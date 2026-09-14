@@ -75,10 +75,7 @@ if (!categoryNav.includes("useI18n")) fail("category navigation is not locale-aw
 if (!categoryNav.includes("uiCopy(locale, category.name)"))
   fail("category labels are not translated before render");
 
-for (const token of [
-  'uiCopy(locale, "Novidades da loja")',
-  'uiCopy(locale, "Lançamentos")',
-]) {
+for (const token of ['uiCopy(locale, "Novidades da loja")', 'uiCopy(locale, "Lançamentos")']) {
   if (!bestSellers.includes(token))
     fail(`animated homepage heading must be translated before splitting: ${token}`);
 }
@@ -88,13 +85,14 @@ for (const token of [
   'uiCopy(locale, "Ordenar")',
   'uiCopy(locale, "Destaques")',
 ]) {
-  if (!productsRoute.includes(token)) fail(`catalog page missing deterministic translation: ${token}`);
+  if (!productsRoute.includes(token))
+    fail(`catalog page missing deterministic translation: ${token}`);
 }
 
 for (const token of [
   'uiCopy(locale, "Filtros")',
   'uiCopy(locale, "Limpar tudo")',
-  'uiCopy(locale, title)',
+  "uiCopy(locale, title)",
 ]) {
   if (!filters.includes(token)) fail(`catalog filters missing deterministic translation: ${token}`);
 }
@@ -107,9 +105,9 @@ if (!productCarousel.includes("data-product-carousel-dot"))
   fail("product carousel dots are missing a dark-mode hook");
 
 for (const token of [
-  'en: {',
-  'zh: {',
-  'ar: {',
+  "en: {",
+  "zh: {",
+  "ar: {",
   'Lançamentos: "NEW ARRIVALS"',
   'Lançamentos: "新品"',
   'Produtos: "PRODUCTS"',
