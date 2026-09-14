@@ -1,0 +1,86 @@
+name: Validate Stage 1 Variant Previews
+
+on:
+  push:
+    branches:
+      - stage1-variant-previews-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: stage1-variant-previews-20260914
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check formatting
+        run: |
+          bunx prettier --check \
+            src/components/product/ProductVariantSelector.tsx \
+            src/components/product/ProductGallery.tsx \
+            src/lib/product-detail.ts \
+            src/routes/product/'$id.tsx'
+
+      - name: Lint
+        run: bun run lint
+
+      - name: TypeScript
+        run: bunx tsc --noEmit
+
+      - name: Test default variant independent of ordering
+        run: |
+          bun -e '
+            import { getDefaultProductVariant } from "./src/lib/product-detail.ts";
+            const first = { id: "first", is_default: false, optionValueIds: { style: "one" } };
+            const second = { id: "second", is_default: true, optionValueIds: { style: "two" } };
+            const selected = getDefaultProductVariant([first, second]);
+            if (selected?.id !== "second") throw new Error(`Expected second default, got ${selected?.id}`);
+            const fallback = getDefaultProductVariant([first, { ...second, is_default: false }]);
+            if (fallback?.id !== "first") throw new Error(`Expected first fallback, got ${fallback?.id}`);
+            const single = getDefaultProductVariant([{ ...second, is_default: false }]);
+            if (single?.id !== "second") throw new Error(`Expected single variant, got ${single?.id}`);
+            console.log("DEFAULT_VARIANT_ORDERING_OK");
+          '
+
+      - name: Production build
+        run: bun run build
+
+      - name: Hostinger build
+        run: bun run build:hostinger
+
+      - name: Install Chromium for browser QA
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start branch storefront
+        run: |
+          nohup bun run dev -- --host 127.0.0.1 --port 4173 > /tmp/stage1-dev.log 2>&1 &
+          for attempt in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/stage1-dev.log
+          exit 1
+
+      - name: Browser QA for variants
+        run: node scripts/qa-stage1-variant-previews.mjs
+
+      - name: Print dev log on failure
+        if: failure()
+        run: cat /tmp/stage1-dev.log || true
