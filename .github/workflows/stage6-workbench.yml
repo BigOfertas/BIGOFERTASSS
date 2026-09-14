@@ -7,18 +7,21 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: stage6-workbench
   cancel-in-progress: true
 
 jobs:
-  snapshot:
+  validate-and-persist:
+    if: ${{ !contains(github.event.head_commit.message || '', '[stage6-persist]') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Stage 6 branch
         uses: actions/checkout@v7
+        with:
+          ref: stage6-dark-motion-i18n-20260914
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -28,33 +31,80 @@ jobs:
       - name: Install existing dependencies
         run: bun install --frozen-lockfile
 
-      - name: Resolve Stage 6 dependencies
+      - name: Resolve and persist Stage 6 dependencies
         run: bun add next-themes framer-motion
 
-      - name: Generate static legacy translations
+      - name: Apply Stage 6 integration to existing source
+        run: node scripts/stage6-patch-existing.mjs
+
+      - name: Generate static locale catalogs
         run: node scripts/stage6-generate-translations.mjs
 
-      - name: Build source snapshot
+      - name: Format Stage 6 changes
+        run: >-
+          bunx prettier --write
+          package.json
+          src/i18n/index.tsx
+          src/i18n/generated/*.json
+          src/components/layout/LanguageSwitcher.tsx
+          src/components/layout/Stage6HeaderControls.tsx
+          src/components/layout/Header.tsx
+          src/components/ui/cinematic-theme-switcher.tsx
+          src/components/ui/motion-button.tsx
+          src/components/product/ProductShare.tsx
+          src/components/product/ProductSeo.tsx
+          src/components/support/FloatingWhatsAppSupport.tsx
+          src/routes/__root.tsx
+          'src/routes/product/$id.tsx'
+          src/stage6-i18n-source.ts
+          src/stage6-theme.css
+          scripts/stage6-generate-translations.mjs
+          scripts/stage6-patch-existing.mjs
+          scripts/validate-stage6-i18n.mjs
+          .github/workflows/validate-main.yml
+
+      - name: Validate Stage 6 gate
+        run: node scripts/validate-stage6-i18n.mjs
+
+      - name: Validate storefront regression gates
+        run: |
+          node scripts/validate-brand-identity.mjs
+          node scripts/validate-stage3-rebrand.mjs
+          node scripts/validate-catalog-foundation-stage1.mjs
+          bun run validate:catalog-import
+          node scripts/validate-catalog-business-rules.mjs
+          node scripts/validate-google-photos-final-pipeline.mjs
+          node scripts/validate-retro-pdf-group-deploy.mjs
+          node scripts/validate-storefront-upgrades.mjs
+          node scripts/validate-storefront-regressions.mjs
+          node scripts/validate-stage2-commerce.mjs
+          node scripts/validate-final-storefront-refinements.mjs
+          bun scripts/validate-size-guidance.ts
+          bun scripts/validate-stage5.ts
+          bun run validate:affiliate
+          node scripts/validate-financial-dashboard.mjs
+          node scripts/validate-finance-category-bulk.mjs
+          bun run validate:phase10
+
+      - name: Lint storefront
+        run: bun run lint
+
+      - name: Validate TypeScript and production build
+        run: bun run build
+
+      - name: Validate Hostinger production build
+        run: bun run build:hostinger
+
+      - name: Persist validated Stage 6 implementation
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf stage6-snapshot
-          mkdir -p stage6-snapshot
-          cp package.json bun.lock stage6-snapshot/
-          cp -R src scripts public supabase vite*.ts tsconfig*.json eslint.config.js components.json stage6-snapshot/ 2>/dev/null || true
-
-      - name: Upload Stage 6 snapshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: stage6-source-snapshot
-          path: stage6-snapshot
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Upload generated locale catalogs
-        uses: actions/upload-artifact@v4
-        with:
-          name: stage6-generated-locales
-          path: src/i18n/generated
-          if-no-files-found: error
-          retention-days: 1
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add package.json bun.lock src scripts .github/workflows/validate-main.yml
+          if git diff --cached --quiet; then
+            echo "No generated Stage 6 changes to persist."
+            exit 0
+          fi
+          git commit -m "[stage6-persist] feat(stage6): integrar tema, motion button e i18n"
+          git push origin HEAD:stage6-dark-motion-i18n-20260914
