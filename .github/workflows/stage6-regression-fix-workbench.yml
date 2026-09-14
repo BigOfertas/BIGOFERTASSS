@@ -37,11 +37,14 @@ jobs:
           bunx prettier --write
           src/i18n/ui-copy.ts
           src/components/layout/CategoryNav.tsx
+          src/components/layout/Header.tsx
           src/components/home/BestSellers.tsx
           src/components/product/ProductCard.tsx
+          src/components/product/ProductCarousel.tsx
           src/components/ProductFilters.tsx
           src/routes/products.tsx
           src/stage6-theme.css
+          scripts/validate-stage6-i18n.mjs
 
       - name: Validate Stage 6 architecture
         run: bun run validate:stage6-i18n
@@ -67,7 +70,7 @@ jobs:
           set -euo pipefail
           git config user.name "BigOfertas"
           git config user.email "contato@bigofertas.net"
-          git add src/i18n/ui-copy.ts src/components/layout/CategoryNav.tsx src/components/home/BestSellers.tsx src/components/product/ProductCard.tsx src/components/ProductFilters.tsx src/routes/products.tsx src/stage6-theme.css
+          git add src/i18n/ui-copy.ts src/components/layout/CategoryNav.tsx src/components/layout/Header.tsx src/components/home/BestSellers.tsx src/components/product/ProductCard.tsx src/components/product/ProductCarousel.tsx src/components/ProductFilters.tsx src/routes/products.tsx src/stage6-theme.css scripts/validate-stage6-i18n.mjs
           if git diff --cached --quiet; then
             echo "No formatting changes to persist."
             exit 0
