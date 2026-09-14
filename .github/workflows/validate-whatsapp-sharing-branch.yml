@@ -1,0 +1,42 @@
+name: Validate WhatsApp and Product Sharing
+
+on:
+  push:
+    branches:
+      - finish-whatsapp-sharing-20260913
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: finish-whatsapp-sharing-20260913
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check formatting
+        run: bunx prettier --check src/routes/__root.tsx 'src/routes/product/$id.tsx' src/components/support/FloatingWhatsAppSupport.tsx src/components/product/ProductShare.tsx scripts/validate-whatsapp-sharing.mjs
+
+      - name: Validate feature contract
+        run: node scripts/validate-whatsapp-sharing.mjs
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Project TypeScript and build validation
+        run: bun run build
+
+      - name: Hostinger production build
+        run: bun run build:hostinger
