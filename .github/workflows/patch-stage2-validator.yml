@@ -1,0 +1,69 @@
+name: Patch Stage 2 Size Guidance Validator
+
+on:
+  push:
+    branches:
+      - fix-stage2-size-guidance-validator-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix-stage2-size-guidance-validator-20260914
+
+      - name: Update legacy size guidance assertion
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("scripts/validate-storefront-upgrades.mjs")
+          source = path.read_text()
+
+          old_read = 'const purchaseOptions = read("src/components/product/ProductPurchaseOptions.tsx");\n'
+          new_read = old_read + 'const sizeGuidance = read("src/lib/size-guidance.ts");\n'
+          if 'const sizeGuidance = read("src/lib/size-guidance.ts");' not in source:
+              if old_read not in source:
+                  raise SystemExit("purchaseOptions read anchor not found")
+              source = source.replace(old_read, new_read, 1)
+
+          old_check = '''check(
+            "produto possui guia de tamanhos sem medidas inventadas",
+            purchaseOptions.includes("Ver guia de tamanhos") &&
+              purchaseOptions.includes("Meça de uma axila à outra") &&
+              purchaseOptions.includes("As medidas em centímetros podem variar entre modelos"),
+          );'''
+          new_check = '''check(
+            "produto possui orientação de tamanho dinâmica sem medida fixa incorreta",
+            purchaseOptions.includes("Ver guia de tamanhos") &&
+              purchaseOptions.includes("getSizeGuidance") &&
+              purchaseOptions.includes("data-size-guidance") &&
+              sizeGuidance.includes("GUIDANCE_BY_KIND") &&
+              sizeGuidance.includes("Consulte o guia de tamanhos") &&
+              sizeGuidance.includes("cintura de um short") &&
+              !purchaseOptions.includes("As medidas em centímetros podem variar entre modelos"),
+          );'''
+          if new_check not in source:
+              if old_check not in source:
+                  raise SystemExit("legacy size guidance assertion not found")
+              source = source.replace(old_check, new_check, 1)
+
+          path.write_text(source)
+          PY
+
+      - name: Commit validator update
+        run: |
+          if git diff --quiet; then
+            echo "Validator already updated."
+            exit 0
+          fi
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add scripts/validate-storefront-upgrades.mjs
+          git commit -m "test: atualizar validador para orientação dinâmica"
+          git push origin HEAD:fix-stage2-size-guidance-validator-20260914
