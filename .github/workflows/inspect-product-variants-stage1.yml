@@ -1,0 +1,32 @@
+name: Inspect Product Variants Stage 1
+
+on:
+  push:
+    branches:
+      - stage1-variant-previews-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: stage1-variant-previews-20260914
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Inspect live variant payloads
+        run: node scripts/inspect-product-variants-stage1.mjs
