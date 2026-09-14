@@ -131,10 +131,55 @@ order by coalesce(vc.active_variant_count, 0) desc, p.updated_at desc
 limit 20;
 `;
 
+const qaSamplesQuery = `
+with variant_data as (
+  select
+    p.id,
+    p.name,
+    p.slug,
+    p.description,
+    p.updated_at,
+    count(v.id) filter (where v.status::text = 'active')::integer as active_variant_count,
+    coalesce(
+      jsonb_agg(v.name order by v.sort_order, v.id) filter (where v.status::text = 'active'),
+      '[]'::jsonb
+    ) as variant_names
+  from public.products p
+  left join public.product_variants v on v.product_id = p.id
+  group by p.id, p.name, p.slug, p.description, p.updated_at
+), ranked as (
+  select
+    *,
+    case
+      when active_variant_count = 1 then 'one'
+      when active_variant_count = 2 then 'two'
+      when active_variant_count >= 3 then 'three_plus'
+      else 'none'
+    end as bucket,
+    row_number() over (
+      partition by case
+        when active_variant_count = 1 then 'one'
+        when active_variant_count = 2 then 'two'
+        when active_variant_count >= 3 then 'three_plus'
+        else 'none'
+      end
+      order by updated_at desc, id
+    ) as bucket_rank
+  from variant_data
+  where active_variant_count > 0
+)
+select id, name, slug, description, active_variant_count, variant_names, bucket
+from ranked
+where bucket_rank <= 3
+order by case bucket when 'one' then 1 when 'two' then 2 else 3 end, bucket_rank;
+`;
+
 const beforeAudit = (await readOnly(auditQuery))[0] ?? null;
 const beforeExamples = await readOnly(examplesQuery);
+const beforeQaSamples = await readOnly(qaSamplesQuery);
 console.log(`STAGE5_PRODUCT_DESCRIPTION_PRE_AUDIT=${JSON.stringify(beforeAudit)}`);
 console.log(`STAGE5_PRODUCT_DESCRIPTION_PRE_EXAMPLES=${JSON.stringify(beforeExamples)}`);
+console.log(`STAGE5_VARIANT_QA_SAMPLES_PRE=${JSON.stringify(beforeQaSamples)}`);
 
 const history = await readHistory();
 const alreadyApplied = history.some((item) => item?.name === migrationName);
@@ -142,7 +187,9 @@ if (alreadyApplied) console.log(`Already applied: ${migrationName}.`);
 else await applyMigration();
 
 const afterAudit = (await readOnly(auditQuery))[0] ?? null;
+const afterQaSamples = await readOnly(qaSamplesQuery);
 console.log(`STAGE5_PRODUCT_DESCRIPTION_POST_AUDIT=${JSON.stringify(afterAudit)}`);
+console.log(`STAGE5_VARIANT_QA_SAMPLES_POST=${JSON.stringify(afterQaSamples)}`);
 
 let afterExamples = [];
 if (beforeExamples.length > 0) {
