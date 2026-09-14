@@ -16,7 +16,7 @@ jobs:
       - name: Audit active commercial classifications read-only
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
         run: |
           node <<'JS'
           const projectRef = process.env.SUPABASE_PROJECT_ID;
@@ -36,56 +36,82 @@ jobs:
             return JSON.parse(text);
           }
 
-          const counts = await query(`
+          const productTypes = await query(`
             select
-              pps.commercial_type::text as product_type,
+              pps.commercial_type::text as commercial_type,
               count(distinct p.id)::int as active_products,
-              count(distinct v.id) filter (where v.status = 'active'::public.product_variant_status)::int as active_variants
+              count(distinct p.id) filter (
+                where exists (
+                  select 1 from public.product_images i
+                  where i.product_id = p.id
+                    and i.status = 'ready'::public.product_image_status
+                )
+              )::int as active_products_with_ready_image
             from public.products p
-            left join public.product_purchase_settings pps on pps.product_id = p.id
-            left join public.product_variants v on v.product_id = p.id
+            join public.product_purchase_settings pps on pps.product_id = p.id
             where p.status = 'active'::public.product_status
+              and pps.commercial_type::text in ('torcedor','jogador')
             group by pps.commercial_type
-            order by pps.commercial_type nulls first;
+            order by pps.commercial_type;
+          `);
+
+          const variantTypes = await query(`
+            select
+              v.commercial_type::text as commercial_type,
+              count(distinct p.id)::int as active_products,
+              count(distinct v.id)::int as active_variants
+            from public.products p
+            join public.product_variants v on v.product_id = p.id
+            where p.status = 'active'::public.product_status
+              and v.status = 'active'::public.product_variant_status
+              and v.commercial_type::text in ('torcedor','jogador')
+            group by v.commercial_type
+            order by v.commercial_type;
           `);
 
           const targets = await query(`
             select
-              p.id,
               p.slug,
               p.name,
-              p.status::text as status,
               pps.commercial_type::text as product_commercial_type,
               coalesce(
                 jsonb_agg(distinct v.commercial_type::text) filter (where v.commercial_type is not null),
                 '[]'::jsonb
-              ) as variant_commercial_types
+              ) as variant_commercial_types,
+              exists (
+                select 1 from public.product_images i
+                where i.product_id = p.id
+                  and i.status = 'ready'::public.product_image_status
+              ) as has_ready_image
             from public.products p
             left join public.product_purchase_settings pps on pps.product_id = p.id
-            left join public.product_variants v on v.product_id = p.id and v.status = 'active'::public.product_variant_status
+            left join public.product_variants v
+              on v.product_id = p.id
+             and v.status = 'active'::public.product_variant_status
             where p.status = 'active'::public.product_status
               and (
                 pps.commercial_type::text in ('torcedor','jogador')
                 or v.commercial_type::text in ('torcedor','jogador')
               )
-            group by p.id,p.slug,p.name,p.status,pps.commercial_type
+            group by p.id,p.slug,p.name,pps.commercial_type
             order by p.name
             limit 100;
           `);
 
-          const rpcTorcedor = await query(`
-            select public.catalog_products_page_v3(
-              null,null,null,null,null,null,null,null,'torcedor',null,null,'featured',1,24
-            ) as payload;
-          `);
-          const rpcJogador = await query(`
-            select public.catalog_products_page_v3(
-              null,null,null,null,null,null,null,null,'jogador',null,null,'featured',1,24
-            ) as payload;
+          const functionMeta = await query(`
+            select
+              p.oid::regprocedure::text as signature,
+              p.proargnames,
+              pg_get_functiondef(p.oid) as definition
+            from pg_proc p
+            join pg_namespace n on n.oid = p.pronamespace
+            where n.nspname = 'public'
+              and p.proname = 'catalog_products_page_v3';
           `);
 
-          console.log('STAGE3_COMMERCIAL_COUNTS=' + JSON.stringify(counts));
+          console.log('STAGE3_PRODUCT_TYPES=' + JSON.stringify(productTypes));
+          console.log('STAGE3_VARIANT_TYPES=' + JSON.stringify(variantTypes));
           console.log('STAGE3_COMMERCIAL_TARGETS=' + JSON.stringify(targets));
-          console.log('STAGE3_RPC_TORCEDOR=' + JSON.stringify(rpcTorcedor));
-          console.log('STAGE3_RPC_JOGADOR=' + JSON.stringify(rpcJogador));
+          console.log('STAGE3_CATALOG_V3_META=' + JSON.stringify(functionMeta));
+          console.log('STAGE3_COMMERCIAL_AUDIT_OK');
           JS
