@@ -1,4 +1,4 @@
-name: Patch Stage 2 Size Guidance Validator
+name: Validate Stage 2 Size Guidance Gate Fix
 
 on:
   push:
@@ -6,64 +6,40 @@ on:
       - fix-stage2-size-guidance-validator-20260914
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout branch
         uses: actions/checkout@v7
         with:
           ref: fix-stage2-size-guidance-validator-20260914
 
-      - name: Update legacy size guidance assertion
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
-          path = Path("scripts/validate-storefront-upgrades.mjs")
-          source = path.read_text()
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
-          old_read = 'const purchaseOptions = read("src/components/product/ProductPurchaseOptions.tsx");\n'
-          new_read = old_read + 'const sizeGuidance = read("src/lib/size-guidance.ts");\n'
-          if 'const sizeGuidance = read("src/lib/size-guidance.ts");' not in source:
-              if old_read not in source:
-                  raise SystemExit("purchaseOptions read anchor not found")
-              source = source.replace(old_read, new_read, 1)
+      - name: Validate storefront upgrades and dynamic size guidance
+        run: node scripts/validate-storefront-upgrades.mjs && bun scripts/validate-size-guidance.ts
 
-          old_check = '''check(
-            "produto possui guia de tamanhos sem medidas inventadas",
-            purchaseOptions.includes("Ver guia de tamanhos") &&
-              purchaseOptions.includes("Meça de uma axila à outra") &&
-              purchaseOptions.includes("As medidas em centímetros podem variar entre modelos"),
-          );'''
-          new_check = '''check(
-            "produto possui orientação de tamanho dinâmica sem medida fixa incorreta",
-            purchaseOptions.includes("Ver guia de tamanhos") &&
-              purchaseOptions.includes("getSizeGuidance") &&
-              purchaseOptions.includes("data-size-guidance") &&
-              sizeGuidance.includes("GUIDANCE_BY_KIND") &&
-              sizeGuidance.includes("Consulte o guia de tamanhos") &&
-              sizeGuidance.includes("cintura de um short") &&
-              !purchaseOptions.includes("As medidas em centímetros podem variar entre modelos"),
-          );'''
-          if new_check not in source:
-              if old_check not in source:
-                  raise SystemExit("legacy size guidance assertion not found")
-              source = source.replace(old_check, new_check, 1)
+      - name: Validate remaining storefront regressions
+        run: node scripts/validate-storefront-regressions.mjs && node scripts/validate-stage2-commerce.mjs && node scripts/validate-final-storefront-refinements.mjs
 
-          path.write_text(source)
-          PY
+      - name: Lint storefront
+        run: bun run lint
 
-      - name: Commit validator update
-        run: |
-          if git diff --quiet; then
-            echo "Validator already updated."
-            exit 0
-          fi
-          git config user.name "BigOfertas"
-          git config user.email "contato@bigofertas.net"
-          git add scripts/validate-storefront-upgrades.mjs
-          git commit -m "test: atualizar validador para orientação dinâmica"
-          git push origin HEAD:fix-stage2-size-guidance-validator-20260914
+      - name: Production build
+        run: bun run build
+
+      - name: Hostinger build without publish
+        run: bun run build:hostinger
+
+      - name: Validate definitive order core
+        run: bun run validate:phase10
