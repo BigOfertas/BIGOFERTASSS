@@ -175,14 +175,25 @@ if (!seo.includes("const { locale, translateText }")) {
     "ProductSeo i18n hook",
   );
 }
-seo = seo.replace(
-  "      product.description?.trim().slice(0, 160) ||",
-  '      translateText(product.description?.trim() ?? "").slice(0, 160) ||',
-);
-seo = seo.replace(
-  "}. Confira fotos, opções e entrega na ${BRAND.officialName}.",
-  '${translateText("Confira fotos, opções e entrega na DropBox.")}',
-);
+if (!seo.includes('translateText(product.description?.trim() ?? "")')) {
+  const descriptionNeedle = [
+    "    const description =",
+    "      product.description?.trim().slice(0, 160) ||",
+    '      `${product.name}${context ? ` — ${context}` : ""}. Confira fotos, opções e entrega na ${BRAND.officialName}.`.slice(',
+    "        0,",
+    "        160,",
+    "      );",
+  ].join("\n");
+  const descriptionReplacement = [
+    "    const description =",
+    '      translateText(product.description?.trim() ?? "").slice(0, 160) ||',
+    '      `${product.name}${context ? ` — ${context}` : ""}. ${translateText("Confira fotos, opções e entrega na DropBox.")}`.slice(',
+    "        0,",
+    "        160,",
+    "      );",
+  ].join("\n");
+  seo = replaceOnce(seo, descriptionNeedle, descriptionReplacement, "ProductSeo description");
+}
 if (!seo.includes("LOCALE_META[locale].ogLocale")) {
   seo = replaceOnce(
     seo,
