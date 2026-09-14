@@ -43,6 +43,10 @@ check(
     product.includes("fixed inset-x-0 bottom-0 z-40"),
 );
 check(
+  "icone combina balao e telefone para leitura de WhatsApp",
+  support.includes("MessageCircle") && support.includes("Phone"),
+);
+check(
   "tooltip discreto esta presente",
   support.includes("Fale conosco") && support.includes("group-hover:opacity-100"),
 );
@@ -65,6 +69,12 @@ check(
   "Web Share API e condicional",
   share.includes('typeof navigator.share === "function"') &&
     share.includes("await navigator.share"),
+);
+check(
+  "Web Share recebe nome do produto no texto e URL canonica separada",
+  share.includes("text: shareText") &&
+    share.includes("productName +") &&
+    share.includes("url: canonicalUrl"),
 );
 check("Telegram possui URL oficial de share", share.includes("https://t.me/share/url"));
 check(
