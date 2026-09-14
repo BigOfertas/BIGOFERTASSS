@@ -136,7 +136,8 @@ check(
   "catálogo oferece e usa Destaques como ordenação comercial padrão",
   catalog.includes('"featured"') &&
     catalog.includes('sort: query.sort ?? "featured"') &&
-    productsRoute.includes('<option value="featured">Destaques</option>') &&
+    productsRoute.includes('<option value="featured">') &&
+    productsRoute.includes('uiCopy(locale, "Destaques")') &&
     productsRoute.includes('search.sort ?? "featured"'),
 );
 
