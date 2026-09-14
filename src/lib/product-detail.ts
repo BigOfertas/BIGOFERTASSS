@@ -1,5 +1,6 @@
 import { parseCatalogPage, type CatalogListItem } from "@/lib/catalog";
 import { attachProductImages } from "@/lib/product-images";
+import { buildPublicProductDescription } from "@/lib/public-product-description";
 import type {
   CatalogProduct,
   Product,
@@ -93,8 +94,13 @@ export async function fetchProductDetail(identifier: string): Promise<ProductDet
     (variant) => variant.name ?? "",
   );
 
+  const publicProduct = {
+    ...product,
+    description: buildPublicProductDescription(product.description, options, variants),
+  } as Product;
+
   return {
-    product: attachProductImages(product, images),
+    product: attachProductImages(publicProduct, images),
     category: payload.category ?? null,
     options,
     variants,
