@@ -71,7 +71,9 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }
     return true;
   }, [prefersReducedMotion]);
 
-  const scheduleAutoplayRef = useRef<(extraDelayMs?: number) => void>(() => undefined);
+  const scheduleAutoplayRef = useRef<(extraDelayMs?: number) => void>(
+    () => undefined,
+  );
 
   const scheduleAutoplay = useCallback(
     (extraDelayMs = 0) => {
@@ -100,7 +102,15 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ children, itemCount }
 
         scheduleAutoplayRef.current(prefersReducedMotion ? 0 : DESKTOP_TRANSITION_MS);
       }, AUTOPLAY_DELAY_MS + extraDelayMs);
-    }, [advanceMobilePage, canAutoplay, clearAutoplayTimer, isMobile, pageCount, prefersReducedMotion],
+    },
+    [
+      advanceMobilePage,
+      canAutoplay,
+      clearAutoplayTimer,
+      isMobile,
+      pageCount,
+      prefersReducedMotion,
+    ],
   );
 
   scheduleAutoplayRef.current = scheduleAutoplay;
