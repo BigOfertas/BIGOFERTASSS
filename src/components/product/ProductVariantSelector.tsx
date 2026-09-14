@@ -1,9 +1,6 @@
 import { Check, ImageOff } from "lucide-react";
 
-import type {
-  ProductOptionGroup,
-  ProductVariantWithValues,
-} from "@/lib/product-detail";
+import type { ProductOptionGroup, ProductVariantWithValues } from "@/lib/product-detail";
 import { getProductGalleryItems } from "@/lib/product-images";
 import type { CatalogProduct } from "@/lib/products";
 
