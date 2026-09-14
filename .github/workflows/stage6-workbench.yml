@@ -31,6 +31,9 @@ jobs:
       - name: Resolve Stage 6 dependencies
         run: bun add next-themes framer-motion
 
+      - name: Generate static legacy translations
+        run: node scripts/stage6-generate-translations.mjs
+
       - name: Build source snapshot
         shell: bash
         run: |
@@ -38,12 +41,20 @@ jobs:
           rm -rf stage6-snapshot
           mkdir -p stage6-snapshot
           cp package.json bun.lock stage6-snapshot/
-          cp -R src scripts public supabase .github vite*.ts tsconfig*.json eslint.config.js components.json stage6-snapshot/ 2>/dev/null || true
+          cp -R src scripts public supabase vite*.ts tsconfig*.json eslint.config.js components.json stage6-snapshot/ 2>/dev/null || true
 
       - name: Upload Stage 6 snapshot
         uses: actions/upload-artifact@v4
         with:
           name: stage6-source-snapshot
           path: stage6-snapshot
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload generated locale catalogs
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage6-generated-locales
+          path: src/i18n/generated
           if-no-files-found: error
           retention-days: 1
