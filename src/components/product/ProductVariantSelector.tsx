@@ -91,6 +91,7 @@ export function ProductVariantSelector({
                 aria-pressed={selected}
                 onClick={() => onSelect(variant)}
                 data-variant-preview={variant.id}
+                data-variant-preview-image-id={preview?.id ?? ""}
                 className={`relative aspect-square w-full overflow-hidden rounded-xl border-2 bg-gray-50 transition-[border-color,box-shadow,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 active:scale-[0.98] ${
                   selected
                     ? "border-red-600 shadow-sm ring-2 ring-red-600/15"
