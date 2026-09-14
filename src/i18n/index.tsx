@@ -9,6 +9,9 @@ import {
   type ReactNode,
 } from "react";
 
+import { formatBusinessDays, siteCopy } from "@/i18n/site-copy";
+import { uiCopy } from "@/i18n/ui-copy";
+
 export const SUPPORTED_LOCALES = [
   "pt",
   "en",
@@ -119,15 +122,44 @@ const conjunctions: Record<Locale, string> = {
   ar: "و",
 };
 
-function exactFromCatalog(catalog: Catalog, value: string) {
-  return catalog[normalize(value)] ?? value;
+/**
+ * Some of the legacy generated dictionaries contain empty values or two translations accidentally
+ * joined by a newline. Never let those malformed entries reach the customer-facing UI. The curated
+ * storefront dictionaries are checked before this legacy catalog.
+ */
+function sanitizeCatalogTranslation(source: string, target: string | undefined) {
+  if (!target?.trim()) return null;
+  const trimmed = target.trim();
+  if (!source.includes("\n") && /\r?\n/u.test(trimmed)) {
+    const firstNonEmptyLine = trimmed
+      .split(/\r?\n/u)
+      .map((line) => line.trim())
+      .find(Boolean);
+    return firstNonEmptyLine ?? null;
+  }
+  return trimmed;
+}
+
+function deterministicCopy(locale: Locale, value: string) {
+  if (locale === "pt") return value;
+  const curated = siteCopy(locale, value);
+  if (curated !== value) return curated;
+  const legacyCurated = uiCopy(locale, value);
+  return legacyCurated !== value ? legacyCurated : value;
+}
+
+function exactFromCatalog(catalog: Catalog, value: string, locale: Locale) {
+  const compact = normalize(value);
+  const deterministic = deterministicCopy(locale, compact);
+  if (deterministic !== compact) return deterministic;
+  return sanitizeCatalogTranslation(compact, catalog[compact]) ?? value;
 }
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function translateCommercialLabel(value: string, catalog: Catalog) {
+function translateCommercialLabel(value: string, locale: Locale, catalog: Catalog) {
   const phrases = [
     "Camisa de treino + calça",
     "Camisa + calção",
@@ -151,7 +183,7 @@ function translateCommercialLabel(value: string, catalog: Catalog) {
 
   let output = value;
   for (const phrase of phrases) {
-    const translated = exactFromCatalog(catalog, phrase);
+    const translated = exactFromCatalog(catalog, phrase, locale);
     if (translated === phrase) continue;
     output = output.replace(new RegExp(escapeRegExp(phrase), "giu"), translated);
   }
@@ -163,7 +195,7 @@ function translateVersionList(raw: string, locale: Locale, catalog: Catalog) {
     .split(/\s+e\s+|,\s*/iu)
     .map((item) => item.trim())
     .filter(Boolean)
-    .map((item) => translateCommercialLabel(item, catalog));
+    .map((item) => translateCommercialLabel(item, locale, catalog));
 
   if (items.length <= 1) return items[0] ?? raw;
   if (items.length === 2) return `${items[0]} ${conjunctions[locale]} ${items[1]}`;
@@ -174,10 +206,17 @@ function translateDynamicText(source: string, locale: Locale, catalog: Catalog) 
   if (locale === "pt") return source;
 
   const compact = normalize(source);
-  const exact = catalog[compact];
+  if (!compact) return source;
+
+  // Customer-visible critical copy always wins over legacy generated dictionaries. This also fixes
+  // known wrong-language and empty entries without forcing a rewrite of historical generated JSON.
+  const deterministic = deterministicCopy(locale, compact);
+  if (deterministic !== compact) return deterministic;
+
+  const exact = sanitizeCatalogTranslation(compact, catalog[compact]);
   if (exact) return exact;
 
-  const lookup = (value: string) => exactFromCatalog(catalog, value);
+  const lookup = (value: string) => exactFromCatalog(catalog, value, locale);
   let output = source;
 
   const genericDemand =
@@ -211,13 +250,28 @@ function translateDynamicText(source: string, locale: Locale, catalog: Catalog) 
     return `${lookup("Carrinho com")} ${count} ${lookup("itens")}`;
   });
   output = output.replace(/^Até\s+(\d+)\s+caracteres$/iu, (_match, count: string) => {
+    if (locale === "ja") return `${count}${lookup("caracteres")}まで`;
+    if (locale === "ko") return `최대 ${count}${lookup("caracteres")}`;
+    if (locale === "zh") return `最多 ${count}${lookup("caracteres")}`;
     return `${lookup("Até")} ${count} ${lookup("caracteres")}`;
+  });
+  output = output.replace(/^Até\s+(\d+)\s+caracteres,\s*sem números$/iu, (_match, count: string) => {
+    if (locale === "ja") return `${count}${lookup("caracteres")}まで、${lookup("sem números")}`;
+    if (locale === "ko") return `최대 ${count}${lookup("caracteres")}, ${lookup("sem números")}`;
+    if (locale === "zh") return `最多 ${count}${lookup("caracteres")}，${lookup("sem números")}`;
+    return `${lookup("Até")} ${count} ${lookup("caracteres")}, ${lookup("sem números")}`;
   });
   output = output.replace(/^Adicionais desta peça:\s*(.+)$/iu, (_match, amount: string) => {
     return `${lookup("Adicionais desta peça")}: ${amount}`;
   });
   output = output.replace(/^Prazo total estimado:\s*(.+)$/iu, (_match, rest: string) => {
     return `${lookup("Prazo total estimado")}: ${rest}`;
+  });
+  output = output.replace(/^(\d+)\s+a\s+(\d+)\s+dias úteis$/iu, (_match, min: string, max: string) => {
+    return formatBusinessDays(locale, Number(min), Number(max));
+  });
+  output = output.replace(/^(\d+)\s+dias úteis$/iu, (_match, days: string) => {
+    return formatBusinessDays(locale, Number(days));
   });
 
   if (/^Switch to (?:light|dark) mode$/i.test(output)) {
