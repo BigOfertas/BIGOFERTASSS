@@ -1,5 +1,6 @@
 import { Check, ImageOff } from "lucide-react";
 
+import { useI18n } from "@/i18n";
 import type { ProductOptionGroup, ProductVariantWithValues } from "@/lib/product-detail";
 import { getProductGalleryItems } from "@/lib/product-images";
 import type { CatalogProduct } from "@/lib/products";
@@ -16,14 +17,23 @@ function getVariantLabel(
   variant: ProductVariantWithValues,
   options: ProductOptionGroup[],
   index: number,
+  translateText: (value: string) => string,
 ) {
   const optionLabels = options.flatMap((option) => {
     const valueId = variant.optionValueIds[option.id];
     const value = option.values.find((candidate) => candidate.id === valueId);
-    return value ? [value.value] : [];
+    return value ? [translateText(value.value)] : [];
   });
 
-  return optionLabels.join(" — ") || variant.name?.trim() || `Variação ${index + 1}`;
+  if (optionLabels.length > 0) return optionLabels.join(" — ");
+  if (variant.name?.trim()) {
+    return variant.name
+      .trim()
+      .split(" — ")
+      .map((part) => translateText(part.trim()))
+      .join(" — ");
+  }
+  return `${translateText("Variação")} ${index + 1}`;
 }
 
 export function ProductVariantSelector({
@@ -33,9 +43,11 @@ export function ProductVariantSelector({
   selectedVariantId,
   onSelect,
 }: ProductVariantSelectorProps) {
+  const { translateText } = useI18n();
   if (variants.length <= 1) return null;
 
-  const legend = options.length === 1 ? options[0]?.name || "Variação" : "Variação";
+  const sourceLegend = options.length === 1 ? options[0]?.name || "Variação" : "Variação";
+  const legend = translateText(sourceLegend);
   const required = options.some((option) => option.is_required);
   const items = variants.map((variant, index) => {
     const gallery = getProductGalleryItems(product, product.images, variant.id);
@@ -47,7 +59,7 @@ export function ProductVariantSelector({
 
     return {
       variant,
-      label: getVariantLabel(variant, options, index),
+      label: getVariantLabel(variant, options, index, translateText),
       preview,
     };
   });
@@ -78,13 +90,14 @@ export function ProductVariantSelector({
                   selected ? "text-gray-950" : "text-gray-600"
                 }`}
                 data-variant-label={variant.id}
+                data-no-i18n="true"
               >
                 {label}
               </p>
 
               <button
                 type="button"
-                aria-label={`Selecionar variação ${label}`}
+                aria-label={`${translateText("Selecionar variação")} ${label}`}
                 aria-pressed={selected}
                 onClick={() => onSelect(variant)}
                 data-variant-preview={variant.id}
