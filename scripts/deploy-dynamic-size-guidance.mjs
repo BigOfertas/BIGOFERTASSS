@@ -106,4 +106,6 @@ if (!required.every((key) => verification?.[key] === true)) {
   process.exit(11);
 }
 
-console.log("Dynamic size guidance backend is live. Public payload behavior is verified by storefront QA.");
+console.log(
+  "Dynamic size guidance backend is live. Public payload behavior is verified by storefront QA.",
+);
