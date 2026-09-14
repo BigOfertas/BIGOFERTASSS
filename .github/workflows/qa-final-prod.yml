@@ -1,0 +1,40 @@
+name: QA Final Production
+
+on:
+  push:
+    branches:
+      - qa-final-prod-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  browser-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout QA branch
+        uses: actions/checkout@v7
+        with:
+          ref: qa-final-prod-20260914
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run final production QA
+        run: node scripts/qa-final-prod.mjs
+
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-final-production
+          path: qa-final-prod
+          if-no-files-found: error
