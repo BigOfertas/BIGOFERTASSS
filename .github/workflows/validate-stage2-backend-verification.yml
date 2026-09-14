@@ -1,0 +1,28 @@
+name: Validate Stage 2 Backend Verification
+
+on:
+  push:
+    branches:
+      - fix-stage2-backend-verification-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix-stage2-backend-verification-20260914
+
+      - name: Validate script syntax
+        run: node --check scripts/deploy-dynamic-size-guidance.mjs
+
+      - name: Deploy idempotently and verify backend contract
+        run: node scripts/deploy-dynamic-size-guidance.mjs
