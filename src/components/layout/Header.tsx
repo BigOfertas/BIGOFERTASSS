@@ -23,6 +23,8 @@ import {
 import { BRAND } from "@/config/brand";
 import { useCart } from "@/context/CartContext";
 import { useCatalogSearchSuggestions } from "@/hooks/useCatalogSearchSuggestions";
+import { useI18n } from "@/i18n";
+import { translateProductDisplayName, uiCopy } from "@/i18n/ui-copy";
 import { useAuth } from "@/lib/auth";
 import CategoryNav, { categoryLinks } from "./CategoryNav";
 
@@ -47,6 +49,7 @@ function SearchBox({
   onNavigate: () => void;
   mobile?: boolean;
 }) {
+  const { locale, translateText } = useI18n();
   const [focused, setFocused] = React.useState(false);
   const suggestionsQuery = useCatalogSearchSuggestions(query);
   const suggestions = suggestionsQuery.data ?? [];
@@ -57,8 +60,8 @@ function SearchBox({
       <form onSubmit={onSubmit} className="relative group" role="search">
         <Input
           type="search"
-          aria-label="Buscar produtos"
-          placeholder="Busque por time, camisa, retrô, NBA..."
+          aria-label={translateText("Buscar produtos")}
+          placeholder={translateText("Busque por time, camisa, retrô, NBA...")}
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
           onFocus={() => setFocused(true)}
@@ -69,7 +72,7 @@ function SearchBox({
         />
         <button
           type="submit"
-          aria-label="Buscar"
+          aria-label={translateText("Buscar")}
           className={
             mobile
               ? "absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-red-600"
@@ -83,12 +86,15 @@ function SearchBox({
       {showSuggestions ? (
         <div className="absolute left-0 right-0 top-full z-[70] mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
           {suggestionsQuery.isLoading ? (
-            <p className="px-4 py-4 text-xs font-semibold text-gray-500">Buscando produtos...</p>
+            <p className="px-4 py-4 text-xs font-semibold text-gray-500">
+              {translateText("Buscando produtos...")}
+            </p>
           ) : suggestions.length > 0 ? (
             <>
               <div className="max-h-[360px] overflow-y-auto py-1">
                 {suggestions.map((product) => {
                   const effectivePrice = product.promotional_price ?? product.price;
+                  const localizedName = translateProductDisplayName(locale, product.name);
                   return (
                     <Link
                       key={product.id}
@@ -116,7 +122,7 @@ function SearchBox({
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="line-clamp-2 text-xs font-bold leading-4 text-gray-900">
-                          {product.name}
+                          {localizedName}
                         </p>
                         {product.time ? (
                           <p className="mt-0.5 truncate text-[10px] font-semibold text-gray-400">
@@ -137,13 +143,13 @@ function SearchBox({
                 onClick={onNavigate}
                 className="flex h-11 items-center justify-center border-t border-gray-100 px-4 text-xs font-black text-red-600 hover:bg-red-50"
               >
-                Ver todos os resultados
+                {translateText("Ver todos os resultados")}
               </Link>
             </>
           ) : (
             <div className="px-4 py-4">
               <p className="text-xs font-semibold text-gray-500">
-                Nenhum produto encontrado agora.
+                {translateText("Nenhum produto encontrado agora.")}
               </p>
               <Link
                 to="/products"
@@ -151,7 +157,7 @@ function SearchBox({
                 onClick={onNavigate}
                 className="mt-2 inline-block text-xs font-black text-red-600"
               >
-                Buscar no catálogo
+                {translateText("Buscar no catálogo")}
               </Link>
             </div>
           )}
@@ -164,6 +170,7 @@ function SearchBox({
 const Header: React.FC = () => {
   const { totalItems } = useCart();
   const { user, isOwner } = useAuth();
+  const { locale, translateText } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const mobileHeaderRef = React.useRef<HTMLDivElement | null>(null);
@@ -171,8 +178,8 @@ const Header: React.FC = () => {
   const [mobilePanel, setMobilePanel] = React.useState<MobilePanel>(null);
 
   const accountDestination = isOwner ? "/admin" : user ? "/conta" : "/login";
-  const accountTopLabel = isOwner ? "Painel" : user ? "Minha" : "Acessar";
-  const accountBottomLabel = isOwner ? "Admin" : "Conta";
+  const accountTopLabel = uiCopy(locale, isOwner ? "Painel" : user ? "Minha" : "Acessar");
+  const accountBottomLabel = isOwner ? "Admin" : uiCopy(locale, "Conta");
 
   const closeNavigation = React.useCallback(() => setMobilePanel(null), []);
 
@@ -250,37 +257,40 @@ const Header: React.FC = () => {
   }
 
   const categoryMenuItems: MobileLiquidMorphMenuItem[] = categoryLinks.map((category) => ({
-    label: category.name,
+    label: uiCopy(locale, category.name),
     onClick: () => handleMobileCategory(category),
   }));
 
   const accountMenuItems: MobileLiquidMorphMenuItem[] = [
     {
-      label: "Meus pedidos",
+      label: translateText("Meus pedidos"),
       icon: Package,
       onClick: () => handleAccountSection("pedidos"),
     },
     {
-      label: "Endereços",
+      label: translateText("Endereços"),
       icon: MapPin,
       onClick: () => handleAccountSection("enderecos"),
     },
     {
-      label: "Dados pessoais",
+      label: translateText("Dados pessoais"),
       icon: UserRound,
       onClick: () => handleAccountSection("dados"),
     },
     {
-      label: "Afiliados",
+      label: translateText("Afiliados"),
       icon: BadgePercent,
       onClick: () => handleAccountSection("afiliados"),
     },
     {
-      label: "Segurança",
+      label: translateText("Segurança"),
       icon: ShieldCheck,
       onClick: () => handleAccountSection("seguranca"),
     },
   ];
+
+  const homeLabel = uiCopy(locale, "INÍCIO");
+  const cartLabel = translateText(`Carrinho com ${totalItems} item(ns)`);
 
   return (
     <header className="glass-header sticky top-0 z-50">
@@ -290,7 +300,7 @@ const Header: React.FC = () => {
             <Link
               to="/"
               className="flex w-56 flex-shrink-0 items-center"
-              aria-label={`${BRAND.officialName} - Início`}
+              aria-label={`${BRAND.officialName} - ${homeLabel}`}
             >
               <div className="brand-lockup h-14 w-full px-5 text-2xl">
                 <BrandWordmark />
@@ -325,7 +335,7 @@ const Header: React.FC = () => {
 
               <Link
                 to="/cart"
-                aria-label={`Carrinho com ${totalItems} item(ns)`}
+                aria-label={cartLabel}
                 className="header-action group relative h-12 w-12 transition-colors"
               >
                 <ShoppingCart className="h-6 w-6 text-gray-900 transition-colors group-hover:text-red-600" />
@@ -348,7 +358,9 @@ const Header: React.FC = () => {
             onClick={() =>
               setMobilePanel((current) => (current === "categories" ? null : "categories"))
             }
-            aria-label={mobilePanel === "categories" ? "Fechar menu" : "Abrir menu de categorias"}
+            aria-label={translateText(
+              mobilePanel === "categories" ? "Fechar menu" : "Abrir menu de categorias",
+            )}
             aria-expanded={mobilePanel === "categories"}
             className={`header-action -ml-1 h-10 w-10 transition-colors ${
               mobilePanel === "categories"
@@ -366,7 +378,7 @@ const Header: React.FC = () => {
           <Link
             to="/"
             className="flex flex-1 justify-center px-3"
-            aria-label={`${BRAND.officialName} - Início`}
+            aria-label={`${BRAND.officialName} - ${homeLabel}`}
             onClick={closeNavigation}
           >
             <div className="brand-lockup h-10 w-36 px-3 text-lg">
@@ -377,7 +389,7 @@ const Header: React.FC = () => {
           <div className="-mr-1 flex items-center gap-2">
             <button
               type="button"
-              aria-label={user ? "Abrir opções da conta" : "Acessar conta"}
+              aria-label={translateText(user ? "Abrir opções da conta" : "Acessar conta")}
               aria-expanded={user ? mobilePanel === "account" : undefined}
               onClick={() => {
                 if (!user) {
@@ -402,7 +414,7 @@ const Header: React.FC = () => {
             </button>
             <Link
               to="/cart"
-              aria-label={`Carrinho com ${totalItems} item(ns)`}
+              aria-label={cartLabel}
               onClick={closeNavigation}
               className="header-action relative h-10 w-10 text-gray-900 active:text-red-600"
             >
@@ -432,13 +444,13 @@ const Header: React.FC = () => {
 
         <MobileLiquidMorphMenu
           open={mobilePanel === "categories"}
-          title="Todas as categorias"
+          title={translateText("Todas as categorias")}
           items={categoryMenuItems}
           origin="left"
         />
         <MobileLiquidMorphMenu
           open={mobilePanel === "account"}
-          title="Minha conta"
+          title={translateText("Minha conta")}
           items={accountMenuItems}
           origin="right"
         />
