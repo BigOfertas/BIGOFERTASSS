@@ -17,7 +17,9 @@ import ProductCard from "@/components/product/ProductCard";
 import ProductGallery from "@/components/product/ProductGallery";
 import { ProductShippingCalculator } from "@/components/product/ProductShippingCalculator";
 import { ProductPurchaseOptions } from "@/components/product/ProductPurchaseOptions";
+import { ProductShare } from "@/components/product/ProductShare";
 import ProductSeo from "@/components/product/ProductSeo";
+import { FloatingWhatsAppSupport } from "@/components/support/FloatingWhatsAppSupport";
 import {
   Accordion,
   AccordionContent,
@@ -38,7 +40,7 @@ import {
   isValueCompatibleWithSelection,
 } from "@/lib/product-detail";
 import { getProductGalleryItems } from "@/lib/product-images";
-import { buildProductHead } from "@/lib/product-seo";
+import { buildProductHead, buildProductSeoData } from "@/lib/product-seo";
 import {
   EMPTY_PURCHASE_CUSTOMIZATION,
   calculatePurchaseSurcharge,
@@ -218,6 +220,7 @@ function ProductDetail() {
   const hasPromotion = promotionalPrice !== null && promotionalPrice < basePrice;
   const formattedPrice = currency.format(effectivePrice);
   const formattedOriginalPrice = hasPromotion ? currency.format(basePrice) : null;
+  const productSeo = buildProductSeoData(detail);
 
   const variantSelectedOptions = detail.options.flatMap((option) => {
     const valueId = selection[option.id];
@@ -384,6 +387,9 @@ function ProductDetail() {
               {product.description ? (
                 <p className="max-w-2xl leading-relaxed text-gray-600">{product.description}</p>
               ) : null}
+              <div className="mt-5">
+                <ProductShare productName={product.name} canonicalUrl={productSeo.canonicalUrl} />
+              </div>
             </div>
 
             {detail.options.length > 0 ? (
@@ -594,6 +600,12 @@ function ProductDetail() {
           </section>
         ) : null}
       </main>
+
+      <FloatingWhatsAppSupport
+        productName={product.name}
+        productUrl={productSeo.canonicalUrl}
+        productPage
+      />
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-xl items-center gap-3">

@@ -17,6 +17,7 @@ import { AuthProvider } from "../lib/auth";
 import Footer from "../components/layout/Footer";
 import { CartProvider } from "../context/CartContext";
 import { CookieConsent } from "@/components/privacy/CookieConsent";
+import { FloatingWhatsAppSupport } from "@/components/support/FloatingWhatsAppSupport";
 import { Toaster } from "@/components/ui/sonner";
 import { Component as CursorFollower } from "@/components/ui/cursor-follower";
 import { BRAND } from "@/config/brand";
@@ -248,6 +249,7 @@ function RootComponent() {
             </div>
             {storefrontHydrated && showStorefrontFooter ? <Footer /> : null}
           </div>
+          {storefrontHydrated && pathname === "/" ? <FloatingWhatsAppSupport /> : null}
           <CursorFollower />
           <CookieConsent />
           <Toaster position="top-center" richColors />
