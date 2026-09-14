@@ -1,0 +1,85 @@
+name: Apply Stage 1 Variant UI
+
+on:
+  push:
+    branches:
+      - stage1-variant-previews-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[stage1-code-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: stage1-variant-previews-20260914
+          fetch-depth: 0
+
+      - name: Apply focused product variant changes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          route = Path('src/routes/product/$id.tsx')
+          text = route.read_text()
+
+          old = 'import ProductGallery from "@/components/product/ProductGallery";\n'
+          new = old + 'import { ProductVariantSelector } from "@/components/product/ProductVariantSelector";\n'
+          if old not in text:
+              raise SystemExit('ProductGallery import anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = '  getVariantPromotionalPrice,\n  isValueCompatibleWithSelection,\n} from "@/lib/product-detail";'
+          new = '  getVariantPromotionalPrice,\n} from "@/lib/product-detail";'
+          if old not in text:
+              raise SystemExit('product-detail import anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = '  const [selection, setSelection] = useState<Record<string, string>>({});'
+          new = '''  const [selection, setSelection] = useState<Record<string, string>>(\n    () => getDefaultProductVariant(loaderDetail.variants)?.optionValueIds ?? {},\n  );'''
+          if old not in text:
+              raise SystemExit('selection initializer anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = '''          <ProductGallery\n            images={gallery}\n            productName={product.name}\n            unavailable={selectionComplete && !availableToOrder}\n          />'''
+          new = '''          <ProductGallery\n            key={selectedVariant?.id ?? defaultVariant?.id ?? product.id}\n            images={gallery}\n            productName={product.name}\n            unavailable={selectionComplete && !availableToOrder}\n          />'''
+          if old not in text:
+              raise SystemExit('ProductGallery usage anchor not found')
+          text = text.replace(old, new, 1)
+
+          pattern = re.compile(
+              r'\n\s*\{detail\.options\.length > 0 \? \([\s\S]*?\n\s*\) : null\}\n\n\s*\{purchaseConfig \? \('
+          )
+          replacement = '''\n\n            {detail.variants.length > 1 ? (\n              <ProductVariantSelector\n                product={product}\n                options={detail.options}\n                variants={detail.variants}\n                selectedVariantId={selectedVariant?.id ?? null}\n                onSelect={(variant) => setSelection({ ...variant.optionValueIds })}\n              />\n            ) : null}\n\n            {purchaseConfig ? ('''
+          text, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f'variant options block replacement count={count}')
+          route.write_text(text)
+
+          gallery = Path('src/components/product/ProductGallery.tsx')
+          text = gallery.read_text()
+          old = '''  const preferredImageId = useMemo(\n    () => images.find((image) => image.isPrimary)?.id ?? images[0]?.id ?? null,\n    [images],\n  );'''
+          new = '''  const preferredImageId = useMemo(() => images[0]?.id ?? null, [images]);'''
+          if old not in text:
+              raise SystemExit('ProductGallery preferred image anchor not found')
+          text = text.replace(old, new, 1)
+          gallery.write_text(text)
+          PY
+
+      - name: Verify focused diff and commit
+        shell: bash
+        run: |
+          git diff --check
+          git status --short
+          git diff -- src/routes/product/'$id.tsx' src/components/product/ProductGallery.tsx
+          git config user.name "BigOfertas"
+          git config user.email "contato@bigofertas.net"
+          git add src/routes/product/'$id.tsx' src/components/product/ProductGallery.tsx
+          git commit -m "[stage1-code-applied] feat: integrar previews visuais de variantes"
+          git push origin HEAD:stage1-variant-previews-20260914
