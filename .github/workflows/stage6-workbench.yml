@@ -112,7 +112,7 @@ jobs:
           set -euo pipefail
           git config user.name "BigOfertas"
           git config user.email "contato@bigofertas.net"
-          git add package.json bun.lock src scripts .github/workflows/validate-main.yml
+          git add package.json bun.lock src scripts
           if git diff --cached --quiet; then
             echo "No generated Stage 6 changes to persist."
             exit 0
