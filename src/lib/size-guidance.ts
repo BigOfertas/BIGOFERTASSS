@@ -98,20 +98,34 @@ function kindFromCommercialType(commercialType: string | null | undefined): Size
   }
 }
 
-function kindFromCategory(categoryName: string | null | undefined, categorySlug: string | null | undefined) {
+function kindFromCategory(
+  categoryName: string | null | undefined,
+  categorySlug: string | null | undefined,
+) {
   const category = normalizeStructuredValue([categorySlug, categoryName].filter(Boolean).join(" "));
   if (!category) return null;
 
-  const hasCalcao = hasWord(category, "calcao") || hasWord(category, "calcoes") || hasWord(category, "short") || hasWord(category, "shorts");
+  const hasCalcao =
+    hasWord(category, "calcao") ||
+    hasWord(category, "calcoes") ||
+    hasWord(category, "short") ||
+    hasWord(category, "shorts");
   const hasCalca = hasWord(category, "calca") || hasWord(category, "calcas");
-  const hasCamisa = hasWord(category, "camisa") || hasWord(category, "camisas") || hasWord(category, "camiseta") || hasWord(category, "camisetas");
+  const hasCamisa =
+    hasWord(category, "camisa") ||
+    hasWord(category, "camisas") ||
+    hasWord(category, "camiseta") ||
+    hasWord(category, "camisetas");
   const hasRegata = hasWord(category, "regata") || hasWord(category, "regatas");
-  const hasCasaco = hasWord(category, "casaco") || hasWord(category, "casacos") || (hasWord(category, "corta") && hasWord(category, "vento"));
+  const hasCasaco =
+    hasWord(category, "casaco") ||
+    hasWord(category, "casacos") ||
+    (hasWord(category, "corta") && hasWord(category, "vento"));
 
   if (hasRegata && hasCalcao) return "tank-shorts" as const;
   if (hasCamisa && hasCalcao) return "shirt-shorts" as const;
   if (hasCasaco && hasCalca) return "jacket-pants" as const;
-  if ((hasWord(category, "treino") || hasWord(category, "top") || hasCamisa) && hasCalca) {
+  if ((hasWord(category, "top") || hasCamisa) && hasCalca) {
     return "training-pants" as const;
   }
   if (hasWord(category, "infantil") || hasWord(category, "kids") || hasWord(category, "kid")) {
