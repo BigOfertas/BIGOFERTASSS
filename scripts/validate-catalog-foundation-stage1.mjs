@@ -113,9 +113,9 @@ const checks = [
           !/'sku'/.test(v2DetailBody ?? ""))),
   ],
   [
-    "escolha real de variacao nao e preenchida automaticamente",
-    /if \(variants\.length === 1\) return variants\[0\]/.test(detail) &&
-      /if \(hasRealChoice\) return null/.test(detail),
+    "variacao padrao real e preenchida automaticamente por is_default",
+    /variants\.find\(\(variant\) => variant\.is_default\) \?\? variants\[0\]/.test(detail) &&
+      !/if \(hasRealChoice\) return null/.test(detail),
   ],
   [
     "compatibilidade considera as escolhas atuais sem trocar silenciosamente",
