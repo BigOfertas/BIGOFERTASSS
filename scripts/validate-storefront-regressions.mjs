@@ -29,6 +29,7 @@ const homeSelection = read("src/lib/home-product-selection.ts");
 const leagues = read("src/components/home/ShopByLeague.tsx");
 const brazilTeams = read("src/components/home/BrazilianTeams.tsx");
 const brazilProducts = read("src/components/home/BrazilianProducts.tsx");
+const visualCategories = read("src/components/home/VisualCategories.tsx");
 const carousel = read("src/components/product/ProductCarousel.tsx");
 const index = read("src/routes/index.tsx");
 const migration = read("supabase/migrations/20260910043000_catalog_filter_key_canonical.sql");
@@ -151,7 +152,37 @@ check(
 );
 check(
   "carrossel padrão mantém cinco cards por página e quinze itens geram três páginas",
-  carousel.includes("const productsPerPage = 5") && 15 / 5 === 3,
+  carousel.includes("const PRODUCTS_PER_PAGE = 5") && 15 / 5 === 3,
+);
+check(
+  "autoplay dos carrosséis comuns espera sete segundos e não usa setInterval",
+  carousel.includes("const AUTOPLAY_DELAY_MS = 7000") &&
+    carousel.includes("window.setTimeout") &&
+    carousel.includes("window.clearTimeout") &&
+    !carousel.includes("setInterval"),
+);
+check(
+  "autoplay reaproveita a página ativa, reinicia após interação e trata a aba oculta",
+  carousel.includes("setActivePage((currentPage)") &&
+    carousel.includes("handlePageSelect") &&
+    carousel.includes("handlePointerDown") &&
+    carousel.includes("handlePointerEnd") &&
+    carousel.includes('document.addEventListener("visibilitychange"'),
+);
+check(
+  "mobile preserva swipe e reinicia autoplay quando a rolagem termina",
+  carousel.includes("snap-x") &&
+    carousel.includes("overflow-x-auto") &&
+    carousel.includes("onScroll={handleMobileScroll}") &&
+    carousel.includes("scheduleAfterMobileSettles"),
+);
+check(
+  "autoplay respeita movimento reduzido sem alterar Monte seu pedido",
+  carousel.includes("prefers-reduced-motion: reduce") &&
+    carousel.includes("motion-reduce:transition-none") &&
+    carousel.includes("motion-reduce:scroll-auto") &&
+    !visualCategories.includes("AUTOPLAY_DELAY_MS") &&
+    !visualCategories.includes("visibilitychange"),
 );
 check(
   "atalho do Atlético-MG usa a chave canônica do catálogo",
