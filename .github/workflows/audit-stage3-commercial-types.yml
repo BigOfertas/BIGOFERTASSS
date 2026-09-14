@@ -11,16 +11,37 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
-      - name: Audit active commercial classifications read-only
+      - name: Checkout exact published main SHA
+        uses: actions/checkout@v7
+        with:
+          ref: 9dcb0f421aa10ad41bb8579a2caf67b978297bbe
+
+      - name: Audit classifications and exact public RPC read-only
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
         run: |
           node <<'JS'
+          import fs from 'node:fs';
+
           const projectRef = process.env.SUPABASE_PROJECT_ID;
           const token = process.env.SUPABASE_ACCESS_TOKEN;
+          const envText = fs.readFileSync('.env', 'utf8');
+          const env = Object.fromEntries(
+            envText.split(/\r?\n/)
+              .map((line) => line.trim())
+              .filter((line) => line && !line.startsWith('#') && line.includes('='))
+              .map((line) => {
+                const index = line.indexOf('=');
+                return [line.slice(0, index), line.slice(index + 1).replace(/^['\"]|['\"]$/g, '')];
+              }),
+          );
+          const publicUrl = env.VITE_SUPABASE_URL;
+          const publicKey = env.VITE_SUPABASE_PUBLISHABLE_KEY;
+          if (!publicUrl || !publicKey) throw new Error('Configuração pública Supabase ausente no .env versionado');
+
           async function query(sql) {
             const response = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query/read-only`, {
               method: 'POST',
@@ -32,7 +53,23 @@ jobs:
               body: JSON.stringify({ query: sql }),
             });
             const text = await response.text();
-            if (!response.ok) throw new Error(`HTTP_${response.status}: ${text}`);
+            if (!response.ok) throw new Error(`READ_ONLY_SQL_${response.status}: ${text}`);
+            return JSON.parse(text);
+          }
+
+          async function publicRpc(functionName, args) {
+            const response = await fetch(`${publicUrl}/rest/v1/rpc/${functionName}`, {
+              method: 'POST',
+              headers: {
+                apikey: publicKey,
+                authorization: `Bearer ${publicKey}`,
+                accept: 'application/json',
+                'content-type': 'application/json',
+              },
+              body: JSON.stringify(args),
+            });
+            const text = await response.text();
+            if (!response.ok) throw new Error(`PUBLIC_RPC_${functionName}_${response.status}: ${text}`);
             return JSON.parse(text);
           }
 
@@ -46,7 +83,7 @@ jobs:
                   where i.product_id = p.id
                     and i.status = 'ready'::public.product_image_status
                 )
-              )::int as active_products_with_ready_image
+              )::int as visible_products
             from public.products p
             join public.product_purchase_settings pps on pps.product_id = p.id
             where p.status = 'active'::public.product_status
@@ -58,7 +95,7 @@ jobs:
           const variantTypes = await query(`
             select
               v.commercial_type::text as commercial_type,
-              count(distinct p.id)::int as active_products,
+              count(distinct p.id)::int as active_product_bases,
               count(distinct v.id)::int as active_variants
             from public.products p
             join public.product_variants v on v.product_id = p.id
@@ -69,49 +106,132 @@ jobs:
             order by v.commercial_type;
           `);
 
-          const targets = await query(`
+          const mixedStructuredCases = await query(`
             select
-              p.slug,
-              p.name,
-              pps.commercial_type::text as product_commercial_type,
-              coalesce(
-                jsonb_agg(distinct v.commercial_type::text) filter (where v.commercial_type is not null),
-                '[]'::jsonb
-              ) as variant_commercial_types,
-              exists (
-                select 1 from public.product_images i
-                where i.product_id = p.id
-                  and i.status = 'ready'::public.product_image_status
-              ) as has_ready_image
+              p.time_key,
+              p.season_key,
+              p.brand_key,
+              count(distinct p.id) filter (where pps.commercial_type = 'torcedor')::int as torcedor_products,
+              count(distinct p.id) filter (where pps.commercial_type = 'jogador')::int as jogador_products,
+              jsonb_agg(jsonb_build_object(
+                'id', p.id,
+                'slug', p.slug,
+                'name', p.name,
+                'type', pps.commercial_type::text
+              ) order by pps.commercial_type, p.name) as products
             from public.products p
-            left join public.product_purchase_settings pps on pps.product_id = p.id
-            left join public.product_variants v
-              on v.product_id = p.id
-             and v.status = 'active'::public.product_variant_status
+            join public.product_purchase_settings pps on pps.product_id = p.id
             where p.status = 'active'::public.product_status
-              and (
-                pps.commercial_type::text in ('torcedor','jogador')
-                or v.commercial_type::text in ('torcedor','jogador')
+              and pps.commercial_type in ('torcedor','jogador')
+              and p.time_key is not null
+              and p.season_key is not null
+              and p.brand_key is not null
+              and exists (
+                select 1 from public.product_images i
+                where i.product_id = p.id and i.status = 'ready'::public.product_image_status
               )
-            group by p.id,p.slug,p.name,pps.commercial_type
-            order by p.name
-            limit 100;
+            group by p.time_key,p.season_key,p.brand_key
+            having count(distinct pps.commercial_type) = 2
+            order by p.time_key,p.season_key,p.brand_key
+            limit 5;
           `);
 
-          const functionMeta = await query(`
-            select
-              p.oid::regprocedure::text as signature,
-              p.proargnames,
-              pg_get_functiondef(p.oid) as definition
-            from pg_proc p
-            join pg_namespace n on n.oid = p.pronamespace
-            where n.nspname = 'public'
-              and p.proname = 'catalog_products_page_v3';
+          const directTorcedor = await query(`
+            select public.catalog_products_page_v3(
+              p_commercial_type => 'torcedor', p_sort => 'featured', p_page => 1, p_page_size => 24
+            ) as payload;
           `);
+          const directJogador = await query(`
+            select public.catalog_products_page_v3(
+              p_commercial_type => 'jogador', p_sort => 'featured', p_page => 1, p_page_size => 24
+            ) as payload;
+          `);
+          const directTorcedorPage2 = await query(`
+            select public.catalog_products_page_v3(
+              p_commercial_type => 'torcedor', p_sort => 'featured', p_page => 2, p_page_size => 24
+            ) as payload;
+          `);
+          const directJogadorPage2 = await query(`
+            select public.catalog_products_page_v3(
+              p_commercial_type => 'jogador', p_sort => 'featured', p_page => 2, p_page_size => 24
+            ) as payload;
+          `);
+
+          const appArgs = (type, page = 1) => ({
+            p_query: null,
+            p_category: null,
+            p_campeonato: null,
+            p_liga: null,
+            p_time: null,
+            p_season: null,
+            p_brand: null,
+            p_audience: null,
+            p_commercial_type: type,
+            p_min_price: null,
+            p_max_price: null,
+            p_sort: 'featured',
+            p_page: page,
+            p_page_size: 24,
+          });
+
+          const publicTorcedor = await publicRpc('catalog_products_page_v3', appArgs('torcedor'));
+          const publicJogador = await publicRpc('catalog_products_page_v3', appArgs('jogador'));
+          const publicTorcedorPage2 = await publicRpc('catalog_products_page_v3', appArgs('torcedor', 2));
+          const publicJogadorPage2 = await publicRpc('catalog_products_page_v3', appArgs('jogador', 2));
+
+          const summarize = (payload) => ({
+            total: payload?.total ?? null,
+            page: payload?.page ?? null,
+            pageSize: payload?.pageSize ?? null,
+            totalPages: payload?.totalPages ?? null,
+            itemCount: Array.isArray(payload?.items) ? payload.items.length : null,
+            items: Array.isArray(payload?.items)
+              ? payload.items.slice(0, 8).map((item) => ({
+                  id: item.id,
+                  slug: item.slug,
+                  commercial_type: item.commercial_type,
+                  time: item.time,
+                  season: item.season,
+                  brand: item.brand,
+                }))
+              : [],
+          });
+
+          const sqlTorcedor = directTorcedor[0]?.payload;
+          const sqlJogador = directJogador[0]?.payload;
+          const sqlTorcedorP2 = directTorcedorPage2[0]?.payload;
+          const sqlJogadorP2 = directJogadorPage2[0]?.payload;
 
           console.log('STAGE3_PRODUCT_TYPES=' + JSON.stringify(productTypes));
           console.log('STAGE3_VARIANT_TYPES=' + JSON.stringify(variantTypes));
-          console.log('STAGE3_COMMERCIAL_TARGETS=' + JSON.stringify(targets));
-          console.log('STAGE3_CATALOG_V3_META=' + JSON.stringify(functionMeta));
-          console.log('STAGE3_COMMERCIAL_AUDIT_OK');
+          console.log('STAGE3_MIXED_STRUCTURED_CASES=' + JSON.stringify(mixedStructuredCases));
+          console.log('STAGE3_SQL_TORCEDOR=' + JSON.stringify(summarize(sqlTorcedor)));
+          console.log('STAGE3_SQL_JOGADOR=' + JSON.stringify(summarize(sqlJogador)));
+          console.log('STAGE3_SQL_TORCEDOR_PAGE2=' + JSON.stringify(summarize(sqlTorcedorP2)));
+          console.log('STAGE3_SQL_JOGADOR_PAGE2=' + JSON.stringify(summarize(sqlJogadorP2)));
+          console.log('STAGE3_PUBLIC_TORCEDOR=' + JSON.stringify(summarize(publicTorcedor)));
+          console.log('STAGE3_PUBLIC_JOGADOR=' + JSON.stringify(summarize(publicJogador)));
+          console.log('STAGE3_PUBLIC_TORCEDOR_PAGE2=' + JSON.stringify(summarize(publicTorcedorPage2)));
+          console.log('STAGE3_PUBLIC_JOGADOR_PAGE2=' + JSON.stringify(summarize(publicJogadorPage2)));
+
+          const expected = Object.fromEntries(productTypes.map((row) => [row.commercial_type, row.visible_products]));
+          const checks = [
+            ['torcedor SQL total', sqlTorcedor?.total, expected.torcedor],
+            ['jogador SQL total', sqlJogador?.total, expected.jogador],
+            ['torcedor public total', publicTorcedor?.total, expected.torcedor],
+            ['jogador public total', publicJogador?.total, expected.jogador],
+            ['torcedor public page1 items', publicTorcedor?.items?.length, Math.min(24, expected.torcedor)],
+            ['jogador public page1 items', publicJogador?.items?.length, Math.min(24, expected.jogador)],
+            ['torcedor public page2 number', publicTorcedorPage2?.page, 2],
+            ['jogador public page2 number', publicJogadorPage2?.page, 2],
+          ];
+          for (const [label, actual, expectedValue] of checks) {
+            if (actual !== expectedValue) throw new Error(`${label}: esperado ${expectedValue}, recebido ${actual}`);
+          }
+          if (!publicTorcedor.items.every((item) => item.commercial_type === 'torcedor')) throw new Error('RPC público Torcedor misturou tipos');
+          if (!publicJogador.items.every((item) => item.commercial_type === 'jogador')) throw new Error('RPC público Jogador misturou tipos');
+          if (!publicTorcedorPage2.items?.length) throw new Error('Paginação Torcedor página 2 vazia inesperadamente');
+          if (!publicJogadorPage2.items?.length) throw new Error('Paginação Jogador página 2 vazia inesperadamente');
+
+          console.log('STAGE3_COMMERCIAL_DEEP_AUDIT_OK');
           JS
