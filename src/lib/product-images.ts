@@ -244,7 +244,7 @@ export function getProductGalleryItems(
   });
 
   const legacyImage = buildOptimizedExternalImageUrl(product.image_url, 1600) ?? product.image_url;
-  if (legacyImage && !seen.has(legacyImage)) {
+  if (legacyImage && selectedVariantImages.length === 0 && !seen.has(legacyImage)) {
     gallery.push({
       id: "legacy-image",
       url: legacyImage,
