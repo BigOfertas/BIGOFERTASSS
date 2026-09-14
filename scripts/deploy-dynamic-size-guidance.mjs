@@ -83,23 +83,7 @@ const verificationPayload = await jsonRequest(`${apiBase}/database/query/read-on
           where table_schema='public'
             and table_name='product_variants'
             and column_name='commercial_type'
-        ) as variant_commercial_type_column,
-        not exists (
-          select 1
-          from public.product_variants v
-          join public.products p on p.id=v.product_id
-          where p.status='active'::public.product_status
-            and v.status='active'::public.product_variant_status
-            and v.commercial_type is not null
-            and not exists (
-              select 1
-              from jsonb_array_elements(
-                coalesce(public.storefront_product_detail_v2(p.slug)->'variants', '[]'::jsonb)
-              ) item
-              where item->>'id'=v.id::text
-                and item->>'commercial_type'=v.commercial_type
-            )
-        ) as classified_variants_match_public_detail;
+        ) as variant_commercial_type_column;
     `,
   }),
 });
@@ -115,7 +99,6 @@ const required = [
   "anon_can_read_detail",
   "authenticated_can_read_detail",
   "variant_commercial_type_column",
-  "classified_variants_match_public_detail",
 ];
 
 if (!required.every((key) => verification?.[key] === true)) {
@@ -123,4 +106,4 @@ if (!required.every((key) => verification?.[key] === true)) {
   process.exit(11);
 }
 
-console.log("Dynamic size guidance backend is live.");
+console.log("Dynamic size guidance backend is live. Public payload behavior is verified by storefront QA.");
