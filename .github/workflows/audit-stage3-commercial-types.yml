@@ -106,6 +106,24 @@ jobs:
             order by v.commercial_type;
           `);
 
+          const storageMeta = await query(`
+            select table_name,column_name,data_type,udt_name
+            from information_schema.columns
+            where table_schema='public'
+              and table_name in ('product_purchase_settings','product_variants')
+              and column_name='commercial_type'
+            order by table_name;
+          `);
+
+          const rpcDefinitions = await query(`
+            select p.proname, pg_get_functiondef(p.oid) as definition
+            from pg_proc p
+            join pg_namespace n on n.oid=p.pronamespace
+            where n.nspname='public'
+              and p.proname in ('catalog_products_page_v2','catalog_products_page_v3')
+            order by p.proname;
+          `);
+
           const mixedStructuredCases = await query(`
             select
               p.time_key,
@@ -136,28 +154,7 @@ jobs:
             limit 5;
           `);
 
-          const directTorcedor = await query(`
-            select public.catalog_products_page_v3(
-              p_commercial_type => 'torcedor', p_sort => 'featured', p_page => 1, p_page_size => 24
-            ) as payload;
-          `);
-          const directJogador = await query(`
-            select public.catalog_products_page_v3(
-              p_commercial_type => 'jogador', p_sort => 'featured', p_page => 1, p_page_size => 24
-            ) as payload;
-          `);
-          const directTorcedorPage2 = await query(`
-            select public.catalog_products_page_v3(
-              p_commercial_type => 'torcedor', p_sort => 'featured', p_page => 2, p_page_size => 24
-            ) as payload;
-          `);
-          const directJogadorPage2 = await query(`
-            select public.catalog_products_page_v3(
-              p_commercial_type => 'jogador', p_sort => 'featured', p_page => 2, p_page_size => 24
-            ) as payload;
-          `);
-
-          const appArgs = (type, page = 1) => ({
+          const appArgs = (type, page = 1, extra = {}) => ({
             p_query: null,
             p_category: null,
             p_campeonato: null,
@@ -172,12 +169,25 @@ jobs:
             p_sort: 'featured',
             p_page: page,
             p_page_size: 24,
+            ...extra,
           });
 
           const publicTorcedor = await publicRpc('catalog_products_page_v3', appArgs('torcedor'));
           const publicJogador = await publicRpc('catalog_products_page_v3', appArgs('jogador'));
           const publicTorcedorPage2 = await publicRpc('catalog_products_page_v3', appArgs('torcedor', 2));
           const publicJogadorPage2 = await publicRpc('catalog_products_page_v3', appArgs('jogador', 2));
+
+          const mixed = mixedStructuredCases[0] ?? null;
+          const mixedTorcedor = mixed ? await publicRpc('catalog_products_page_v3', appArgs('torcedor', 1, {
+            p_time: mixed.time_key,
+            p_season: mixed.season_key,
+            p_brand: mixed.brand_key,
+          })) : null;
+          const mixedJogador = mixed ? await publicRpc('catalog_products_page_v3', appArgs('jogador', 1, {
+            p_time: mixed.time_key,
+            p_season: mixed.season_key,
+            p_brand: mixed.brand_key,
+          })) : null;
 
           const summarize = (payload) => ({
             total: payload?.total ?? null,
@@ -197,27 +207,25 @@ jobs:
               : [],
           });
 
-          const sqlTorcedor = directTorcedor[0]?.payload;
-          const sqlJogador = directJogador[0]?.payload;
-          const sqlTorcedorP2 = directTorcedorPage2[0]?.payload;
-          const sqlJogadorP2 = directJogadorPage2[0]?.payload;
-
           console.log('STAGE3_PRODUCT_TYPES=' + JSON.stringify(productTypes));
           console.log('STAGE3_VARIANT_TYPES=' + JSON.stringify(variantTypes));
+          console.log('STAGE3_STORAGE_META=' + JSON.stringify(storageMeta));
+          console.log('STAGE3_RPC_FILTER_SOURCES=' + JSON.stringify(rpcDefinitions.map((row) => ({
+            name: row.proname,
+            usesProductSettings: row.definition.includes('product_purchase_settings'),
+            usesVariantCommercialType: row.definition.includes('pv.commercial_type') || row.definition.includes('v.commercial_type'),
+            delegatesV2: row.definition.includes('catalog_products_page_v2'),
+          }))));
           console.log('STAGE3_MIXED_STRUCTURED_CASES=' + JSON.stringify(mixedStructuredCases));
-          console.log('STAGE3_SQL_TORCEDOR=' + JSON.stringify(summarize(sqlTorcedor)));
-          console.log('STAGE3_SQL_JOGADOR=' + JSON.stringify(summarize(sqlJogador)));
-          console.log('STAGE3_SQL_TORCEDOR_PAGE2=' + JSON.stringify(summarize(sqlTorcedorP2)));
-          console.log('STAGE3_SQL_JOGADOR_PAGE2=' + JSON.stringify(summarize(sqlJogadorP2)));
           console.log('STAGE3_PUBLIC_TORCEDOR=' + JSON.stringify(summarize(publicTorcedor)));
           console.log('STAGE3_PUBLIC_JOGADOR=' + JSON.stringify(summarize(publicJogador)));
           console.log('STAGE3_PUBLIC_TORCEDOR_PAGE2=' + JSON.stringify(summarize(publicTorcedorPage2)));
           console.log('STAGE3_PUBLIC_JOGADOR_PAGE2=' + JSON.stringify(summarize(publicJogadorPage2)));
+          console.log('STAGE3_MIXED_TORCEDOR=' + JSON.stringify(summarize(mixedTorcedor)));
+          console.log('STAGE3_MIXED_JOGADOR=' + JSON.stringify(summarize(mixedJogador)));
 
           const expected = Object.fromEntries(productTypes.map((row) => [row.commercial_type, row.visible_products]));
           const checks = [
-            ['torcedor SQL total', sqlTorcedor?.total, expected.torcedor],
-            ['jogador SQL total', sqlJogador?.total, expected.jogador],
             ['torcedor public total', publicTorcedor?.total, expected.torcedor],
             ['jogador public total', publicJogador?.total, expected.jogador],
             ['torcedor public page1 items', publicTorcedor?.items?.length, Math.min(24, expected.torcedor)],
@@ -232,6 +240,10 @@ jobs:
           if (!publicJogador.items.every((item) => item.commercial_type === 'jogador')) throw new Error('RPC público Jogador misturou tipos');
           if (!publicTorcedorPage2.items?.length) throw new Error('Paginação Torcedor página 2 vazia inesperadamente');
           if (!publicJogadorPage2.items?.length) throw new Error('Paginação Jogador página 2 vazia inesperadamente');
+          if (mixed) {
+            if ((mixedTorcedor?.total ?? 0) < 1) throw new Error('Caso combinado estruturado Torcedor não retornou produto');
+            if ((mixedJogador?.total ?? 0) < 1) throw new Error('Caso combinado estruturado Jogador não retornou produto');
+          }
 
           console.log('STAGE3_COMMERCIAL_DEEP_AUDIT_OK');
           JS
