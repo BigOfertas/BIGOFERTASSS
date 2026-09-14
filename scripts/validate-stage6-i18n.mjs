@@ -82,8 +82,15 @@ if (!share.includes("useI18n")) fail("share messages are not localized");
 if (!whatsapp.includes("useI18n")) fail("WhatsApp messages are not localized");
 if (!validateMain.includes("validate-stage6-i18n.mjs"))
   fail("main CI does not enforce Stage 6 gate");
-if (read("scripts/stage6-generate-translations.mjs").includes("runtime")) {
-  // Informational only: build-time generator is allowed; browser runtime translation APIs are not.
+
+for (const forbiddenRuntimeApi of [
+  "translate.googleapis.com",
+  "translation.googleapis.com",
+  "api.openai.com",
+]) {
+  if (i18n.includes(forbiddenRuntimeApi)) {
+    fail(`runtime i18n must not call external translation API: ${forbiddenRuntimeApi}`);
+  }
 }
 
 if (!process.exitCode) {
