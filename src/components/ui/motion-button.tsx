@@ -22,6 +22,7 @@ const MotionButton: FC<Props> = ({ label, classes, loading = false, disabled, ..
   return (
     <button
       {...buttonProps}
+      data-motion-button
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
@@ -30,7 +31,7 @@ const MotionButton: FC<Props> = ({ label, classes, loading = false, disabled, ..
       )}
     >
       <span
-        className='circle bg-primary m-0 block h-12 w-12 overflow-hidden rounded-full duration-500 group-hover:w-full group-disabled:w-12'
+        className='circle bg-[var(--brand-accent)] m-0 block h-12 w-12 overflow-hidden rounded-full duration-500 group-hover:w-full group-disabled:w-12'
         aria-hidden='true'
       ></span>
       <div className='icon absolute top-1/2 left-4 translate-x-0 -translate-y-1/2 duration-500 group-hover:translate-x-[0.4rem] group-disabled:translate-x-0'>
