@@ -1,4 +1,4 @@
-name: QA Production f16b Final
+name: QA Production Runtime Diagnostic
 
 on:
   push:
@@ -30,13 +30,13 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Run final production browser QA
-        run: node scripts/qa-production-f16b.mjs
+      - name: Run focused production runtime diagnostic
+        run: node scripts/qa-production-runtime-diagnostic.mjs
 
       - name: Upload QA evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: production-qa-f16b-final
-          path: qa-final-f16b
+          name: production-runtime-diagnostic
+          path: qa-runtime-diagnostic
           if-no-files-found: error
