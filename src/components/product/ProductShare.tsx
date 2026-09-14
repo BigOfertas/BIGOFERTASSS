@@ -4,22 +4,11 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BRAND } from "@/config/brand";
+import { useI18n } from "@/i18n";
 
 interface ProductShareProps {
   productName: string;
   canonicalUrl: string;
-}
-
-function buildShareMessage(productName: string, canonicalUrl: string) {
-  return (
-    "Olha o que eu achei na " +
-    BRAND.officialName +
-    "! 👀⚽\n" +
-    productName +
-    "\nDá uma olhada: " +
-    canonicalUrl
-  );
 }
 
 async function copyToClipboard(value: string) {
@@ -41,12 +30,14 @@ async function copyToClipboard(value: string) {
 }
 
 export function ProductShare({ productName, canonicalUrl }: ProductShareProps) {
+  const { t, translateText } = useI18n();
   const [open, setOpen] = useState(false);
   const [nativeShareAvailable, setNativeShareAvailable] = useState(false);
-  const shareMessage = buildShareMessage(productName, canonicalUrl);
+  const shareHeadline = t("share.found");
+  const shareLook = t("share.look");
+  const shareMessage = `${shareHeadline}\n${productName}\n${shareLook} ${canonicalUrl}`;
   const whatsAppUrl = "https://wa.me/?text=" + encodeURIComponent(shareMessage);
-  const shareText =
-    "Olha o que eu achei na " + BRAND.officialName + "! 👀⚽\n" + productName + "\nDá uma olhada:";
+  const shareText = `${shareHeadline}\n${productName}\n${shareLook}`;
   const telegramUrl =
     "https://t.me/share/url?url=" +
     encodeURIComponent(canonicalUrl) +
@@ -63,9 +54,9 @@ export function ProductShare({ productName, canonicalUrl }: ProductShareProps) {
     try {
       await copyToClipboard(canonicalUrl);
       setOpen(false);
-      toast.success("Link copiado!");
+      toast.success(t("share.copySuccess"));
     } catch {
-      toast.error("Não foi possível copiar o link.");
+      toast.error(t("share.copyError"));
     }
   };
 
@@ -79,7 +70,7 @@ export function ProductShare({ productName, canonicalUrl }: ProductShareProps) {
       setOpen(false);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      toast.error("Não foi possível abrir o compartilhamento do dispositivo.");
+      toast.error(t("share.nativeError"));
     }
   };
 
@@ -91,7 +82,7 @@ export function ProductShare({ productName, canonicalUrl }: ProductShareProps) {
           type="button"
           variant="outline"
           className="h-10 gap-2 rounded-lg border-gray-200 bg-white px-3 text-sm font-bold text-gray-700 shadow-none hover:border-gray-300 hover:bg-gray-50 hover:text-gray-950"
-          aria-label={"Compartilhar " + productName}
+          aria-label={translateText("Compartilhar") + " " + productName}
         >
           <Share2 className="h-4 w-4" aria-hidden="true" />
           Compartilhar
