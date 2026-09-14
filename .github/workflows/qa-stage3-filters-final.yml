@@ -1,0 +1,184 @@
+name: QA Stage 3 Filters Final
+
+on:
+  push:
+    branches:
+      - qa-stage3-filters-final-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout published main SHA
+        uses: actions/checkout@v7
+        with:
+          ref: 9dcb0f421aa10ad41bb8579a2caf67b978297bbe
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Validate Torcedor/Jogador in production
+        env:
+          BASE_URL: https://bigofertas.net
+        run: |
+          mkdir -p qa-shots
+          cat > qa-stage3-filters-final.mjs <<'JS'
+          import { chromium } from 'playwright';
+
+          const BASE_URL = process.env.BASE_URL;
+          const browser = await chromium.launch({ headless: true });
+          const report = { publishedSha: '9dcb0f421aa10ad41bb8579a2caf67b978297bbe', cases: [], pageErrors: [], relevantConsoleErrors: [] };
+
+          const expected = {
+            torcedor: { total: 1194, label: 'TORCEDOR' },
+            jogador: { total: 46, label: 'JOGADOR' },
+          };
+
+          const assert = (condition, message) => { if (!condition) throw new Error(message); };
+          const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+          function attachDiagnostics(page, scope) {
+            page.on('pageerror', (error) => report.pageErrors.push({ scope, text: String(error).slice(0, 1000) }));
+            page.on('console', (msg) => {
+              if (msg.type() !== 'error') return;
+              const text = msg.text();
+              if (/catalog_products_page_v3|supabase rpc|failed to fetch|typeerror|referenceerror|syntaxerror|cors/i.test(text)) {
+                report.relevantConsoleErrors.push({ scope, text: text.slice(0, 1000) });
+              }
+            });
+          }
+
+          function matchesCatalogResponse(response, type) {
+            if (!response.url().includes('/rest/v1/rpc/catalog_products_page_v3')) return false;
+            if (response.request().method() !== 'POST') return false;
+            try {
+              const body = response.request().postDataJSON();
+              return body?.p_commercial_type === type && body?.p_page === 1 && body?.p_page_size === 24;
+            } catch {
+              return false;
+            }
+          }
+
+          async function parseRpc(response, type, phase) {
+            const status = response.status();
+            let payload = null;
+            let raw = '';
+            try {
+              payload = await response.json();
+            } catch {
+              raw = (await response.text()).slice(0, 1200);
+            }
+            assert(status === 200, `${phase} ${type}: RPC HTTP ${status} ${raw}`);
+            assert(payload && typeof payload === 'object', `${phase} ${type}: payload inválido`);
+            assert(payload.total === expected[type].total, `${phase} ${type}: total esperado ${expected[type].total}, recebido ${payload.total}`);
+            assert(Array.isArray(payload.items) && payload.items.length === 24, `${phase} ${type}: página 1 deveria ter 24 itens, recebeu ${payload.items?.length}`);
+            assert(payload.items.every((item) => item.commercial_type === type), `${phase} ${type}: RPC misturou commercial_type`);
+            return { status, total: payload.total, page: payload.page, pageSize: payload.pageSize, totalPages: payload.totalPages, itemCount: payload.items.length, firstIds: payload.items.slice(0, 5).map((item) => item.id) };
+          }
+
+          async function waitRendered(page, type) {
+            await page.waitForFunction((expectedTotal) => {
+              const cards = document.querySelectorAll('[data-product-card]').length;
+              const text = document.body.innerText;
+              const formatted = new Intl.NumberFormat('pt-BR').format(expectedTotal);
+              return cards > 0 && text.includes(`${formatted} produto(s) encontrado(s)`);
+            }, expected[type].total, { timeout: 30000 });
+            const cards = await page.locator('[data-product-card]').count();
+            const headings = await page.locator('[data-product-card] h2').allTextContents();
+            assert(cards === 24, `${type}: DOM deveria renderizar 24 cards, recebeu ${cards}`);
+            assert(headings.length === 24, `${type}: títulos dos cards divergentes (${headings.length})`);
+            return { cards, firstTitles: headings.slice(0, 5) };
+          }
+
+          async function runDesktop(type) {
+            const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+            const page = await context.newPage();
+            attachDiagnostics(page, `desktop-${type}`);
+            await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await page.locator('header.glass-header').waitFor({ state: 'visible', timeout: 15000 });
+            const nav = page.locator('nav[aria-label="Categorias"]:visible');
+            const link = nav.getByRole('link', { name: expected[type].label, exact: true });
+            await link.waitFor({ state: 'visible', timeout: 10000 });
+
+            const clickResponsePromise = page.waitForResponse((response) => matchesCatalogResponse(response, type), { timeout: 35000 });
+            await Promise.all([
+              page.waitForURL((url) => url.pathname === '/products' && url.searchParams.get('commercialType') === type, { timeout: 20000 }),
+              link.click(),
+            ]);
+            const clickRpc = await parseRpc(await clickResponsePromise, type, 'click');
+            const clickDom = await waitRendered(page, type);
+            await page.screenshot({ path: `qa-shots/desktop-${type}.png`, fullPage: false });
+
+            const refreshResponsePromise = page.waitForResponse((response) => matchesCatalogResponse(response, type), { timeout: 35000 });
+            await page.reload({ waitUntil: 'domcontentloaded', timeout: 45000 });
+            const refreshRpc = await parseRpc(await refreshResponsePromise, type, 'refresh');
+            assert(new URL(page.url()).searchParams.get('commercialType') === type, `refresh ${type}: URL perdeu filtro`);
+            const refreshDom = await waitRendered(page, type);
+
+            const result = { viewport: 'desktop-1440', type, url: page.url(), clickRpc, clickDom, refreshRpc, refreshDom };
+            report.cases.push(result);
+            await context.close();
+          }
+
+          async function runMobile(type) {
+            const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+            const page = await context.newPage();
+            attachDiagnostics(page, `mobile-${type}`);
+            await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await page.locator('header.glass-header').waitFor({ state: 'visible', timeout: 15000 });
+            await page.getByRole('button', { name: 'Abrir menu de categorias' }).click();
+            const button = page.getByRole('button', { name: expected[type].label, exact: true });
+            await button.waitFor({ state: 'visible', timeout: 10000 });
+
+            const clickResponsePromise = page.waitForResponse((response) => matchesCatalogResponse(response, type), { timeout: 35000 });
+            await Promise.all([
+              page.waitForURL((url) => url.pathname === '/products' && url.searchParams.get('commercialType') === type, { timeout: 20000 }),
+              button.click(),
+            ]);
+            const clickRpc = await parseRpc(await clickResponsePromise, type, 'mobile-click');
+            const clickDom = await waitRendered(page, type);
+            await page.screenshot({ path: `qa-shots/mobile-${type}.png`, fullPage: false });
+
+            const refreshResponsePromise = page.waitForResponse((response) => matchesCatalogResponse(response, type), { timeout: 35000 });
+            await page.reload({ waitUntil: 'domcontentloaded', timeout: 45000 });
+            const refreshRpc = await parseRpc(await refreshResponsePromise, type, 'mobile-refresh');
+            assert(new URL(page.url()).searchParams.get('commercialType') === type, `mobile refresh ${type}: URL perdeu filtro`);
+            const refreshDom = await waitRendered(page, type);
+
+            const result = { viewport: 'mobile-390', type, url: page.url(), clickRpc, clickDom, refreshRpc, refreshDom };
+            report.cases.push(result);
+            await context.close();
+          }
+
+          try {
+            await runDesktop('torcedor');
+            await sleep(500);
+            await runDesktop('jogador');
+            await sleep(500);
+            await runMobile('torcedor');
+            await sleep(500);
+            await runMobile('jogador');
+
+            assert(report.pageErrors.length === 0, `Page errors: ${JSON.stringify(report.pageErrors)}`);
+            assert(report.relevantConsoleErrors.length === 0, `Console errors relevantes: ${JSON.stringify(report.relevantConsoleErrors)}`);
+            console.log('STAGE3_FILTERS_FINAL_REPORT=' + JSON.stringify(report));
+            console.log('STAGE3_FILTERS_FINAL_OK');
+          } finally {
+            await browser.close();
+          }
+          JS
+          node qa-stage3-filters-final.mjs
+
+      - name: Upload QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage3-filters-final-shots
+          path: qa-shots/*.png
+          if-no-files-found: ignore
