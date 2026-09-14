@@ -135,22 +135,8 @@ export default function ProductSeo({
       );
     }
 
-    const existingCanonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    if (existingCanonical) {
-      const previousHref = existingCanonical.getAttribute("href");
-      existingCanonical.href = canonicalUrl;
-      cleanups.push(() => {
-        if (previousHref === null) existingCanonical.removeAttribute("href");
-        else existingCanonical.setAttribute("href", previousHref);
-      });
-    } else {
-      const canonical = document.createElement("link");
-      canonical.rel = "canonical";
-      canonical.href = canonicalUrl;
-      document.head.appendChild(canonical);
-      cleanups.push(() => canonical.remove());
-    }
-
+    // O canonical é responsabilidade exclusiva do head da rota (`buildProductHead`).
+    // Mantê-lo também neste efeito pode duplicar a tag durante a hidratação.
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "Product",
