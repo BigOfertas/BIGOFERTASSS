@@ -1,0 +1,25 @@
+name: Deploy Stage 2 Size Guidance Only
+
+on:
+  push:
+    branches:
+      - deploy-stage2-size-guidance-backend-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: hootwcacnrtidfmqsvrn
+    steps:
+      - name: Checkout exact production source
+        uses: actions/checkout@v7
+        with:
+          ref: deploy-stage2-size-guidance-backend-20260914
+
+      - name: Deploy and verify dynamic size guidance backend
+        run: node scripts/deploy-dynamic-size-guidance.mjs
