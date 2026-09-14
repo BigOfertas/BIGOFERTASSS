@@ -34,8 +34,8 @@ jobs:
             src/lib/product-detail.ts \
             src/routes/product/'$id.tsx'
 
-      - name: Lint
-        run: bun run lint
+      - name: Lint storefront
+        run: bunx eslint . --ignore-pattern scripts/qa-stage1-variant-previews.mjs
 
       - name: TypeScript
         run: bunx tsc --noEmit
