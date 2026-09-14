@@ -10,14 +10,29 @@ const cases = [
   ["Retrô", { commercialType: "retro" }, "shirt", "axila à outra em uma camisa"],
   ["NBA/basquete", { commercialType: "basquete" }, "basketball", "regata ou camiseta"],
   ["Short / Calção", { commercialType: "calcao" }, "shorts", "cintura de um short"],
-  ["Calça por categoria estruturada", { commercialType: "other", categoryName: "Calças" }, "pants", "cintura de uma calça"],
+  [
+    "Calça por categoria estruturada",
+    { commercialType: "other", categoryName: "Calças" },
+    "pants",
+    "cintura de uma calça",
+  ],
   ["Corta-vento", { commercialType: "corta_vento" }, "outerwear", "axila à outra em um casaco"],
   ["Kit Infantil", { commercialType: "infantil" }, "kids", "altura da criança"],
   ["Camisa + Calção", { commercialType: "camisa_calcao" }, "shirt-shorts", "largura de uma camisa"],
   ["Regata + Calção", { commercialType: "regata_calcao" }, "tank-shorts", "largura de uma regata"],
-  ["Top/Camisa de treino + Calça", { commercialType: "treino_calca" }, "training-pants", "parte de cima na região do peito"],
+  [
+    "Top/Camisa de treino + Calça",
+    { commercialType: "treino_calca" },
+    "training-pants",
+    "parte de cima na região do peito",
+  ],
   ["Casaco + Calça", { commercialType: "casaco_calca" }, "jacket-pants", "largura de um casaco"],
-  ["categoria desconhecida", { commercialType: "other", categoryName: "Acessórios especiais" }, "fallback", "Consulte o guia de tamanhos"],
+  [
+    "categoria desconhecida",
+    { commercialType: "other", categoryName: "Acessórios especiais" },
+    "fallback",
+    "Consulte o guia de tamanhos",
+  ],
 ] as const;
 
 for (const [label, context, expectedKind, expectedText] of cases) {
@@ -28,7 +43,11 @@ for (const [label, context, expectedKind, expectedText] of cases) {
 }
 
 const shorts = getSizeGuidance({ commercialType: "calcao" });
-assert.equal(/axila/i.test(shorts.instruction), false, "Short / Calção nunca pode receber orientação de axila");
+assert.equal(
+  /axila/i.test(shorts.instruction),
+  false,
+  "Short / Calção nunca pode receber orientação de axila",
+);
 console.log("PASS - Short / Calção nunca usa orientação de axila");
 
 const categoryFallbacks = [
@@ -73,7 +92,7 @@ assert.ok(
   "Troca de variante deve continuar usando o estado selection existente",
 );
 assert.ok(
-  component.includes("getSizeGuidance({") && component.includes("aria-live=\"polite\""),
+  component.includes("getSizeGuidance({") && component.includes('aria-live="polite"'),
   "Orientação deve ser recalculada no render e anunciável sem refresh",
 );
 assert.ok(
