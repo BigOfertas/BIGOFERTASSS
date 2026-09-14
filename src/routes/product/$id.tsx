@@ -410,6 +410,9 @@ function ProductDetail() {
                 config={purchaseConfig}
                 value={purchaseCustomization}
                 onChange={setPurchaseCustomization}
+                commercialType={selectedVariant?.commercial_type ?? purchaseConfig.commercialType}
+                categoryName={detail.category?.name ?? product.category}
+                categorySlug={detail.category?.slug ?? null}
               />
             ) : null}
 
