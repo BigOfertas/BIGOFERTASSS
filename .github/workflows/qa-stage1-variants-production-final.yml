@@ -29,4 +29,4 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Run final production browser QA
-        run: node scripts/qa-stage1-variants-production-final.mjs
+        run: node scripts/run-qa-stage1-production-final.mjs
