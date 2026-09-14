@@ -66,7 +66,9 @@ function looksTechnical(value) {
   if (/^(?:https?:|\/|\.\/|\.\.\/|@\/|[a-z0-9_.-]+\.(?:tsx?|jsx?|css|json|mjs|png|webp|svg))/.test(text)) {
     return true;
   }
-  if (/^[a-z0-9_.:/-]+$/i.test(text) && !/\s/.test(text)) return true;
+  if (/^[a-z0-9_.:/-]+$/i.test(text) && !/\s/.test(text) && !portugueseHint.test(text)) {
+    return true;
+  }
   if (/(?:bg-|text-|border-|rounded-|px-|py-|mx-|my-|flex|grid|hover:|focus:|sm:|md:|lg:|xl:|w-|h-)/.test(text)) {
     return true;
   }
