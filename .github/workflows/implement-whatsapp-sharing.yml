@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Format implementation
+        run: bunx prettier --write src/routes/__root.tsx 'src/routes/product/$id.tsx' src/components/support/FloatingWhatsAppSupport.tsx src/components/product/ProductShare.tsx scripts/validate-whatsapp-sharing.mjs
+
       - name: Validate feature contract
         run: node scripts/validate-whatsapp-sharing.mjs
 
