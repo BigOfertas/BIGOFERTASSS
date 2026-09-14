@@ -4,6 +4,7 @@ import { ChevronDown, CreditCard, Mail, MessageCircle, PackageCheck } from "luci
 
 import { COOKIE_PREFERENCES_EVENT } from "@/components/privacy/CookieConsent";
 import { BRAND } from "@/config/brand";
+import { useI18n } from "@/i18n";
 import { useAuth } from "@/lib/auth";
 
 const trustItems = [
@@ -27,6 +28,7 @@ const paymentMethods = [
 
 export default function Footer() {
   const { user, isOwner } = useAuth();
+  const { translateText } = useI18n();
   const [expanded, setExpanded] = useState({ acesso: false, conta: false, ajuda: false });
   const toggle = (key: keyof typeof expanded) =>
     setExpanded((current) => ({ ...current, [key]: !current[key] }));
@@ -47,9 +49,11 @@ export default function Footer() {
               </div>
               <div>
                 <p className="text-[11px] font-black uppercase tracking-[0.14em] text-white">
-                  {title}
+                  {translateText(title)}
                 </p>
-                <p className="mt-0.5 text-xs leading-relaxed text-gray-400">{description}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-gray-400">
+                  {translateText(description)}
+                </p>
               </div>
             </div>
           ))}
@@ -62,7 +66,7 @@ export default function Footer() {
             <Link
               to="/"
               className="inline-flex w-fit"
-              aria-label={`${BRAND.officialName} - Início`}
+              aria-label={`${BRAND.officialName} - ${translateText("Início")}`}
             >
               <img
                 src="/assets/branding/dropbox-wordmark-footer.png"
@@ -74,7 +78,9 @@ export default function Footer() {
               />
             </Link>
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-gray-400">
-              Camisas e artigos esportivos com compra online e atendimento pelos canais oficiais.
+              {translateText(
+                "Camisas e artigos esportivos com compra online e atendimento pelos canais oficiais.",
+              )}
             </p>
             <div className="mt-6 space-y-3 text-sm text-gray-300">
               <a
@@ -82,13 +88,14 @@ export default function Footer() {
                 className="flex items-center gap-3 hover:text-red-500"
               >
                 <Mail className="h-4 w-4" />
-                Fale por e-mail
+                {translateText("Fale por e-mail")}
               </a>
               <a
                 href={BRAND.whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-3 hover:text-red-500"
+                data-no-i18n="true"
               >
                 <MessageCircle className="h-4 w-4" />
                 {BRAND.whatsappDisplay}
@@ -103,7 +110,9 @@ export default function Footer() {
               className="flex w-full items-center justify-between py-3 text-left lg:cursor-default lg:py-0 lg:pb-4"
               aria-expanded={expanded.acesso}
             >
-              <h3 className="text-xs font-black uppercase tracking-[0.14em]">Acesso rápido</h3>
+              <h3 className="text-xs font-black uppercase tracking-[0.14em]">
+                {translateText("Acesso rápido")}
+              </h3>
               <ChevronDown
                 className={`h-5 w-5 text-gray-400 lg:hidden ${expanded.acesso ? "rotate-180" : ""}`}
               />
@@ -111,17 +120,17 @@ export default function Footer() {
             <ul className={accordionClass(expanded.acesso)}>
               <li>
                 <Link to="/" className="hover:text-white">
-                  Início
+                  {translateText("Início")}
                 </Link>
               </li>
               <li>
                 <Link to="/products" search={{}} className="hover:text-white">
-                  Produtos
+                  {translateText("Produtos")}
                 </Link>
               </li>
               <li>
                 <Link to="/cart" className="hover:text-white">
-                  Carrinho
+                  {translateText("Carrinho")}
                 </Link>
               </li>
             </ul>
@@ -134,7 +143,9 @@ export default function Footer() {
               className="flex w-full items-center justify-between py-3 text-left lg:cursor-default lg:py-0 lg:pb-4"
               aria-expanded={expanded.conta}
             >
-              <h3 className="text-xs font-black uppercase tracking-[0.14em]">Minha conta</h3>
+              <h3 className="text-xs font-black uppercase tracking-[0.14em]">
+                {translateText("Minha conta")}
+              </h3>
               <ChevronDown
                 className={`h-5 w-5 text-gray-400 lg:hidden ${expanded.conta ? "rotate-180" : ""}`}
               />
@@ -143,24 +154,24 @@ export default function Footer() {
               {isOwner ? (
                 <li>
                   <Link to="/admin" className="hover:text-white">
-                    Painel administrativo
+                    {translateText("Painel administrativo")}
                   </Link>
                 </li>
               ) : user ? (
                 <>
                   <li>
                     <Link to="/conta" className="hover:text-white">
-                      Minha conta
+                      {translateText("Minha conta")}
                     </Link>
                   </li>
                   <li>
                     <Link to="/conta" search={{ secao: "pedidos" }} className="hover:text-white">
-                      Pedidos
+                      {translateText("Pedidos")}
                     </Link>
                   </li>
                   <li>
                     <Link to="/conta" search={{ secao: "enderecos" }} className="hover:text-white">
-                      Endereços
+                      {translateText("Endereços")}
                     </Link>
                   </li>
                 </>
@@ -168,12 +179,12 @@ export default function Footer() {
                 <>
                   <li>
                     <Link to="/login" className="hover:text-white">
-                      Entrar
+                      {translateText("Entrar")}
                     </Link>
                   </li>
                   <li>
                     <Link to="/cadastro" className="hover:text-white">
-                      Criar conta
+                      {translateText("Criar conta")}
                     </Link>
                   </li>
                 </>
@@ -188,7 +199,9 @@ export default function Footer() {
               className="flex w-full items-center justify-between py-3 text-left lg:cursor-default lg:py-0 lg:pb-4"
               aria-expanded={expanded.ajuda}
             >
-              <h3 className="text-xs font-black uppercase tracking-[0.14em]">Ajuda e políticas</h3>
+              <h3 className="text-xs font-black uppercase tracking-[0.14em]">
+                {translateText("Ajuda e políticas")}
+              </h3>
               <ChevronDown
                 className={`h-5 w-5 text-gray-400 lg:hidden ${expanded.ajuda ? "rotate-180" : ""}`}
               />
@@ -196,17 +209,17 @@ export default function Footer() {
             <ul className={accordionClass(expanded.ajuda)}>
               <li>
                 <Link to="/trocas-e-devolucoes" className="hover:text-white">
-                  Trocas e devoluções
+                  {translateText("Trocas e devoluções")}
                 </Link>
               </li>
               <li>
                 <Link to="/producao-e-envio" className="hover:text-white">
-                  Produção e envio
+                  {translateText("Produção e envio")}
                 </Link>
               </li>
               <li>
                 <Link to="/privacidade" className="hover:text-white">
-                  Privacidade
+                  {translateText("Privacidade")}
                 </Link>
               </li>
               <li>
@@ -215,17 +228,17 @@ export default function Footer() {
                   onClick={() => window.dispatchEvent(new Event(COOKIE_PREFERENCES_EVENT))}
                   className="text-left hover:text-white"
                 >
-                  Preferências de cookies
+                  {translateText("Preferências de cookies")}
                 </button>
               </li>
               <li>
                 <Link to="/termos-de-compra" className="hover:text-white">
-                  Termos de compra
+                  {translateText("Termos de compra")}
                 </Link>
               </li>
               <li>
                 <Link to="/contato" className="hover:text-white">
-                  Contato
+                  {translateText("Contato")}
                 </Link>
               </li>
             </ul>
@@ -242,18 +255,22 @@ export default function Footer() {
               id="footer-payment-title"
               className="text-xs font-black uppercase tracking-[0.14em]"
             >
-              Formas de pagamento
+              {translateText("Formas de pagamento")}
             </h3>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-gray-400">
-            Pix e principais cartões no pagamento online.
+            {translateText("Pix e principais cartões no pagamento online.")}
           </p>
-          <div className="mt-4 flex flex-wrap gap-2" aria-label="Formas de pagamento">
+          <div
+            className="mt-4 flex flex-wrap gap-2"
+            aria-label={translateText("Formas de pagamento")}
+          >
             {paymentMethods.map((method) => (
               <span
                 key={method.name}
                 className="inline-flex h-9 min-w-14 items-center justify-center rounded-lg border border-white/15 bg-white px-2.5 py-1.5"
                 title={method.name}
+                data-no-i18n="true"
               >
                 <img
                   src={method.src}
@@ -269,9 +286,11 @@ export default function Footer() {
 
         <hr className="my-8 border-white/10" />
         <div className="flex flex-col items-center justify-between gap-3 text-center text-xs text-gray-500 md:flex-row md:text-left">
-          <p>Copyright © {BRAND.officialName} 2026. Todos os direitos reservados.</p>
+          <p>
+            Copyright © {BRAND.officialName} 2026. {translateText("Todos os direitos reservados.")}
+          </p>
           <Link to="/contato" className="hover:text-gray-300">
-            Precisa de ajuda? Fale conosco.
+            {translateText("Precisa de ajuda? Fale conosco.")}
           </Link>
         </div>
       </div>
