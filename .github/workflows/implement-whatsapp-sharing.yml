@@ -40,10 +40,10 @@ jobs:
       - name: Lint
         run: bun run lint
 
-      - name: Typecheck
-        run: bunx tsc --noEmit
+      - name: Project TypeScript and build validation
+        run: bun run build
 
-      - name: Production build
+      - name: Hostinger production build
         run: bun run build:hostinger
 
       - name: Commit validated implementation
