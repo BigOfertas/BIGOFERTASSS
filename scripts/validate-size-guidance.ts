@@ -26,6 +26,12 @@ const cases = [
     "training-pants",
     "parte de cima na região do peito",
   ],
+  [
+    "Kits de treino do catálogo",
+    { commercialType: "other", categoryName: "Kits de treino", categorySlug: "kit-treino" },
+    "training-pants",
+    "parte de cima na região do peito",
+  ],
   ["Casaco + Calça", { commercialType: "casaco_calca" }, "jacket-pants", "largura de um casaco"],
   [
     "categoria desconhecida",
@@ -112,6 +118,10 @@ assert.equal(
 assert.ok(
   helper.includes("categoryName") && helper.includes("categorySlug"),
   "Fallback deve usar categoria estruturada",
+);
+assert.ok(
+  helper.includes('normalizedCategorySlug === "kit-treino"'),
+  "Categoria estruturada kit-treino deve receber orientação de conjunto treino + calça",
 );
 assert.ok(
   detail.includes("commercial_type?: string | null"),
