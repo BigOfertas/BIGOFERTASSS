@@ -43,6 +43,9 @@ jobs:
       - name: Validate storefront customer experience
         run: node scripts/validate-storefront-upgrades.mjs && node scripts/validate-storefront-regressions.mjs && node scripts/validate-stage2-commerce.mjs && node scripts/validate-final-storefront-refinements.mjs && bun scripts/validate-size-guidance.ts && bun scripts/validate-stage5.ts
 
+      - name: Validate Stage 6 dark mode and i18n
+        run: node scripts/validate-stage6-i18n.mjs
+
       - name: Validate affiliate referral backend
         run: bun run validate:affiliate
 

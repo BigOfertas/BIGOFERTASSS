@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import {
   Outlet,
   Link,
@@ -13,6 +14,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import glassLegacyCss from "../glass-legacy.css?url";
 import sportThemeCss from "../sport-theme.css?url";
+import stage6ThemeCss from "../stage6-theme.css?url";
 import { AuthProvider } from "../lib/auth";
 import Footer from "../components/layout/Footer";
 import { CartProvider } from "../context/CartContext";
@@ -22,6 +24,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Component as CursorFollower } from "@/components/ui/cursor-follower";
 import { BRAND } from "@/config/brand";
 import { getR2PublicBaseUrl } from "@/lib/product-images";
+import { I18nProvider } from "@/i18n";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 const FOOTER_ROUTES = new Set([
@@ -151,6 +154,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: glassLegacyCss },
       { rel: "stylesheet", href: sportThemeCss },
+      { rel: "stylesheet", href: stage6ThemeCss },
       { rel: "icon", href: DROPBOX_FAVICON, type: "image/png", sizes: "64x64" },
       { rel: "shortcut icon", href: DROPBOX_FAVICON, type: "image/png", sizes: "64x64" },
       { rel: "apple-touch-icon", href: DROPBOX_TOUCH_ICON, sizes: "180x180" },
@@ -164,11 +168,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body style={{ background: "#ffffff" }}>
+      <body>
         {children}
         <Scripts />
       </body>
@@ -188,7 +192,7 @@ function InitialBootSplash() {
         zIndex: 2147483647,
         display: "grid",
         placeItems: "center",
-        background: "#ffffff",
+        background: "var(--background)",
       }}
     >
       <svg width="42" height="42" viewBox="0 0 42 42" aria-hidden="true">
@@ -241,21 +245,30 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CartProvider>
-          <div className="relative flex min-h-screen flex-col overflow-x-clip">
-            <div className="min-h-0 flex-1">
-              <Outlet />
-            </div>
-            {storefrontHydrated && showStorefrontFooter ? <Footer /> : null}
-          </div>
-          {storefrontHydrated && pathname === "/" ? <FloatingWhatsAppSupport /> : null}
-          <CursorFollower />
-          <CookieConsent />
-          <Toaster position="top-center" richColors />
-          {initialBootSplashVisible ? <InitialBootSplash /> : null}
-        </CartProvider>
-      </AuthProvider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="light"
+        enableSystem={false}
+        storageKey="dropbox-theme"
+      >
+        <I18nProvider>
+          <AuthProvider>
+            <CartProvider>
+              <div className="relative flex min-h-screen flex-col overflow-x-clip">
+                <div className="min-h-0 flex-1">
+                  <Outlet />
+                </div>
+                {storefrontHydrated && showStorefrontFooter ? <Footer /> : null}
+              </div>
+              {storefrontHydrated && pathname === "/" ? <FloatingWhatsAppSupport /> : null}
+              <CursorFollower />
+              <CookieConsent />
+              <Toaster position="top-center" richColors />
+              {initialBootSplashVisible ? <InitialBootSplash /> : null}
+            </CartProvider>
+          </AuthProvider>
+        </I18nProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

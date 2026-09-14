@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import { BRAND } from "@/config/brand";
+import { LOCALE_META, useI18n } from "@/i18n";
 import type { ProductGalleryItem } from "@/lib/product-images";
 import type { Product, ProductVariant } from "@/lib/products";
 
@@ -45,6 +46,8 @@ export default function ProductSeo({
   inStock,
   images,
 }: ProductSeoProps) {
+  const { locale, translateText } = useI18n();
+
   useEffect(() => {
     const cleanups: Array<() => void> = [];
     const previousTitle = document.title;
@@ -52,8 +55,8 @@ export default function ProductSeo({
       .filter(Boolean)
       .join(" · ");
     const description =
-      product.description?.trim().slice(0, 160) ||
-      `${product.name}${context ? ` — ${context}` : ""}. Confira fotos, opções e entrega na ${BRAND.officialName}.`.slice(
+      translateText(product.description?.trim() ?? "").slice(0, 160) ||
+      `${product.name}${context ? ` — ${context}` : ""}. ${translateText("Confira fotos, opções e entrega na DropBox.")}`.slice(
         0,
         160,
       );
@@ -79,6 +82,11 @@ export default function ProductSeo({
     setManagedMeta(
       'meta[property="og:description"]',
       { property: "og:description", content: description },
+      cleanups,
+    );
+    setManagedMeta(
+      'meta[property="og:locale"]',
+      { property: "og:locale", content: LOCALE_META[locale].ogLocale },
       cleanups,
     );
     setManagedMeta(
@@ -181,7 +189,7 @@ export default function ProductSeo({
     });
 
     return () => cleanups.reverse().forEach((cleanup) => cleanup());
-  }, [images, inStock, price, product]);
+  }, [images, inStock, locale, price, product, translateText]);
 
   return null;
 }

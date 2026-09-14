@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
+import { Stage6HeaderControls } from "@/components/layout/Stage6HeaderControls";
 import { Input } from "@/components/ui/input";
 import {
   MobileLiquidMorphMenu,
@@ -283,7 +284,7 @@ const Header: React.FC = () => {
 
   return (
     <header className="glass-header sticky top-0 z-50">
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <div className="mx-auto max-w-7xl px-4 py-4 lg:px-8 lg:py-5">
           <div className="flex items-center justify-between gap-10">
             <Link
@@ -306,6 +307,7 @@ const Header: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3">
+              <Stage6HeaderControls />
               <Link
                 to={accountDestination}
                 className="header-action group gap-3 px-3 py-2.5 transition-colors"
@@ -339,7 +341,7 @@ const Header: React.FC = () => {
         <CategoryNav />
       </div>
 
-      <div ref={mobileHeaderRef} className="md:hidden">
+      <div ref={mobileHeaderRef} className="lg:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             type="button"
@@ -422,6 +424,10 @@ const Header: React.FC = () => {
             onNavigate={closeNavigation}
             mobile
           />
+        </div>
+
+        <div className="border-t border-gray-100 px-4 py-3 dark:border-white/10">
+          <Stage6HeaderControls mobile />
         </div>
 
         <MobileLiquidMorphMenu
