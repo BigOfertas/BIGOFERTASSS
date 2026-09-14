@@ -1,0 +1,248 @@
+name: QA Stage 2 Production
+
+on:
+  push:
+    branches:
+      - qa-stage2-production-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact published source
+        uses: actions/checkout@v7
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run production QA
+        env:
+          BASE_URL: https://bigofertas.net
+        run: |
+          cat > /tmp/stage2-production-qa.mjs <<'JS'
+          import { chromium } from 'playwright';
+
+          const BASE_URL = process.env.BASE_URL;
+          const browser = await chromium.launch({ headless: true });
+          const result = {
+            production: BASE_URL,
+            products: {},
+            viewports: {},
+            variantSwitch: { foundMixedTypeExample: false, testedProducts: 0, evidence: null },
+            consoleErrors: [],
+            pageErrors: [],
+            failedRequests: [],
+            httpErrors: [],
+          };
+
+          const uniquePush = (array, value) => {
+            const key = JSON.stringify(value);
+            if (!array.some((item) => JSON.stringify(item) === key)) array.push(value);
+          };
+
+          function attachDiagnostics(page, label) {
+            page.on('console', (msg) => {
+              if (msg.type() === 'error') uniquePush(result.consoleErrors, { label, text: msg.text().slice(0, 800) });
+            });
+            page.on('pageerror', (error) => uniquePush(result.pageErrors, { label, text: String(error).slice(0, 800) }));
+            page.on('requestfailed', (request) => {
+              const url = request.url();
+              if (url.includes('bigofertas.net') || url.includes('supabase.co')) {
+                uniquePush(result.failedRequests, { label, url: url.slice(0, 500), error: request.failure()?.errorText ?? 'unknown' });
+              }
+            });
+            page.on('response', (response) => {
+              const url = response.url();
+              if (response.status() >= 400 && (url.includes('bigofertas.net') || url.includes('supabase.co'))) {
+                uniquePush(result.httpErrors, { label, status: response.status(), url: url.slice(0, 500) });
+              }
+            });
+          }
+
+          async function catalogProductUrls(page, candidates, max = 16) {
+            for (const path of candidates) {
+              await page.goto(`${BASE_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+              try {
+                await page.waitForSelector('[data-product-card] a[href^="/product/"]', { timeout: 18000 });
+              } catch {
+                continue;
+              }
+              const urls = await page.locator('[data-product-card] a[href^="/product/"]').evaluateAll((links) =>
+                [...new Set(links.map((link) => link.getAttribute('href')).filter(Boolean))].slice(0, 24),
+              );
+              if (urls.length) return urls.slice(0, max);
+            }
+            return [];
+          }
+
+          async function inspectProduct(page, path) {
+            await page.goto(`${BASE_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await page.waitForSelector('[data-size-guidance]', { timeout: 22000 });
+            const data = await page.evaluate(() => {
+              const block = document.querySelector('[data-size-guidance]');
+              const instruction = document.querySelector('[data-size-guidance-instruction]');
+              const note = document.querySelector('[data-size-guidance-note]');
+              const title = document.querySelector('#product-title');
+              const rect = block?.getBoundingClientRect();
+              const sizeLegend = [...document.querySelectorAll('legend')].find((node) => node.textContent?.includes('Tamanho'));
+              const sizeFieldset = sizeLegend?.closest('fieldset');
+              return {
+                title: title?.textContent?.trim() ?? '',
+                kind: block?.getAttribute('data-size-guidance-kind') ?? '',
+                instruction: instruction?.textContent?.trim() ?? '',
+                note: note?.textContent?.trim() ?? '',
+                rect: rect ? { left: rect.left, right: rect.right, width: rect.width, top: rect.top, bottom: rect.bottom } : null,
+                viewportWidth: window.innerWidth,
+                guidanceFitsViewport: Boolean(rect && rect.left >= -1 && rect.right <= window.innerWidth + 1),
+                sizeSelectorVisible: Boolean(sizeFieldset && sizeFieldset.getBoundingClientRect().height > 0),
+                bodyOverflow: document.documentElement.scrollWidth > window.innerWidth + 2,
+              };
+            });
+            return { ...data, url: page.url() };
+          }
+
+          async function findByKind(page, catalogCandidates, allowedKinds, label) {
+            const urls = await catalogProductUrls(page, catalogCandidates, 18);
+            if (!urls.length) throw new Error(`${label}: nenhum produto real encontrado nas rotas de catálogo`);
+            for (const url of urls) {
+              try {
+                const inspected = await inspectProduct(page, url);
+                if (allowedKinds.includes(inspected.kind)) return inspected;
+              } catch (error) {
+                console.log(`QA_SKIP ${label} ${url} ${String(error).slice(0, 180)}`);
+              }
+            }
+            throw new Error(`${label}: nenhum produto real exibiu kind esperado (${allowedKinds.join(', ')})`);
+          }
+
+          const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+          const desktop = await desktopContext.newPage();
+          attachDiagnostics(desktop, 'desktop');
+
+          result.products.shirt = await findByKind(
+            desktop,
+            ['/products?commercialType=torcedor', '/products?commercialType=jogador', '/products'],
+            ['shirt'],
+            'camisa',
+          );
+          result.products.shorts = await findByKind(
+            desktop,
+            ['/products?commercialType=calcao', '/products?category=shorts', '/products'],
+            ['shorts'],
+            'short-calção',
+          );
+          result.products.outerwear = await findByKind(
+            desktop,
+            ['/products?category=corta-ventos', '/products?q=corta-vento', '/products'],
+            ['outerwear'],
+            'corta-vento',
+          );
+          result.products.kids = await findByKind(
+            desktop,
+            ['/products?commercialType=infantil', '/products?category=infantil', '/products'],
+            ['kids'],
+            'kit-infantil',
+          );
+          result.products.set = await findByKind(
+            desktop,
+            ['/products?category=kit-treino', '/products?q=conjunto', '/products?q=treino', '/products'],
+            ['shirt-shorts', 'tank-shorts', 'training-pants', 'jacket-pants'],
+            'conjunto',
+          );
+
+          const assert = (condition, message) => { if (!condition) throw new Error(message); };
+          assert(/axila/i.test(result.products.shirt.instruction) && /camisa/i.test(result.products.shirt.instruction), 'Camisa sem orientação de axila adequada');
+          assert(/cintura/i.test(result.products.shorts.instruction), 'Short/Calção sem orientação de cintura');
+          assert(!/axila/i.test(result.products.shorts.instruction), 'Short/Calção contém orientação de axila');
+          assert(/casaco/i.test(result.products.outerwear.instruction) && /folga/i.test(result.products.outerwear.instruction), 'Corta-vento sem orientação de casaco/folga');
+          assert(/altura da criança/i.test(result.products.kids.instruction), 'Kit Infantil sem orientação baseada na altura');
+          assert(['shirt-shorts','tank-shorts','training-pants','jacket-pants'].includes(result.products.set.kind), 'Conjunto sem orientação combinada');
+          assert(result.products.set.instruction.includes(' e '), 'Conjunto não descreve as duas partes');
+          for (const [key, product] of Object.entries(result.products)) {
+            assert(product.guidanceFitsViewport, `${key}: orientação excede viewport desktop`);
+            assert(product.sizeSelectorVisible, `${key}: seletor de tamanho não está visível`);
+          }
+
+          // Procura um exemplo real onde a classificação comercial varie entre variantes.
+          const variantCandidates = [...new Set(Object.values(result.products).map((item) => new URL(item.url).pathname))];
+          for (const path of variantCandidates) {
+            await desktop.goto(`${BASE_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await desktop.waitForSelector('[data-size-guidance]', { timeout: 20000 });
+            const buttons = desktop.locator('[data-variant-preview]');
+            const count = await buttons.count();
+            if (count < 2) continue;
+            result.variantSwitch.testedProducts += 1;
+            const initial = await desktop.locator('[data-size-guidance]').getAttribute('data-size-guidance-kind');
+            const initialText = (await desktop.locator('[data-size-guidance-instruction]').textContent())?.trim() ?? '';
+            let mainFrameNavigations = 0;
+            const onNavigated = (frame) => { if (frame === desktop.mainFrame()) mainFrameNavigations += 1; };
+            desktop.on('framenavigated', onNavigated);
+            for (let index = 0; index < Math.min(count, 8); index += 1) {
+              const button = buttons.nth(index);
+              const pressed = await button.getAttribute('aria-pressed');
+              if (pressed === 'true') continue;
+              await button.click();
+              await desktop.waitForTimeout(350);
+              const nextKind = await desktop.locator('[data-size-guidance]').getAttribute('data-size-guidance-kind');
+              const nextText = (await desktop.locator('[data-size-guidance-instruction]').textContent())?.trim() ?? '';
+              if ((nextKind !== initial || nextText !== initialText) && mainFrameNavigations === 0) {
+                result.variantSwitch.foundMixedTypeExample = true;
+                result.variantSwitch.evidence = {
+                  url: desktop.url(),
+                  title: (await desktop.locator('#product-title').textContent())?.trim() ?? '',
+                  before: { kind: initial, text: initialText },
+                  after: { kind: nextKind, text: nextText },
+                  noRefresh: true,
+                };
+                break;
+              }
+            }
+            desktop.off('framenavigated', onNavigated);
+            if (result.variantSwitch.foundMixedTypeExample) break;
+          }
+
+          result.viewports.desktop = { width: 1440, height: 900, checked: Object.keys(result.products) };
+          await desktopContext.close();
+
+          const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
+          const mobile = await mobileContext.newPage();
+          attachDiagnostics(mobile, 'mobile');
+          result.viewports.mobile = { width: 390, height: 844, products: {} };
+          for (const [key, product] of Object.entries(result.products)) {
+            const path = new URL(product.url).pathname;
+            const inspected = await inspectProduct(mobile, path);
+            result.viewports.mobile.products[key] = inspected;
+            assert(inspected.kind === product.kind, `${key}: kind mudou entre desktop e mobile`);
+            assert(inspected.instruction === product.instruction, `${key}: texto mudou entre desktop e mobile`);
+            assert(inspected.guidanceFitsViewport, `${key}: orientação excede viewport mobile`);
+            assert(inspected.sizeSelectorVisible, `${key}: seletor de tamanho não visível no mobile`);
+          }
+          await mobileContext.close();
+
+          const relevantConsole = result.consoleErrors.filter(({ text }) => /hydration|cors|rpc|storefront_product_detail|failed to fetch|uncaught|typeerror/i.test(text));
+          const relevantPageErrors = result.pageErrors;
+          const relevantFailedRequests = result.failedRequests.filter(({ url }) => /bigofertas\.net|supabase\.co/.test(url));
+          const relevantHttpErrors = result.httpErrors.filter(({ url }) => /bigofertas\.net|supabase\.co/.test(url));
+          result.relevantDiagnostics = {
+            consoleErrors: relevantConsole,
+            pageErrors: relevantPageErrors,
+            failedRequests: relevantFailedRequests,
+            httpErrors: relevantHttpErrors,
+          };
+
+          assert(relevantConsole.length === 0, `Console contém erros relevantes: ${JSON.stringify(relevantConsole)}`);
+          assert(relevantPageErrors.length === 0, `Page errors encontrados: ${JSON.stringify(relevantPageErrors)}`);
+          assert(relevantFailedRequests.length === 0, `Requests falhos encontrados: ${JSON.stringify(relevantFailedRequests)}`);
+          assert(relevantHttpErrors.length === 0, `Respostas 4xx/5xx encontradas: ${JSON.stringify(relevantHttpErrors)}`);
+
+          await browser.close();
+          console.log('STAGE2_PRODUCTION_QA_RESULT=' + JSON.stringify(result));
+          console.log('STAGE2_PRODUCTION_QA_OK');
+          JS
+          node /tmp/stage2-production-qa.mjs
