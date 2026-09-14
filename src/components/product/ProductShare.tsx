@@ -45,13 +45,13 @@ export function ProductShare({ productName, canonicalUrl }: ProductShareProps) {
   const [nativeShareAvailable, setNativeShareAvailable] = useState(false);
   const shareMessage = buildShareMessage(productName, canonicalUrl);
   const whatsAppUrl = "https://wa.me/?text=" + encodeURIComponent(shareMessage);
-  const telegramText =
+  const shareText =
     "Olha o que eu achei na " + BRAND.officialName + "! 👀⚽\n" + productName + "\nDá uma olhada:";
   const telegramUrl =
     "https://t.me/share/url?url=" +
     encodeURIComponent(canonicalUrl) +
     "&text=" +
-    encodeURIComponent(telegramText);
+    encodeURIComponent(shareText);
 
   useEffect(() => {
     setNativeShareAvailable(
@@ -73,7 +73,7 @@ export function ProductShare({ productName, canonicalUrl }: ProductShareProps) {
     try {
       await navigator.share({
         title: productName,
-        text: "Olha o que eu achei na " + BRAND.officialName + "! 👀⚽",
+        text: shareText,
         url: canonicalUrl,
       });
       setOpen(false);
