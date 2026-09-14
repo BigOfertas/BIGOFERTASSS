@@ -1,14 +1,12 @@
 name: Deploy Stage 5 Product Descriptions
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/deploy-stage5-product-descriptions.yml"
-      - "scripts/deploy-stage5-product-descriptions.mjs"
-      - "supabase/migrations/20260914162500_stage5_public_product_descriptions.sql"
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Validate Storefront Main
+    types:
+      - completed
 
 permissions:
   contents: read
@@ -19,6 +17,9 @@ concurrency:
 
 jobs:
   deploy:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     environment: production
     env:
@@ -27,6 +28,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Validate deployment runner syntax
         run: node --check scripts/deploy-stage5-product-descriptions.mjs
