@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { criticalCopy } from "./critical-copy";
+
 export const SUPPORTED_LOCALES = [
   "pt",
   "en",
@@ -119,15 +121,29 @@ const conjunctions: Record<Locale, string> = {
   ar: "و",
 };
 
+function isUsableGeneratedTranslation(source: string, candidate: string | undefined) {
+  if (!candidate) return false;
+  const normalizedSource = normalize(source);
+  const normalizedCandidate = normalize(candidate);
+  if (!normalizedCandidate || normalizedCandidate === normalizedSource) return false;
+  if (!source.includes("\n") && candidate.includes("\n")) return false;
+  return true;
+}
+
 function exactFromCatalog(catalog: Catalog, value: string) {
-  return catalog[normalize(value)] ?? value;
+  const candidate = catalog[normalize(value)];
+  return isUsableGeneratedTranslation(value, candidate) ? candidate : value;
+}
+
+function localizedLookup(locale: Locale, catalog: Catalog, value: string) {
+  return criticalCopy(locale, value) ?? exactFromCatalog(catalog, value);
 }
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function translateCommercialLabel(value: string, catalog: Catalog) {
+function translateCommercialLabel(value: string, locale: Locale, catalog: Catalog) {
   const phrases = [
     "Camisa de treino + calça",
     "Camisa + calção",
@@ -151,7 +167,7 @@ function translateCommercialLabel(value: string, catalog: Catalog) {
 
   let output = value;
   for (const phrase of phrases) {
-    const translated = exactFromCatalog(catalog, phrase);
+    const translated = localizedLookup(locale, catalog, phrase);
     if (translated === phrase) continue;
     output = output.replace(new RegExp(escapeRegExp(phrase), "giu"), translated);
   }
@@ -163,7 +179,7 @@ function translateVersionList(raw: string, locale: Locale, catalog: Catalog) {
     .split(/\s+e\s+|,\s*/iu)
     .map((item) => item.trim())
     .filter(Boolean)
-    .map((item) => translateCommercialLabel(item, catalog));
+    .map((item) => translateCommercialLabel(item, locale, catalog));
 
   if (items.length <= 1) return items[0] ?? raw;
   if (items.length === 2) return `${items[0]} ${conjunctions[locale]} ${items[1]}`;
@@ -174,10 +190,13 @@ function translateDynamicText(source: string, locale: Locale, catalog: Catalog) 
   if (locale === "pt") return source;
 
   const compact = normalize(source);
-  const exact = catalog[compact];
-  if (exact) return exact;
+  const curated = criticalCopy(locale, compact);
+  if (curated) return curated;
 
-  const lookup = (value: string) => exactFromCatalog(catalog, value);
+  const exact = catalog[compact];
+  if (isUsableGeneratedTranslation(compact, exact)) return exact;
+
+  const lookup = (value: string) => localizedLookup(locale, catalog, value);
   let output = source;
 
   const genericDemand =

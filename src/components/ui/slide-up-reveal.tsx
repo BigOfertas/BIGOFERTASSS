@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 type SplitMode = "words" | "characters" | "lines";
@@ -89,7 +90,9 @@ const SlideUpReveal = forwardRef<SlideUpRevealRef, SlideUpRevealProps>(
     },
     ref,
   ) => {
-    const text = typeof children === "string" ? children : children?.toString() || "";
+    const { translateText } = useI18n();
+    const sourceText = typeof children === "string" ? children : children?.toString() || "";
+    const text = useMemo(() => translateText(sourceText), [sourceText, translateText]);
     const [isAnimating, setIsAnimating] = useState(false);
     const [hasCompleted, setHasCompleted] = useState(false);
     const rootRef = useRef<HTMLSpanElement | null>(null);
