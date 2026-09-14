@@ -41,7 +41,7 @@ jobs:
         run: node scripts/validate-catalog-business-rules.mjs && node scripts/validate-google-photos-final-pipeline.mjs && node scripts/validate-retro-pdf-group-deploy.mjs
 
       - name: Validate storefront customer experience
-        run: node scripts/validate-storefront-upgrades.mjs && node scripts/validate-storefront-regressions.mjs && node scripts/validate-stage2-commerce.mjs && node scripts/validate-final-storefront-refinements.mjs && bun scripts/validate-size-guidance.ts
+        run: node scripts/validate-storefront-upgrades.mjs && node scripts/validate-storefront-regressions.mjs && node scripts/validate-stage2-commerce.mjs && node scripts/validate-final-storefront-refinements.mjs && bun scripts/validate-size-guidance.ts && bun scripts/validate-stage5.ts
 
       - name: Validate affiliate referral backend
         run: bun run validate:affiliate
