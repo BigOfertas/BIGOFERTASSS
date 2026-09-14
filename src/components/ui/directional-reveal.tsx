@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 type RevealDirection = "left" | "right" | "up";
@@ -25,8 +26,11 @@ export default function DirectionalReveal({
   className,
   once = true,
 }: DirectionalRevealProps) {
+  const { translateText } = useI18n();
   const ref = useRef<HTMLSpanElement | null>(null);
   const [visible, setVisible] = useState(false);
+  const isStringChild = typeof children === "string";
+  const translatedChildren = isStringChild ? translateText(children) : children;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -67,6 +71,7 @@ export default function DirectionalReveal({
   return (
     <span
       ref={ref}
+      data-no-i18n={isStringChild ? "true" : undefined}
       className={cn(
         "inline-block transform-gpu transition-[transform,opacity] motion-reduce:transform-none motion-reduce:transition-none",
         className,
@@ -79,7 +84,7 @@ export default function DirectionalReveal({
         transitionTimingFunction: "cubic-bezier(.22,1,.36,1)",
       }}
     >
-      {children}
+      {translatedChildren}
     </span>
   );
 }
