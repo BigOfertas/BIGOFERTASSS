@@ -7,7 +7,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: read
   contents: write
 
 concurrency:
@@ -15,8 +14,46 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  generate-locales:
+    if: ${{ !contains(github.event.head_commit.message || '', '[stage6-persist]') }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        locale: [en, es, fr, de, it, nl, ja, ko, zh, ar]
+    steps:
+      - name: Checkout Stage 6 branch
+        uses: actions/checkout@v7
+        with:
+          ref: stage6-dark-motion-i18n-20260914
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Apply source integration for extraction
+        run: node scripts/stage6-patch-existing.mjs
+
+      - name: Generate locale catalog
+        env:
+          STAGE6_TARGET_LOCALE: ${{ matrix.locale }}
+        run: node scripts/stage6-generate-translations.mjs
+
+      - name: Upload locale catalog
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage6-locale-${{ matrix.locale }}
+          path: src/i18n/generated/${{ matrix.locale }}.json
+          if-no-files-found: error
+          retention-days: 1
+
   validate-and-persist:
     if: ${{ !contains(github.event.head_commit.message || '', '[stage6-persist]') }}
+    needs: generate-locales
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Stage 6 branch
@@ -38,14 +75,12 @@ jobs:
       - name: Apply Stage 6 integration to existing source
         run: node scripts/stage6-patch-existing.mjs
 
-      - name: Reuse validated generated locale catalogs
+      - name: Download generated locale catalogs
         uses: actions/download-artifact@v4
         with:
           pattern: stage6-locale-*
           path: src/i18n/generated
           merge-multiple: true
-          run-id: 34877224914
-          github-token: ${{ github.token }}
 
       - name: Format Stage 6 changes
         run: >-
