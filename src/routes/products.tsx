@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/sheet";
 import SlideUpReveal from "@/components/ui/slide-up-reveal";
 import { useCatalogFacets, useCatalogProducts } from "@/hooks/useCatalogProducts";
+import { LOCALE_META, useI18n } from "@/i18n";
+import { uiCopy } from "@/i18n/ui-copy";
 import {
   catalogSortSchema,
   countActiveCatalogFilters,
@@ -89,8 +91,9 @@ function getVisiblePages(current: number, total: number) {
 }
 
 function FilterSkeleton() {
+  const { translateText } = useI18n();
   return (
-    <div className="space-y-8" aria-label="Carregando filtros">
+    <div className="space-y-8" aria-label={translateText("Carregando filtros")}>
       {Array.from({ length: 5 }).map((_, index) => (
         <div key={index} className="animate-pulse">
           <div className="mb-4 h-4 w-24 bg-gray-100" />
@@ -108,6 +111,7 @@ function FilterSkeleton() {
 function ProductsPage() {
   const search = Route.useSearch() satisfies CatalogQuery;
   const navigate = useNavigate();
+  const { locale, translateText } = useI18n();
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const { data: catalog, isLoading, isFetching, error } = useCatalogProducts(search);
   const { data: facets, isLoading: facetsLoading, error: facetsError } = useCatalogFacets(search);
@@ -116,6 +120,7 @@ function ProductsPage() {
   const totalPages = catalog?.totalPages ?? 0;
   const products = catalog?.items ?? [];
   const activeFilterCount = countActiveCatalogFilters(search);
+  const numberLocale = LOCALE_META[locale].htmlLang;
 
   const updateSearch = (updates: CatalogQuery, resetPage = true) => {
     const next: CatalogQuery = { ...search, ...updates };
@@ -136,9 +141,11 @@ function ProductsPage() {
         <Header />
         <main className="flex flex-grow items-center justify-center p-8">
           <div className="text-center">
-            <h2 className="mb-2 text-2xl font-bold text-red-600">Erro ao carregar produtos</h2>
+            <h2 className="mb-2 text-2xl font-bold text-red-600">
+              {translateText("Erro ao carregar produtos")}
+            </h2>
             <p className="text-gray-600">
-              Não foi possível consultar o catálogo agora. Tente novamente mais tarde.
+              {translateText("Não foi possível consultar o catálogo agora. Tente novamente mais tarde.")}
             </p>
           </div>
         </main>
@@ -160,20 +167,20 @@ function ProductsPage() {
                 className="justify-start"
                 charClass="pb-[0.08em]"
               >
-                Produtos
+                {uiCopy(locale, "Produtos")}
               </SlideUpReveal>
             </h1>
             {search.q ? (
               <p className="mt-2 text-sm text-gray-500">
                 <DirectionalReveal direction="left" distance={10} delay={0.08}>
-                  Resultados para <strong>“{search.q}”</strong>
+                  {translateText("Resultados para")} <strong>“{search.q}”</strong>
                 </DirectionalReveal>
               </p>
             ) : null}
             {!isLoading && catalog ? (
               <p className="mt-1 text-xs text-gray-400">
                 <DirectionalReveal direction="left" distance={8} delay={0.12}>
-                  {catalog.total.toLocaleString("pt-BR")} produto(s) encontrado(s)
+                  {catalog.total.toLocaleString(numberLocale)} {translateText("produto(s) encontrado(s)")}
                 </DirectionalReveal>
               </p>
             ) : null}
@@ -181,18 +188,18 @@ function ProductsPage() {
 
           <DirectionalReveal direction="right" distance={10} delay={0.08}>
             <label className="hidden items-center gap-2 text-xs font-bold uppercase text-gray-500 md:flex">
-              Ordenar
+              {uiCopy(locale, "Ordenar")}
               <select
                 value={search.sort ?? "featured"}
                 onChange={(event) => updateSearch({ sort: event.target.value as CatalogSort })}
                 className="h-10 rounded-md border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-900"
               >
-                <option value="featured">Destaques</option>
-                <option value="newest">Mais recentes</option>
-                <option value="price_asc">Menor preço</option>
-                <option value="price_desc">Maior preço</option>
-                <option value="name_asc">Nome A–Z</option>
-                <option value="name_desc">Nome Z–A</option>
+                <option value="featured">{uiCopy(locale, "Destaques")}</option>
+                <option value="newest">{uiCopy(locale, "Mais recentes")}</option>
+                <option value="price_asc">{uiCopy(locale, "Menor preço")}</option>
+                <option value="price_desc">{uiCopy(locale, "Maior preço")}</option>
+                <option value="name_asc">{uiCopy(locale, "Nome A–Z")}</option>
+                <option value="name_desc">{uiCopy(locale, "Nome Z–A")}</option>
               </select>
             </label>
           </DirectionalReveal>
@@ -203,7 +210,7 @@ function ProductsPage() {
             <SheetTrigger asChild>
               <Button type="button" variant="outline" className="h-11 justify-center font-bold">
                 <SlidersHorizontal className="mr-2 h-4 w-4" />
-                Filtrar
+                {uiCopy(locale, "Filtrar")}
                 {activeFilterCount > 0 ? (
                   <span className="ml-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] text-white">
                     {activeFilterCount}
@@ -216,8 +223,10 @@ function ProductsPage() {
               className="flex h-[90vh] flex-col rounded-t-2xl bg-white p-0"
             >
               <SheetHeader className="border-b border-gray-100 px-5 py-4 text-left">
-                <SheetTitle>Filtrar produtos</SheetTitle>
-                <SheetDescription>As opções se ajustam ao que você já selecionou.</SheetDescription>
+                <SheetTitle>{uiCopy(locale, "Filtrar produtos")}</SheetTitle>
+                <SheetDescription>
+                  {translateText("As opções se ajustam ao que você já selecionou.")}
+                </SheetDescription>
               </SheetHeader>
               <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
                 {facets ? (
@@ -225,13 +234,16 @@ function ProductsPage() {
                 ) : facetsLoading ? (
                   <FilterSkeleton />
                 ) : (
-                  <p className="text-sm text-gray-500">Filtros temporariamente indisponíveis.</p>
+                  <p className="text-sm text-gray-500">
+                    {translateText("Filtros temporariamente indisponíveis.")}
+                  </p>
                 )}
               </div>
               <div className="border-t border-gray-100 bg-white p-4">
                 <SheetClose asChild>
                   <Button className="h-11 w-full bg-red-600 font-black text-white hover:bg-red-700">
-                    Ver {catalog?.total?.toLocaleString("pt-BR") ?? ""} produtos
+                    {translateText("Ver")} {catalog?.total?.toLocaleString(numberLocale) ?? ""}{" "}
+                    {translateText("produtos")}
                   </Button>
                 </SheetClose>
               </div>
@@ -239,18 +251,18 @@ function ProductsPage() {
           </Sheet>
 
           <label className="flex h-11 items-center rounded-md border border-gray-200 bg-white px-3">
-            <span className="sr-only">Ordenar</span>
+            <span className="sr-only">{uiCopy(locale, "Ordenar")}</span>
             <select
               value={search.sort ?? "featured"}
               onChange={(event) => updateSearch({ sort: event.target.value as CatalogSort })}
               className="h-full w-full bg-transparent text-xs font-bold text-gray-800 outline-none"
             >
-              <option value="featured">Destaques</option>
-              <option value="newest">Mais recentes</option>
-              <option value="price_asc">Menor preço</option>
-              <option value="price_desc">Maior preço</option>
-              <option value="name_asc">Nome A–Z</option>
-              <option value="name_desc">Nome Z–A</option>
+              <option value="featured">{uiCopy(locale, "Destaques")}</option>
+              <option value="newest">{uiCopy(locale, "Mais recentes")}</option>
+              <option value="price_asc">{uiCopy(locale, "Menor preço")}</option>
+              <option value="price_desc">{uiCopy(locale, "Maior preço")}</option>
+              <option value="name_asc">{uiCopy(locale, "Nome A–Z")}</option>
+              <option value="name_desc">{uiCopy(locale, "Nome Z–A")}</option>
             </select>
           </label>
         </div>
@@ -263,7 +275,9 @@ function ProductsPage() {
               ) : facetsLoading ? (
                 <FilterSkeleton />
               ) : facetsError ? (
-                <p className="text-sm text-gray-500">Filtros temporariamente indisponíveis.</p>
+                <p className="text-sm text-gray-500">
+                  {translateText("Filtros temporariamente indisponíveis.")}
+                </p>
               ) : null}
             </div>
           </aside>
@@ -272,7 +286,7 @@ function ProductsPage() {
             {isFetching && !isLoading ? (
               <div
                 className="mb-4 h-1 w-full overflow-hidden rounded-full bg-gray-100"
-                aria-label="Atualizando catálogo"
+                aria-label={translateText("Atualizando catálogo")}
               >
                 <div className="h-full w-1/3 animate-pulse bg-red-600" />
               </div>
@@ -286,7 +300,7 @@ function ProductsPage() {
                 {totalPages > 1 ? (
                   <nav
                     className="mt-12 flex flex-wrap items-center justify-center gap-2"
-                    aria-label="Paginação do catálogo"
+                    aria-label={translateText("Paginação do catálogo")}
                   >
                     <Button
                       type="button"
@@ -294,7 +308,7 @@ function ProductsPage() {
                       size="sm"
                       disabled={currentPage <= 1}
                       onClick={() => goToPage(currentPage - 1)}
-                      aria-label="Página anterior"
+                      aria-label={translateText("Página anterior")}
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -327,7 +341,7 @@ function ProductsPage() {
                       size="sm"
                       disabled={currentPage >= totalPages}
                       onClick={() => goToPage(currentPage + 1)}
-                      aria-label="Próxima página"
+                      aria-label={translateText("Próxima página")}
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -338,12 +352,12 @@ function ProductsPage() {
               <div className="py-20 text-center">
                 <h2 className="text-xl font-bold uppercase text-gray-400">
                   <SlideUpReveal split="words" stagger={0.05} inView className="justify-center">
-                    Nenhum produto encontrado
+                    {uiCopy(locale, "Nenhum produto encontrado")}
                   </SlideUpReveal>
                 </h2>
                 <p className="mt-2 text-gray-500">
                   <DirectionalReveal direction="up" distance={8} delay={0.08}>
-                    Ajuste a busca ou os filtros para tentar novamente.
+                    {translateText("Ajuste a busca ou os filtros para tentar novamente.")}
                   </DirectionalReveal>
                 </p>
               </div>
