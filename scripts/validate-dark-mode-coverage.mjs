@@ -5,44 +5,48 @@ const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const exists = (file) => fs.existsSync(path.join(root, file));
 
-const visualRoutes = [
-  "src/routes/admin.tsx",
-  "src/routes/cadastro.tsx",
-  "src/routes/cart.tsx",
-  "src/routes/checkout.tsx",
-  "src/routes/confirmar-email.tsx",
-  "src/routes/conta.tsx",
-  "src/routes/conta/pedidos/$orderNumber.tsx",
-  "src/routes/contato.tsx",
-  "src/routes/esqueci-senha.tsx",
-  "src/routes/index.tsx",
-  "src/routes/login.tsx",
-  "src/routes/privacidade.tsx",
-  "src/routes/producao-e-envio.tsx",
-  "src/routes/product/$id.tsx",
-  "src/routes/products.tsx",
-  "src/routes/redefinir-senha.tsx",
-  "src/routes/termos-de-compra.tsx",
-  "src/routes/trocas-e-devolucoes.tsx",
-];
+function walkFiles(relativeDir, predicate) {
+  const absoluteDir = path.join(root, relativeDir);
+  const files = [];
+
+  for (const entry of fs.readdirSync(absoluteDir, { withFileTypes: true })) {
+    const relativePath = path.posix.join(relativeDir, entry.name);
+    if (entry.isDirectory()) files.push(...walkFiles(relativePath, predicate));
+    else if (predicate(relativePath)) files.push(relativePath);
+  }
+
+  return files.sort();
+}
+
+const visualRoutes = walkFiles("src/routes", (file) => file.endsWith(".tsx"));
+const visualComponents = walkFiles("src/components", (file) => file.endsWith(".tsx"));
 
 const fail = (message) => {
   console.error(`DARK_MODE_COVERAGE_ERROR ${message}`);
   process.exitCode = 1;
 };
 
+if (visualRoutes.length < 18) {
+  fail(`visual route discovery unexpectedly found only ${visualRoutes.length} routes`);
+}
+
 for (const route of visualRoutes) {
   if (!exists(route)) fail(`missing visual route: ${route}`);
 }
 
 const theme = read("src/stage6-theme.css");
+const routeFixes = read("src/stage6-dark-route-fixes.css");
 const legacyGlass = read("src/glass-legacy.css");
 const auth = read("src/auth.css");
 const brand = read("src/brand.css");
+const sportTheme = read("src/sport-theme.css");
 const brandWordmark = read("src/components/brand/BrandWordmark.tsx");
+const rootRoute = read("src/routes/__root.tsx");
+const accountOverview = read("src/components/account/AccountOverview.tsx");
 const cart = read("src/routes/cart.tsx");
 const checkout = read("src/routes/checkout.tsx");
 const institutional = read("src/components/content/InstitutionalPage.tsx");
+const combinedDarkStyles = [theme, routeFixes, brand].join("\n");
 
 const requiredThemeTokens = [
   ".dark .bg-white",
@@ -88,6 +92,25 @@ for (const token of [
   if (!brandWordmark.includes(token)) fail(`missing theme-aware header wordmark: ${token}`);
 }
 
+for (const token of [
+  'import stage6DarkRouteFixesCss from "../stage6-dark-route-fixes.css?url"',
+  '{ rel: "stylesheet", href: stage6DarkRouteFixesCss }',
+]) {
+  if (!rootRoute.includes(token)) fail(`route-specific dark stylesheet is not loaded last: ${token}`);
+}
+
+for (const token of [
+  ".dark .account-action-card",
+  ".dark .account-profile-card",
+  ".dark .category-carousel-arrow",
+]) {
+  if (!routeFixes.includes(token)) fail(`missing route-specific dark override: ${token}`);
+}
+
+for (const token of ["account-action-card", "account-profile-card", "account-command-hero"]) {
+  if (!accountOverview.includes(token)) fail(`account overview audit fixture changed: ${token}`);
+}
+
 if (!legacyGlass.includes("background:\n    linear-gradient(")) {
   fail("legacy glass no longer exposes the background-image hazard expected by this audit");
 }
@@ -97,8 +120,9 @@ for (const token of ["bg-gray-50/50", "bg-white", "from-emerald-50", "to-white"]
 }
 
 for (const token of ["bg-[#f7f7f7]", "bg-white", "bg-gray-50", "bg-emerald-50"]) {
-  if (!checkout.includes(token))
+  if (!checkout.includes(token)) {
     fail(`checkout audit fixture changed; expected token missing: ${token}`);
+  }
 }
 
 for (const token of ["auth-split-page", "auth-form-card", "auth-input-wrap", "auth-side-panel"]) {
@@ -117,19 +141,76 @@ const hazardPatterns = [
 ];
 
 let routeHazards = 0;
-for (const route of visualRoutes) {
-  const source = read(route);
-  for (const pattern of hazardPatterns) {
-    routeHazards += source.match(pattern)?.length ?? 0;
-  }
+let componentHazards = 0;
+for (const sourceFile of visualRoutes) {
+  const source = read(sourceFile);
+  for (const pattern of hazardPatterns) routeHazards += source.match(pattern)?.length ?? 0;
+}
+for (const sourceFile of visualComponents) {
+  const source = read(sourceFile);
+  for (const pattern of hazardPatterns) componentHazards += source.match(pattern)?.length ?? 0;
 }
 
 if (routeHazards < 10) {
   fail(`route light-surface audit unexpectedly found only ${routeHazards} hazards`);
 }
+if (componentHazards < 10) {
+  fail(`component light-surface audit unexpectedly found only ${componentHazards} hazards`);
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const customCssFiles = [
+  "src/auth.css",
+  "src/glass-legacy.css",
+  "src/header.css",
+  "src/sport-theme.css",
+];
+const lightBackgroundPattern =
+  /background(?:-color)?\s*:\s*[^;}]*(?:#f[4-9a-f][0-9a-f]{4}|#fff(?:fff)?\b|rgba\(\s*255\s*,\s*255\s*,\s*255\s*,\s*(?:0\.[5-9][0-9]*|1(?:\.0+)?)\s*\))/i;
+const coveredCustomClasses = new Set();
+const uncoveredCustomClasses = new Set();
+
+for (const cssFile of customCssFiles) {
+  const css = read(cssFile);
+  const blockPattern = /([^{}]+)\{([^{}]*)\}/g;
+  let match;
+
+  while ((match = blockPattern.exec(css))) {
+    const selector = match[1].trim();
+    const declarations = match[2];
+    if (!lightBackgroundPattern.test(declarations)) continue;
+
+    const classNames = [...selector.matchAll(/\.([a-zA-Z][a-zA-Z0-9_-]*)/g)].map(
+      (classMatch) => classMatch[1],
+    );
+
+    for (const className of classNames) {
+      if (className.startsWith("dark")) continue;
+      const darkSelectorPattern = new RegExp(
+        `\\.dark[^\\{]*\\.${escapeRegExp(className)}(?:[\\s\\.:#\\[,>+~]|$)`,
+        "m",
+      );
+      if (darkSelectorPattern.test(combinedDarkStyles)) coveredCustomClasses.add(className);
+      else uncoveredCustomClasses.add(`${cssFile}:${className}`);
+    }
+  }
+}
+
+if (uncoveredCustomClasses.size > 0) {
+  fail(
+    `custom light CSS surfaces without dark override: ${[...uncoveredCustomClasses].sort().join(", ")}`,
+  );
+}
+
+if (!sportTheme.includes(".account-action-card") || !sportTheme.includes(".account-profile-card")) {
+  fail("account custom surfaces were removed without updating the dark audit contract");
+}
 
 if (!process.exitCode) {
   console.log(
-    `DARK_MODE_COVERAGE_OK routes=${visualRoutes.length} hazards=${routeHazards} cart=ok checkout=ok auth=ok account=ok admin=ok institutional=ok storefront=ok overlays=ok charts=ok mobile=ok brand=ok`,
+    `DARK_MODE_COVERAGE_OK routes=${visualRoutes.length} components=${visualComponents.length} route_hazards=${routeHazards} component_hazards=${componentHazards} custom_light_classes=${coveredCustomClasses.size} cart=ok checkout=ok auth=ok account=ok admin=ok institutional=ok storefront=ok overlays=ok charts=ok mobile=ok brand=ok`,
   );
 }
