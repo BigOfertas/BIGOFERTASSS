@@ -1,0 +1,64 @@
+name: Browser Dark Postdeploy Routes
+
+on:
+  push:
+    branches:
+      - browser-dark-contrast-audit-20260915
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: browser-dark-postdeploy-routes
+  cancel-in-progress: true
+
+jobs:
+  routes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        viewport: [desktop, mobile]
+    steps:
+      - name: Checkout audit harness
+        uses: actions/checkout@v7
+        with:
+          ref: browser-dark-contrast-audit-20260915
+      - name: Download shared product catalog
+        uses: actions/download-artifact@v4
+        with:
+          name: browser-dark-product-catalog
+          path: browser-audit-discovery
+          repository: BigOfertas/BIGOFERTASSS
+          run-id: 34922517490
+          github-token: ${{ github.token }}
+      - name: Patch audit to reuse shared catalog
+        run: node scripts/patch-browser-audit-discovery.mjs
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install app dependencies
+        run: bun install --frozen-lockfile
+      - name: Install browser audit dependencies
+        run: npm install --no-save playwright axe-core
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Audit production routes in real Chromium
+        env:
+          AUDIT_MODE: routes
+          AUDIT_VIEWPORT: ${{ matrix.viewport }}
+          AUDIT_PRODUCT_LINKS_FILE: browser-audit-discovery/product-links.json
+        run: node scripts/browser-dark-contrast-audit.mjs
+      - name: Upload postdeploy route report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-dark-postdeploy-routes-${{ matrix.viewport }}
+          path: browser-audit/
+          if-no-files-found: error
+          retention-days: 3
