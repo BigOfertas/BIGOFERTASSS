@@ -25,6 +25,9 @@ jobs:
       - name: Checkout audit branch
         uses: actions/checkout@v7
 
+      - name: Patch product discovery for live async catalog
+        run: node scripts/patch-browser-audit-discovery.mjs
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -65,6 +68,9 @@ jobs:
     steps:
       - name: Checkout audit branch
         uses: actions/checkout@v7
+
+      - name: Patch product discovery for live async catalog
+        run: node scripts/patch-browser-audit-discovery.mjs
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
