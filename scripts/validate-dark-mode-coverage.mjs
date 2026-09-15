@@ -125,7 +125,12 @@ for (const token of ["bg-[#f7f7f7]", "bg-white", "bg-gray-50", "bg-emerald-50"])
   }
 }
 
-for (const token of ["auth-split-page", "auth-form-card", "auth-input-wrap", "auth-side-panel"]) {
+for (const token of [
+  "auth-split-page",
+  "auth-form-card",
+  "auth-input-wrap",
+  "auth-side-panel",
+]) {
   if (!auth.includes(token)) fail(`auth dark-mode surface missing from source audit: ${token}`);
 }
 
