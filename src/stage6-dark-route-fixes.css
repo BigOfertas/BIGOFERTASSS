@@ -1,3 +1,5 @@
+@import "./stage6-black-theme.css";
+
 /*
  * Route/component-specific dark surfaces that are defined outside Tailwind utilities.
  * Keep this file loaded after stage6-theme.css so custom component CSS cannot repaint
@@ -6,28 +8,28 @@
 
 .dark .account-action-card,
 .dark .account-profile-card {
-  border-color: rgba(148, 163, 184, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
   background:
-    radial-gradient(circle at 92% 110%, rgba(220, 38, 38, 0.08), transparent 34%),
-    linear-gradient(145deg, #182235, #111827 60%, #0f1724) !important;
+    radial-gradient(circle at 92% 110%, rgba(220, 38, 38, 0.07), transparent 34%),
+    linear-gradient(145deg, #121212, #090909 60%, #040404) !important;
   color: var(--stage6-dark-text) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
-    0 14px 34px rgba(0, 0, 0, 0.3) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 14px 34px rgba(0, 0, 0, 0.38) !important;
 }
 
 .dark .account-action-card::after {
-  background: radial-gradient(circle, rgba(239, 68, 68, 0.16), transparent 68%) !important;
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.14), transparent 68%) !important;
 }
 
 .dark .account-action-card:hover {
   border-color: rgba(239, 68, 68, 0.34) !important;
   background:
-    radial-gradient(circle at 92% 110%, rgba(220, 38, 38, 0.12), transparent 36%),
-    linear-gradient(145deg, #1d2a40, #151f30 60%, #111827) !important;
+    radial-gradient(circle at 92% 110%, rgba(220, 38, 38, 0.1), transparent 36%),
+    linear-gradient(145deg, #191919, #101010 60%, #080808) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.055),
-    0 18px 38px rgba(0, 0, 0, 0.38) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 38px rgba(0, 0, 0, 0.46) !important;
 }
 
 .dark .account-profile-card::before {
@@ -35,15 +37,15 @@
 }
 
 .dark .category-carousel-arrow {
-  border-color: rgba(148, 163, 184, 0.22) !important;
-  background: rgba(17, 24, 39, 0.92) !important;
-  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  background: rgba(8, 8, 8, 0.95) !important;
+  color: #f5f5f5 !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 13px 30px rgba(0, 0, 0, 0.34) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 13px 30px rgba(0, 0, 0, 0.42) !important;
 }
 
 .dark .category-carousel-arrow:hover {
   border-color: rgba(239, 68, 68, 0.34) !important;
-  background: #1f2937 !important;
+  background: #171717 !important;
 }
