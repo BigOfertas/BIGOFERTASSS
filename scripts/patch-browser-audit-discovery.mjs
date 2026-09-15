@@ -16,59 +16,62 @@ if (start < 0 || end < 0) {
 }
 
 const replacement = `async function discoverProductLinks(context) {
+  const sharedCatalogFile = process.env.AUDIT_PRODUCT_LINKS_FILE;
+  if (sharedCatalogFile) {
+    const raw = await fs.readFile(path.resolve(sharedCatalogFile), "utf8");
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      throw new Error(\`Shared product catalog is empty or invalid: \${sharedCatalogFile}\`);
+    }
+    const normalized = [...new Set(parsed.filter((href) => typeof href === "string" && href.startsWith("/product/")))].sort();
+    if (normalized.length === 0) {
+      throw new Error(\`Shared product catalog has no valid /product/ links: \${sharedCatalogFile}\`);
+    }
+    console.log(\`BROWSER_AUDIT_SHARED_CATALOG products=\${normalized.length}\`);
+    return normalized;
+  }
+
   const page = await context.newPage();
   const links = new Set();
-  await page.goto(\`${"${BASE_URL}"}/products?pageSize=48\`, {
-    waitUntil: "domcontentloaded",
-    timeout: 45_000,
-  });
-  await settlePage(page);
+  let pageNumber = 1;
 
-  let previousFirstHref = null;
   for (let current = 1; current <= 100; current += 1) {
-    await Promise.race([
-      page.locator('a[href*="/product/"]').first().waitFor({ state: "attached", timeout: 25_000 }),
-      page.getByText(/Nenhum produto encontrado/i).first().waitFor({ state: "visible", timeout: 25_000 }),
-      page.getByText(/Erro ao carregar produtos/i).first().waitFor({ state: "visible", timeout: 25_000 }),
-    ]).catch(() => {});
-    await sleep(500);
-
-    const found = await page.locator('a[href*="/product/"]').evaluateAll((anchors) =>
-      anchors.flatMap((anchor) => {
-        const href = anchor.href || anchor.getAttribute("href");
-        if (!href || !href.includes("/product/")) return [];
-        try {
-          return [new URL(href, window.location.origin).pathname];
-        } catch {
-          return [];
-        }
-      }),
-    );
-
-    if (current === 1 && found.length === 0) {
-      const bodyText = (await page.locator("body").innerText()).slice(0, 2500);
-      throw new Error(\`Product discovery returned zero links on the first catalog page. Body: \${bodyText}\`);
+    let found = [];
+    for (let attempt = 1; attempt <= 5; attempt += 1) {
+      await page.goto(\`${"${BASE_URL}"}/products?pageSize=48&page=\${pageNumber}\`, {
+        waitUntil: "domcontentloaded",
+        timeout: 45_000,
+      });
+      await settlePage(page);
+      found = await page.locator('a[href*="/product/"]').evaluateAll((anchors) =>
+        anchors.flatMap((anchor) => {
+          const href = anchor.href || anchor.getAttribute("href");
+          if (!href || !href.includes("/product/")) return [];
+          try {
+            return [new URL(href, window.location.origin).pathname];
+          } catch {
+            return [];
+          }
+        }),
+      );
+      if (found.length > 0) break;
+      await sleep(1200 * attempt);
     }
+
+    if (found.length === 0) {
+      const bodyText = (await page.locator("body").innerText()).slice(0, 2500);
+      await page.close();
+      throw new Error(\`Product discovery failed on catalog page \${pageNumber}. Body: \${bodyText}\`);
+    }
+
+    const before = links.size;
     for (const href of found) links.add(href.split("?")[0]);
+    console.log(\`BROWSER_AUDIT_DISCOVERY page=\${pageNumber} pageLinks=\${found.length} unique=\${links.size}\`);
 
     const next = page.getByRole("button", { name: /Próxima página/i }).first();
     if ((await next.count()) === 0 || (await next.isDisabled())) break;
-
-    const currentFirstHref = found[0] ?? null;
-    await next.click();
-    await page
-      .waitForFunction(
-        (oldHref) => {
-          const first = document.querySelector('a[href*="/product/"]');
-          const href = first?.getAttribute("href") ?? null;
-          return href && href !== oldHref;
-        },
-        currentFirstHref ?? previousFirstHref,
-        { timeout: 25_000 },
-      )
-      .catch(() => {});
-    previousFirstHref = currentFirstHref;
-    await sleep(550);
+    if (links.size === before) break;
+    pageNumber += 1;
   }
 
   await page.close();
