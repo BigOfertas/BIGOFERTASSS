@@ -38,6 +38,8 @@ for (const route of visualRoutes) {
 const theme = read("src/stage6-theme.css");
 const legacyGlass = read("src/glass-legacy.css");
 const auth = read("src/auth.css");
+const brand = read("src/brand.css");
+const brandWordmark = read("src/components/brand/BrandWordmark.tsx");
 const cart = read("src/routes/cart.tsx");
 const checkout = read("src/routes/checkout.tsx");
 const institutional = read("src/components/content/InstitutionalPage.tsx");
@@ -66,6 +68,24 @@ const requiredThemeTokens = [
 
 for (const token of requiredThemeTokens) {
   if (!theme.includes(token)) fail(`missing global dark compatibility rule: ${token}`);
+}
+
+for (const token of [
+  ".dark .glass-header .brand-lockup",
+  "background: transparent !important",
+  ".dark .dropbox-wordmark--light",
+  ".dark .dropbox-wordmark--dark",
+  ".dark .dropbox-wordmark-fallback",
+]) {
+  if (!brand.includes(token)) fail(`missing dark brand compatibility rule: ${token}`);
+}
+
+for (const token of [
+  'DROPBOX_WORDMARK_DARK_SRC = "/assets/branding/dropbox-wordmark-footer.png"',
+  "dropbox-wordmark--light",
+  "dropbox-wordmark--dark",
+]) {
+  if (!brandWordmark.includes(token)) fail(`missing theme-aware header wordmark: ${token}`);
 }
 
 if (!legacyGlass.includes("background:\n    linear-gradient(")) {
@@ -110,6 +130,6 @@ if (routeHazards < 10) {
 
 if (!process.exitCode) {
   console.log(
-    `DARK_MODE_COVERAGE_OK routes=${visualRoutes.length} hazards=${routeHazards} cart=ok checkout=ok auth=ok account=ok admin=ok institutional=ok storefront=ok overlays=ok charts=ok mobile=ok`,
+    `DARK_MODE_COVERAGE_OK routes=${visualRoutes.length} hazards=${routeHazards} cart=ok checkout=ok auth=ok account=ok admin=ok institutional=ok storefront=ok overlays=ok charts=ok mobile=ok brand=ok`,
   );
 }

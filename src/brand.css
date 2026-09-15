@@ -9,13 +9,42 @@
   box-shadow: none !important;
 }
 
+/*
+ * The header wordmark is intentionally a bare mark in both themes.
+ * Keep this rule more specific than the generic dark header-action surface so
+ * the logo never receives a card/background/border in dark mode.
+ */
+.dark .glass-header .brand-lockup,
+.dark .brand-lockup {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
 .dropbox-wordmark {
-  display: block;
   width: 100%;
   height: auto;
   object-fit: contain;
   filter: none !important;
   text-shadow: none !important;
+}
+
+.dropbox-wordmark--light {
+  display: block;
+}
+
+.dropbox-wordmark--dark {
+  display: none;
+}
+
+.dark .dropbox-wordmark--light {
+  display: none;
+}
+
+.dark .dropbox-wordmark--dark {
+  display: block;
 }
 
 .dropbox-wordmark-fallback {
@@ -34,6 +63,10 @@
   text-transform: none;
   text-shadow: none;
   transform: skewX(-5deg);
+}
+
+.dark .dropbox-wordmark-fallback {
+  color: #ffffff;
 }
 
 .dropbox-wordmark-fallback strong {

@@ -3,7 +3,8 @@ import { useState } from "react";
 import { BRAND } from "@/config/brand";
 import "@/brand.css";
 
-const DROPBOX_WORDMARK_SRC = "/assets/branding/dropbox-wordmark-header-v2.png";
+const DROPBOX_WORDMARK_LIGHT_SRC = "/assets/branding/dropbox-wordmark-header-v2.png";
+const DROPBOX_WORDMARK_DARK_SRC = "/assets/branding/dropbox-wordmark-footer.png";
 
 export function BrandWordmark({ className = "" }: { className?: string }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -22,14 +23,25 @@ export function BrandWordmark({ className = "" }: { className?: string }) {
   }
 
   return (
-    <img
-      src={DROPBOX_WORDMARK_SRC}
-      alt={BRAND.officialName}
-      width={440}
-      height={76}
-      decoding="async"
-      onError={() => setImageFailed(true)}
-      className={`dropbox-wordmark ${className}`}
-    />
+    <>
+      <img
+        src={DROPBOX_WORDMARK_LIGHT_SRC}
+        alt={BRAND.officialName}
+        width={440}
+        height={76}
+        decoding="async"
+        onError={() => setImageFailed(true)}
+        className={`dropbox-wordmark dropbox-wordmark--light ${className}`}
+      />
+      <img
+        src={DROPBOX_WORDMARK_DARK_SRC}
+        alt={BRAND.officialName}
+        width={440}
+        height={76}
+        decoding="async"
+        onError={() => setImageFailed(true)}
+        className={`dropbox-wordmark dropbox-wordmark--dark ${className}`}
+      />
+    </>
   );
 }
