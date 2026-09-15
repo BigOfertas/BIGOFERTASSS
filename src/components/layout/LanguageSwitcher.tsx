@@ -1,9 +1,18 @@
+import { useEffect } from "react";
 import { Languages } from "lucide-react";
 
 import { LOCALE_META, SUPPORTED_LOCALES, type Locale, useI18n } from "@/i18n";
 
 export function LanguageSwitcher({ mobile = false }: { mobile?: boolean }) {
   const { locale, setLocale, translateText } = useI18n();
+
+  useEffect(() => {
+    // The header already renders every customer-facing label from React using the
+    // active locale. Keep the global DOM translation fallback away from this
+    // React-owned subtree so it cannot preserve or restore text from the
+    // previously selected language after a locale change.
+    document.querySelector<HTMLElement>(".glass-header")?.setAttribute("data-no-i18n", "true");
+  }, []);
 
   return (
     <label
