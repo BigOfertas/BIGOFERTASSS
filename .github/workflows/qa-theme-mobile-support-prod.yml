@@ -1,0 +1,36 @@
+name: QA Theme Mobile Support Production
+
+on:
+  push:
+    branches:
+      - qa-theme-mobile-support-prod-20260915
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout QA branch
+        uses: actions/checkout@v7
+        with:
+          ref: qa-theme-mobile-support-prod-20260915
+
+      - name: Install Playwright
+        run: npm install --no-save playwright
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify production controls and support contact
+        run: node scripts/qa-theme-mobile-support-prod.mjs
+
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-theme-mobile-support-prod
+          path: qa-theme-mobile-support-prod/
+          if-no-files-found: error
+          retention-days: 3
