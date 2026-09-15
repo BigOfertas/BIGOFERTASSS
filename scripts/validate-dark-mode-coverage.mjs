@@ -168,6 +168,12 @@ const customCssFiles = [
   "src/header.css",
   "src/sport-theme.css",
 ];
+const intentionalDarkContextClasses = new Set([
+  "auth-showcase-dot",
+  "auth-showcase-progress",
+  "auth-showcase-vignette",
+  "auth-mobile-showcase-vignette",
+]);
 const lightBackgroundPattern =
   /background(?:-color)?\s*:\s*[^;}]*(?:#f[4-9a-f][0-9a-f]{4}|#fff(?:fff)?\b|rgba\(\s*255\s*,\s*255\s*,\s*255\s*,\s*(?:0\.[5-9][0-9]*|1(?:\.0+)?)\s*\))/i;
 const coveredCustomClasses = new Set();
@@ -188,7 +194,7 @@ for (const cssFile of customCssFiles) {
     );
 
     for (const className of classNames) {
-      if (className.startsWith("dark")) continue;
+      if (className.startsWith("dark") || intentionalDarkContextClasses.has(className)) continue;
       const darkSelectorPattern = new RegExp(
         `\\.dark[^\\{]*\\.${escapeRegExp(className)}(?:[\\s\\.:#\\[,>+~]|$)`,
         "m",
