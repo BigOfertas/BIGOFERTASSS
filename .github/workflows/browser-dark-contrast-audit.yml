@@ -1,0 +1,98 @@
+name: Browser Dark Contrast Audit
+
+on:
+  push:
+    branches:
+      - browser-dark-contrast-audit-20260915
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-dark-contrast-audit
+  cancel-in-progress: true
+
+jobs:
+  routes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        viewport: [desktop, mobile]
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install app dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install browser audit dependencies
+        run: npm install --no-save playwright axe-core
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Audit every route and card state in real Chromium
+        env:
+          AUDIT_MODE: routes
+          AUDIT_VIEWPORT: ${{ matrix.viewport }}
+        run: node scripts/browser-dark-contrast-audit.mjs
+
+      - name: Upload route browser report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-dark-routes-${{ matrix.viewport }}
+          path: browser-audit/
+          if-no-files-found: error
+          retention-days: 3
+
+  products:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        viewport: [desktop, mobile]
+        shard: [0, 1, 2, 3]
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install app dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install browser audit dependencies
+        run: npm install --no-save playwright axe-core
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Audit every product page in real Chromium
+        env:
+          AUDIT_MODE: products
+          AUDIT_VIEWPORT: ${{ matrix.viewport }}
+          AUDIT_SHARD_INDEX: ${{ matrix.shard }}
+          AUDIT_SHARD_TOTAL: 4
+        run: node scripts/browser-dark-contrast-audit.mjs
+
+      - name: Upload product browser report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-dark-products-${{ matrix.viewport }}-${{ matrix.shard }}
+          path: browser-audit/
+          if-no-files-found: error
+          retention-days: 3
