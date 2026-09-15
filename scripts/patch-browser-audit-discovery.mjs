@@ -16,11 +16,11 @@ const oldBlock = `    await page.goto(url, { waitUntil: "domcontentloaded", time
     if (emptyPages >= 2) break;`;
 const newBlock = `    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45_000 });
     await settlePage(page);
-    await page
-      .waitForSelector('a[href*="/product/"], [data-product-card], text=/Nenhum produto encontrado/i', {
-        timeout: 20_000,
-      })
-      .catch(() => {});
+    await Promise.race([
+      page.locator('a[href*="/product/"]').first().waitFor({ state: "attached", timeout: 20_000 }),
+      page.getByText(/Nenhum produto encontrado/i).first().waitFor({ state: "visible", timeout: 20_000 }),
+      page.getByText(/Erro ao carregar produtos/i).first().waitFor({ state: "visible", timeout: 20_000 }),
+    ]).catch(() => {});
     await sleep(550);
     const found = await page.locator('a[href*="/product/"]').evaluateAll((anchors) =>
       anchors.flatMap((anchor) => {
@@ -34,7 +34,8 @@ const newBlock = `    await page.goto(url, { waitUntil: "domcontentloaded", time
       }),
     );
     if (current === 1 && found.length === 0) {
-      throw new Error("Product discovery returned zero links on the first catalog page");
+      const bodyText = (await page.locator("body").innerText()).slice(0, 2000);
+      throw new Error(\`Product discovery returned zero links on the first catalog page. Body: \${bodyText}\`);
     }
     const before = links.size;
     for (const href of found) links.add(href.split("?")[0]);
