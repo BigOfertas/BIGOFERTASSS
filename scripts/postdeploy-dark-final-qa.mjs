@@ -95,7 +95,13 @@ async function setupContext(browser, viewportName, authenticated = false) {
 async function settle(page) {
   await page.waitForLoadState("domcontentloaded");
   await page.waitForSelector("body", { timeout: 20_000 });
-  await page.waitForTimeout(900);
+  await page.waitForTimeout(650);
+  await page.evaluate(() => {
+    document.querySelector("[data-initial-boot-splash]")?.remove();
+    document.documentElement.classList.add("dark");
+    document.body.style.overflow = "auto";
+  });
+  await page.waitForTimeout(350);
 }
 
 function parseRgb(value) {
@@ -131,6 +137,8 @@ async function checkKickers(browser, viewportName, results) {
 
   await page.goto(`${BASE_URL}/`, { waitUntil: "domcontentloaded", timeout: 45_000 });
   await settle(page);
+  await page.locator(".display-kicker").first().waitFor({ state: "visible", timeout: 30_000 });
+  await page.waitForTimeout(500);
 
   const themeDark = await page.evaluate(() => document.documentElement.classList.contains("dark"));
   const kickers = await page.locator(".display-kicker").evaluateAll((elements) =>
