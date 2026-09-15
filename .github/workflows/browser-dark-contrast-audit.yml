@@ -14,7 +14,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  discover-products:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install app dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install browser audit dependencies
+        run: npm install --no-save playwright
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Discover the real catalog once in Chromium
+        run: node scripts/browser-discover-products.mjs
+
+      - name: Upload shared product catalog
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-dark-product-catalog
+          path: browser-audit-discovery/
+          if-no-files-found: error
+          retention-days: 3
+
   routes:
+    needs: discover-products
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -25,7 +58,13 @@ jobs:
       - name: Checkout audit branch
         uses: actions/checkout@v7
 
-      - name: Patch product discovery for live async catalog
+      - name: Download shared product catalog
+        uses: actions/download-artifact@v4
+        with:
+          name: browser-dark-product-catalog
+          path: browser-audit-discovery
+
+      - name: Patch audit to reuse shared catalog
         run: node scripts/patch-browser-audit-discovery.mjs
 
       - name: Setup Bun
@@ -46,6 +85,7 @@ jobs:
         env:
           AUDIT_MODE: routes
           AUDIT_VIEWPORT: ${{ matrix.viewport }}
+          AUDIT_PRODUCT_LINKS_FILE: browser-audit-discovery/product-links.json
         run: node scripts/browser-dark-contrast-audit.mjs
 
       - name: Upload route browser report and screenshots
@@ -58,6 +98,7 @@ jobs:
           retention-days: 3
 
   products:
+    needs: discover-products
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
@@ -69,7 +110,13 @@ jobs:
       - name: Checkout audit branch
         uses: actions/checkout@v7
 
-      - name: Patch product discovery for live async catalog
+      - name: Download shared product catalog
+        uses: actions/download-artifact@v4
+        with:
+          name: browser-dark-product-catalog
+          path: browser-audit-discovery
+
+      - name: Patch audit to reuse shared catalog
         run: node scripts/patch-browser-audit-discovery.mjs
 
       - name: Setup Bun
@@ -92,6 +139,7 @@ jobs:
           AUDIT_VIEWPORT: ${{ matrix.viewport }}
           AUDIT_SHARD_INDEX: ${{ matrix.shard }}
           AUDIT_SHARD_TOTAL: 4
+          AUDIT_PRODUCT_LINKS_FILE: browser-audit-discovery/product-links.json
         run: node scripts/browser-dark-contrast-audit.mjs
 
       - name: Upload product browser report and screenshots
