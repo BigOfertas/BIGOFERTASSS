@@ -82,6 +82,14 @@
   color: #ef4444 !important;
 }
 
+/* Small editorial kickers use the brand red at ~11.5px; the light-mode red
+ * only reaches 3.99:1 on #090909. Keep the same visual identity with the
+ * accessible dark-mode red already used for text-red-600 (5.29:1 on #090909).
+ */
+.dark .display-kicker {
+  color: #ef4444 !important;
+}
+
 .dark .text-gray-600,
 .dark .text-gray-500,
 .dark .text-slate-600,
