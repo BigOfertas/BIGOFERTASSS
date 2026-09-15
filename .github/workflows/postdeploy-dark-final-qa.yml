@@ -1,0 +1,44 @@
+name: Postdeploy Dark Final QA
+
+on:
+  push:
+    branches:
+      - qa-dark-postdeploy-final-20260915
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: postdeploy-dark-final-qa
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout QA branch
+        uses: actions/checkout@v7
+        with:
+          ref: qa-dark-postdeploy-final-20260915
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install app dependencies
+        run: bun install --frozen-lockfile
+      - name: Install Playwright
+        run: npm install --no-save playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run final production dark-mode checks
+        run: node scripts/postdeploy-dark-final-qa.mjs
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postdeploy-dark-final-qa
+          path: postdeploy-dark-qa/
+          if-no-files-found: error
+          retention-days: 3
