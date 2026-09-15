@@ -96,7 +96,9 @@ for (const token of [
   'import stage6DarkRouteFixesCss from "../stage6-dark-route-fixes.css?url"',
   '{ rel: "stylesheet", href: stage6DarkRouteFixesCss }',
 ]) {
-  if (!rootRoute.includes(token)) fail(`route-specific dark stylesheet is not loaded last: ${token}`);
+  if (!rootRoute.includes(token)) {
+    fail(`route-specific dark stylesheet is not loaded last: ${token}`);
+  }
 }
 
 for (const token of [
@@ -125,12 +127,7 @@ for (const token of ["bg-[#f7f7f7]", "bg-white", "bg-gray-50", "bg-emerald-50"])
   }
 }
 
-for (const token of [
-  "auth-split-page",
-  "auth-form-card",
-  "auth-input-wrap",
-  "auth-side-panel",
-]) {
+for (const token of ["auth-split-page", "auth-form-card", "auth-input-wrap", "auth-side-panel"]) {
   if (!auth.includes(token)) fail(`auth dark-mode surface missing from source audit: ${token}`);
 }
 
