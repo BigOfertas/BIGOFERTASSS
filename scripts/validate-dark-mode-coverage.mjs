@@ -35,6 +35,7 @@ for (const route of visualRoutes) {
 }
 
 const theme = read("src/stage6-theme.css");
+const blackTheme = read("src/stage6-black-theme.css");
 const routeFixes = read("src/stage6-dark-route-fixes.css");
 const legacyGlass = read("src/glass-legacy.css");
 const auth = read("src/auth.css");
@@ -46,7 +47,7 @@ const accountOverview = read("src/components/account/AccountOverview.tsx");
 const cart = read("src/routes/cart.tsx");
 const checkout = read("src/routes/checkout.tsx");
 const institutional = read("src/components/content/InstitutionalPage.tsx");
-const combinedDarkStyles = [theme, routeFixes, brand].join("\n");
+const combinedDarkStyles = [theme, blackTheme, routeFixes, brand].join("\n");
 
 const requiredThemeTokens = [
   ".dark .bg-white",
@@ -72,6 +73,50 @@ const requiredThemeTokens = [
 
 for (const token of requiredThemeTokens) {
   if (!theme.includes(token)) fail(`missing global dark compatibility rule: ${token}`);
+}
+
+const requiredBlackThemeTokens = [
+  "--background: #000000;",
+  "--stage6-dark-bg: #000000;",
+  "--stage6-dark-surface: #090909;",
+  "background: #000000 !important;",
+  ".dark .glass-header",
+  ".dark .liquid-glass-card",
+  ".dark .account-action-card",
+  ".dark [data-product-card]",
+  ".dark .auth-form-card",
+  ".dark .recharts-default-tooltip",
+  "linear-gradient(180deg, #000000 0%, #030303 52%, #000000 100%)",
+];
+
+for (const token of requiredBlackThemeTokens) {
+  if (!blackTheme.includes(token)) fail(`missing final black dark-mode rule: ${token}`);
+}
+
+if (!routeFixes.startsWith('@import "./stage6-black-theme.css";')) {
+  fail("final black dark-mode stylesheet is not imported before route-specific overrides");
+}
+
+const forbiddenBlackThemeTints = [
+  "#090d15",
+  "#111827",
+  "#182235",
+  "#1f2937",
+  "#263244",
+  "#0d1420",
+  "#0f1724",
+  "#1d2a40",
+  "#151f30",
+  "#1b2940",
+  "#1a2538",
+  "#202b3e",
+  "#162034",
+];
+
+for (const color of forbiddenBlackThemeTints) {
+  if (blackTheme.toLowerCase().includes(color)) {
+    fail(`final black dark-mode stylesheet reintroduced navy tint: ${color}`);
+  }
 }
 
 for (const token of [
@@ -219,6 +264,6 @@ if (!sportTheme.includes(".account-action-card") || !sportTheme.includes(".accou
 
 if (!process.exitCode) {
   console.log(
-    `DARK_MODE_COVERAGE_OK routes=${visualRoutes.length} components=${visualComponents.length} route_hazards=${routeHazards} component_hazards=${componentHazards} custom_light_classes=${coveredCustomClasses.size} cart=ok checkout=ok auth=ok account=ok admin=ok institutional=ok storefront=ok overlays=ok charts=ok mobile=ok brand=ok`,
+    `DARK_MODE_COVERAGE_OK palette=black routes=${visualRoutes.length} components=${visualComponents.length} route_hazards=${routeHazards} component_hazards=${componentHazards} custom_light_classes=${coveredCustomClasses.size} cart=ok checkout=ok auth=ok account=ok admin=ok institutional=ok storefront=ok overlays=ok charts=ok mobile=ok brand=ok`,
   );
 }
