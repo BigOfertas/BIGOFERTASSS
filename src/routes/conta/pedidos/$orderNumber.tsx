@@ -159,7 +159,7 @@ function CustomerOrderDetailPage() {
   if (!user) return null;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f6f6f6]">
+    <div className="flex min-h-screen flex-col bg-[#f6f6f6] dark:bg-black">
       <Header />
       <main className="flex-1 px-4 py-6 sm:px-6 sm:py-9 lg:px-8">
         <div className="mx-auto max-w-7xl">
