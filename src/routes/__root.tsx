@@ -15,6 +15,7 @@ import appCss from "../styles.css?url";
 import glassLegacyCss from "../glass-legacy.css?url";
 import sportThemeCss from "../sport-theme.css?url";
 import stage6ThemeCss from "../stage6-theme.css?url";
+import stage6DarkRouteFixesCss from "../stage6-dark-route-fixes.css?url";
 import { AuthProvider } from "../lib/auth";
 import Footer from "../components/layout/Footer";
 import { CartProvider } from "../context/CartContext";
@@ -155,6 +156,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: glassLegacyCss },
       { rel: "stylesheet", href: sportThemeCss },
       { rel: "stylesheet", href: stage6ThemeCss },
+      { rel: "stylesheet", href: stage6DarkRouteFixesCss },
       { rel: "icon", href: DROPBOX_FAVICON, type: "image/png", sizes: "64x64" },
       { rel: "shortcut icon", href: DROPBOX_FAVICON, type: "image/png", sizes: "64x64" },
       { rel: "apple-touch-icon", href: DROPBOX_TOUCH_ICON, sizes: "180x180" },
