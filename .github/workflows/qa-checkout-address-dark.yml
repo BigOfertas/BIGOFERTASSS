@@ -1,0 +1,38 @@
+name: QA Checkout Address Dark
+
+on:
+  push:
+    branches:
+      - qa-checkout-address-dark-20260915
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qa-checkout-address-dark
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout QA branch
+        uses: actions/checkout@v7
+        with:
+          ref: qa-checkout-address-dark-20260915
+      - name: Install Playwright
+        run: npm install --no-save playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Verify selected address card in production
+        run: node scripts/qa-checkout-address-dark.mjs
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-checkout-address-dark
+          path: qa-checkout-address-dark/
+          if-no-files-found: error
+          retention-days: 3
