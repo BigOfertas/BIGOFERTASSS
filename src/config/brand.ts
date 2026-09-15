@@ -15,11 +15,11 @@ const contactEmail = readPublicBrandValue(
 );
 const whatsappDisplay = readPublicBrandValue(
   import.meta.env.VITE_BRAND_WHATSAPP_DISPLAY,
-  "+55 (84) 9 8134-7939",
+  "+55 84 8134-7639",
 );
 const whatsappUrl = readPublicBrandValue(
   import.meta.env.VITE_BRAND_WHATSAPP_URL,
-  "https://wa.me/5584981347939",
+  "https://wa.me/558481347639",
 );
 
 const compactName = officialName.replace(/[^\p{L}\p{N}]/gu, "");

@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 
 const read = (file) => fs.readFileSync(file, "utf8");
 let passed = 0;
@@ -12,6 +13,37 @@ function check(label, condition) {
     failed += 1;
     console.error(`FAIL - ${label}`);
   }
+}
+
+function collectTextFiles(directory) {
+  if (!fs.existsSync(directory)) return [];
+  const supportedExtensions = new Set([
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".json",
+    ".md",
+    ".html",
+    ".css",
+    ".svg",
+    ".txt",
+    ".env",
+  ]);
+  const result = [];
+  const visit = (current) => {
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const target = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        visit(target);
+      } else if (supportedExtensions.has(path.extname(entry.name).toLowerCase())) {
+        result.push(target);
+      }
+    }
+  };
+  visit(directory);
+  return result;
 }
 
 const env = read(".env");
@@ -123,6 +155,28 @@ check(
     privacy.includes("href={`mailto:${BRAND.contactEmail}`}") &&
     footer.includes("href={`mailto:${BRAND.contactEmail}`}"),
 );
+
+const publicContactFiles = [
+  ...collectTextFiles("src"),
+  ...collectTextFiles("public"),
+  ...collectTextFiles("supabase/functions"),
+];
+const staleSupportNumber = /8134-7939|81347939|5584981347939/;
+const staleSupportNumberFiles = publicContactFiles.filter((file) =>
+  staleSupportNumber.test(read(file)),
+);
+check(
+  "WhatsApp oficial de suporte foi atualizado em todas as superfícies públicas",
+  env.includes('VITE_BRAND_WHATSAPP_DISPLAY="+55 84 8134-7639"') &&
+    env.includes('VITE_BRAND_WHATSAPP_URL="https://wa.me/558481347639"') &&
+    brand.includes('"+55 84 8134-7639"') &&
+    brand.includes('"https://wa.me/558481347639"') &&
+    staleSupportNumberFiles.length === 0,
+);
+
+if (staleSupportNumberFiles.length > 0) {
+  console.error(`Contato antigo ainda presente em: ${staleSupportNumberFiles.join(", ")}`);
+}
 
 check(
   "favicon público usa PNG DropBox novo e versionado",
