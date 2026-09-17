@@ -1,0 +1,203 @@
+name: QA Brazilian Team Crests Browser
+
+on:
+  push:
+    branches:
+      - qa-brazilian-individual-crests-20260917
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    env:
+      VITE_TURNSTILE_SITE_KEY: ${{ secrets.VITE_TURNSTILE_SITE_KEY }}
+    steps:
+      - name: Checkout QA branch
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate crest contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(grep -Eo 'enabled: true' src/components/home/BrazilianTeams.tsx | wc -l)" -eq 11
+          grep -Fq 'const MINIMUM_TEAM_SLOTS = 30' src/components/home/BrazilianTeams.tsx
+          grep -Fq 'data-enabled-team-count={teams.length}' src/components/home/BrazilianTeams.tsx
+          grep -Fq 'data-team-slot-count={TOTAL_TEAM_SLOTS}' src/components/home/BrazilianTeams.tsx
+          grep -Fq 'object-contain' src/components/home/BrazilianTeams.tsx
+          if grep -Fq 'brasileirao-sprite' src/components/home/BrazilianTeams.tsx; then
+            echo "Legacy sprite dependency remains." >&2
+            exit 1
+          fi
+          for asset in flamengo.webp atletico-mineiro.webp cruzeiro.webp saopaulo.webp corinthians.webp palmeiras.webp santos.webp botafogo.webp fluminense.webp gremio.png internacional.webp; do
+            test -s "public/assets/teams/$asset"
+          done
+          echo "CREST_CONTRACT_OK"
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Build Hostinger artifact
+        run: bun run build:hostinger
+
+      - name: Locate static output
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUTPUT=""
+          for candidate in .output/public dist/client dist/public dist; do
+            if [ -f "$candidate/index.html" ]; then OUTPUT="$candidate"; break; fi
+          done
+          test -n "$OUTPUT"
+          echo "HOSTINGER_OUTPUT=$OUTPUT" >> "$GITHUB_ENV"
+
+      - name: Install Playwright Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start local production preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory "$HOSTINGER_OUTPUT" >/tmp/crest-preview.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl --fail --silent http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/crest-preview.log || true
+          exit 1
+
+      - name: Chromium desktop and mobile light/dark QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa-artifacts
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+
+          const teams = [
+            ['flamengo', '/assets/teams/flamengo.webp'],
+            ['atletico-mineiro', '/assets/teams/atletico-mineiro.webp'],
+            ['cruzeiro', '/assets/teams/cruzeiro.webp'],
+            ['sao-paulo', '/assets/teams/saopaulo.webp'],
+            ['corinthians', '/assets/teams/corinthians.webp'],
+            ['palmeiras', '/assets/teams/palmeiras.webp'],
+            ['santos', '/assets/teams/santos.webp'],
+            ['botafogo', '/assets/teams/botafogo.webp'],
+            ['fluminense', '/assets/teams/fluminense.webp'],
+            ['gremio', '/assets/teams/gremio.png'],
+            ['internacional', '/assets/teams/internacional.webp'],
+          ];
+
+          const browser = await chromium.launch({ headless: true });
+          const summaries = [];
+
+          async function scenario(label, viewport, theme) {
+            const context = await browser.newContext({ viewport, colorScheme: theme });
+            const page = await context.newPage();
+            const failedAssets = [];
+            page.on('response', (response) => {
+              if (response.url().includes('/assets/teams/') && !response.ok()) {
+                failedAssets.push(`${response.status()} ${response.url()}`);
+              }
+            });
+            await page.addInitScript((value) => localStorage.setItem('theme', value), theme);
+            await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.waitForTimeout(3200);
+
+            const heading = page.getByText('Encontre seu time', { exact: true });
+            await heading.waitFor({ state: 'visible', timeout: 30000 });
+            await heading.scrollIntoViewIfNeeded();
+            await page.waitForTimeout(700);
+
+            const wrapper = page.locator('[data-team-slot-count="30"][data-enabled-team-count="11"]');
+            if (await wrapper.count() !== 1) throw new Error(`${label}: storefront contract wrapper missing`);
+            if (await page.locator('[data-team-card]').count() !== 11) throw new Error(`${label}: visible card count is not 11`);
+            if (await page.locator('[data-team-slot]').count() !== 11) throw new Error(`${label}: reserved slots leaked into UI`);
+
+            for (const [id, src] of teams) {
+              const link = page.locator(`[data-team-link="${id}"]`);
+              if (await link.count() !== 1) throw new Error(`${label}: missing link ${id}`);
+              const href = await link.getAttribute('href');
+              if (!href?.includes('/products') || !href.includes(`time=${id}`)) throw new Error(`${label}: invalid href ${id}: ${href}`);
+              if ((await link.locator('img').getAttribute('src')) !== src) throw new Error(`${label}: wrong src for ${id}`);
+            }
+
+            await page.waitForFunction(() => {
+              const images = [...document.querySelectorAll('[data-team-card] img')];
+              return images.length === 11 && images.every((img) => img.complete && img.naturalWidth > 0 && img.naturalHeight > 0);
+            }, null, { timeout: 30000 });
+            if (failedAssets.length) throw new Error(`${label}: failed crest requests: ${failedAssets.join('; ')}`);
+
+            const rootClass = await page.evaluate(() => document.documentElement.className);
+            if (theme === 'dark' && !rootClass.split(/\s+/).includes('dark')) throw new Error(`${label}: dark class missing`);
+            if (theme === 'light' && rootClass.split(/\s+/).includes('dark')) throw new Error(`${label}: unexpected dark class`);
+
+            const metrics = await page.locator('[data-team-card]').evaluateAll((nodes) => nodes.map((node) => {
+              const outer = getComputedStyle(node);
+              const inner = getComputedStyle(node.firstElementChild);
+              const image = node.querySelector('img');
+              const rect = node.getBoundingClientRect();
+              return {
+                id: node.getAttribute('data-team-card'),
+                width: rect.width,
+                height: rect.height,
+                outerBackground: outer.backgroundColor,
+                innerBackground: inner.backgroundColor,
+                imageWidth: image?.naturalWidth ?? 0,
+                imageHeight: image?.naturalHeight ?? 0,
+              };
+            }));
+            if (metrics.some((item) => item.width < 100 || item.height < 100 || item.imageWidth <= 0 || item.imageHeight <= 0)) {
+              throw new Error(`${label}: invalid card/image metrics`);
+            }
+
+            const scroller = wrapper.locator('[aria-label="Times do futebol brasileiro"]');
+            const before = await scroller.evaluate((node) => ({ left: node.scrollLeft, max: Math.max(0, node.scrollWidth - node.clientWidth), scrollWidth: node.scrollWidth, clientWidth: node.clientWidth }));
+            await wrapper.screenshot({ path: `qa-artifacts/${label}-start.png` });
+            if (before.max > 4) {
+              await scroller.evaluate((node) => node.scrollTo({ left: node.scrollWidth, behavior: 'auto' }));
+              await page.waitForTimeout(250);
+              const after = await scroller.evaluate((node) => node.scrollLeft);
+              if (after <= before.left + 4) throw new Error(`${label}: carousel did not scroll`);
+              await wrapper.screenshot({ path: `qa-artifacts/${label}-end.png` });
+            }
+
+            const overflow = await page.evaluate(() => ({ body: document.body.scrollWidth, viewport: window.innerWidth }));
+            if (overflow.body > overflow.viewport + 2) throw new Error(`${label}: page-level horizontal overflow ${overflow.body}/${overflow.viewport}`);
+
+            summaries.push({ label, viewport, theme, rootClass, before, overflow, metrics });
+            console.log(`BROWSER_SCENARIO_OK ${label} cards=11 maxScroll=${before.max}`);
+            await context.close();
+          }
+
+          await scenario('desktop-light', { width: 1440, height: 1200 }, 'light');
+          await scenario('desktop-dark', { width: 1440, height: 1200 }, 'dark');
+          await scenario('mobile-light', { width: 390, height: 844 }, 'light');
+          await scenario('mobile-dark', { width: 390, height: 844 }, 'dark');
+          fs.writeFileSync('qa-artifacts/summary.json', JSON.stringify(summaries, null, 2));
+          await browser.close();
+          console.log('BRAZILIAN_TEAM_BROWSER_QA_OK scenarios=4 visible=11 reserved_visible=0');
+          NODE
+
+      - name: Upload browser QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brazilian-team-browser-qa
+          path: qa-artifacts
+          if-no-files-found: warn
+          retention-days: 7
