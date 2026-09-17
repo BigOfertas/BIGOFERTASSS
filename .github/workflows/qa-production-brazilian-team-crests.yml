@@ -1,0 +1,163 @@
+name: QA Production Brazilian Team Crests
+
+on:
+  push:
+    branches:
+      - qa-brazilian-crests-production-20260917
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Playwright Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Validate production in Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa-production
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+
+          const baseUrl = 'https://bigofertas.net/';
+          const expected = [
+            ['flamengo','/assets/teams/flamengo.webp'],
+            ['atletico-mineiro','/assets/teams/atletico-mineiro.webp'],
+            ['cruzeiro','/assets/teams/cruzeiro.webp'],
+            ['sao-paulo','/assets/teams/saopaulo.webp'],
+            ['corinthians','/assets/teams/corinthians.webp'],
+            ['palmeiras','/assets/teams/palmeiras.webp'],
+            ['santos','/assets/teams/santos.webp'],
+            ['botafogo','/assets/teams/botafogo.webp'],
+            ['fluminense','/assets/teams/fluminense.webp'],
+            ['gremio','/assets/teams/gremio.png'],
+            ['internacional','/assets/teams/internacional.webp'],
+          ];
+
+          const browser = await chromium.launch({ headless: true });
+          const summary = [];
+
+          for (const [label, viewport, theme] of [
+            ['desktop-light',{width:1440,height:1200},'light'],
+            ['desktop-dark',{width:1440,height:1200},'dark'],
+            ['mobile-light',{width:390,height:844},'light'],
+            ['mobile-dark',{width:390,height:844},'dark'],
+          ]) {
+            const context = await browser.newContext({ viewport, colorScheme: theme });
+            const page = await context.newPage();
+            const failedAssets = [];
+            page.on('response', (response) => {
+              if (response.url().includes('/assets/teams/') && !response.ok()) {
+                failedAssets.push(`${response.status()} ${response.url()}`);
+              }
+            });
+            await page.addInitScript((value) => localStorage.setItem('dropbox-theme', value), theme);
+            const response = await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            if (!response || response.status() >= 400) throw new Error(`${label}: homepage HTTP ${response?.status()}`);
+            await page.waitForTimeout(3500);
+
+            const heading = page.getByText('Encontre seu time', { exact: true });
+            await heading.waitFor({ state: 'visible', timeout: 30000 });
+            await heading.scrollIntoViewIfNeeded();
+            await page.waitForTimeout(500);
+
+            const wrapper = page.locator('[data-team-slot-count="30"][data-enabled-team-count="11"]');
+            if (await wrapper.count() !== 1) throw new Error(`${label}: new production team-card contract not found`);
+            if (await page.locator('[data-team-card]').count() !== 11) throw new Error(`${label}: expected 11 visible crest cards`);
+            if (await page.locator('[data-team-slot]').count() !== 11) throw new Error(`${label}: reserved slots are visible`);
+
+            const scroller = wrapper.locator('[aria-label="Times do futebol brasileiro"]');
+            await scroller.evaluate((node) => node.scrollTo({ left: 0, behavior: 'auto' }));
+            await page.waitForTimeout(100);
+            await wrapper.screenshot({ path: `qa-production/${label}-start.png` });
+
+            for (const [id, src] of expected) {
+              const link = page.locator(`[data-team-link="${id}"]`);
+              if (await link.count() !== 1) throw new Error(`${label}: missing ${id}`);
+              const href = await link.getAttribute('href');
+              if (!href?.includes('/products') || !href.includes(`time=${id}`)) {
+                throw new Error(`${label}: invalid ${id} filter href: ${href}`);
+              }
+              const image = link.locator('img');
+              if ((await image.getAttribute('src')) !== src) throw new Error(`${label}: invalid ${id} image source`);
+              await link.scrollIntoViewIfNeeded();
+              await page.waitForTimeout(80);
+              await page.waitForFunction((selector) => {
+                const img = document.querySelector(selector);
+                return img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0 && img.naturalHeight > 0;
+              }, `[data-team-link="${id}"] img`, { timeout: 10000 });
+            }
+
+            if (failedAssets.length) throw new Error(`${label}: failed crest assets: ${failedAssets.join('; ')}`);
+
+            const rootClass = await page.evaluate(() => document.documentElement.className);
+            if (theme === 'dark' && !rootClass.split(/\s+/).includes('dark')) throw new Error(`${label}: dark theme not active`);
+            if (theme === 'light' && rootClass.split(/\s+/).includes('dark')) throw new Error(`${label}: unexpected dark theme`);
+
+            const metrics = await page.locator('[data-team-card]').evaluateAll((nodes) => nodes.map((node) => {
+              const rect = node.getBoundingClientRect();
+              const outer = getComputedStyle(node);
+              const inner = getComputedStyle(node.firstElementChild);
+              const image = node.querySelector('img');
+              return {
+                id: node.getAttribute('data-team-card'),
+                width: rect.width,
+                height: rect.height,
+                outerBackground: outer.backgroundColor,
+                innerBackground: inner.backgroundColor,
+                naturalWidth: image?.naturalWidth ?? 0,
+                naturalHeight: image?.naturalHeight ?? 0,
+              };
+            }));
+            if (metrics.some((item) => item.width < 100 || item.height < 100 || item.naturalWidth <= 0 || item.naturalHeight <= 0)) {
+              throw new Error(`${label}: invalid card/image metrics`);
+            }
+            if (theme === 'dark' && metrics.some((item) => item.innerBackground === 'rgb(255, 255, 255)')) {
+              throw new Error(`${label}: white inner crest backing in dark mode`);
+            }
+
+            await scroller.evaluate((node) => node.scrollTo({ left: 0, behavior: 'auto' }));
+            await page.waitForTimeout(100);
+            const before = await scroller.evaluate((node) => ({
+              left: node.scrollLeft,
+              max: Math.max(0, node.scrollWidth - node.clientWidth),
+              scrollWidth: node.scrollWidth,
+              clientWidth: node.clientWidth,
+            }));
+            if (before.max > 4) {
+              await scroller.evaluate((node) => node.scrollTo({ left: node.scrollWidth, behavior: 'auto' }));
+              await page.waitForTimeout(200);
+              const after = await scroller.evaluate((node) => node.scrollLeft);
+              if (after <= 4) throw new Error(`${label}: production carousel did not scroll`);
+              await wrapper.screenshot({ path: `qa-production/${label}-end.png` });
+            }
+
+            const overflow = await page.evaluate(() => ({ body: document.body.scrollWidth, viewport: innerWidth }));
+            if (overflow.body > overflow.viewport + 2) throw new Error(`${label}: page-level horizontal overflow ${overflow.body}/${overflow.viewport}`);
+
+            summary.push({ label, viewport, theme, rootClass, before, overflow, metrics });
+            console.log(`PRODUCTION_SCENARIO_OK ${label} crests=11 maxScroll=${before.max}`);
+            await context.close();
+          }
+
+          fs.writeFileSync('qa-production/summary.json', JSON.stringify(summary, null, 2));
+          await browser.close();
+          console.log('PRODUCTION_BRAZILIAN_CREST_QA_OK scenarios=4 crest_checks=44 reserved_visible=0');
+          NODE
+      - name: Upload production QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-brazilian-crest-qa
+          path: qa-production
+          if-no-files-found: warn
+          retention-days: 7
