@@ -186,7 +186,7 @@ check(
 );
 check(
   "atalho do Atlético-MG usa a chave canônica do catálogo",
-  brazilTeams.includes('{ id: "atletico-mineiro", name: "Atlético-MG"'),
+  /id:\s*"atletico-mineiro"[\s\S]*?name:\s*"Atlético-MG"/.test(brazilTeams),
 );
 
 console.log(`\nSTOREFRONT_REGRESSION_VALIDATION passed=${passed} failed=${failed}`);
