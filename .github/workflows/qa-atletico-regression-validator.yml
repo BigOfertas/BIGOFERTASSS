@@ -1,0 +1,23 @@
+name: QA Storefront Regression Validator Hotfix
+
+on:
+  push:
+    branches:
+      - qa-atletico-regression-validator-20260917
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Validate storefront regressions
+        run: node scripts/validate-storefront-regressions.mjs
+      - name: Lint
+        run: bun run lint
