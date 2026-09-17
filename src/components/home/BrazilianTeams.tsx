@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 import TEAM_CREST_SPRITE from "@/assets/teams/brasileirao-sprite";
 import BrazilianProducts from "@/components/home/BrazilianProducts";
@@ -28,14 +29,18 @@ const teams: Team[] = [
   { id: "internacional", name: "Internacional", spriteIndex: 10 },
 ];
 
+const reservedSlots = Array.from({ length: 19 }, (_, index) => index + 1);
+const TOTAL_TEAM_SLOTS = teams.length + reservedSlots.length;
+
 const TeamLogo: React.FC<{ team: Team }> = ({ team }) => (
   <Link
     to="/products"
     search={{ time: team.id }}
     aria-label={`Ver produtos do ${team.name}`}
+    title={team.name}
     className="group flex flex-shrink-0 flex-col items-center justify-center"
   >
-    <div className="flex h-[104px] w-[104px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition group-hover:-translate-y-0.5 group-hover:shadow-md motion-reduce:transform-none motion-reduce:transition-none lg:h-[80px] lg:w-[80px] xl:h-[100px] xl:w-[100px] 2xl:h-[104px] 2xl:w-[104px]">
+    <div className="flex h-[104px] w-[104px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition group-hover:-translate-y-0.5 group-hover:border-red-200 group-hover:shadow-md motion-reduce:transform-none motion-reduce:transition-none lg:h-[100px] lg:w-[100px]">
       <span
         aria-hidden="true"
         className="block h-full w-full bg-no-repeat"
@@ -45,6 +50,22 @@ const TeamLogo: React.FC<{ team: Team }> = ({ team }) => (
           backgroundPosition: `${team.spriteIndex * 10}% 50%`,
         }}
       />
+    </div>
+  </Link>
+);
+
+const ReservedTeamSlot: React.FC<{ index: number }> = ({ index }) => (
+  <Link
+    to="/products"
+    search={{ campeonato: "brasileirao", sort: "featured" }}
+    aria-label={`Espaço reservado para novo time ${index}`}
+    title="Mais times"
+    className="group flex flex-shrink-0 flex-col items-center justify-center"
+  >
+    <div className="flex h-[104px] w-[104px] items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50/80 shadow-sm transition group-hover:-translate-y-0.5 group-hover:border-red-300 group-hover:bg-red-50/60 group-hover:shadow-md motion-reduce:transform-none motion-reduce:transition-none lg:h-[100px] lg:w-[100px]">
+      <div className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-400 transition-colors group-hover:border-red-200 group-hover:text-red-600">
+        <Plus className="h-5 w-5" aria-hidden="true" />
+      </div>
     </div>
   </Link>
 );
@@ -64,7 +85,13 @@ const BrazilianTeams: React.FC = () => {
     setScrollProgress(maxScroll > 0 ? scrollLeft / maxScroll : 0);
   };
 
-  const dots = [0, 1, 2, 3, 4];
+  const scrollTeams = (direction: -1 | 1) => {
+    if (!scrollRef.current) return;
+    const distance = Math.max(scrollRef.current.clientWidth * 0.72, 360);
+    scrollRef.current.scrollBy({ left: direction * distance, behavior: "smooth" });
+  };
+
+  const dots = Array.from({ length: 8 }, (_, index) => index);
   const activeDotIndex = Math.round(scrollProgress * (dots.length - 1));
 
   return (
@@ -118,25 +145,57 @@ const BrazilianTeams: React.FC = () => {
           </h2>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white px-3 py-5 shadow-sm sm:px-5">
+        <div
+          className="rounded-2xl border border-gray-200 bg-white px-3 py-5 shadow-sm sm:px-5"
+          data-team-slot-count={TOTAL_TEAM_SLOTS}
+        >
           <div className="relative">
+            <button
+              type="button"
+              onClick={() => scrollTeams(-1)}
+              aria-label="Ver times anteriores"
+              className="absolute -left-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-md transition hover:border-red-200 hover:text-red-600 lg:flex"
+            >
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            </button>
+
             <div
               ref={scrollRef}
               onScroll={handleScroll}
-              className="flex h-[112px] snap-x items-center gap-3 overflow-x-auto scroll-smooth no-scrollbar lg:h-[132px] lg:w-full lg:justify-between lg:gap-0 lg:overflow-visible"
+              className="flex h-[112px] snap-x snap-mandatory items-center gap-3 overflow-x-auto scroll-smooth no-scrollbar lg:h-[124px] lg:gap-4 lg:px-10"
               style={{ scrollSnapType: "x mandatory" }}
             >
               {teams.map((team) => (
                 <div
                   key={team.id}
                   className="flex flex-shrink-0 snap-center items-center justify-center"
+                  data-team-slot={team.id}
                 >
                   <TeamLogo team={team} />
                 </div>
               ))}
+
+              {reservedSlots.map((slot) => (
+                <div
+                  key={`reserved-${slot}`}
+                  className="flex flex-shrink-0 snap-center items-center justify-center"
+                  data-team-slot={`reserved-${slot}`}
+                >
+                  <ReservedTeamSlot index={slot} />
+                </div>
+              ))}
             </div>
 
-            <div className="mt-3 flex justify-center gap-2 lg:hidden">
+            <button
+              type="button"
+              onClick={() => scrollTeams(1)}
+              aria-label="Ver próximos times"
+              className="absolute -right-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-md transition hover:border-red-200 hover:text-red-600 lg:flex"
+            >
+              <ChevronRight className="h-5 w-5" aria-hidden="true" />
+            </button>
+
+            <div className="mt-3 flex justify-center gap-2">
               {dots.map((dot) => (
                 <div
                   key={dot}
