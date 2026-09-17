@@ -22,7 +22,12 @@ const configuredTeams: Team[] = [
     image: "/assets/teams/flamengo.webp",
     enabled: true,
   },
-  { id: "atletico-mineiro", name: "Atlético-MG", image: "/assets/teams/atletico-mineiro.webp", enabled: true },
+  {
+    id: "atletico-mineiro",
+    name: "Atlético-MG",
+    image: "/assets/teams/atletico-mineiro.webp",
+    enabled: true,
+  },
   {
     id: "cruzeiro",
     name: "Cruzeiro",
@@ -154,11 +159,9 @@ const BrazilianTeams: React.FC = () => {
 
     const maxScroll = Math.max(0, node.scrollWidth - node.clientWidth);
     const progress = maxScroll > 1 ? node.scrollLeft / maxScroll : 0;
-    const pageCount = maxScroll > 1 ? Math.max(2, Math.ceil(node.scrollWidth / node.clientWidth)) : 1;
-    const activePage = Math.min(
-      pageCount - 1,
-      Math.max(0, Math.round(progress * (pageCount - 1))),
-    );
+    const pageCount =
+      maxScroll > 1 ? Math.max(2, Math.ceil(node.scrollWidth / node.clientWidth)) : 1;
+    const activePage = Math.min(pageCount - 1, Math.max(0, Math.round(progress * (pageCount - 1))));
     const epsilon = 4;
 
     const nextState: CarouselState = {
