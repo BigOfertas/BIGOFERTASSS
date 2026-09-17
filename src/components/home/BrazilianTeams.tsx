@@ -1,8 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import TEAM_CREST_SPRITE from "@/assets/teams/brasileirao-sprite";
 import BrazilianProducts from "@/components/home/BrazilianProducts";
 import DirectionalReveal from "@/components/ui/directional-reveal";
 import SlideUpReveal from "@/components/ui/slide-up-reveal";
@@ -12,87 +11,205 @@ import { useStorefrontPersonalization } from "@/hooks/useStorefrontPersonalizati
 interface Team {
   id: string;
   name: string;
-  spriteIndex: number;
+  image: string | null;
+  enabled: boolean;
 }
 
-const teams: Team[] = [
-  { id: "flamengo", name: "Flamengo", spriteIndex: 0 },
-  { id: "atletico-mineiro", name: "Atlético-MG", spriteIndex: 1 },
-  { id: "cruzeiro", name: "Cruzeiro", spriteIndex: 2 },
-  { id: "sao-paulo", name: "São Paulo", spriteIndex: 3 },
-  { id: "corinthians", name: "Corinthians", spriteIndex: 4 },
-  { id: "palmeiras", name: "Palmeiras", spriteIndex: 5 },
-  { id: "santos", name: "Santos", spriteIndex: 6 },
-  { id: "botafogo", name: "Botafogo", spriteIndex: 7 },
-  { id: "fluminense", name: "Fluminense", spriteIndex: 8 },
-  { id: "gremio", name: "Grêmio", spriteIndex: 9 },
-  { id: "internacional", name: "Internacional", spriteIndex: 10 },
+const configuredTeams: Team[] = [
+  {
+    id: "flamengo",
+    name: "Flamengo",
+    image: "/assets/teams/flamengo.webp",
+    enabled: true,
+  },
+  {
+    id: "atletico-mineiro",
+    name: "Atlético-MG",
+    image: "/assets/teams/atletico-mineiro.webp",
+    enabled: true,
+  },
+  {
+    id: "cruzeiro",
+    name: "Cruzeiro",
+    image: "/assets/teams/cruzeiro.webp",
+    enabled: true,
+  },
+  {
+    id: "sao-paulo",
+    name: "São Paulo",
+    image: "/assets/teams/saopaulo.webp",
+    enabled: true,
+  },
+  {
+    id: "corinthians",
+    name: "Corinthians",
+    image: "/assets/teams/corinthians.webp",
+    enabled: true,
+  },
+  {
+    id: "palmeiras",
+    name: "Palmeiras",
+    image: "/assets/teams/palmeiras.webp",
+    enabled: true,
+  },
+  {
+    id: "santos",
+    name: "Santos",
+    image: "/assets/teams/santos.webp",
+    enabled: true,
+  },
+  {
+    id: "botafogo",
+    name: "Botafogo",
+    image: "/assets/teams/botafogo.webp",
+    enabled: true,
+  },
+  {
+    id: "fluminense",
+    name: "Fluminense",
+    image: "/assets/teams/fluminense.webp",
+    enabled: true,
+  },
+  {
+    id: "gremio",
+    name: "Grêmio",
+    image: "/assets/teams/gremio.png",
+    enabled: true,
+  },
+  {
+    id: "internacional",
+    name: "Internacional",
+    image: "/assets/teams/internacional.webp",
+    enabled: true,
+  },
 ];
 
-const reservedSlots = Array.from({ length: 19 }, (_, index) => index + 1);
-const TOTAL_TEAM_SLOTS = teams.length + reservedSlots.length;
+const MINIMUM_TEAM_SLOTS = 30;
 
-const TeamLogo: React.FC<{ team: Team }> = ({ team }) => (
-  <Link
-    to="/products"
-    search={{ time: team.id }}
-    aria-label={`Ver produtos do ${team.name}`}
-    title={team.name}
-    className="group flex flex-shrink-0 flex-col items-center justify-center"
-  >
-    <div className="flex h-[104px] w-[104px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition group-hover:-translate-y-0.5 group-hover:border-red-200 group-hover:shadow-md motion-reduce:transform-none motion-reduce:transition-none lg:h-[100px] lg:w-[100px]">
-      <span
-        aria-hidden="true"
-        className="block h-full w-full bg-no-repeat"
-        style={{
-          backgroundImage: `url(${TEAM_CREST_SPRITE})`,
-          backgroundSize: "1100% 100%",
-          backgroundPosition: `${team.spriteIndex * 10}% 50%`,
-        }}
-      />
-    </div>
-  </Link>
+const reservedTeamSlots: Team[] = Array.from(
+  { length: Math.max(0, MINIMUM_TEAM_SLOTS - configuredTeams.length) },
+  (_, index) => ({
+    id: `reserved-${index + 1}`,
+    name: `Espaço reservado ${index + 1}`,
+    image: null,
+    enabled: false,
+  }),
 );
 
-const ReservedTeamSlot: React.FC<{ index: number }> = ({ index }) => (
-  <Link
-    to="/products"
-    search={{ campeonato: "brasileirao", sort: "featured" }}
-    aria-label={`Espaço reservado para novo time ${index}`}
-    title="Mais times"
-    className="group flex flex-shrink-0 flex-col items-center justify-center"
-  >
-    <div className="flex h-[104px] w-[104px] items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50/80 shadow-sm transition group-hover:-translate-y-0.5 group-hover:border-red-300 group-hover:bg-red-50/60 group-hover:shadow-md motion-reduce:transform-none motion-reduce:transition-none lg:h-[100px] lg:w-[100px]">
-      <div className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-400 transition-colors group-hover:border-red-200 group-hover:text-red-600">
-        <Plus className="h-5 w-5" aria-hidden="true" />
+const teamSlots = [...configuredTeams, ...reservedTeamSlots];
+const teams = teamSlots.filter((team) => team.enabled && team.image);
+const TOTAL_TEAM_SLOTS = teamSlots.length;
+
+const TeamLogo: React.FC<{ team: Team }> = ({ team }) => {
+  if (!team.enabled || !team.image) return null;
+
+  return (
+    <Link
+      to="/products"
+      search={{ time: team.id }}
+      aria-label={`Ver produtos do ${team.name}`}
+      title={team.name}
+      data-team-link={team.id}
+      className="group flex flex-shrink-0 flex-col items-center justify-center"
+    >
+      <div
+        data-team-card={team.id}
+        className="flex h-[108px] w-[108px] items-center justify-center rounded-2xl border border-gray-200 bg-gray-50/90 p-2.5 shadow-sm transition duration-200 group-hover:-translate-y-0.5 group-hover:border-red-200 group-hover:shadow-md motion-reduce:transform-none motion-reduce:transition-none dark:border-white/10 dark:bg-[#111111] dark:group-hover:border-red-500/35 sm:h-[112px] sm:w-[112px]"
+      >
+        <div className="flex h-full w-full items-center justify-center rounded-xl bg-[#e4e4e4] p-1.5 ring-1 ring-black/5 dark:bg-[#707070] dark:ring-white/10">
+          <img
+            src={team.image}
+            alt={`Escudo do ${team.name}`}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            className="h-full w-full select-none object-contain"
+          />
+        </div>
       </div>
-    </div>
-  </Link>
-);
+    </Link>
+  );
+};
+
+interface CarouselState {
+  pageCount: number;
+  activePage: number;
+  canScrollPrevious: boolean;
+  canScrollNext: boolean;
+}
+
+const INITIAL_CAROUSEL_STATE: CarouselState = {
+  pageCount: 1,
+  activePage: 0,
+  canScrollPrevious: false,
+  canScrollNext: false,
+};
 
 const BrazilianTeams: React.FC = () => {
   const { data: personalization } = useStorefrontPersonalization();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const [carouselState, setCarouselState] = useState<CarouselState>(INITIAL_CAROUSEL_STATE);
 
   const desktopBanner = personalization?.brasileirao_banner_desktop?.url;
   const mobileBanner = personalization?.brasileirao_banner_mobile?.url;
 
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-    const maxScroll = scrollWidth - clientWidth;
-    setScrollProgress(maxScroll > 0 ? scrollLeft / maxScroll : 0);
-  };
+  const updateCarouselState = useCallback(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+
+    const maxScroll = Math.max(0, node.scrollWidth - node.clientWidth);
+    const progress = maxScroll > 1 ? node.scrollLeft / maxScroll : 0;
+    const pageCount =
+      maxScroll > 1 ? Math.max(2, Math.ceil(node.scrollWidth / node.clientWidth)) : 1;
+    const activePage = Math.min(pageCount - 1, Math.max(0, Math.round(progress * (pageCount - 1))));
+    const epsilon = 4;
+
+    const nextState: CarouselState = {
+      pageCount,
+      activePage,
+      canScrollPrevious: node.scrollLeft > epsilon,
+      canScrollNext: node.scrollLeft < maxScroll - epsilon,
+    };
+
+    setCarouselState((current) =>
+      current.pageCount === nextState.pageCount &&
+      current.activePage === nextState.activePage &&
+      current.canScrollPrevious === nextState.canScrollPrevious &&
+      current.canScrollNext === nextState.canScrollNext
+        ? current
+        : nextState,
+    );
+  }, []);
+
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+
+    updateCarouselState();
+
+    const resizeObserver =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateCarouselState);
+    resizeObserver?.observe(node);
+    window.addEventListener("resize", updateCarouselState);
+
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", updateCarouselState);
+    };
+  }, [updateCarouselState]);
 
   const scrollTeams = (direction: -1 | 1) => {
-    if (!scrollRef.current) return;
-    const distance = Math.max(scrollRef.current.clientWidth * 0.72, 360);
-    scrollRef.current.scrollBy({ left: direction * distance, behavior: "smooth" });
-  };
+    const node = scrollRef.current;
+    if (!node) return;
 
-  const dots = Array.from({ length: 8 }, (_, index) => index);
-  const activeDotIndex = Math.round(scrollProgress * (dots.length - 1));
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const distance = Math.max(node.clientWidth * 0.78, 300);
+
+    node.scrollBy({
+      left: direction * distance,
+      behavior: reducedMotion ? "auto" : "smooth",
+    });
+  };
 
   return (
     <section className="bg-transparent py-8 sm:py-10 lg:py-12">
@@ -146,24 +263,26 @@ const BrazilianTeams: React.FC = () => {
         </div>
 
         <div
-          className="rounded-2xl border border-gray-200 bg-white px-3 py-5 shadow-sm sm:px-5"
+          className="rounded-2xl border border-gray-200 bg-white/85 px-3 py-5 shadow-sm dark:border-white/10 dark:bg-[#0d0d0d] sm:px-5"
           data-team-slot-count={TOTAL_TEAM_SLOTS}
+          data-enabled-team-count={teams.length}
         >
           <div className="relative">
             <button
               type="button"
               onClick={() => scrollTeams(-1)}
+              disabled={!carouselState.canScrollPrevious}
               aria-label="Ver times anteriores"
-              className="absolute -left-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-md transition hover:border-red-200 hover:text-red-600 lg:flex"
+              className="category-carousel-arrow absolute -left-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-md transition hover:border-red-200 hover:text-red-600 disabled:pointer-events-none disabled:opacity-0 motion-reduce:transition-none lg:flex"
             >
               <ChevronLeft className="h-5 w-5" aria-hidden="true" />
             </button>
 
             <div
               ref={scrollRef}
-              onScroll={handleScroll}
-              className="flex h-[112px] snap-x snap-mandatory items-center gap-3 overflow-x-auto scroll-smooth no-scrollbar lg:h-[124px] lg:gap-4 lg:px-10"
-              style={{ scrollSnapType: "x mandatory" }}
+              onScroll={updateCarouselState}
+              aria-label="Times do futebol brasileiro"
+              className="flex h-[118px] snap-x snap-mandatory items-center gap-3 overflow-x-auto scroll-smooth no-scrollbar motion-reduce:scroll-auto sm:h-[122px] lg:h-[126px] lg:gap-4 lg:px-10"
             >
               {teams.map((team) => (
                 <div
@@ -174,37 +293,32 @@ const BrazilianTeams: React.FC = () => {
                   <TeamLogo team={team} />
                 </div>
               ))}
-
-              {reservedSlots.map((slot) => (
-                <div
-                  key={`reserved-${slot}`}
-                  className="flex flex-shrink-0 snap-center items-center justify-center"
-                  data-team-slot={`reserved-${slot}`}
-                >
-                  <ReservedTeamSlot index={slot} />
-                </div>
-              ))}
             </div>
 
             <button
               type="button"
               onClick={() => scrollTeams(1)}
+              disabled={!carouselState.canScrollNext}
               aria-label="Ver próximos times"
-              className="absolute -right-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-md transition hover:border-red-200 hover:text-red-600 lg:flex"
+              className="category-carousel-arrow absolute -right-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-md transition hover:border-red-200 hover:text-red-600 disabled:pointer-events-none disabled:opacity-0 motion-reduce:transition-none lg:flex"
             >
               <ChevronRight className="h-5 w-5" aria-hidden="true" />
             </button>
 
-            <div className="mt-3 flex justify-center gap-2">
-              {dots.map((dot) => (
-                <div
-                  key={dot}
-                  className={`h-1.5 rounded-full transition-all duration-300 motion-reduce:transition-none ${
-                    activeDotIndex === dot ? "w-5 bg-red-600" : "w-1.5 bg-gray-300"
-                  }`}
-                />
-              ))}
-            </div>
+            {carouselState.pageCount > 1 ? (
+              <div className="mt-3 flex justify-center gap-2" aria-hidden="true">
+                {Array.from({ length: carouselState.pageCount }, (_, dot) => (
+                  <div
+                    key={dot}
+                    className={`h-1.5 rounded-full transition-all duration-300 motion-reduce:transition-none ${
+                      carouselState.activePage === dot
+                        ? "w-5 bg-red-600"
+                        : "w-1.5 bg-gray-300 dark:bg-white/20"
+                    }`}
+                  />
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
 
