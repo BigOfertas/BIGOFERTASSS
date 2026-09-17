@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(grep -o 'spriteIndex:' src/components/home/BrazilianTeams.tsx | wc -l)" -eq 11
+          test "$(grep -Eo 'spriteIndex: [0-9]+' src/components/home/BrazilianTeams.tsx | wc -l)" -eq 11
           grep -Fq 'Array.from({ length: 19 }' src/components/home/BrazilianTeams.tsx
           grep -Fq 'data-team-slot-count={TOTAL_TEAM_SLOTS}' src/components/home/BrazilianTeams.tsx
           grep -Fq 'search={{ time: team.id }}' src/components/home/BrazilianTeams.tsx
