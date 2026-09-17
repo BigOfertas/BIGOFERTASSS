@@ -25,6 +25,7 @@ async function verify(viewportName, viewport) {
 
   const slots = section.locator("[data-team-slot]");
   const count = await slots.count();
+  const slotNames = await slots.evaluateAll((els) => els.map((el) => el.getAttribute("data-team-slot")));
   record(viewportName, "slots-30", count === 30, { count });
 
   const expectedTeams = [
@@ -56,14 +57,9 @@ async function verify(viewportName, viewport) {
   }
   record(viewportName, "11-real-crests", realCrestsOk);
 
-  let reservedOk = true;
-  for (let i = 1; i <= 19; i += 1) {
-    if ((await section.locator(`[data-team-slot="reserved-${i}"]`)).count() !== 1) {
-      reservedOk = false;
-      break;
-    }
-  }
-  record(viewportName, "19-reserved-slots", reservedOk);
+  const reservedNames = slotNames.filter((name) => name?.startsWith("reserved-"));
+  const reservedOk = reservedNames.length === 19 && new Set(reservedNames).size === 19;
+  record(viewportName, "19-reserved-slots", reservedOk, { reservedCount: reservedNames.length, reservedNames });
 
   const rail = section.locator(".overflow-x-auto").first();
   const geometry = await rail.evaluate((el) => ({
@@ -96,7 +92,8 @@ async function verify(viewportName, viewport) {
   const flamengoHref = await section.locator('[data-team-slot="flamengo"] a').getAttribute("href");
   record(viewportName, "flamengo-click-filter", Boolean(flamengoHref?.includes("time=flamengo")), { href: flamengoHref });
 
-  const reservedHref = await section.locator('[data-team-slot="reserved-1"] a').getAttribute("href");
+  const firstReserved = section.locator('[data-team-slot^="reserved-"]').first();
+  const reservedHref = await firstReserved.locator("a").getAttribute("href");
   record(viewportName, "reserved-safe-link", Boolean(reservedHref?.includes("campeonato=brasileirao")), { href: reservedHref });
 
   await page.screenshot({ path: `${outDir}/${viewportName}.png`, fullPage: true });
