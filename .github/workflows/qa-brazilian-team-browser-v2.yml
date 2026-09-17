@@ -1,0 +1,113 @@
+name: QA Brazilian Crests Browser V2
+
+on:
+  push:
+    branches:
+      - qa-brazilian-individual-crests-v2-20260917
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    env:
+      VITE_TURNSTILE_SITE_KEY: ${{ secrets.VITE_TURNSTILE_SITE_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Validate, lint and build
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(grep -Eo 'enabled: true' src/components/home/BrazilianTeams.tsx | wc -l)" -eq 11
+          grep -Fq 'const MINIMUM_TEAM_SLOTS = 30' src/components/home/BrazilianTeams.tsx
+          grep -Fq 'data-enabled-team-count={teams.length}' src/components/home/BrazilianTeams.tsx
+          grep -Fq 'object-contain' src/components/home/BrazilianTeams.tsx
+          ! grep -Fq 'brasileirao-sprite' src/components/home/BrazilianTeams.tsx
+          for asset in flamengo.webp atletico-mineiro.webp cruzeiro.webp saopaulo.webp corinthians.webp palmeiras.webp santos.webp botafogo.webp fluminense.webp gremio.png internacional.webp; do test -s "public/assets/teams/$asset"; done
+          bun run lint
+          bun run build:hostinger
+      - name: Resolve output
+        shell: bash
+        run: |
+          set -euo pipefail
+          for candidate in .output/public dist/client dist/public dist; do
+            if [ -f "$candidate/index.html" ]; then echo "HOSTINGER_OUTPUT=$candidate" >> "$GITHUB_ENV"; exit 0; fi
+          done
+          exit 1
+      - name: Install Chromium
+        shell: bash
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start preview
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory "$HOSTINGER_OUTPUT" >/tmp/preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/preview.log; exit 1
+      - name: Chromium QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa-artifacts
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+          const expected = [
+            ['flamengo','/assets/teams/flamengo.webp'],['atletico-mineiro','/assets/teams/atletico-mineiro.webp'],['cruzeiro','/assets/teams/cruzeiro.webp'],['sao-paulo','/assets/teams/saopaulo.webp'],['corinthians','/assets/teams/corinthians.webp'],['palmeiras','/assets/teams/palmeiras.webp'],['santos','/assets/teams/santos.webp'],['botafogo','/assets/teams/botafogo.webp'],['fluminense','/assets/teams/fluminense.webp'],['gremio','/assets/teams/gremio.png'],['internacional','/assets/teams/internacional.webp']
+          ];
+          const browser = await chromium.launch({headless:true});
+          const summary=[];
+          for (const [label,viewport,theme] of [
+            ['desktop-light',{width:1440,height:1200},'light'],['desktop-dark',{width:1440,height:1200},'dark'],['mobile-light',{width:390,height:844},'light'],['mobile-dark',{width:390,height:844},'dark']
+          ]) {
+            const context=await browser.newContext({viewport,colorScheme:theme});
+            const page=await context.newPage();
+            const failed=[];
+            page.on('response',r=>{if(r.url().includes('/assets/teams/')&&!r.ok()) failed.push(`${r.status()} ${r.url()}`)});
+            await page.addInitScript(value=>localStorage.setItem('dropbox-theme',value),theme);
+            await page.goto('http://127.0.0.1:4173/',{waitUntil:'domcontentloaded',timeout:60000});
+            await page.waitForTimeout(3200);
+            const heading=page.getByText('Encontre seu time',{exact:true});
+            await heading.waitFor({state:'visible',timeout:30000});
+            await heading.scrollIntoViewIfNeeded(); await page.waitForTimeout(500);
+            const wrapper=page.locator('[data-team-slot-count="30"][data-enabled-team-count="11"]');
+            if(await wrapper.count()!==1) throw new Error(`${label}: wrapper contract missing`);
+            if(await page.locator('[data-team-card]').count()!==11) throw new Error(`${label}: card count`);
+            if(await page.locator('[data-team-slot]').count()!==11) throw new Error(`${label}: reserved slots visible`);
+            for(const [id,src] of expected){const link=page.locator(`[data-team-link="${id}"]`);if(await link.count()!==1)throw new Error(`${label}: missing ${id}`);const href=await link.getAttribute('href');if(!href?.includes('/products')||!href.includes(`time=${id}`))throw new Error(`${label}: href ${id} ${href}`);if(await link.locator('img').getAttribute('src')!==src)throw new Error(`${label}: src ${id}`)}
+            await page.waitForFunction(()=>{const imgs=[...document.querySelectorAll('[data-team-card] img')];return imgs.length===11&&imgs.every(i=>i.complete&&i.naturalWidth>0&&i.naturalHeight>0)},null,{timeout:30000});
+            if(failed.length) throw new Error(`${label}: image request failure ${failed.join(';')}`);
+            const rootClass=await page.evaluate(()=>document.documentElement.className);
+            if(theme==='dark'&&!rootClass.split(/\s+/).includes('dark'))throw new Error(`${label}: dark class missing (${rootClass})`);
+            if(theme==='light'&&rootClass.split(/\s+/).includes('dark'))throw new Error(`${label}: unexpected dark class`);
+            const styles=await page.locator('[data-team-card]').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect(),o=getComputedStyle(n),inner=getComputedStyle(n.firstElementChild),img=n.querySelector('img');return{id:n.getAttribute('data-team-card'),w:r.width,h:r.height,outer:o.backgroundColor,inner:inner.backgroundColor,nw:img?.naturalWidth??0,nh:img?.naturalHeight??0}}));
+            if(styles.some(x=>x.w<100||x.h<100||x.nw<=0||x.nh<=0))throw new Error(`${label}: invalid metrics`);
+            if(theme==='dark'&&styles.some(x=>x.inner==='rgb(255, 255, 255)'||x.inner==='rgba(255, 255, 255, 1)'))throw new Error(`${label}: white crest backing in dark mode`);
+            const scroller=wrapper.locator('[aria-label="Times do futebol brasileiro"]');
+            const before=await scroller.evaluate(n=>({left:n.scrollLeft,max:Math.max(0,n.scrollWidth-n.clientWidth),sw:n.scrollWidth,cw:n.clientWidth}));
+            await wrapper.screenshot({path:`qa-artifacts/${label}-start.png`});
+            if(before.max>4){await scroller.evaluate(n=>n.scrollTo({left:n.scrollWidth,behavior:'auto'}));await page.waitForTimeout(250);const after=await scroller.evaluate(n=>n.scrollLeft);if(after<=before.left+4)throw new Error(`${label}: carousel no scroll`);await wrapper.screenshot({path:`qa-artifacts/${label}-end.png`})}
+            const overflow=await page.evaluate(()=>({body:document.body.scrollWidth,viewport:innerWidth}));if(overflow.body>overflow.viewport+2)throw new Error(`${label}: page overflow ${overflow.body}/${overflow.viewport}`);
+            summary.push({label,viewport,theme,rootClass,before,overflow,styles});
+            console.log(`SCENARIO_OK ${label} cards=11 maxScroll=${before.max}`);
+            await context.close();
+          }
+          fs.writeFileSync('qa-artifacts/summary.json',JSON.stringify(summary,null,2));
+          await browser.close();
+          console.log('BRAZILIAN_CREST_QA_OK scenarios=4 visible=11 reserved=0');
+          NODE
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brazilian-crest-browser-v2
+          path: qa-artifacts
+          if-no-files-found: warn
+          retention-days: 7
