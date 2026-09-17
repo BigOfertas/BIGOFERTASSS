@@ -1,0 +1,88 @@
+name: Materialize Brazilian Team Crests
+
+on:
+  push:
+    branches:
+      - brasileirao-real-team-images-20260917
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install Pillow
+        run: python -m pip install --disable-pip-version-check pillow
+
+      - name: Materialize individual crest files from the user-provided crest sprite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import io
+          import re
+          from pathlib import Path
+          from PIL import Image
+
+          parts = []
+          for index in range(1, 7):
+              source = Path(f"src/assets/teams/brasileirao-sprite-parts/part{index}.ts").read_text(encoding="utf-8")
+              match = re.fullmatch(r'export default "([A-Za-z0-9+/=]+)";\s*', source)
+              if not match:
+                  raise SystemExit(f"invalid sprite part {index}")
+              parts.append(match.group(1))
+
+          sprite_bytes = base64.b64decode("".join(parts), validate=True)
+          sprite = Image.open(io.BytesIO(sprite_bytes)).convert("RGBA")
+          if sprite.size != (1408, 128):
+              raise SystemExit(f"unexpected sprite size: {sprite.size}")
+
+          teams = [
+              ("flamengo.webp", 0),
+              ("atletico-mineiro.webp", 1),
+              ("cruzeiro.webp", 2),
+              ("saopaulo.webp", 3),
+              ("corinthians.webp", 4),
+              ("palmeiras.webp", 5),
+              ("santos.webp", 6),
+              ("botafogo.webp", 7),
+              ("fluminense.webp", 8),
+              ("gremio.png", 9),
+              ("internacional.webp", 10),
+          ]
+
+          output = Path("public/assets/teams")
+          output.mkdir(parents=True, exist_ok=True)
+
+          for filename, index in teams:
+              tile = sprite.crop((index * 128, 0, (index + 1) * 128, 128))
+              destination = output / filename
+              if destination.suffix == ".png":
+                  tile.save(destination, format="PNG", optimize=True)
+              else:
+                  tile.save(destination, format="WEBP", lossless=True, method=6)
+              print(f"materialized {filename}: {destination.stat().st_size} bytes")
+          PY
+
+      - name: Commit materialized assets and remove this one-time workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/teams
+          git rm --ignore-unmatch .github/workflows/materialize-brazilian-team-crests.yml
+          if git diff --cached --quiet; then
+            echo "No materialization changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: materialize individual Brazilian team crests"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
